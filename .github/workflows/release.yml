@@ -8,6 +8,7 @@ name: Release
 # (Upstream's Docker Hub publish was removed — those credentials don't exist on this fork.)
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
