@@ -845,7 +845,7 @@
       "selectAllTooltip": "Selecciona todas las filas de esta página, incluidos los DLC ocultos",
       "selectedCount_one": "{{count}} seleccionado",
       "selectedCount_other": "{{count}} seleccionados",
-      "syncSelectedButton": "Sincronizar seleccionados",
+      "syncSelectedButton": "Sincronizar seleccionados", "syncAllButton": "Sincronizar todo",
       "runImportButton": "Ejecutar Importar",
       "importRunning": "Importando…",
       "importErrorToast": "No se pudo iniciar la importación de Steam. Inténtalo de nuevo.",
