@@ -1,8 +1,8 @@
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, exists, func, select
 from sqlalchemy.orm import Session
 
 from app.models.catalog import Game, GameCategory, GamePlatform, Platform
-from app.models.library import MediaFormat
+from app.models.library import LibraryItem, MediaFormat
 from app.repositories.game_repository import (
     GameSortOption,
     GameWithStatus,
@@ -90,19 +90,19 @@ def get_by_slug(db: Session, slug: str) -> Platform | None:
 
 
 def list_platforms_with_counts(db: Session) -> list[tuple[Platform, int]]:
-    """Every platform with its locally-known, browsable (non-addon) game count — the count
-    uses the same _is_browsable_game/parent_game_id filter as list_games_for_platform, so it
-    always matches what the platform's own page shows. Platforms with zero games are included
-    with count 0; the browsable filter lives in the JOIN condition (not WHERE) so the outer
-    join keeps zero-count platforms instead of dropping them."""
+    """Every platform with its locally-known, browsable (non-addon) game count — a game
+    counts for a platform when the user has a *copy* for it (library_items.platform_id),
+    not merely because IGDB lists the game as released on it. Uses the same scoping as
+    list_games_for_platform, so the count always matches what the platform's own page
+    shows. Platforms with zero games are included with count 0; the browsable filter
+    lives in the JOIN condition (not WHERE) so the outer join keeps zero-count
+    platforms instead of dropping them."""
     stmt = (
         select(Platform, func.count(func.distinct(Game.id)))
-        .outerjoin(GamePlatform, GamePlatform.platform_id == Platform.id)
+        .outerjoin(LibraryItem, LibraryItem.platform_id == Platform.id)
         .outerjoin(
             Game,
-            (Game.id == GamePlatform.game_id)
-            & Game.parent_game_id.is_(None)
-            & _is_browsable_game(Game.category),
+            (Game.id == LibraryItem.game_id) & Game.parent_game_id.is_(None) & _is_browsable_game(Game.category),
         )
         .group_by(Platform.id)
         .order_by(Platform.name)
@@ -111,9 +111,11 @@ def list_platforms_with_counts(db: Session) -> list[tuple[Platform, int]]:
 
 
 def list_games_for_platform(db: Session, platform_id: int) -> list[GameWithStatus]:
-    """Only games already locally known, and only browsable (non-addon) ones — an addon's
-    platform link would otherwise clutter the grid; addons stay reachable via the parent's
-    own Addons tab and the page's "Include addons" toggle."""
+    """Only games the user actually has a copy for on this platform — scoped by
+    library_items.platform_id (the platform on the owned/wishlisted copy), not
+    game_platforms (IGDB's full list of platforms the game was ever released on).
+    An addon's platform link would otherwise clutter the grid; addons stay reachable
+    via the parent's own Addons tab and the page's "Include addons" toggle."""
     stmt = (
         select(
             Game,
@@ -122,9 +124,11 @@ def list_games_for_platform(db: Session, platform_id: int) -> list[GameWithStatu
             _play_status_subquery(Game.id),
             _rating_subquery(Game.id),
         )
-        .join(GamePlatform, GamePlatform.game_id == Game.id)
         .where(
-            GamePlatform.platform_id == platform_id,
+            exists().where(
+                LibraryItem.game_id == Game.id,
+                LibraryItem.platform_id == platform_id,
+            ),
             Game.parent_game_id.is_(None),
             _is_browsable_game(Game.category),
         )
@@ -157,25 +161,23 @@ def list_addons_for_platform(
 ) -> list[GameWithStatus]:
     """Addons of this platform's top-level games — same parent-based approach as
     collection_repository.list_addons_for_collection: an addon inherits its platform
-    through its parent, so this goes via the parent ids."""
-    parent_ids = (
-        select(Game.id)
-        .join(GamePlatform, GamePlatform.game_id == Game.id)
-        .where(
-            GamePlatform.platform_id == platform_id,
-            Game.parent_game_id.is_(None),
-            _is_browsable_game(Game.category),
-        )
+    through its parent, so this goes via the parent ids. The parent is scoped by the
+    user's copies (library_items.platform_id), not the catalog release list."""
+    parent_ids = select(Game.id).where(
+        exists().where(
+            LibraryItem.game_id == Game.id,
+            LibraryItem.platform_id == platform_id,
+        ),
+        Game.parent_game_id.is_(None),
+        _is_browsable_game(Game.category),
     )
-    stmt = (
-        select(
-            Game,
-            _owned_exists(Game.id),
-            _wishlisted_exists(Game.id),
-            _play_status_subquery(Game.id),
-            _rating_subquery(Game.id),
-        ).where(Game.parent_game_id.in_(parent_ids))
-    )
+    stmt = select(
+        Game,
+        _owned_exists(Game.id),
+        _wishlisted_exists(Game.id),
+        _play_status_subquery(Game.id),
+        _rating_subquery(Game.id),
+    ).where(Game.parent_game_id.in_(parent_ids))
     stmt = _apply_optional_game_filters(
         stmt,
         search=search,

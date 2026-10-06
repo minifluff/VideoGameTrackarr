@@ -256,8 +256,15 @@ def list_top_level_games(
             exists().where(GameFranchise.game_id == Game.id, GameFranchise.franchise_id == required_franchise_id)
         )
     if required_platform_id is not None:
+        # The platform of the user's *copy* (library_items), not game_platforms
+        # (IGDB's full list of platforms a game was ever released on) — same
+        # semantics as the platform_ids filter, so a platform detail page never
+        # shows a game the user doesn't have for that platform.
         stmt = stmt.where(
-            exists().where(GamePlatform.game_id == Game.id, GamePlatform.platform_id == required_platform_id)
+            exists().where(
+                LibraryItem.game_id == Game.id,
+                LibraryItem.platform_id == required_platform_id,
+            )
         )
     stmt = _apply_optional_game_filters(
         stmt,
