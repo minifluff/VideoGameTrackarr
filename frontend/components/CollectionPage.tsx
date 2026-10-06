@@ -26,7 +26,7 @@ const CollectionPage = () => {
       name={data?.name}
       entityId={data?.id}
       isLoading={isLoading}
-      resyncKind="collection"
+      browseKind="collection"
       slug={collectionSlug}
       resyncLabel={t("games.collectionPage.resyncButton")}
     />

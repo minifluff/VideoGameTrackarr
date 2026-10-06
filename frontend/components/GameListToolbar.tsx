@@ -171,6 +171,8 @@ interface GameListToolbarProps {
   onPlatformIdsChange: (value: number[]) => void;
   platformExclude: boolean;
   onPlatformExcludeChange: (value: boolean) => void;
+  // Same reasoning as hideCollectionsField, for a Platform detail page.
+  hidePlatformsField?: boolean;
   tagOptions: Tag[];
   tagIds: number[];
   onTagIdsChange: (value: number[]) => void;
@@ -256,6 +258,7 @@ const GameListToolbar = ({
   onPlatformIdsChange,
   platformExclude,
   onPlatformExcludeChange,
+  hidePlatformsField = false,
   tagOptions,
   tagIds,
   onTagIdsChange,
@@ -591,27 +594,29 @@ const GameListToolbar = ({
                     />
                   </Stack>
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Stack spacing={0.5}>
-                    <AutocompleteMultiSelect<PlatformResponse>
-                      label={t("games.listToolbar.consoleLabel")}
-                      options={platformOptions}
-                      value={selectedPlatforms}
-                      onChange={(newValue) =>
-                        onPlatformIdsChange(newValue.map((platform) => platform.id))
-                      }
-                      getOptionLabel={platformOptionLabel}
-                      isOptionEqualToValue={(option, val) => option.id === val.id}
-                      placeholder={allPlaceholder}
-                      fullWidth
-                    />
-                    <ExcludeCheckbox
-                      checked={platformExclude}
-                      onChange={onPlatformExcludeChange}
-                      disabled={platformIds.length === 0}
-                    />
-                  </Stack>
-                </Grid>
+                {!hidePlatformsField ? (
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Stack spacing={0.5}>
+                      <AutocompleteMultiSelect<PlatformResponse>
+                        label={t("games.listToolbar.consoleLabel")}
+                        options={platformOptions}
+                        value={selectedPlatforms}
+                        onChange={(newValue) =>
+                          onPlatformIdsChange(newValue.map((platform) => platform.id))
+                        }
+                        getOptionLabel={platformOptionLabel}
+                        isOptionEqualToValue={(option, val) => option.id === val.id}
+                        placeholder={allPlaceholder}
+                        fullWidth
+                      />
+                      <ExcludeCheckbox
+                        checked={platformExclude}
+                        onChange={onPlatformExcludeChange}
+                        disabled={platformIds.length === 0}
+                      />
+                    </Stack>
+                  </Grid>
+                ) : null}
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Stack spacing={0.5}>
                     <AutocompleteMultiSelect<FormatOption>

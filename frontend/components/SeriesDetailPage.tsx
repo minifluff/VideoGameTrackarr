@@ -28,7 +28,7 @@ const SeriesDetailPage = () => {
       name={data?.name}
       entityId={data?.id}
       isLoading={isLoading}
-      resyncKind="franchise"
+      browseKind="franchise"
       slug={seriesSlug}
       resyncLabel={t("games.seriesDetailPage.resyncButton")}
     />
