@@ -37,7 +37,8 @@
     "accessoryNotFoundTitle": "Acessório não encontrado",
     "seriesNotFoundTitle": "Série não encontrada",
     "collectionNotFoundTitle": "Coleção não encontrada",
-    "eventNotFoundTitle": "Evento não encontrado"
+    "eventNotFoundTitle": "Evento não encontrado",
+    "platformNotFoundTitle": "Plataforma não encontrada"
   },
   "nav": {
     "dashboard": "Painel",
@@ -62,7 +63,8 @@
     "jobs": "Tarefas",
     "integrations": "Integrações",
     "about": "Sobre",
-    "emulation": "Emulação"
+    "emulation": "Emulação",
+    "platforms": "Plataformas"
   },
   "breadcrumbs": {
     "edit": "Editar",
@@ -543,7 +545,8 @@
       "allGames": "Todos os Jogos",
       "addGame": "Adicionar Jogo",
       "collections": "Coleções",
-      "series": "Séries"
+      "series": "Séries",
+      "platforms": "Plataformas"
     },
     "add": {
       "pageTitle": "Adicionar Jogo",
@@ -770,6 +773,16 @@
       "notInLibrary": "Ainda não está na sua biblioteca",
       "backToSearch": "Voltar à pesquisa",
       "addedToast": "{{name}} adicionado à sua biblioteca"
+    },
+    "platformsPage": {
+      "title": "Plataformas",
+      "description": "Plataformas com pelo menos um jogo na sua biblioteca.",
+      "emptyMessage": "Ainda sem plataformas — aparecem aqui quando adicionar um jogo numa delas.",
+      "searchLabel": "Pesquisar plataformas",
+      "searchPlaceholder": "Nome da plataforma"
+    },
+    "platformPage": {
+      "kindLabel": "Plataforma"
     }
   },
   "events": {
