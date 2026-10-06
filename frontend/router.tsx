@@ -6,6 +6,8 @@ import AddDevicePage from "./components/AddDevicePage";
 import AddGame from "./components/AddGame";
 import IgdbGamePreviewPage from "./components/IgdbGamePreviewPage";
 import CollectionPage from "./components/CollectionPage";
+import PlatformPage from "./components/PlatformPage";
+import PlatformsPage from "./components/PlatformsPage";
 import CollectionsPage from "./components/CollectionsPage";
 import ComparePage from "./components/ComparePage";
 import DashboardPage from "./components/DashboardPage";
@@ -71,6 +73,8 @@ import {
   orphanedAccessoriesCrumbs,
   saleTrackedCrumbs,
   salesIgnoredCrumbs,
+  platformCrumbs,
+  platformsCrumbs,
   seriesCrumbs,
   settingsCrumbs,
   steamSyncCrumbs,
@@ -160,6 +164,16 @@ const router = createBrowserRouter([
             path: "/games/collections/:collectionSlug",
             element: <CollectionPage />,
             handle: { crumbs: collectionCrumbs },
+          },
+          {
+            path: "/games/platforms",
+            element: <PlatformsPage />,
+            handle: { crumbs: platformsCrumbs },
+          },
+          {
+            path: "/games/platforms/:platformSlug",
+            element: <PlatformPage />,
+            handle: { crumbs: platformCrumbs },
           },
           { path: "/hardware", element: <HardwarePage />, handle: { crumbs: hardwareCrumbs } },
           {
