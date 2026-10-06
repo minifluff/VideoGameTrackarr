@@ -820,6 +820,8 @@
     },
     "steamSync": {
       "heading": "Sincronización Steam",
+      "hideSyncedEmptyState": "Todo ya está sincronizado, no queda nada por revisar.",
+      "hideSyncedLabel": "Ocultar juegos sincronizados",
       "description": "Todos los juegos que Steam dice que posees o tienes en tu lista de deseos, comparados con tu catálogo de VGT. Nada cambia aquí hasta que sincronices una fila explícitamente — Importar solo obtiene y empareja datos, nunca escribe en tu biblioteca por sí solo.",
       "tableHeading": "Biblioteca y lista de deseos de Steam",
       "emptyState": "Todavía no hay nada aquí. Configura tu SteamID64 en Ajustes → Integraciones y luego ejecuta Importar.",
