@@ -247,7 +247,16 @@
       "restoreStartError": "Impossible de démarrer la restauration. Veuillez réessayer.",
       "exportFullBackupWithFiles": "Sauvegarde complète avec fichiers (ZIP)",
       "includeFilesLabel": "Inclure les ROM, sauvegardes et fichiers BIOS",
-      "includeFilesHelp": "Télécharge un .zip au lieu du fichier JSON — il peut être aussi volumineux que toutes vos ROM réunies. Restaurer un .zip remplace aussi les ROM, sauvegardes et fichiers BIOS."
+      "includeFilesHelp": "Télécharge un .zip au lieu du fichier JSON — il peut être aussi volumineux que toutes vos ROM réunies. Restaurer un .zip remplace aussi les ROM, sauvegardes et fichiers BIOS.",
+      "importHeading": "Importer",
+      "importCsvDescription": "Ajoutez des jeux à votre bibliothèque depuis un fichier CSV — pratique pour les imports en masse depuis des tableurs ou d'autres outils. Les colonnes doivent apparaître dans cet ordre :",
+      "importCsvValuesHelp": "Une ligne d'en-tête avec ces noms exacts est facultative. name est requis pour chaque ligne ; category accepte main_game, dlc_addon, expansion, bundle, standalone_expansion, mod, episode, season, remake, remaster, expanded_game, port, fork, pack ou update (vide = main_game) ; status accepte owned ou wishlist (vide = owned) ; format accepte physical, digital, iso, rom, abandonware ou other ; acquired_at utilise AAAA-MM-JJ. Les lignes problématiques sont ignorées et signalées, les autres sont importées. Les jeux déjà dans votre bibliothèque sont ignorés, pas dupliqués.",
+      "downloadCsvTemplate": "Télécharger le modèle CSV",
+      "importCsvButton": "Importer depuis CSV",
+      "importCsvResult": "{{imported}} importés, {{skipped}} ignorés",
+      "importCsvRowError": "Ligne {{row}} : {{message}}",
+      "importCsvMoreErrors": "…et {{count}} autres",
+      "importCsvError": "Impossible d'importer le CSV. Veuillez réessayer."
     },
     "jobs": {
       "heading": "Tâches",
@@ -847,7 +856,8 @@
       "selectAllTooltip": "Sélectionne toutes les lignes de cette page, y compris les DLC masqués",
       "selectedCount_one": "{{count}} sélectionné",
       "selectedCount_other": "{{count}} sélectionnés",
-      "syncSelectedButton": "Synchroniser la sélection", "syncAllButton": "Tout synchroniser",
+      "syncSelectedButton": "Synchroniser la sélection",
+      "syncAllButton": "Tout synchroniser",
       "runImportButton": "Lancer Importer",
       "importRunning": "Importation…",
       "importErrorToast": "Impossible de démarrer l'importation Steam. Veuillez réessayer.",
