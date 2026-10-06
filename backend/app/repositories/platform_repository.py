@@ -1,7 +1,19 @@
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
-from app.models.catalog import GamePlatform, Platform
+from app.models.catalog import Game, GameCategory, GamePlatform, Platform
+from app.models.library import MediaFormat
+from app.repositories.game_repository import (
+    GameSortOption,
+    GameWithStatus,
+    _apply_optional_game_filters,
+    _is_browsable_game,
+    _owned_exists,
+    _play_status_subquery,
+    _rating_subquery,
+    _row_to_game_with_status,
+    _wishlisted_exists,
+)
 
 
 def list_platforms(db: Session) -> list[Platform]:
@@ -71,3 +83,117 @@ def sync_for_game(db: Session, game_id: int, platform_ids: list[int]) -> None:
     for platform_id in platform_ids:
         db.add(GamePlatform(game_id=game_id, platform_id=platform_id))
     db.flush()
+
+
+def get_by_slug(db: Session, slug: str) -> Platform | None:
+    return db.scalars(select(Platform).where(Platform.slug == slug)).first()
+
+
+def list_platforms_with_counts(db: Session) -> list[tuple[Platform, int]]:
+    """Every platform with its locally-known, browsable (non-addon) game count — the count
+    uses the same _is_browsable_game/parent_game_id filter as list_games_for_platform, so it
+    always matches what the platform's own page shows. Platforms with zero games are included
+    with count 0; the browsable filter lives in the JOIN condition (not WHERE) so the outer
+    join keeps zero-count platforms instead of dropping them."""
+    stmt = (
+        select(Platform, func.count(func.distinct(Game.id)))
+        .outerjoin(GamePlatform, GamePlatform.platform_id == Platform.id)
+        .outerjoin(
+            Game,
+            (Game.id == GamePlatform.game_id)
+            & Game.parent_game_id.is_(None)
+            & _is_browsable_game(Game.category),
+        )
+        .group_by(Platform.id)
+        .order_by(Platform.name)
+    )
+    return [(platform, count) for platform, count in db.execute(stmt)]
+
+
+def list_games_for_platform(db: Session, platform_id: int) -> list[GameWithStatus]:
+    """Only games already locally known, and only browsable (non-addon) ones — an addon's
+    platform link would otherwise clutter the grid; addons stay reachable via the parent's
+    own Addons tab and the page's "Include addons" toggle."""
+    stmt = (
+        select(
+            Game,
+            _owned_exists(Game.id),
+            _wishlisted_exists(Game.id),
+            _play_status_subquery(Game.id),
+            _rating_subquery(Game.id),
+        )
+        .join(GamePlatform, GamePlatform.game_id == Game.id)
+        .where(
+            GamePlatform.platform_id == platform_id,
+            Game.parent_game_id.is_(None),
+            _is_browsable_game(Game.category),
+        )
+        .order_by(Game.name)
+    )
+    return [_row_to_game_with_status(row) for row in db.execute(stmt)]
+
+
+def list_addons_for_platform(
+    db: Session,
+    platform_id: int,
+    *,
+    search: str | None = None,
+    platform_ids: list[int] | None = None,
+    platform_exclude: bool = False,
+    tag_ids: list[int] | None = None,
+    tag_exclude: bool = False,
+    collection_ids: list[int] | None = None,
+    collection_exclude: bool = False,
+    franchise_ids: list[int] | None = None,
+    franchise_exclude: bool = False,
+    categories: list[GameCategory] | None = None,
+    category_exclude: bool = False,
+    formats: list[MediaFormat] | None = None,
+    format_exclude: bool = False,
+    storefronts: list[str] | None = None,
+    storefront_exclude: bool = False,
+    steelbook_only: bool = False,
+    sort: GameSortOption = GameSortOption.NAME_ASC,
+) -> list[GameWithStatus]:
+    """Addons of this platform's top-level games — same parent-based approach as
+    collection_repository.list_addons_for_collection: an addon inherits its platform
+    through its parent, so this goes via the parent ids."""
+    parent_ids = (
+        select(Game.id)
+        .join(GamePlatform, GamePlatform.game_id == Game.id)
+        .where(
+            GamePlatform.platform_id == platform_id,
+            Game.parent_game_id.is_(None),
+            _is_browsable_game(Game.category),
+        )
+    )
+    stmt = (
+        select(
+            Game,
+            _owned_exists(Game.id),
+            _wishlisted_exists(Game.id),
+            _play_status_subquery(Game.id),
+            _rating_subquery(Game.id),
+        ).where(Game.parent_game_id.in_(parent_ids))
+    )
+    stmt = _apply_optional_game_filters(
+        stmt,
+        search=search,
+        platform_ids=platform_ids,
+        platform_exclude=platform_exclude,
+        tag_ids=tag_ids,
+        tag_exclude=tag_exclude,
+        collection_ids=collection_ids,
+        collection_exclude=collection_exclude,
+        franchise_ids=franchise_ids,
+        franchise_exclude=franchise_exclude,
+        categories=categories,
+        category_exclude=category_exclude,
+        formats=formats,
+        format_exclude=format_exclude,
+        storefronts=storefronts,
+        storefront_exclude=storefront_exclude,
+        steelbook_only=steelbook_only,
+        sort=sort,
+    )
+    return [_row_to_game_with_status(row) for row in db.execute(stmt)]

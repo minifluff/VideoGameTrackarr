@@ -234,6 +234,7 @@ def list_top_level_games(
     sort: GameSortOption = GameSortOption.NAME_ASC,
     required_collection_id: int | None = None,
     required_franchise_id: int | None = None,
+    required_platform_id: int | None = None,
 ) -> list[GameWithStatus]:
     stmt = select(
         Game,
@@ -243,9 +244,9 @@ def list_top_level_games(
         _rating_subquery(Game.id),
     ).where(Game.parent_game_id.is_(None), _is_browsable_game(Game.category))
     # Always-applied AND-scope, independent of the user-editable collection_ids/franchise_ids
-    # OR-filter above/below — this is what lets a Collection/Series detail page hard-scope to
-    # "games in *this* collection" while still letting the Series/Collections filter field
-    # narrow further on top, rather than the two colliding into one OR-list.
+    # OR-filter above/below — this is what lets a Collection/Series/Platform detail page
+    # hard-scope to "games in *this* collection/series/platform" while still letting the
+    # filter fields narrow further on top, rather than the two colliding into one OR-list.
     if required_collection_id is not None:
         stmt = stmt.where(
             exists().where(GameCollection.game_id == Game.id, GameCollection.collection_id == required_collection_id)
@@ -253,6 +254,10 @@ def list_top_level_games(
     if required_franchise_id is not None:
         stmt = stmt.where(
             exists().where(GameFranchise.game_id == Game.id, GameFranchise.franchise_id == required_franchise_id)
+        )
+    if required_platform_id is not None:
+        stmt = stmt.where(
+            exists().where(GamePlatform.game_id == Game.id, GamePlatform.platform_id == required_platform_id)
         )
     stmt = _apply_optional_game_filters(
         stmt,
