@@ -820,6 +820,8 @@
     },
     "steamSync": {
       "heading": "Steam Sync",
+      "hideSyncedEmptyState": "Everything is already synced — nothing left to review.",
+      "hideSyncedLabel": "Hide synced games",
       "description": "Every game Steam knows you own or have wishlisted, matched against your VGT catalog. Nothing changes here until you explicitly Sync a row — Import only fetches and matches, it never writes to your library on its own.",
       "tableHeading": "Steam Library & Wishlist",
       "emptyState": "Nothing here yet. Set your SteamID64 in Settings → Integrations, then run Import.",
