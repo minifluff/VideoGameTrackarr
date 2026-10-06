@@ -46,13 +46,14 @@ def _game_detail_response(db: Session, game: GameWithStatus) -> GameDetailRespon
 @router.get("", response_model=list[GameSummaryResponse])
 def list_games(
     params: GameFilterParams = Depends(),
-    # Only meaningful here, not on the Collection/Series "addons" endpoints that share
+    # Only meaningful here, not on the Collection/Series/Platform "addons" endpoints that share
     # GameFilterParams — there, the path itself already implies the scope, so folding these
     # into the shared dependency would offer a redundant/confusing extra way to say the same
     # thing. See game_repository.list_top_level_games for the AND-scope semantics (independent
     # of the collectionId/franchiseId OR-filter GameFilterParams already carries).
     required_collection_id: int | None = Query(default=None, alias="requiredCollectionId"),
     required_franchise_id: int | None = Query(default=None, alias="requiredFranchiseId"),
+    required_platform_id: int | None = Query(default=None, alias="requiredPlatformId"),
     db: Session = Depends(get_db),
 ) -> list[GameSummaryResponse]:
     games = game_service.search_local_games(
@@ -60,6 +61,7 @@ def list_games(
         **vars(params),
         required_collection_id=required_collection_id,
         required_franchise_id=required_franchise_id,
+        required_platform_id=required_platform_id,
     )
     on_sale_game_ids = insight_service.get_on_sale_game_ids(db)
     return [game_summary_from_orm(game, on_sale_game_ids) for game in games]
