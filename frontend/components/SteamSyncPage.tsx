@@ -11,6 +11,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -75,6 +76,25 @@ const isRowActionable = (row: SyncRow) =>
   row.source === "owned"
     ? row.entry.status === "new" || row.entry.status === "update_available"
     : row.entry.status === "new";
+
+// "Already synced" — owned rows whose library copy is fully up to date, and wishlist
+// rows already sitting on the wishlist. Powers the "hide synced" filter below.
+const isRowSynced = (row: SyncRow) =>
+  row.source === "owned"
+    ? row.entry.status === "up_to_date"
+    : row.entry.status === "already_wishlisted";
+
+// Drops synced rows out of each tree. A synced parent with unsynced DLC children stays
+// visible as their anchor (the children are what you're here to review); a tree with
+// nothing left to review disappears entirely.
+function filterSyncedTrees(trees: TreeRow[]): TreeRow[] {
+  return trees
+    .map((tree) => ({
+      row: tree.row,
+      children: tree.children.filter((child) => !isRowSynced(child)),
+    }))
+    .filter((tree) => !isRowSynced(tree.row) || tree.children.length > 0);
+}
 
 const OWNED_STATUS_CHIP: Record<
   SteamEntryStatus,
@@ -159,6 +179,7 @@ const SteamSyncPage = () => {
   const [unlinkTarget, setUnlinkTarget] = useState<SyncRow | null>(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [hideSynced, setHideSynced] = useState(false);
 
   const isImporting = jobs?.find((job) => job.id === STEAM_IMPORT_JOB_ID)?.run.status === "running";
 
@@ -168,12 +189,20 @@ const SteamSyncPage = () => {
     return combined;
   }, [ownedEntries, wishlistEntries]);
 
-  const visibleTrees = trees.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const filteredTrees = useMemo(
+    () => (hideSynced ? filterSyncedTrees(trees) : trees),
+    [trees, hideSynced]
+  );
+
+  const visibleTrees = filteredTrees.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   // Flattened top-level rows + their DLC children, across every page — used for resolving
   // "Sync selected" (a selection can span pages even though "select all" itself doesn't, see
   // below) into the actual rows to sync.
-  const allRows = useMemo(() => trees.flatMap((tree) => [tree.row, ...tree.children]), [trees]);
+  const allRows = useMemo(
+    () => filteredTrees.flatMap((tree) => [tree.row, ...tree.children]),
+    [filteredTrees]
+  );
   const selectedRows = allRows.filter((row) => selected.includes(rowKey(row)) && isRowActionable(row));
   // Every actionable row across all pages — the "Sync all" target. Unlike the per-page
   // "select all" checkbox, this deliberately reaches across pages: syncing everything
@@ -269,6 +298,20 @@ const SteamSyncPage = () => {
     setSelected((prev) =>
       allSelected ? prev.filter((k) => !pageKeys.includes(k)) : [...new Set([...prev, ...pageKeys])]
     );
+  };
+
+  const handleHideSyncedChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = event.target.checked;
+    setHideSynced(checked);
+    setPage(0);
+    if (checked) {
+      // Prune the selection of rows that are about to be hidden, so the "N selected"
+      // count and bulk sync only ever cover rows the user can actually see.
+      const visibleKeys = new Set(
+        filterSyncedTrees(trees).flatMap((tree) => [rowKey(tree.row), ...tree.children.map(rowKey)])
+      );
+      setSelected((prev) => prev.filter((key) => visibleKeys.has(key)));
+    }
   };
 
   const handleRunImport = async () => {
@@ -513,6 +556,21 @@ const SteamSyncPage = () => {
               {t("insights.steamSync.tableHeading")}
             </Typography>
           )}
+          <FormControlLabel
+            control={
+              <Checkbox
+                size="small"
+                checked={hideSynced}
+                onChange={handleHideSyncedChange}
+              />
+            }
+            label={
+              <Typography variant="body2" color="text.secondary">
+                {t("insights.steamSync.hideSyncedLabel")}
+              </Typography>
+            }
+            sx={{ mr: 1, whiteSpace: "nowrap" }}
+          />
           {selected.length > 0 && (
             <Button
               startIcon={<SyncIcon />}
@@ -547,9 +605,11 @@ const SteamSyncPage = () => {
           </Button>
         </Toolbar>
 
-        {trees.length === 0 ? (
+        {filteredTrees.length === 0 ? (
           <Box sx={{ p: 3, textAlign: "center", color: "text.secondary" }}>
-            {t("insights.steamSync.emptyState")}
+            {hideSynced && trees.length > 0
+              ? t("insights.steamSync.hideSyncedEmptyState")
+              : t("insights.steamSync.emptyState")}
           </Box>
         ) : (
           <TableContainer>
@@ -751,7 +811,7 @@ const SteamSyncPage = () => {
         )}
         <TablePagination
           component="div"
-          count={trees.length}
+          count={filteredTrees.length}
           page={page}
           onPageChange={(_event, newPage) => setPage(newPage)}
           rowsPerPage={rowsPerPage}
