@@ -36,6 +36,7 @@ export interface GameListFilters {
   // letting every other field filter on top. See game_repository.list_top_level_games.
   requiredCollectionId?: number;
   requiredFranchiseId?: number;
+  requiredPlatformId?: number;
 }
 
 // Shared by listGames below and CatalogBrowseGrid.tsx's Addons-section fetches
@@ -63,6 +64,7 @@ export function buildGameFilterParams(filters: GameListFilters) {
     sort,
     requiredCollectionId,
     requiredFranchiseId,
+    requiredPlatformId,
   } = filters;
   return {
     search: search || undefined,
@@ -84,6 +86,7 @@ export function buildGameFilterParams(filters: GameListFilters) {
     sort: sort || undefined,
     requiredCollectionId,
     requiredFranchiseId,
+    requiredPlatformId,
   };
 }
 
