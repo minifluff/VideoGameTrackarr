@@ -584,7 +584,6 @@
     },
     "collectionsPage": {
       "title": "Collections",
-      "description": "IGDB collections with at least one game in your library.",
       "emptyMessage": "No collections yet — they show up here once you've imported a game that belongs to one.",
       "searchLabel": "Search collections",
       "searchPlaceholder": "Enter collection name"
@@ -595,7 +594,6 @@
     },
     "seriesPage": {
       "title": "Series",
-      "description": "Game series (IGDB franchises) with at least one game in your library.",
       "emptyMessage": "No series yet — they show up here once you've imported a game that belongs to one.",
       "searchLabel": "Search series",
       "searchPlaceholder": "Enter series name"
@@ -776,7 +774,6 @@
     },
     "platformsPage": {
       "title": "Platforms",
-      "description": "Platforms with at least one game in your library.",
       "emptyMessage": "No platforms yet — they show up here once you've added a game on one.",
       "searchLabel": "Search platforms",
       "searchPlaceholder": "Enter platform name"
