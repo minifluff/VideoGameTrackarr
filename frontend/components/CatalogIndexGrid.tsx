@@ -22,6 +22,7 @@ const CATALOG_REF_CARD_HEIGHT_BY_COLUMNS: Record<number, number> = {
 
 interface CatalogIndexGridProps {
   title: string;
+  description: string;
   emptyMessage: string;
   searchLabel: string;
   searchPlaceholder: string;
@@ -38,6 +39,7 @@ interface CatalogIndexGridProps {
 // Games list's server-side filtering — there's no comparable dataset size concern here.
 const CatalogIndexGrid = ({
   title,
+  description,
   emptyMessage,
   searchLabel,
   searchPlaceholder,
@@ -67,6 +69,9 @@ const CatalogIndexGrid = ({
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           {title}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {description}
         </Typography>
       </Box>
       <CatalogIndexToolbar
