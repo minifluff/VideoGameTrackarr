@@ -373,6 +373,14 @@ def list_igdb_linked_games(db: Session) -> list[tuple[int, str]]:
     return [(row[0], row[1]) for row in db.execute(stmt)]
 
 
+def list_unlinked_games(db: Session) -> list[Game]:
+    """Every game row with no igdb_id — the candidate set for the mass "Link all to
+    IGDB" job (see app/services/igdb_link_job.py), which tries to match each one
+    against IGDB by name."""
+    stmt = select(Game).where(Game.igdb_id.is_(None)).order_by(Game.id)
+    return list(db.scalars(stmt))
+
+
 def list_addons(db: Session, parent_game_id: int) -> list[GameWithStatus]:
     stmt = (
         select(
