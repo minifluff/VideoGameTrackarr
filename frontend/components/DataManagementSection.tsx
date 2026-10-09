@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import DownloadIcon from "@mui/icons-material/Download";
+import LinkIcon from "@mui/icons-material/Link";
 import RestoreIcon from "@mui/icons-material/Restore";
 import UploadIcon from "@mui/icons-material/Upload";
 import Alert from "@mui/material/Alert";
@@ -9,6 +10,7 @@ import Checkbox from "@mui/material/Checkbox";
 import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import FormHelperText from "@mui/material/FormHelperText";
+import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
@@ -23,6 +25,7 @@ import {
   useRestoreBackup,
   useRestoreStatus,
 } from "../hooks/useImportExport";
+import { useAcknowledgeIgdbLinkStatus, useIgdbLinkStatus, useStartIgdbLink } from "../hooks/useIgdbLink";
 import { downloadBlob } from "../utils/download";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 
@@ -40,6 +43,13 @@ const DataManagementSection = () => {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [importResult, setImportResult] = useState<CsvImportResult | null>(null);
   const [includeFiles, setIncludeFiles] = useState(false);
+  const [linkConfirmOpen, setLinkConfirmOpen] = useState(false);
+  const startIgdbLink = useStartIgdbLink();
+  const igdbLinkStatus = useIgdbLinkStatus();
+  const acknowledgeIgdbLink = useAcknowledgeIgdbLinkStatus();
+  const igdbLinkRunning = igdbLinkStatus.data?.status === "running";
+  const igdbLinkResult = igdbLinkStatus.data?.status === "completed" ? igdbLinkStatus.data.result : null;
+  const igdbLinkError = igdbLinkStatus.data?.status === "failed" ? igdbLinkStatus.data.error : null;
 
   const handleExportCsv = async () => {
     try {
@@ -85,6 +95,16 @@ const DataManagementSection = () => {
       toast.error(t("settings.dataManagement.importCsvError"), TOAST_OPTIONS);
     } finally {
       if (csvInputRef.current) csvInputRef.current.value = "";
+    }
+  };
+
+  const handleIgdbLinkConfirmed = async () => {
+    setLinkConfirmOpen(false);
+    try {
+      await startIgdbLink.mutateAsync();
+    } catch (error) {
+      console.error("Error starting IGDB link-all:", error);
+      toast.error(t("settings.dataManagement.igdbLinkStartError"), TOAST_OPTIONS);
     }
   };
 
@@ -211,6 +231,77 @@ const DataManagementSection = () => {
 
       <Box>
         <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+          {t("settings.dataManagement.igdbLinkHeading")}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+          {t("settings.dataManagement.igdbLinkDescription")}
+        </Typography>
+        <Button
+          variant="outlined"
+          startIcon={<LinkIcon />}
+          onClick={() => setLinkConfirmOpen(true)}
+          disabled={igdbLinkRunning || startIgdbLink.isPending}
+        >
+          {t("settings.dataManagement.igdbLinkButton")}
+        </Button>
+        {igdbLinkRunning && (
+          <Box sx={{ mt: 1.5, maxWidth: 420 }}>
+            <LinearProgress
+              variant={igdbLinkStatus.data?.progress ? "determinate" : "indeterminate"}
+              value={
+                igdbLinkStatus.data?.progress && igdbLinkStatus.data.progress.total > 0
+                  ? (igdbLinkStatus.data.progress.current / igdbLinkStatus.data.progress.total) * 100
+                  : undefined
+              }
+            />
+            {igdbLinkStatus.data?.progress && (
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                {t("settings.dataManagement.igdbLinkProgress", {
+                  current: igdbLinkStatus.data.progress.current,
+                  total: igdbLinkStatus.data.progress.total,
+                })}
+              </Typography>
+            )}
+          </Box>
+        )}
+        {igdbLinkError && (
+          <Alert severity="error" sx={{ mt: 1.5 }}>
+            {t("settings.dataManagement.igdbLinkFailed", { error: igdbLinkError })}
+          </Alert>
+        )}
+        {igdbLinkResult && (
+          <Alert severity={igdbLinkResult.failed > 0 ? "warning" : "success"} sx={{ mt: 1.5 }}>
+            {t("settings.dataManagement.igdbLinkResult", {
+              linked: igdbLinkResult.linked,
+              total: igdbLinkResult.totalCandidates,
+              needsReview: igdbLinkResult.needsReview.length,
+              failed: igdbLinkResult.failed,
+            })}
+            {igdbLinkResult.needsReview.slice(0, 5).map((item) => (
+              <Typography key={item.gameId} variant="body2">
+                {t("settings.dataManagement.igdbLinkNeedsReview", {
+                  name: item.name,
+                  reason: t(`settings.dataManagement.igdbLinkReason${item.reason === "no_match" ? "NoMatch" : item.reason === "ambiguous" ? "Ambiguous" : "AlreadyInLibrary"}`),
+                })}
+              </Typography>
+            ))}
+            {igdbLinkResult.needsReview.length > 5 &&
+              t("settings.dataManagement.igdbLinkMoreNeedingReview", {
+                count: igdbLinkResult.needsReview.length - 5,
+              })}
+            <Box sx={{ mt: 1 }}>
+              <Button size="small" onClick={() => acknowledgeIgdbLink.mutate()}>
+                {t("settings.dataManagement.igdbLinkDismiss")}
+              </Button>
+            </Box>
+          </Alert>
+        )}
+      </Box>
+
+      <Divider />
+
+      <Box>
+        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
           {t("settings.dataManagement.restoreHeading")}
         </Typography>
         <Button
@@ -234,6 +325,15 @@ const DataManagementSection = () => {
           {t("settings.dataManagement.restoreWarning")}
         </Alert>
       </Box>
+
+      <ConfirmDialog
+        open={linkConfirmOpen}
+        title={t("settings.dataManagement.igdbLinkConfirmTitle")}
+        description={t("settings.dataManagement.igdbLinkConfirmDescription")}
+        confirmLabel={t("settings.dataManagement.igdbLinkConfirmButton")}
+        onClose={() => setLinkConfirmOpen(false)}
+        onConfirm={() => void handleIgdbLinkConfirmed()}
+      />
 
       <ConfirmDialog
         open={Boolean(pendingFile)}
