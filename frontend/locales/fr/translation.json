@@ -258,7 +258,23 @@
       "importCsvResult": "{{imported}} importés, {{skipped}} ignorés",
       "importCsvRowError": "Ligne {{row}} : {{message}}",
       "importCsvMoreErrors": "…et {{count}} autres",
-      "importCsvError": "Impossible d'importer le CSV. Veuillez réessayer."
+      "importCsvError": "Impossible d'importer le CSV. Veuillez réessayer.",
+      "igdbLinkHeading": "Liaison IGDB",
+      "igdbLinkDescription": "Recherche automatiquement chaque jeu sans lien IGDB dans le catalogue IGDB. Seules les correspondances exactes de nom sont liées ; les cas douteux sont listés pour une liaison manuelle.",
+      "igdbLinkButton": "Lier tous les jeux à IGDB",
+      "igdbLinkStartError": "Impossible de démarrer la liaison avec IGDB.",
+      "igdbLinkProgress": "Liaison du jeu {{current}} sur {{total}}...",
+      "igdbLinkFailed": "Échec de la liaison : {{error}}",
+      "igdbLinkResult": "{{linked}} jeux sur {{total}} liés. {{needsReview}} à vérifier manuellement, {{failed}} en échec.",
+      "igdbLinkNeedsReview": "{{name}} — {{reason}}",
+      "igdbLinkReasonNoMatch": "aucune correspondance IGDB trouvée",
+      "igdbLinkReasonAmbiguous": "plusieurs correspondances IGDB trouvées",
+      "igdbLinkReasonAlreadyInLibrary": "l’entrée correspondante est déjà liée à un autre jeu",
+      "igdbLinkMoreNeedingReview": "...et {{count}} autres.",
+      "igdbLinkDismiss": "Ignorer",
+      "igdbLinkConfirmTitle": "Lier tous les jeux à IGDB ?",
+      "igdbLinkConfirmDescription": "Recherchera dans IGDB chaque jeu de votre bibliothèque sans lien IGDB et liera ceux dont le nom correspond exactement. Cela peut prendre un moment pour une grande bibliothèque.",
+      "igdbLinkConfirmButton": "Tout lier"
     },
     "jobs": {
       "heading": "Tâches",
@@ -584,7 +600,6 @@
     },
     "collectionsPage": {
       "title": "Collections",
-      "description": "Collections IGDB comportant au moins un jeu dans votre bibliothèque.",
       "emptyMessage": "Aucune collection pour l'instant — elles apparaîtront ici dès que vous aurez importé un jeu qui en fait partie.",
       "searchLabel": "Rechercher des collections",
       "searchPlaceholder": "Entrez le nom de la collection"
@@ -595,7 +610,6 @@
     },
     "seriesPage": {
       "title": "Séries",
-      "description": "Séries de jeux (franchises IGDB) comportant au moins un jeu dans votre bibliothèque.",
       "emptyMessage": "Aucune série pour l'instant — elles apparaîtront ici dès que vous aurez importé un jeu qui en fait partie.",
       "searchLabel": "Rechercher des séries",
       "searchPlaceholder": "Entrez le nom de la série"
@@ -776,7 +790,6 @@
     },
     "platformsPage": {
       "title": "Plateformes",
-      "description": "Plateformes avec au moins un jeu dans votre bibliothèque.",
       "emptyMessage": "Aucune plateforme pour l'instant — elles apparaîtront ici dès que vous ajouterez un jeu sur l'une d'elles.",
       "searchLabel": "Rechercher des plateformes",
       "searchPlaceholder": "Nom de la plateforme"
