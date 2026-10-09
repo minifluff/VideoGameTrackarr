@@ -9,6 +9,7 @@ function renderGrid(stateKey: string) {
       <CatalogIndexGrid
         stateKey={stateKey}
         title="Collections"
+        description=""
         emptyMessage="None"
         searchLabel="Search collections"
         searchPlaceholder="Enter collection name"
