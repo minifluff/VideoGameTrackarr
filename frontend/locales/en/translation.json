@@ -258,23 +258,7 @@
       "importCsvResult": "{{imported}} imported, {{skipped}} skipped",
       "importCsvRowError": "Row {{row}}: {{message}}",
       "importCsvMoreErrors": "…and {{count}} more",
-      "importCsvError": "Could not import the CSV. Please try again.",
-      "igdbLinkHeading": "IGDB linking",
-      "igdbLinkDescription": "Automatically match every game without an IGDB link against the IGDB catalog. Only exact name matches are linked; anything uncertain is listed for you to link manually.",
-      "igdbLinkButton": "Link all games to IGDB",
-      "igdbLinkStartError": "Could not start linking games to IGDB.",
-      "igdbLinkProgress": "Linking game {{current}} of {{total}}...",
-      "igdbLinkFailed": "Linking failed: {{error}}",
-      "igdbLinkResult": "Linked {{linked}} of {{total}} games. {{needsReview}} need manual review, {{failed}} failed.",
-      "igdbLinkNeedsReview": "{{name}} — {{reason}}",
-      "igdbLinkReasonNoMatch": "no IGDB match found",
-      "igdbLinkReasonAmbiguous": "multiple IGDB matches found",
-      "igdbLinkReasonAlreadyInLibrary": "matched IGDB entry is already linked to another game",
-      "igdbLinkMoreNeedingReview": "...and {{count}} more.",
-      "igdbLinkDismiss": "Dismiss",
-      "igdbLinkConfirmTitle": "Link all games to IGDB?",
-      "igdbLinkConfirmDescription": "This will search IGDB for every game in your library that has no IGDB link yet, and link the ones with an exact name match. It may take a while for a large library.",
-      "igdbLinkConfirmButton": "Link all"
+      "importCsvError": "Could not import the CSV. Please try again."
     },
     "jobs": {
       "heading": "Jobs",
@@ -600,6 +584,7 @@
     },
     "collectionsPage": {
       "title": "Collections",
+      "description": "IGDB collections with at least one game in your library.",
       "emptyMessage": "No collections yet — they show up here once you've imported a game that belongs to one.",
       "searchLabel": "Search collections",
       "searchPlaceholder": "Enter collection name"
@@ -610,6 +595,7 @@
     },
     "seriesPage": {
       "title": "Series",
+      "description": "Game series (IGDB franchises) with at least one game in your library.",
       "emptyMessage": "No series yet — they show up here once you've imported a game that belongs to one.",
       "searchLabel": "Search series",
       "searchPlaceholder": "Enter series name"
@@ -790,6 +776,7 @@
     },
     "platformsPage": {
       "title": "Platforms",
+      "description": "Platforms with at least one game in your library.",
       "emptyMessage": "No platforms yet — they show up here once you've added a game on one.",
       "searchLabel": "Search platforms",
       "searchPlaceholder": "Enter platform name"
