@@ -412,38 +412,6 @@ export interface CatalogResyncStatus {
 
 export type JobRunStatus = "idle" | "running" | "completed" | "failed";
 
-export interface IgdbLinkReviewItem {
-  gameId: number;
-  name: string;
-  reason: "no_match" | "ambiguous" | "already_in_library";
-}
-
-export interface IgdbLinkFailure {
-  gameId: number;
-  name: string;
-  error: string;
-}
-
-export interface IgdbLinkResult {
-  totalCandidates: number;
-  linked: number;
-  skipped: number;
-  noMatch: number;
-  ambiguous: number;
-  failed: number;
-  needsReview: IgdbLinkReviewItem[];
-  failures: IgdbLinkFailure[];
-}
-
-export interface IgdbLinkStatus {
-  status: JobRunStatus;
-  startedAt: string | null;
-  finishedAt: string | null;
-  progress: JobProgress | null;
-  result: IgdbLinkResult | null;
-  error: string | null;
-}
-
 export interface ResyncJobFailure {
   gameId: number;
   gameName: string;
