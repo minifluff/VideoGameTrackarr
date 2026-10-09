@@ -27,7 +27,6 @@ from app.api.routes import (
     hardware_stats,
     health,
     igdb,
-    igdb_link,
     import_export,
     insights,
     integrations,
@@ -154,7 +153,6 @@ async def conflict_handler(request: Request, exc: ConflictError) -> JSONResponse
 async def igdb_credentials_handler(request: Request, exc: IGDBCredentialsError) -> JSONResponse:
     return JSONResponse(status_code=503, content={"detail": str(exc)})
 
-
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(platforms.router)
@@ -171,7 +169,6 @@ app.include_router(insights.router)
 app.include_router(franchises.router)
 app.include_router(collections.router)
 app.include_router(catalog_resync.router)
-app.include_router(igdb_link.router)
 app.include_router(events.router)
 app.include_router(dashboard.router)
 app.include_router(hardware_lookups.router)
