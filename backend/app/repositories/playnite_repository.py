@@ -23,6 +23,7 @@ def upsert_entry(
     playnite_platform: str | None,
     playnite_playtime_minutes: int,
     playnite_last_played_at: datetime | None,
+    playnite_tags: str | None = None,
 ) -> PlayniteLibraryEntry:
     entry = get_entry(db, playnite_id)
     if entry is None:
@@ -33,6 +34,7 @@ def upsert_entry(
     entry.playnite_platform = playnite_platform
     entry.playnite_playtime_minutes = playnite_playtime_minutes
     entry.playnite_last_played_at = playnite_last_played_at
+    entry.playnite_tags = playnite_tags
     db.flush()
     return entry
 
