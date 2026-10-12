@@ -23,6 +23,39 @@ class PlayniteError(Exception):
     with a clear message about what to check (path, credentials, network)."""
 
 
+# Playnite tags that map to the library item's edition field (matched case-insensitively).
+EDITION_TAGS = {
+    "counterfeit",
+    "freetoplay",
+    "gamepass",
+    "games with gold",
+    "japanese",
+    "c64 mini",
+    "playstation classic",
+    "playstation+",
+    "stadia pro",
+    "snes classic",
+    "nes classic",
+    "quest+",
+    "vr",
+    "wii u roms",
+    "3ds roms",
+}
+
+
+def _tags_to_edition(playnite_tags: str | None) -> str | None:
+    """Extract edition tags from a comma-separated Playnite tag string. Returns the
+    matched tags joined by ", ", or None when none match."""
+    if not playnite_tags:
+        return None
+    matched = [
+        tag.strip()
+        for tag in playnite_tags.split(",")
+        if tag.strip().lower() in EDITION_TAGS
+    ]
+    return ", ".join(matched) if matched else None
+
+
 def test_connection(smb_path: str, username: str | None, password: str | None) -> None:
     """Tries to connect to the SMB server and access the share — raises PlayniteError
     with a clear message if anything fails. Does not read any library files."""
@@ -239,6 +272,7 @@ def _sync_one(db: Session, entry: PlayniteLibraryEntry) -> None:
     # Only create formats that don't already have an OWNED item for this
     # game+platform — re-syncing must not duplicate.
     existing_formats = _existing_playnite_formats(db, entry.game_id, platform_id)
+    edition = _tags_to_edition(entry.playnite_tags)
     for fmt in wanted_formats:
         if fmt not in existing_formats:
             library_service.add_library_item(
@@ -247,6 +281,7 @@ def _sync_one(db: Session, entry: PlayniteLibraryEntry) -> None:
                 platform_id=platform_id,
                 status=LibraryStatus.OWNED,
                 format=fmt,
+                edition=edition,
                 notes=entry.playnite_tags,
             )
     sync_platform_id = platform_id
