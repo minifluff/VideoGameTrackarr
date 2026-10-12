@@ -473,7 +473,9 @@
       "scanSuccess": "Scanned {{scanned}} games, {{newCount}} new.",
       "scanError": "Scan failed.",
       "scanning": "Scanning...",
-      "columnNotes": "Notes"
+      "columnNotes": "Notes",
+      "columnEdition": "Edition",
+      "columnFormat": "Format"
     }
   },
   "auth": {
