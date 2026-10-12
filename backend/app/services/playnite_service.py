@@ -10,7 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.catalog import Game, GameCategory
-from app.models.library import LibraryItem, LibraryStatus, MediaFormat
+from app.models.library import LibraryStatus, MediaFormat
 from app.models.playnite import PlayniteLibraryEntry
 from app.models.system import User
 from app.repositories import game_repository, library_item_repository, platform_repository, playnite_repository
@@ -198,18 +198,14 @@ def unignore_entry(db: Session, playnite_id: str) -> PlayniteEntryWithStatus:
     return _with_status(db, entry)
 
 
-def _find_playnite_library_item(db: Session, game_id: int) -> LibraryItem | None:
-    """The OWNED library item Playnite Sync itself is responsible for (Format: Digital,
-    Storefront: Playnite) — not merely "owned" in general, since the same game could be
-    owned on Steam/GOG/a physical disc independently."""
-    return next(
-        (
-            item
-            for item in library_item_repository.list_library_items(db, game_id, status=LibraryStatus.OWNED)
-            if item.format == MediaFormat.DIGITAL and item.digital_storefront == "Playnite"
-        ),
-        None,
-    )
+def _existing_playnite_formats(db: Session, game_id: int, platform_id: int | None) -> set[MediaFormat]:
+    """Formats of OWNED library items for this game+platform — used to avoid creating
+    duplicates when re-syncing."""
+    return {
+        item.format
+        for item in library_item_repository.list_library_items(db, game_id, status=LibraryStatus.OWNED)
+        if item.platform_id == platform_id and item.format in (MediaFormat.PHYSICAL, MediaFormat.DIGITAL)
+    }
 
 
 def _sync_one(db: Session, entry: PlayniteLibraryEntry) -> None:
@@ -220,29 +216,40 @@ def _sync_one(db: Session, entry: PlayniteLibraryEntry) -> None:
         playnite_repository.set_game_id(db, entry, game.id)
         db.flush()
 
-    playnite_item = _find_playnite_library_item(db, entry.game_id)
-    if playnite_item is None or playnite_item.platform_id is None:
-        # Resolve the platform from the Playnite platform name when we have one —
-        # get-or-create by name, same lenient pattern as CSV import. Falls back to no
-        # platform (platform_id stays None) when Playnite didn't record one.
-        platform_id = None
-        if entry.playnite_platform:
-            platform_id = platform_repository.get_or_create_by_name(db, entry.playnite_platform).id
-        if playnite_item is None:
-            # A "physical" tag means the copy is a physical disc/cartridge, not digital.
-            tags_lower = (entry.playnite_tags or "").lower()
-            is_physical = "physical" in [t.strip() for t in tags_lower.split(",")]
+    # Resolve the platform from the Playnite platform name when we have one —
+    # get-or-create by name, same lenient pattern as CSV import. Falls back to no
+    # platform (platform_id stays None) when Playnite didn't record one.
+    platform_id = None
+    if entry.playnite_platform:
+        platform_id = platform_repository.get_or_create_by_name(db, entry.playnite_platform).id
+
+    # Determine which formats to create: "Physical and Digital" (as a single tag
+    # or as separate tags) means the user owns both — create one library item
+    # per format. "Physical" alone → physical only; otherwise digital.
+    tags = [t.strip().lower() for t in (entry.playnite_tags or "").split(",")]
+    has_physical = any("physical" in t for t in tags)
+    has_digital = any("digital" in t for t in tags)
+    if has_physical and has_digital:
+        wanted_formats = [MediaFormat.PHYSICAL, MediaFormat.DIGITAL]
+    elif has_physical:
+        wanted_formats = [MediaFormat.PHYSICAL]
+    else:
+        wanted_formats = [MediaFormat.DIGITAL]
+
+    # Only create formats that don't already have an OWNED item for this
+    # game+platform — re-syncing must not duplicate.
+    existing_formats = _existing_playnite_formats(db, entry.game_id, platform_id)
+    for fmt in wanted_formats:
+        if fmt not in existing_formats:
             library_service.add_library_item(
                 db,
                 entry.game_id,
                 platform_id=platform_id,
                 status=LibraryStatus.OWNED,
-                format=MediaFormat.PHYSICAL if is_physical else MediaFormat.DIGITAL,
+                format=fmt,
                 notes=entry.playnite_tags,
             )
-        sync_platform_id = platform_id
-    else:
-        sync_platform_id = playnite_item.platform_id
+    sync_platform_id = platform_id
 
     # A straight set to Playnite's numbers, not a merge — Sync is an explicit, confirmed
     # action so it's allowed to overwrite, including downward. play_status is deliberately
@@ -265,14 +272,22 @@ def _with_status(db: Session, entry: PlayniteLibraryEntry) -> PlayniteEntryWithS
     if entry.game_id is None:
         return PlayniteEntryWithStatus(entry, PlayniteEntryStatus.NO_MATCH, None)
 
-    playnite_item = _find_playnite_library_item(db, entry.game_id)
-    if playnite_item is None:
+    # Status is based on whether any OWNED library item exists for the game —
+    # with multi-format support there may be several.
+    owned_items = [
+        item
+        for item in library_item_repository.list_library_items(
+            db, entry.game_id, status=LibraryStatus.OWNED
+        )
+    ]
+    if not owned_items:
         return PlayniteEntryWithStatus(entry, PlayniteEntryStatus.NEW, None)
 
-    if playnite_item.platform_id is None:
+    platform_id = owned_items[0].platform_id
+    if platform_id is None:
         return PlayniteEntryWithStatus(entry, PlayniteEntryStatus.NEW, None)
 
-    progress = progress_service.get_progress_for_platform(db, entry.game_id, playnite_item.platform_id)
+    progress = progress_service.get_progress_for_platform(db, entry.game_id, platform_id)
     vgt_minutes = progress.playtime_minutes if progress else 0
     if vgt_minutes == entry.playnite_playtime_minutes:
         status = PlayniteEntryStatus.UP_TO_DATE
