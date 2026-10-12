@@ -242,6 +242,11 @@ export const steamSyncCrumbs: CrumbsFn = (_params, t) => [
   { label: t("nav.steamSync") },
 ];
 
+export const removeGamesCrumbs: CrumbsFn = (_params, t) => [
+  { label: t("nav.settings"), to: "/settings" },
+  { label: t("nav.removeGames") },
+];
+
 export const saleTrackedCrumbs: CrumbsFn = (_params, t) => [
   { label: t("nav.settings"), to: "/settings" },
   { label: t("nav.saleTracked") },

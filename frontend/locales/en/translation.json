@@ -64,7 +64,8 @@
     "integrations": "Integrations",
     "about": "About",
     "emulation": "Emulation",
-    "platforms": "Platforms"
+    "platforms": "Platforms",
+    "removeGames": "Remove Games"
   },
   "breadcrumbs": {
     "edit": "Edit",
@@ -412,6 +413,21 @@
       "appTitle": "App title",
       "appTitleHelp": "Shown in the title bar and the browser tab.",
       "reset": "Reset to defaults"
+    },
+    "removeGames": {
+      "title": "Remove Games",
+      "description": "Permanently remove games from your library. Select games below and confirm to delete them.",
+      "searchLabel": "Search games",
+      "searchPlaceholder": "Type to filter games...",
+      "deleteSelected": "Delete selected ({{count}})",
+      "deleteButton": "Delete",
+      "columnGame": "Game",
+      "columnActions": "Actions",
+      "noGames": "No games found.",
+      "confirmSingleTitle": "Delete \"{{name}}\"?",
+      "confirmBulkTitle": "Delete {{count}} games?",
+      "confirmDescription": "This permanently removes the selected games from your library. This cannot be undone.",
+      "confirmButton": "Delete"
     }
   },
   "auth": {
