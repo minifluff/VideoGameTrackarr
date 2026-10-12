@@ -17,6 +17,7 @@ vi.mock("../../hooks/useImportExport", () => ({
   useExportBackup: () => ({ mutateAsync: exportBackup, isPending: false }),
   useRestoreBackup: () => ({ mutateAsync: restoreBackup, isPending: false }),
   useRestoreStatus: () => ({ data: { status: "idle" } }),
+  useImportCsv: () => ({ mutateAsync: async () => ({ imported: 0, skipped: 0, errors: [] }), isPending: false }),
 }));
 
 describe("DataManagementSection", () => {
@@ -40,7 +41,9 @@ describe("DataManagementSection", () => {
     const user = userEvent.setup();
     render(<DataManagementSection />);
 
-    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const input = Array.from(document.querySelectorAll('input[type="file"]')).find((el) =>
+      (el as HTMLInputElement).accept.includes(".zip")
+    ) as HTMLInputElement;
     expect(input.accept).toContain(".zip");
     const zip = new File(["PK"], "videogametrackarr-full-backup.zip", { type: "application/zip" });
     await user.upload(input, zip);
