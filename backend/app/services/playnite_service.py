@@ -238,7 +238,6 @@ def _sync_one(db: Session, entry: PlayniteLibraryEntry) -> None:
                 platform_id=platform_id,
                 status=LibraryStatus.OWNED,
                 format=MediaFormat.PHYSICAL if is_physical else MediaFormat.DIGITAL,
-                digital_storefront=None if is_physical else "Playnite",
                 notes=entry.playnite_tags,
             )
         sync_platform_id = platform_id
