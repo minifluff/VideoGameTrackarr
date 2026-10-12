@@ -24,8 +24,6 @@ def upgrade() -> None:
     op.add_column('users', sa.Column('playnite_smb_path', sa.String(1024), nullable=True))
     op.add_column('users', sa.Column('playnite_smb_username', sa.String(255), nullable=True))
     op.add_column('users', sa.Column('playnite_smb_password', sa.String(255), nullable=True))
-    op.add_column('playnite_library_entries', sa.Column('playnite_tags', sa.String(1024), nullable=True))
-
     op.create_table(
         'playnite_library_entries',
         sa.Column('id', sa.Integer(), nullable=False),
@@ -36,6 +34,7 @@ def upgrade() -> None:
         sa.Column('playnite_last_played_at', sa.DateTime(timezone=True), nullable=True),
         sa.Column('game_id', sa.Integer(), nullable=True),
         sa.Column('dismissed', sa.Boolean(), nullable=False, server_default='false'),
+        sa.Column('playnite_tags', sa.String(1024), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.ForeignKeyConstraint(['game_id'], ['games.id']),
