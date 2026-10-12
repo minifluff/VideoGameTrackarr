@@ -40,6 +40,7 @@ import SalesIgnoredListPage from "./components/SalesIgnoredListPage";
 import SaleTrackedPage from "./components/SaleTrackedPage";
 import SteamSyncPage from "./components/SteamSyncPage";
 import RemoveGamesPage from "./components/RemoveGamesPage";
+import PlayniteSyncPage from "./components/PlayniteSyncPage";
 import OnSalePage from "./components/OnSalePage";
 import TagManagerPage from "./components/TagManagerPage";
 import PublicShell from "./PublicShell";
@@ -81,6 +82,7 @@ import {
   settingsCrumbs,
   steamSyncCrumbs,
   removeGamesCrumbs,
+  playniteSyncCrumbs,
   tagManagerCrumbs,
 } from "./navigation/breadcrumbConfig";
 import Login from "./pages/Login";
@@ -258,6 +260,11 @@ const router = createBrowserRouter([
             path: "/settings/remove-games",
             element: <RemoveGamesPage />,
             handle: { crumbs: removeGamesCrumbs },
+          },
+          {
+            path: "/settings/playnite-sync",
+            element: <PlayniteSyncPage />,
+            handle: { crumbs: playniteSyncCrumbs },
           },
           {
             path: "/settings/sale-tracked",
