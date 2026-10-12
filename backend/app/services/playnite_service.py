@@ -142,10 +142,10 @@ def scan_library(db: Session, user: User) -> dict[str, Any]:
         normalized = _normalize_game_data(game_data, platforms)
         if normalized is None:
             continue
-        playnite_id, name, platform_name, playtime_minutes, last_played = normalized
+        playnite_id, name, platform_name, playtime_minutes, last_played, tags = normalized
 
         entry = playnite_repository.upsert_entry(
-            db, playnite_id, name, platform_name, playtime_minutes, last_played
+            db, playnite_id, name, platform_name, playtime_minutes, last_played, tags
         )
         scanned += 1
 
@@ -229,13 +229,17 @@ def _sync_one(db: Session, entry: PlayniteLibraryEntry) -> None:
         if entry.playnite_platform:
             platform_id = platform_repository.get_or_create_by_name(db, entry.playnite_platform).id
         if playnite_item is None:
+            # A "physical" tag means the copy is a physical disc/cartridge, not digital.
+            tags_lower = (entry.playnite_tags or "").lower()
+            is_physical = "physical" in [t.strip() for t in tags_lower.split(",")]
             library_service.add_library_item(
                 db,
                 entry.game_id,
                 platform_id=platform_id,
                 status=LibraryStatus.OWNED,
-                format=MediaFormat.DIGITAL,
-                digital_storefront="Playnite",
+                format=MediaFormat.PHYSICAL if is_physical else MediaFormat.DIGITAL,
+                digital_storefront=None if is_physical else "Playnite",
+                notes=entry.playnite_tags,
             )
         sync_platform_id = platform_id
     else:
@@ -370,12 +374,12 @@ def _read_playnite_library(
 
 def _normalize_game_data(
     game_data: dict[str, Any], platforms: dict[str, str]
-) -> tuple[str, str, str | None, int, datetime | None] | None:
-    """Extracts (playnite_id, name, platform_name, playtime_minutes, last_played) from a
-    raw game dict, handling both the native Playnite library format (Id/Name/Platforms
-    as GUIDs/Playtime in seconds) and the Playnite Library Exporter format
-    (playniteId/name/platforms as names/playtimeSeconds). Returns None if the row has
-    no usable id or name."""
+) -> tuple[str, str, str | None, int, datetime | None, str | None] | None:
+    """Extracts (playnite_id, name, platform_name, playtime_minutes, last_played, tags)
+    from a raw game dict, handling both the native Playnite library format
+    (Id/Name/Platforms as GUIDs/Playtime in seconds) and the Playnite Library Exporter
+    format (playniteId/name/platforms as names/playtimeSeconds). Returns None if the
+    row has no usable id or name. Tags are joined into a comma-separated string."""
     # Exporter format uses camelCase keys; native uses PascalCase.
     playnite_id = str(game_data.get("playniteId") or game_data.get("Id") or "").strip()
     name = str(game_data.get("name") or game_data.get("Name") or "").strip()
@@ -407,7 +411,10 @@ def _normalize_game_data(
         game_data.get("lastActivity") or game_data.get("LastActivity")
     )
 
-    return playnite_id, name, platform_name, playtime_minutes, last_played
+    raw_tags = game_data.get("tags") or game_data.get("Tags") or []
+    tags = ", ".join(str(t).strip() for t in raw_tags if str(t).strip()) or None
+
+    return playnite_id, name, platform_name, playtime_minutes, last_played, tags
 
 
 def _read_smb_json(tree: Any, path: str) -> Any:
