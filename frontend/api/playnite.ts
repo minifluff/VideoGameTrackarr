@@ -41,6 +41,18 @@ export async function updatePlayniteConfig(config: {
   return response.data;
 }
 
+export async function testPlayniteConnection(config: {
+  smbPath: string | null;
+  smbUsername: string | null;
+  smbPassword: string | null;
+}): Promise<{ ok: boolean; message: string }> {
+  const response = await apiClient.post<{ ok: boolean; message: string }>(
+    "/api/integrations/playnite/test",
+    config
+  );
+  return response.data;
+}
+
 export async function scanPlayniteLibrary(): Promise<PlayniteScanResult> {
   const response = await apiClient.post<PlayniteScanResult>("/api/integrations/playnite/scan");
   return response.data;
