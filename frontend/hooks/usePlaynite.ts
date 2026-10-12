@@ -5,6 +5,7 @@ import {
   listPlayniteEntries,
   scanPlayniteLibrary,
   syncPlayniteEntries,
+  testPlayniteConnection,
   unignorePlayniteEntry,
   updatePlayniteConfig,
 } from "../api/playnite";
@@ -42,6 +43,12 @@ export function useScanPlaynite() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["integrations", "playnite", "entries"] });
     },
+  });
+}
+
+export function useTestPlayniteConnection() {
+  return useMutation({
+    mutationFn: testPlayniteConnection,
   });
 }
 

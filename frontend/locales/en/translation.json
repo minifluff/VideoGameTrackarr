@@ -389,7 +389,9 @@
       "playnitePasswordHelper": "SMB password (leave blank for guest access)",
       "playnitePasswordSet": "Password is set (leave blank to keep it)",
       "playniteSaved": "Playnite settings saved",
-      "playniteSaveError": "Failed to save Playnite settings"
+      "playniteSaveError": "Failed to save Playnite settings",
+      "playniteTestButton": "Test connection",
+      "playniteTestError": "Could not test the connection."
     },
     "emulation": {
       "description": "Some systems need the console's BIOS to play in the browser. Upload them here once and every game on that system can use them.",
