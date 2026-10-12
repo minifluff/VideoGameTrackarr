@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
+import Collapse from "@mui/material/Collapse";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
@@ -9,6 +10,7 @@ import CatalogIndexToolbar from "./CatalogIndexToolbar";
 import CatalogRefCard from "./CatalogRefCard";
 import VirtualGameGrid from "./VirtualGameGrid";
 import { useSessionState } from "../hooks/useSessionState";
+import { useScrollCollapse } from "../hooks/useScrollCollapse";
 
 // Tiles are just a name + a game count — much shorter than a cover-art GameCard, so the
 // default cover-art height guess (VirtualGameGrid's ESTIMATED_ROW_HEIGHT_BY_COLUMNS) would
@@ -50,6 +52,7 @@ const CatalogIndexGrid = ({
 }: CatalogIndexGridProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const collapsed = useScrollCollapse();
   const [searchKeyword, setSearchKeyword] = useSessionState(`${stateKey}.searchKeyword`, "");
   const [sort, setSort] = useSessionState<CatalogSortOption>(`${stateKey}.sort`, "name_asc");
 
@@ -66,22 +69,36 @@ const CatalogIndexGrid = ({
 
   return (
     <>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          {title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {description}
-        </Typography>
+      <Box
+        sx={{
+          position: "sticky",
+          top: { xs: 56, sm: 64 },
+          zIndex: (theme) => theme.zIndex.appBar - 1,
+          backgroundColor: (theme) => theme.palette.background.default,
+          pt: 1,
+          pb: 1,
+          mb: 2,
+        }}
+      >
+        <Collapse in={!collapsed}>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="h4" component="h1" gutterBottom>
+              {title}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {description}
+            </Typography>
+          </Box>
+        </Collapse>
+        <CatalogIndexToolbar
+          searchLabel={searchLabel}
+          searchPlaceholder={searchPlaceholder}
+          searchKeyword={searchKeyword}
+          onSearchKeywordChange={setSearchKeyword}
+          sort={sort}
+          onSortChange={setSort}
+        />
       </Box>
-      <CatalogIndexToolbar
-        searchLabel={searchLabel}
-        searchPlaceholder={searchPlaceholder}
-        searchKeyword={searchKeyword}
-        onSearchKeywordChange={setSearchKeyword}
-        sort={sort}
-        onSortChange={setSort}
-      />
       {isLoading ? (
         <Paper sx={{ p: 3, textAlign: "center" }}>{t("common.loading")}</Paper>
       ) : !entries || entries.length === 0 ? (
