@@ -109,7 +109,7 @@ def test_sync_matched_game_adds_library_item(db_session):
 
     items = list(db_session.scalars(select(LibraryItem).where(LibraryItem.game_id == game.id)))
     assert len(items) == 1
-    assert items[0].digital_storefront == "Playnite"
+    assert items[0].digital_storefront is None
 
 
 def test_sync_unknown_id_is_failure_not_crash(db_session):
