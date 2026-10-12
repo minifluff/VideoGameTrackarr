@@ -1,7 +1,7 @@
 """add playnite smb config and playnite library entries
 
 Revision ID: a1b2c3d4e5f6
-Revises: fda7168df178
+Revises: b7e2c4f9a1d3
 Create Date: 2026-10-12
 
 Adds playnite_smb_path/username/password columns to users and the
@@ -15,7 +15,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = 'a1b2c3d4e5f6'
-down_revision: Union[str, None] = 'fda7168df178'
+down_revision: Union[str, None] = 'b7e2c4f9a1d3'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
