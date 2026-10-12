@@ -385,10 +385,8 @@ def _read_smb_json(tree: Any, path: str) -> Any:
         CreateDisposition,
         CreateOptions,
         FileAttributes,
-        FileInformationClass,
         FilePipePrinterAccessMask,
         ImpersonationLevel,
-        InfoType,
         Open,
         ShareAccess,
     )
@@ -407,9 +405,19 @@ def _read_smb_json(tree: Any, path: str) -> Any:
         raise PlayniteError(f"Could not open {path!r} on the SMB share: {exc}") from exc
 
     try:
-        info = file.query_info(InfoType.FILE, FileInformationClass.FILE_STANDARD_INFORMATION)
-        size = info["end_of_file"]
-        raw = file.read(0, size)
+        # No query_info on Open in this smbprotocol version — read in 1MB chunks
+        # until a short read signals EOF.
+        chunks = []
+        offset = 0
+        while True:
+            chunk = file.read(offset, 1024 * 1024)
+            if not chunk:
+                break
+            chunks.append(chunk)
+            offset += len(chunk)
+            if len(chunk) < 1024 * 1024:
+                break
+        raw = b"".join(chunks)
     except Exception as exc:
         raise PlayniteError(f"Could not read {path!r} from the SMB share: {exc}") from exc
     finally:
