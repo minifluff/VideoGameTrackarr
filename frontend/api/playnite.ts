@@ -11,6 +11,7 @@ export interface PlayniteEntry {
   playniteName: string;
   playnitePlatform: string | null;
   playtimeMinutes: number;
+  playniteTags: string | null;
   status: "no_match" | "new" | "up_to_date" | "ignored";
   gameId: number | null;
   gameName: string | null;

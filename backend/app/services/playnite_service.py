@@ -10,7 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.catalog import Game, GameCategory
-from app.models.library import LibraryItem, LibraryStatus, MediaFormat
+from app.models.library import LibraryStatus, MediaFormat
 from app.models.playnite import PlayniteLibraryEntry
 from app.models.system import User
 from app.repositories import game_repository, library_item_repository, platform_repository, playnite_repository
@@ -21,6 +21,39 @@ from app.services.exceptions import NotFoundError
 class PlayniteError(Exception):
     """Raised for Playnite configuration or SMB access problems — surfaced to the user
     with a clear message about what to check (path, credentials, network)."""
+
+
+# Playnite tags that map to the library item's edition field (matched case-insensitively).
+EDITION_TAGS = {
+    "counterfeit",
+    "freetoplay",
+    "gamepass",
+    "games with gold",
+    "japanese",
+    "c64 mini",
+    "playstation classic",
+    "playstation+",
+    "stadia pro",
+    "snes classic",
+    "nes classic",
+    "quest+",
+    "vr",
+    "wii u roms",
+    "3ds roms",
+}
+
+
+def _tags_to_edition(playnite_tags: str | None) -> str | None:
+    """Extract edition tags from a comma-separated Playnite tag string. Returns the
+    matched tags joined by ", ", or None when none match."""
+    if not playnite_tags:
+        return None
+    matched = [
+        tag.strip()
+        for tag in playnite_tags.split(",")
+        if tag.strip().lower() in EDITION_TAGS
+    ]
+    return ", ".join(matched) if matched else None
 
 
 def test_connection(smb_path: str, username: str | None, password: str | None) -> None:
@@ -142,10 +175,10 @@ def scan_library(db: Session, user: User) -> dict[str, Any]:
         normalized = _normalize_game_data(game_data, platforms)
         if normalized is None:
             continue
-        playnite_id, name, platform_name, playtime_minutes, last_played = normalized
+        playnite_id, name, platform_name, playtime_minutes, last_played, tags = normalized
 
         entry = playnite_repository.upsert_entry(
-            db, playnite_id, name, platform_name, playtime_minutes, last_played
+            db, playnite_id, name, platform_name, playtime_minutes, last_played, tags
         )
         scanned += 1
 
@@ -198,18 +231,14 @@ def unignore_entry(db: Session, playnite_id: str) -> PlayniteEntryWithStatus:
     return _with_status(db, entry)
 
 
-def _find_playnite_library_item(db: Session, game_id: int) -> LibraryItem | None:
-    """The OWNED library item Playnite Sync itself is responsible for (Format: Digital,
-    Storefront: Playnite) — not merely "owned" in general, since the same game could be
-    owned on Steam/GOG/a physical disc independently."""
-    return next(
-        (
-            item
-            for item in library_item_repository.list_library_items(db, game_id, status=LibraryStatus.OWNED)
-            if item.format == MediaFormat.DIGITAL and item.digital_storefront == "Playnite"
-        ),
-        None,
-    )
+def _existing_playnite_formats(db: Session, game_id: int, platform_id: int | None) -> set[MediaFormat]:
+    """Formats of OWNED library items for this game+platform — used to avoid creating
+    duplicates when re-syncing."""
+    return {
+        item.format
+        for item in library_item_repository.list_library_items(db, game_id, status=LibraryStatus.OWNED)
+        if item.platform_id == platform_id and item.format in (MediaFormat.PHYSICAL, MediaFormat.DIGITAL)
+    }
 
 
 def _sync_one(db: Session, entry: PlayniteLibraryEntry) -> None:
@@ -220,26 +249,42 @@ def _sync_one(db: Session, entry: PlayniteLibraryEntry) -> None:
         playnite_repository.set_game_id(db, entry, game.id)
         db.flush()
 
-    playnite_item = _find_playnite_library_item(db, entry.game_id)
-    if playnite_item is None or playnite_item.platform_id is None:
-        # Resolve the platform from the Playnite platform name when we have one —
-        # get-or-create by name, same lenient pattern as CSV import. Falls back to no
-        # platform (platform_id stays None) when Playnite didn't record one.
-        platform_id = None
-        if entry.playnite_platform:
-            platform_id = platform_repository.get_or_create_by_name(db, entry.playnite_platform).id
-        if playnite_item is None:
+    # Resolve the platform from the Playnite platform name when we have one —
+    # get-or-create by name, same lenient pattern as CSV import. Falls back to no
+    # platform (platform_id stays None) when Playnite didn't record one.
+    platform_id = None
+    if entry.playnite_platform:
+        platform_id = platform_repository.get_or_create_by_name(db, entry.playnite_platform).id
+
+    # Determine which formats to create: "Physical and Digital" (as a single tag
+    # or as separate tags) means the user owns both — create one library item
+    # per format. "Physical" alone → physical only; otherwise digital.
+    tags = [t.strip().lower() for t in (entry.playnite_tags or "").split(",")]
+    has_physical = any("physical" in t for t in tags)
+    has_digital = any("digital" in t for t in tags)
+    if has_physical and has_digital:
+        wanted_formats = [MediaFormat.PHYSICAL, MediaFormat.DIGITAL]
+    elif has_physical:
+        wanted_formats = [MediaFormat.PHYSICAL]
+    else:
+        wanted_formats = [MediaFormat.DIGITAL]
+
+    # Only create formats that don't already have an OWNED item for this
+    # game+platform — re-syncing must not duplicate.
+    existing_formats = _existing_playnite_formats(db, entry.game_id, platform_id)
+    edition = _tags_to_edition(entry.playnite_tags)
+    for fmt in wanted_formats:
+        if fmt not in existing_formats:
             library_service.add_library_item(
                 db,
                 entry.game_id,
                 platform_id=platform_id,
                 status=LibraryStatus.OWNED,
-                format=MediaFormat.DIGITAL,
-                digital_storefront="Playnite",
+                format=fmt,
+                edition=edition,
+                notes=entry.playnite_tags,
             )
-        sync_platform_id = platform_id
-    else:
-        sync_platform_id = playnite_item.platform_id
+    sync_platform_id = platform_id
 
     # A straight set to Playnite's numbers, not a merge — Sync is an explicit, confirmed
     # action so it's allowed to overwrite, including downward. play_status is deliberately
@@ -262,14 +307,22 @@ def _with_status(db: Session, entry: PlayniteLibraryEntry) -> PlayniteEntryWithS
     if entry.game_id is None:
         return PlayniteEntryWithStatus(entry, PlayniteEntryStatus.NO_MATCH, None)
 
-    playnite_item = _find_playnite_library_item(db, entry.game_id)
-    if playnite_item is None:
+    # Status is based on whether any OWNED library item exists for the game —
+    # with multi-format support there may be several.
+    owned_items = [
+        item
+        for item in library_item_repository.list_library_items(
+            db, entry.game_id, status=LibraryStatus.OWNED
+        )
+    ]
+    if not owned_items:
         return PlayniteEntryWithStatus(entry, PlayniteEntryStatus.NEW, None)
 
-    if playnite_item.platform_id is None:
+    platform_id = owned_items[0].platform_id
+    if platform_id is None:
         return PlayniteEntryWithStatus(entry, PlayniteEntryStatus.NEW, None)
 
-    progress = progress_service.get_progress_for_platform(db, entry.game_id, playnite_item.platform_id)
+    progress = progress_service.get_progress_for_platform(db, entry.game_id, platform_id)
     vgt_minutes = progress.playtime_minutes if progress else 0
     if vgt_minutes == entry.playnite_playtime_minutes:
         status = PlayniteEntryStatus.UP_TO_DATE
@@ -370,12 +423,12 @@ def _read_playnite_library(
 
 def _normalize_game_data(
     game_data: dict[str, Any], platforms: dict[str, str]
-) -> tuple[str, str, str | None, int, datetime | None] | None:
-    """Extracts (playnite_id, name, platform_name, playtime_minutes, last_played) from a
-    raw game dict, handling both the native Playnite library format (Id/Name/Platforms
-    as GUIDs/Playtime in seconds) and the Playnite Library Exporter format
-    (playniteId/name/platforms as names/playtimeSeconds). Returns None if the row has
-    no usable id or name."""
+) -> tuple[str, str, str | None, int, datetime | None, str | None] | None:
+    """Extracts (playnite_id, name, platform_name, playtime_minutes, last_played, tags)
+    from a raw game dict, handling both the native Playnite library format
+    (Id/Name/Platforms as GUIDs/Playtime in seconds) and the Playnite Library Exporter
+    format (playniteId/name/platforms as names/playtimeSeconds). Returns None if the
+    row has no usable id or name. Tags are joined into a comma-separated string."""
     # Exporter format uses camelCase keys; native uses PascalCase.
     playnite_id = str(game_data.get("playniteId") or game_data.get("Id") or "").strip()
     name = str(game_data.get("name") or game_data.get("Name") or "").strip()
@@ -407,7 +460,10 @@ def _normalize_game_data(
         game_data.get("lastActivity") or game_data.get("LastActivity")
     )
 
-    return playnite_id, name, platform_name, playtime_minutes, last_played
+    raw_tags = game_data.get("tags") or game_data.get("Tags") or []
+    tags = ", ".join(str(t).strip() for t in raw_tags if str(t).strip()) or None
+
+    return playnite_id, name, platform_name, playtime_minutes, last_played, tags
 
 
 def _read_smb_json(tree: Any, path: str) -> Any:

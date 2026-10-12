@@ -21,6 +21,7 @@ class PlayniteLibraryEntry(TimestampMixin, Base):
     playnite_platform: Mapped[str | None] = mapped_column(String(255))
     playnite_playtime_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     playnite_last_played_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    playnite_tags: Mapped[str | None] = mapped_column(String(1024))
     game_id: Mapped[int | None] = mapped_column(ForeignKey("games.id"), index=True)
     dismissed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
 

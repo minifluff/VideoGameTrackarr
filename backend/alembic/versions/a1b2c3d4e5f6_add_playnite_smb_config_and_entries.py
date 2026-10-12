@@ -24,6 +24,7 @@ def upgrade() -> None:
     op.add_column('users', sa.Column('playnite_smb_path', sa.String(1024), nullable=True))
     op.add_column('users', sa.Column('playnite_smb_username', sa.String(255), nullable=True))
     op.add_column('users', sa.Column('playnite_smb_password', sa.String(255), nullable=True))
+    op.add_column('playnite_library_entries', sa.Column('playnite_tags', sa.String(1024), nullable=True))
 
     op.create_table(
         'playnite_library_entries',

@@ -228,6 +228,7 @@ def _playnite_entry_response(item: "playnite_service.PlayniteEntryWithStatus") -
         playnite_name=entry.playnite_name,
         playnite_platform=entry.playnite_platform,
         playtime_minutes=entry.playnite_playtime_minutes,
+        playnite_tags=entry.playnite_tags,
         status=item.status.value,
         game_id=game.id if game else None,
         game_name=game.name if game else None,
