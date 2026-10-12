@@ -37,8 +37,7 @@
     "accessoryNotFoundTitle": "Accessory not found",
     "seriesNotFoundTitle": "Series not found",
     "collectionNotFoundTitle": "Collection not found",
-    "eventNotFoundTitle": "Event not found",
-    "platformNotFoundTitle": "Platform not found"
+    "eventNotFoundTitle": "Event not found"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -63,10 +62,7 @@
     "jobs": "Jobs",
     "integrations": "Integrations",
     "about": "About",
-    "emulation": "Emulation",
-    "platforms": "Platforms",
-    "removeGames": "Remove Games",
-    "playniteSync": "Playnite Sync"
+    "emulation": "Emulation"
   },
   "breadcrumbs": {
     "edit": "Edit",
@@ -259,14 +255,7 @@
       "restoreStartError": "Could not start the restore. Please try again.",
       "exportFullBackupWithFiles": "Full backup with files (ZIP)",
       "includeFilesLabel": "Include ROMs, saves and BIOS files",
-      "includeFilesHelp": "Downloads a .zip instead of the JSON file — it can be as large as all your ROMs together. Restoring a .zip replaces ROMs, saves and BIOS files too.",
-      "importHeading": "Import",
-      "importCsvDescription": "Add games to your library from a CSV file — handy for bulk imports from spreadsheets or other tools. Columns must appear in this order:",
-      "importCsvValuesHelp": "A header row with these exact names is optional. name is required per row; category accepts main_game, dlc_addon, expansion, bundle, standalone_expansion, mod, episode, season, remake, remaster, expanded_game, port, fork, pack or update (blank defaults to main_game); status accepts owned or wishlist (blank defaults to owned); format accepts physical, digital, iso, rom, abandonware or other; acquired_at uses YYYY-MM-DD. Rows with problems are skipped and reported, while the rest still import. Games already in your library are skipped, not duplicated.",
-      "downloadCsvTemplate": "Download CSV template",
-      "importCsvButton": "Import from CSV",
-      "importCsvError": "Could not import the CSV. Please try again.",
-      "importCsvResult": "{{imported}} imported, {{skipped}} skipped"
+      "includeFilesHelp": "Downloads a .zip instead of the JSON file — it can be as large as all your ROMs together. Restoring a .zip replaces ROMs, saves and BIOS files too."
     },
     "jobs": {
       "heading": "Jobs",
@@ -355,6 +344,18 @@
       "regenerateSuccess": "Share links regenerated.",
       "regenerateError": "Could not regenerate the links. Please try again."
     },
+    "dangerZone": {
+      "heading": "Danger Zone",
+      "description": "Permanently delete every game in your library — all library items, catalog entries, progress, play sessions, notes, tags, and ROM files — and clear the Playnite, Steam, and wishlist sync caches so they can reimport from scratch. Your account, settings, and connection details are kept.",
+      "resetButton": "Reset Database",
+      "dialogTitle": "Reset the database?",
+      "dialogDescription": "This will permanently delete all games and reset the sync tools. There is no undo.",
+      "dialogWarning": "All games, library items, progress, notes, tags, and ROM files will be deleted. Sync caches will be cleared.",
+      "confirmLabel": "Type \"confirm\" to proceed",
+      "resetting": "Resetting...",
+      "resetSuccess": "Database reset: {{games}} games and {{items}} library items deleted.",
+      "resetError": "Could not reset the database. Please try again."
+    },
     "integrations": {
       "igdbHeading": "IGDB Credentials",
       "igdbLogoAlt": "IGDB",
@@ -377,21 +378,7 @@
       "platpricesLogoAlt": "PlatPrices",
       "platpricesDescription": "The PlatPrices API key is configured via this server's <1>.env</1> file (<3>PLATPRICES_API_KEY</3>), not through the app. Get a key by applying at platprices.com/api-request (usually issued within 1-2 business days), add it to .env, then restart VideoGameTrackarr.",
       "platpricesRegionCaveat": "PlatPrices' free tier lets your account track any 2 PlayStation Store regions at a time (changeable once every 24 hours on platprices.com), plus 1,000 requests/month. Set PLATPRICES_REGION in .env to the two-letter code of one of them (e.g. GB or IN), then recreate the container with docker compose up -d (a plain restart doesn't pick up .env changes). The region in use is shown above, and prices fetched for any other region are cleared on startup.",
-      "platpricesCredit": "PlayStation price data is powered by <1>PlatPrices</1>.",
-      "playniteHeading": "Playnite",
-      "playniteDescription": "Connect to your Playnite library over the network (SMB share) to sync games into VideoGameTrackarr.",
-      "playnitePathLabel": "Playnite folder location",
-      "playnitePathPlaceholder": "\\\\server\\share\\Playnite",
-      "playnitePathHelper": "Network path to your Playnite data folder (e.g. \\\\SERVER\\Share\\Playnite)",
-      "playniteUsernameLabel": "Username",
-      "playniteUsernameHelper": "SMB username (leave blank for guest access)",
-      "playnitePasswordLabel": "Password",
-      "playnitePasswordHelper": "SMB password (leave blank for guest access)",
-      "playnitePasswordSet": "Password is set (leave blank to keep it)",
-      "playniteSaved": "Playnite settings saved",
-      "playniteSaveError": "Failed to save Playnite settings",
-      "playniteTestButton": "Test connection",
-      "playniteTestError": "Could not test the connection."
+      "platpricesCredit": "PlayStation price data is powered by <1>PlatPrices</1>."
     },
     "emulation": {
       "description": "Some systems need the console's BIOS to play in the browser. Upload them here once and every game on that system can use them.",
@@ -418,64 +405,6 @@
       "deleteTitle": "Delete BIOS file?",
       "deleteDescription": "{{name}} will be deleted from the server. Games that need it won't start until you upload it again.",
       "deleteErrorToast": "Couldn't delete the BIOS file. Please try again."
-    },
-    "appearance": {
-      "heading": "Appearance",
-      "description": "Customize the look of the interface.",
-      "accentColor": "Accent color",
-      "accentColorHelp": "Changes buttons, highlights and other accent elements throughout the app.",
-      "customColor": "Pick a custom color",
-      "appTitle": "App title",
-      "appTitleHelp": "Shown in the title bar and the browser tab.",
-      "reset": "Reset to defaults"
-    },
-    "removeGames": {
-      "title": "Remove Games",
-      "description": "Permanently remove games from your library. Select games below and confirm to delete them.",
-      "searchLabel": "Search games",
-      "searchPlaceholder": "Type to filter games...",
-      "deleteSelected": "Delete selected ({{count}})",
-      "deleteButton": "Delete",
-      "columnGame": "Game",
-      "columnActions": "Actions",
-      "noGames": "No games found.",
-      "confirmSingleTitle": "Delete \"{{name}}\"?",
-      "confirmBulkTitle": "Delete {{count}} games?",
-      "confirmDescription": "This permanently removes the selected games from your library. This cannot be undone.",
-      "confirmButton": "Delete"
-    },
-    "playniteSync": {
-      "title": "Playnite Sync",
-      "description": "Sync games from your Playnite library (via the configured network share) into VideoGameTrackarr.",
-      "notConfigured": "Playnite sync is not configured. Set the network folder location in Integrations first.",
-      "goToIntegrations": "Go to Integrations",
-      "searchLabel": "Search",
-      "scanButton": "Scan library",
-      "syncSelectedButton": "Sync selected ({{count}})",
-      "syncAllButton": "Sync all",
-      "hideSyncedLabel": "Hide synced",
-      "hideSyncedTooltip": "Hide games already in your library",
-      "columnName": "Game",
-      "columnPlatform": "Platform",
-      "columnStatus": "Status",
-      "columnActions": "Actions",
-      "statusUpToDate": "Up to date",
-      "statusNew": "New",
-      "statusNoMatch": "No match",
-      "statusIgnored": "Ignored",
-      "ignoreButton": "Ignore",
-      "unignoreButton": "Unignore",
-      "emptyState": "No Playnite games found. Click Scan library to read your Playnite data folder.",
-      "noResults": "No games match your filters.",
-      "confirmTitle": "Sync {{count}} games?",
-      "confirmDescription": "This will add the selected games to your library.",
-      "confirmButton": "Sync",
-      "scanSuccess": "Scanned {{scanned}} games, {{newCount}} new.",
-      "scanError": "Scan failed.",
-      "scanning": "Scanning...",
-      "columnNotes": "Notes",
-      "columnEdition": "Edition",
-      "columnFormat": "Format"
     }
   },
   "auth": {
@@ -630,8 +559,7 @@
       "allGames": "All Games",
       "addGame": "Add Game",
       "collections": "Collections",
-      "series": "Series",
-      "platforms": "Platforms"
+      "series": "Series"
     },
     "add": {
       "pageTitle": "Add Game",
@@ -858,16 +786,6 @@
       "notInLibrary": "Not in your library yet",
       "backToSearch": "Back to search",
       "addedToast": "{{name}} added to your library"
-    },
-    "platformsPage": {
-      "title": "Platforms",
-      "description": "Platforms with at least one game in your library.",
-      "emptyMessage": "No platforms yet — they show up here once you've added a game on one.",
-      "searchLabel": "Search platforms",
-      "searchPlaceholder": "Enter platform name"
-    },
-    "platformPage": {
-      "kindLabel": "Platform"
     }
   },
   "events": {
@@ -1005,8 +923,7 @@
       "confirmAddonNote_other": "This will also sync {{count}} DLC.",
       "wishlist": {
         "confirmAddDescription": "This will add \"{{name}}\" to your Wishlist (PC, Digital, Steam)."
-      },
-      "syncAllButton": "Sync all"
+      }
     },
     "saleTracked": {
       "heading": "Sale - Tracked",
