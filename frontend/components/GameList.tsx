@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Collapse from "@mui/material/Collapse";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
@@ -25,11 +26,13 @@ import GamesSubNav from "./GamesSubNav";
 import ManageTagsDialog from "./ManageTagsDialog";
 import VirtualGameGrid from "./VirtualGameGrid";
 import { usePruneStaleIds, useSessionState } from "../hooks/useSessionState";
+import { useScrollCollapse } from "../hooks/useScrollCollapse";
 
 const MIN_SEARCH_LENGTH = 3;
 
 const GameList = () => {
   const { t } = useTranslation();
+  const collapsed = useScrollCollapse();
   const [searchKeyword, setSearchKeyword] = useSessionState("games.searchKeyword", "");
   const [ownershipStatuses, setOwnershipStatuses] = useSessionState<OwnershipStatus[]>("games.ownershipStatuses", []);
   const [ownershipExclude, setOwnershipExclude] = useSessionState("games.ownershipExclude", false);
@@ -226,13 +229,14 @@ const GameList = () => {
         }}
       >
         <GamesSubNav />
+        <Collapse in={!collapsed}>
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-start",
             gap: 2,
-            mb: 3,
+            mb: 2,
           }}
         >
           <Box>
@@ -252,6 +256,7 @@ const GameList = () => {
             {t("games.list.addGameButton")}
           </Button>
         </Box>
+        </Collapse>
         <GameListToolbar
           searchKeyword={searchKeyword}
           onSearchKeywordChange={setSearchKeyword}
