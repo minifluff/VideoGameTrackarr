@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
+import Collapse from "@mui/material/Collapse";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -28,6 +29,7 @@ import GameCard from "./GameCard";
 import GameListToolbar, { type OwnershipStatus } from "./GameListToolbar";
 import VirtualGameGrid from "./VirtualGameGrid";
 import { usePruneStaleIds, useSessionState } from "../hooks/useSessionState";
+import { useScrollCollapse } from "../hooks/useScrollCollapse";
 
 const MIN_SEARCH_LENGTH = 3;
 
@@ -75,6 +77,7 @@ const CatalogBrowseGrid = ({
 }: CatalogBrowseGridProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const collapsed = useScrollCollapse();
   const isCollection = resyncKind === "collection";
   // Remembered per collection/series for the session, so filters set on one don't carry
   // over to another (see hooks/useSessionState.ts).
@@ -210,22 +213,35 @@ const CatalogBrowseGrid = ({
 
   return (
     <>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2, mb: 3 }}>
-        <Box>
-          <Typography variant="overline" color="text.secondary">
-            {kindLabel}
-          </Typography>
-          <Typography variant="h4" component="h1" gutterBottom>
-            {name ?? t("common.loading")}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {t("catalog.browseGrid.importedOnlyNotice")}
-          </Typography>
-        </Box>
-        {slug && resyncKind && resyncLabel ? (
-          <CatalogResyncButton kind={resyncKind} slug={slug} label={resyncLabel} />
-        ) : null}
-      </Box>
+      <Box
+        sx={{
+          position: "sticky",
+          top: { xs: 56, sm: 64 },
+          zIndex: (theme) => theme.zIndex.appBar - 1,
+          backgroundColor: (theme) => theme.palette.background.default,
+          pt: 1,
+          pb: 1,
+          mb: 2,
+        }}
+      >
+        <Collapse in={!collapsed}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2, mb: 2 }}>
+            <Box>
+              <Typography variant="overline" color="text.secondary">
+                {kindLabel}
+              </Typography>
+              <Typography variant="h4" component="h1" gutterBottom>
+                {name ?? t("common.loading")}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t("catalog.browseGrid.importedOnlyNotice")}
+              </Typography>
+            </Box>
+            {slug && resyncKind && resyncLabel ? (
+              <CatalogResyncButton kind={resyncKind} slug={slug} label={resyncLabel} />
+            ) : null}
+          </Box>
+        </Collapse>
       {entityId ? (
         <Box sx={{ mb: 3 }}>
           <GameListToolbar
@@ -287,6 +303,7 @@ const CatalogBrowseGrid = ({
           />
         </Box>
       ) : null}
+      </Box>
       {isLoading || isGamesLoading ? (
         <Paper sx={{ p: 3, textAlign: "center" }}>{t("common.loading")}</Paper>
       ) : includeAddons ? (
