@@ -120,6 +120,42 @@ def test_sync_unknown_id_is_failure_not_crash(db_session):
     assert len(result["failures"]) == 1
 
 
+def test_sync_edition_tag_sets_edition(db_session):
+    game = Game(name="Hollow Knight", category=GameCategory.MAIN_GAME)
+    db_session.add(game)
+    db_session.commit()
+
+    entry = _make_entry(db_session)
+    entry.playnite_tags = "Digital, Gamepass"
+    playnite_repository.set_game_id(db_session, entry, game.id)
+    db_session.commit()
+
+    result = playnite_service.sync_entries(db_session, [entry.playnite_id])
+
+    assert result["synced"] == 1
+    items = list(db_session.scalars(select(LibraryItem).where(LibraryItem.game_id == game.id)))
+    assert len(items) == 1
+    assert items[0].edition == "Gamepass"
+
+
+def test_sync_physical_and_digital_tag_creates_two_items(db_session):
+    game = Game(name="Hollow Knight", category=GameCategory.MAIN_GAME)
+    db_session.add(game)
+    db_session.commit()
+
+    entry = _make_entry(db_session)
+    entry.playnite_tags = "Physical and Digital"
+    playnite_repository.set_game_id(db_session, entry, game.id)
+    db_session.commit()
+
+    result = playnite_service.sync_entries(db_session, [entry.playnite_id])
+
+    assert result["synced"] == 1
+    items = list(db_session.scalars(select(LibraryItem).where(LibraryItem.game_id == game.id)))
+    assert len(items) == 2
+    assert {item.format for item in items} == {MediaFormat.PHYSICAL, MediaFormat.DIGITAL}
+
+
 def test_config_set_and_get(db_session, test_user: User):
     assert playnite_service.get_config(test_user)["smb_path"] is None
     assert playnite_service.get_config(test_user)["has_password"] is False
