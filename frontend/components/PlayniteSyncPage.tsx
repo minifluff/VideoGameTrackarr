@@ -235,6 +235,7 @@ const PlayniteSyncPage = () => {
                       </TableCell>
                       <TableCell>{t("settings.playniteSync.columnName")}</TableCell>
                       <TableCell>{t("settings.playniteSync.columnPlatform")}</TableCell>
+                      <TableCell>{t("settings.playniteSync.columnNotes")}</TableCell>
                       <TableCell>{t("settings.playniteSync.columnStatus")}</TableCell>
                       <TableCell align="right">{t("settings.playniteSync.columnActions")}</TableCell>
                     </TableRow>
@@ -267,6 +268,7 @@ const PlayniteSyncPage = () => {
                           )}
                         </TableCell>
                         <TableCell>{entry.playnitePlatform ?? "—"}</TableCell>
+                        <TableCell>{entry.playniteTags ?? "—"}</TableCell>
                         <TableCell>{statusChip(entry)}</TableCell>
                         <TableCell align="right">
                           {entry.dismissed ? (
