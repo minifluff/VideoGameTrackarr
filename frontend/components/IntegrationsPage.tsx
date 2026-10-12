@@ -17,7 +17,7 @@ import itadLogo from "../assets/isthereanydeal-logo.png";
 import platpricesLogo from "../assets/platprices-logo.png";
 import steamLogo from "../assets/steam-logo.png";
 import { useIntegrationsStatus, useUpdateSteamId } from "../hooks/useIntegrations";
-import { usePlayniteConfig, useUpdatePlayniteConfig } from "../hooks/usePlaynite";
+import { usePlayniteConfig, useTestPlayniteConnection, useUpdatePlayniteConfig } from "../hooks/usePlaynite";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import SettingsSubNav from "./SettingsSubNav";
 
@@ -25,10 +25,12 @@ const PlayniteSection = () => {
   const { t } = useTranslation();
   const { data: config } = usePlayniteConfig();
   const updateConfig = useUpdatePlayniteConfig();
+  const testConnection = useTestPlayniteConnection();
   const [smbPath, setSmbPath] = useState("");
   const [smbUsername, setSmbUsername] = useState("");
   const [smbPassword, setSmbPassword] = useState("");
   const [touched, setTouched] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
 
   useEffect(() => {
     if (!touched && config) {
@@ -36,6 +38,20 @@ const PlayniteSection = () => {
       setSmbUsername(config.smbUsername ?? "");
     }
   }, [config, touched]);
+
+  const handleTest = async () => {
+    setTestResult(null);
+    try {
+      const result = await testConnection.mutateAsync({
+        smbPath: smbPath.trim() === "" ? null : smbPath.trim(),
+        smbUsername: smbUsername.trim() === "" ? null : smbUsername.trim(),
+        smbPassword: smbPassword === "" ? null : smbPassword,
+      });
+      setTestResult(result);
+    } catch {
+      setTestResult({ ok: false, message: t("settings.integrations.playniteTestError") });
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -101,11 +117,23 @@ const PlayniteSection = () => {
           }
           fullWidth
         />
-        <Box>
+        <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="contained" onClick={handleSave} disabled={updateConfig.isPending}>
             {t("common.save")}
           </Button>
+          <Button
+            variant="outlined"
+            onClick={handleTest}
+            disabled={testConnection.isPending || smbPath.trim() === ""}
+          >
+            {t("settings.integrations.playniteTestButton")}
+          </Button>
         </Box>
+        {testResult && (
+          <Alert severity={testResult.ok ? "success" : "error"} sx={{ mt: 1 }}>
+            {testResult.message}
+          </Alert>
+        )}
       </Stack>
     </>
   );
