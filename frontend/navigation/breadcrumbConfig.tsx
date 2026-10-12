@@ -247,6 +247,11 @@ export const removeGamesCrumbs: CrumbsFn = (_params, t) => [
   { label: t("nav.removeGames") },
 ];
 
+export const playniteSyncCrumbs: CrumbsFn = (_params, t) => [
+  { label: t("nav.settings"), to: "/settings" },
+  { label: t("nav.playniteSync") },
+];
+
 export const saleTrackedCrumbs: CrumbsFn = (_params, t) => [
   { label: t("nav.settings"), to: "/settings" },
   { label: t("nav.saleTracked") },
