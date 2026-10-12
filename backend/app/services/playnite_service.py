@@ -382,10 +382,12 @@ def _read_playnite_library(
 def _read_smb_json(tree: Any, path: str) -> Any:
     """Reads and JSON-parses a single file from an SMB tree connection."""
     from smbprotocol.open import (
+        CreateDisposition,
         CreateOptions,
         FileAttributes,
         FileInformationClass,
         FilePipePrinterAccessMask,
+        ImpersonationLevel,
         InfoType,
         Open,
         ShareAccess,
@@ -394,10 +396,12 @@ def _read_smb_json(tree: Any, path: str) -> Any:
     try:
         file = Open(tree, path)
         file.create(
-            desired_access=FilePipePrinterAccessMask.FILE_READ_DATA,
-            share_access=ShareAccess.FILE_SHARE_READ,
-            create_options=CreateOptions.FILE_NON_DIRECTORY_FILE,
-            file_attributes=FileAttributes.FILE_ATTRIBUTE_NORMAL,
+            ImpersonationLevel.Impersonation,
+            FilePipePrinterAccessMask.FILE_READ_DATA,
+            FileAttributes.FILE_ATTRIBUTE_NORMAL,
+            ShareAccess.FILE_SHARE_READ,
+            CreateDisposition.FILE_OPEN,
+            CreateOptions.FILE_NON_DIRECTORY_FILE,
         )
     except Exception as exc:
         raise PlayniteError(f"Could not open {path!r} on the SMB share: {exc}") from exc
