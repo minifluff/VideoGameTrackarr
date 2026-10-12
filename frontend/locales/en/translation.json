@@ -37,7 +37,8 @@
     "accessoryNotFoundTitle": "Accessory not found",
     "seriesNotFoundTitle": "Series not found",
     "collectionNotFoundTitle": "Collection not found",
-    "eventNotFoundTitle": "Event not found"
+    "eventNotFoundTitle": "Event not found",
+    "platformNotFoundTitle": "Platform not found"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -641,7 +642,8 @@
       "allGames": "All Games",
       "addGame": "Add Game",
       "collections": "Collections",
-      "series": "Series"
+      "series": "Series",
+      "platforms": "Platforms"
     },
     "add": {
       "pageTitle": "Add Game",
@@ -868,6 +870,16 @@
       "notInLibrary": "Not in your library yet",
       "backToSearch": "Back to search",
       "addedToast": "{{name}} added to your library"
+    },
+    "platformsPage": {
+      "title": "Platforms",
+      "description": "Platforms with at least one game in your library.",
+      "emptyMessage": "No platforms yet — they show up here once you've added a game on one.",
+      "searchLabel": "Search platforms",
+      "searchPlaceholder": "Enter platform name"
+    },
+    "platformPage": {
+      "kindLabel": "Platform"
     }
   },
   "events": {
@@ -1005,7 +1017,8 @@
       "confirmAddonNote_other": "This will also sync {{count}} DLC.",
       "wishlist": {
         "confirmAddDescription": "This will add \"{{name}}\" to your Wishlist (PC, Digital, Steam)."
-      }
+      },
+      "syncAllButton": "Sync all"
     },
     "saleTracked": {
       "heading": "Sale - Tracked",
