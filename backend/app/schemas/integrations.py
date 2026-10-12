@@ -91,6 +91,7 @@ class PlayniteEntryResponse(CamelModel):
     playnite_name: str
     playnite_platform: str | None
     playtime_minutes: int
+    playnite_tags: str | None
     status: str
     game_id: int | None
     game_name: str | None
