@@ -383,9 +383,9 @@ def _read_smb_json(tree: Any, path: str) -> Any:
     """Reads and JSON-parses a single file from an SMB tree connection."""
     from smbprotocol.open import (
         CreateOptions,
-        FileAccess,
         FileAttributes,
         FileInformationClass,
+        FilePipePrinterAccessMask,
         InfoType,
         Open,
         ShareAccess,
@@ -394,7 +394,7 @@ def _read_smb_json(tree: Any, path: str) -> Any:
     try:
         file = Open(tree, path)
         file.create(
-            desired_access=FileAccess.FILE_READ_DATA,
+            desired_access=FilePipePrinterAccessMask.FILE_READ_DATA,
             share_access=ShareAccess.FILE_SHARE_READ,
             create_options=CreateOptions.FILE_NON_DIRECTORY_FILE,
             file_attributes=FileAttributes.FILE_ATTRIBUTE_NORMAL,
