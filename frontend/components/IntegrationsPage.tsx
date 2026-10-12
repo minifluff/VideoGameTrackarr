@@ -17,8 +17,99 @@ import itadLogo from "../assets/isthereanydeal-logo.png";
 import platpricesLogo from "../assets/platprices-logo.png";
 import steamLogo from "../assets/steam-logo.png";
 import { useIntegrationsStatus, useUpdateSteamId } from "../hooks/useIntegrations";
+import { usePlayniteConfig, useUpdatePlayniteConfig } from "../hooks/usePlaynite";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import SettingsSubNav from "./SettingsSubNav";
+
+const PlayniteSection = () => {
+  const { t } = useTranslation();
+  const { data: config } = usePlayniteConfig();
+  const updateConfig = useUpdatePlayniteConfig();
+  const [smbPath, setSmbPath] = useState("");
+  const [smbUsername, setSmbUsername] = useState("");
+  const [smbPassword, setSmbPassword] = useState("");
+  const [touched, setTouched] = useState(false);
+
+  useEffect(() => {
+    if (!touched && config) {
+      setSmbPath(config.smbPath ?? "");
+      setSmbUsername(config.smbUsername ?? "");
+    }
+  }, [config, touched]);
+
+  const handleSave = async () => {
+    try {
+      await updateConfig.mutateAsync({
+        smbPath: smbPath.trim() === "" ? null : smbPath.trim(),
+        smbUsername: smbUsername.trim() === "" ? null : smbUsername.trim(),
+        smbPassword: smbPassword === "" ? null : smbPassword,
+      });
+      setSmbPassword("");
+      setTouched(false);
+      toast.success(t("settings.integrations.playniteSaved"), TOAST_OPTIONS);
+    } catch {
+      toast.error(t("settings.integrations.playniteSaveError"), TOAST_OPTIONS);
+    }
+  };
+
+  const configured = !!config?.smbPath;
+
+  return (
+    <>
+      <Divider sx={{ my: 3 }} />
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
+        <Typography variant="subtitle1">{t("settings.integrations.playniteHeading")}</Typography>
+        <ConfiguredChip configured={configured} />
+      </Stack>
+      <Alert severity="info" sx={{ mb: 2 }}>
+        {t("settings.integrations.playniteDescription")}
+      </Alert>
+      <Stack spacing={2} sx={{ maxWidth: 500 }}>
+        <TextField
+          label={t("settings.integrations.playnitePathLabel")}
+          placeholder={t("settings.integrations.playnitePathPlaceholder")}
+          value={smbPath}
+          onChange={(e) => {
+            setSmbPath(e.target.value);
+            setTouched(true);
+          }}
+          helperText={t("settings.integrations.playnitePathHelper")}
+          fullWidth
+        />
+        <TextField
+          label={t("settings.integrations.playniteUsernameLabel")}
+          value={smbUsername}
+          onChange={(e) => {
+            setSmbUsername(e.target.value);
+            setTouched(true);
+          }}
+          helperText={t("settings.integrations.playniteUsernameHelper")}
+          fullWidth
+        />
+        <TextField
+          label={t("settings.integrations.playnitePasswordLabel")}
+          type="password"
+          value={smbPassword}
+          onChange={(e) => {
+            setSmbPassword(e.target.value);
+            setTouched(true);
+          }}
+          helperText={
+            config?.hasPassword
+              ? t("settings.integrations.playnitePasswordSet")
+              : t("settings.integrations.playnitePasswordHelper")
+          }
+          fullWidth
+        />
+        <Box>
+          <Button variant="contained" onClick={handleSave} disabled={updateConfig.isPending}>
+            {t("common.save")}
+          </Button>
+        </Box>
+      </Stack>
+    </>
+  );
+};
 
 // The store region prices are fetched for (ITAD_COUNTRY / PLATPRICES_REGION), so a region
 // that doesn't match what you expect is visible here rather than only in the prices.
@@ -139,6 +230,10 @@ const IntegrationsPage = () => {
               {t("common.save")}
             </Button>
           </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          <PlayniteSection />
 
           <Divider sx={{ my: 3 }} />
 

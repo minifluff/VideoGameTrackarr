@@ -15,6 +15,7 @@ def get_status(user: User) -> IntegrationsStatusResponse:
         itad_country=settings.itad_country.strip().upper(),
         platprices_configured=bool(settings.platprices_api_key),
         platprices_region=settings.platprices_region,
+        playnite_configured=bool(user.playnite_smb_path),
     )
 
 

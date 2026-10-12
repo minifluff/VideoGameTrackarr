@@ -11,6 +11,7 @@ class IntegrationsStatusResponse(CamelModel):
     itad_country: str
     platprices_configured: bool
     platprices_region: str
+    playnite_configured: bool
 
 
 class UpdateSteamIdRequest(CamelModel):
@@ -68,3 +69,49 @@ class SteamWishlistEntryResponse(CamelModel):
     game_slug: str | None
     game_cover_url: str | None
     parent_game_id: int | None
+
+
+class PlayniteConfigRequest(CamelModel):
+    # All optional — None clears the stored value. An empty password string also clears
+    # it; None leaves the existing password untouched.
+    smb_path: str | None = None
+    smb_username: str | None = None
+    smb_password: str | None = None
+
+
+class PlayniteConfigResponse(CamelModel):
+    smb_path: str | None
+    smb_username: str | None
+    # Never expose the actual password — only whether one is stored.
+    has_password: bool
+
+
+class PlayniteEntryResponse(CamelModel):
+    playnite_id: str
+    playnite_name: str
+    playnite_platform: str | None
+    playtime_minutes: int
+    status: str
+    game_id: int | None
+    game_name: str | None
+    dismissed: bool
+
+
+class PlayniteScanResponse(CamelModel):
+    scanned: int
+    new_count: int
+
+
+class PlayniteSyncRequest(CamelModel):
+    playnite_ids: list[str]
+
+
+class PlayniteSyncFailure(CamelModel):
+    playnite_id: str
+    error: str
+
+
+class PlayniteSyncResultResponse(CamelModel):
+    synced: int
+    failed: int
+    failures: list[PlayniteSyncFailure]

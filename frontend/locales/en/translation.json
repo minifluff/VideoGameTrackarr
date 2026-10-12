@@ -65,7 +65,8 @@
     "about": "About",
     "emulation": "Emulation",
     "platforms": "Platforms",
-    "removeGames": "Remove Games"
+    "removeGames": "Remove Games",
+    "playniteSync": "Playnite Sync"
   },
   "breadcrumbs": {
     "edit": "Edit",
@@ -376,7 +377,19 @@
       "platpricesLogoAlt": "PlatPrices",
       "platpricesDescription": "The PlatPrices API key is configured via this server's <1>.env</1> file (<3>PLATPRICES_API_KEY</3>), not through the app. Get a key by applying at platprices.com/api-request (usually issued within 1-2 business days), add it to .env, then restart VideoGameTrackarr.",
       "platpricesRegionCaveat": "PlatPrices' free tier lets your account track any 2 PlayStation Store regions at a time (changeable once every 24 hours on platprices.com), plus 1,000 requests/month. Set PLATPRICES_REGION in .env to the two-letter code of one of them (e.g. GB or IN), then recreate the container with docker compose up -d (a plain restart doesn't pick up .env changes). The region in use is shown above, and prices fetched for any other region are cleared on startup.",
-      "platpricesCredit": "PlayStation price data is powered by <1>PlatPrices</1>."
+      "platpricesCredit": "PlayStation price data is powered by <1>PlatPrices</1>.",
+      "playniteHeading": "Playnite",
+      "playniteDescription": "Connect to your Playnite library over the network (SMB share) to sync games into VideoGameTrackarr.",
+      "playnitePathLabel": "Playnite folder location",
+      "playnitePathPlaceholder": "\\\\server\\share\\Playnite",
+      "playnitePathHelper": "Network path to your Playnite data folder (e.g. \\\\SERVER\\Share\\Playnite)",
+      "playniteUsernameLabel": "Username",
+      "playniteUsernameHelper": "SMB username (leave blank for guest access)",
+      "playnitePasswordLabel": "Password",
+      "playnitePasswordHelper": "SMB password (leave blank for guest access)",
+      "playnitePasswordSet": "Password is set (leave blank to keep it)",
+      "playniteSaved": "Playnite settings saved",
+      "playniteSaveError": "Failed to save Playnite settings"
     },
     "emulation": {
       "description": "Some systems need the console's BIOS to play in the browser. Upload them here once and every game on that system can use them.",
@@ -428,6 +441,33 @@
       "confirmBulkTitle": "Delete {{count}} games?",
       "confirmDescription": "This permanently removes the selected games from your library. This cannot be undone.",
       "confirmButton": "Delete"
+    },
+    "playniteSync": {
+      "title": "Playnite Sync",
+      "description": "Sync games from your Playnite library (via the configured network share) into VideoGameTrackarr.",
+      "notConfigured": "Playnite sync is not configured. Set the network folder location in Integrations first.",
+      "goToIntegrations": "Go to Integrations",
+      "searchLabel": "Search",
+      "scanButton": "Scan library",
+      "syncSelectedButton": "Sync selected ({{count}})",
+      "syncAllButton": "Sync all",
+      "hideSyncedLabel": "Hide synced",
+      "hideSyncedTooltip": "Hide games already in your library",
+      "columnName": "Game",
+      "columnPlatform": "Platform",
+      "columnStatus": "Status",
+      "columnActions": "Actions",
+      "statusUpToDate": "Up to date",
+      "statusNew": "New",
+      "statusNoMatch": "No match",
+      "statusIgnored": "Ignored",
+      "ignoreButton": "Ignore",
+      "unignoreButton": "Unignore",
+      "emptyState": "No Playnite games found. Click Scan library to read your Playnite data folder.",
+      "noResults": "No games match your filters.",
+      "confirmTitle": "Sync {{count}} games?",
+      "confirmDescription": "This will add the selected games to your library.",
+      "confirmButton": "Sync"
     }
   },
   "auth": {

@@ -22,6 +22,15 @@ class User(TimestampMixin, Base):
     steam_id_64: Mapped[str | None] = mapped_column(
         String(32), comment="Steam profile SteamID64, used for Steam Web API sync"
     )
+    playnite_smb_path: Mapped[str | None] = mapped_column(
+        String(1024), comment="SMB/network path to the Playnite data folder (e.g. \\\\server\\share\\Playnite)"
+    )
+    playnite_smb_username: Mapped[str | None] = mapped_column(
+        String(255), comment="Username for SMB authentication to the Playnite share"
+    )
+    playnite_smb_password: Mapped[str | None] = mapped_column(
+        String(255), comment="Password for SMB authentication to the Playnite share"
+    )
 
 
 class RefreshToken(Base):
