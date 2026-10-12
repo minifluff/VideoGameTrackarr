@@ -469,7 +469,10 @@
       "noResults": "No games match your filters.",
       "confirmTitle": "Sync {{count}} games?",
       "confirmDescription": "This will add the selected games to your library.",
-      "confirmButton": "Sync"
+      "confirmButton": "Sync",
+      "scanSuccess": "Scanned {{scanned}} games, {{newCount}} new.",
+      "scanError": "Scan failed.",
+      "scanning": "Scanning..."
     }
   },
   "auth": {
