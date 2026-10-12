@@ -39,6 +39,43 @@ import { TOAST_OPTIONS } from "../utils/toastOptions";
 const isEntryActionable = (entry: PlayniteEntry) =>
   !entry.dismissed && (entry.status === "new" || entry.status === "no_match");
 
+// Tags that map to the edition field (mirrors backend EDITION_TAGS).
+const EDITION_TAGS = new Set([
+  "counterfeit",
+  "freetoplay",
+  "gamepass",
+  "games with gold",
+  "japanese",
+  "c64 mini",
+  "playstation classic",
+  "playstation+",
+  "stadia pro",
+  "snes classic",
+  "nes classic",
+  "quest+",
+  "vr",
+  "wii u roms",
+  "3ds roms",
+]);
+
+const tagsToEdition = (tags: string | null): string => {
+  if (!tags) return "—";
+  const matched = tags
+    .split(",")
+    .map((t) => t.trim())
+    .filter((t) => EDITION_TAGS.has(t.toLowerCase()));
+  return matched.length > 0 ? matched.join(", ") : "—";
+};
+
+const tagsToFormats = (tags: string | null): string => {
+  const lower = (tags ?? "").toLowerCase().split(",").map((t) => t.trim());
+  const hasPhysical = lower.some((t) => t.includes("physical"));
+  const hasDigital = lower.some((t) => t.includes("digital"));
+  if (hasPhysical && hasDigital) return "Physical, Digital";
+  if (hasPhysical) return "Physical";
+  return "Digital";
+};
+
 const PlayniteSyncPage = () => {
   const { t } = useTranslation();
   const { data: config } = usePlayniteConfig();
@@ -235,6 +272,8 @@ const PlayniteSyncPage = () => {
                       </TableCell>
                       <TableCell>{t("settings.playniteSync.columnName")}</TableCell>
                       <TableCell>{t("settings.playniteSync.columnPlatform")}</TableCell>
+                      <TableCell>{t("settings.playniteSync.columnEdition")}</TableCell>
+                      <TableCell>{t("settings.playniteSync.columnFormat")}</TableCell>
                       <TableCell>{t("settings.playniteSync.columnNotes")}</TableCell>
                       <TableCell>{t("settings.playniteSync.columnStatus")}</TableCell>
                       <TableCell align="right">{t("settings.playniteSync.columnActions")}</TableCell>
@@ -268,6 +307,8 @@ const PlayniteSyncPage = () => {
                           )}
                         </TableCell>
                         <TableCell>{entry.playnitePlatform ?? "—"}</TableCell>
+                        <TableCell>{tagsToEdition(entry.playniteTags)}</TableCell>
+                        <TableCell>{tagsToFormats(entry.playniteTags)}</TableCell>
                         <TableCell>{entry.playniteTags ?? "—"}</TableCell>
                         <TableCell>{statusChip(entry)}</TableCell>
                         <TableCell align="right">
