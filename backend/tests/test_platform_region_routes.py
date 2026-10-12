@@ -10,7 +10,7 @@ def test_list_platforms_returns_seeded_platform(auth_client, seed_platform):
     assert response.status_code == 200
     body = response.json()
     assert body == [
-        {"id": seed_platform.id, "igdbId": None, "name": "PlayStation 5", "slug": "ps5", "abbreviation": None}
+        {"id": seed_platform.id, "igdbId": None, "name": "PlayStation 5", "slug": "ps5", "abbreviation": None, "gameCount": 0}
     ]
 
 
