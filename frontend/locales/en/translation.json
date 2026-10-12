@@ -472,7 +472,8 @@
       "confirmButton": "Sync",
       "scanSuccess": "Scanned {{scanned}} games, {{newCount}} new.",
       "scanError": "Scan failed.",
-      "scanning": "Scanning..."
+      "scanning": "Scanning...",
+      "columnNotes": "Notes"
     }
   },
   "auth": {
