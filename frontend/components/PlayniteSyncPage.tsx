@@ -22,6 +22,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import SyncIcon from "@mui/icons-material/Sync";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
+import { isAxiosError } from "axios";
 import type { PlayniteEntry } from "../api/playnite";
 import {
   useIgnorePlayniteEntry,
@@ -159,11 +160,14 @@ const PlayniteSyncPage = () => {
                       }),
                       TOAST_OPTIONS
                     ),
-                  onError: (error: any) =>
+                  onError: (error: unknown) => {
+                    const detail =
+                      isAxiosError<{ detail?: string }>(error) && error.response?.data?.detail;
                     toast.error(
-                      error?.response?.data?.detail ?? t("settings.playniteSync.scanError"),
+                      detail || t("settings.playniteSync.scanError"),
                       TOAST_OPTIONS
-                    ),
+                    );
+                  },
                 })
               }
               disabled={scan.isPending}
