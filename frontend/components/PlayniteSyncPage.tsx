@@ -21,6 +21,7 @@ import Typography from "@mui/material/Typography";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SyncIcon from "@mui/icons-material/Sync";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 import type { PlayniteEntry } from "../api/playnite";
 import {
   useIgnorePlayniteEntry,
@@ -32,6 +33,7 @@ import {
 } from "../hooks/usePlaynite";
 import ConfirmDialog from "./ConfirmDialog";
 import SettingsSubNav from "./SettingsSubNav";
+import { TOAST_OPTIONS } from "../utils/toastOptions";
 
 const isEntryActionable = (entry: PlayniteEntry) =>
   !entry.dismissed && (entry.status === "new" || entry.status === "no_match");
@@ -147,10 +149,28 @@ const PlayniteSyncPage = () => {
             />
             <Button
               startIcon={<RefreshIcon />}
-              onClick={() => scan.mutate()}
+              onClick={() =>
+                scan.mutate(undefined, {
+                  onSuccess: (result) =>
+                    toast.success(
+                      t("settings.playniteSync.scanSuccess", {
+                        scanned: result.scanned,
+                        newCount: result.newCount,
+                      }),
+                      TOAST_OPTIONS
+                    ),
+                  onError: (error: any) =>
+                    toast.error(
+                      error?.response?.data?.detail ?? t("settings.playniteSync.scanError"),
+                      TOAST_OPTIONS
+                    ),
+                })
+              }
               disabled={scan.isPending}
             >
-              {t("settings.playniteSync.scanButton")}
+              {scan.isPending
+                ? t("settings.playniteSync.scanning")
+                : t("settings.playniteSync.scanButton")}
             </Button>
             <Box sx={{ flexGrow: 1 }} />
             {selected.length > 0 ? (
