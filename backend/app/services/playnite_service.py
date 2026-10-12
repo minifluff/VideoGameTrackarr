@@ -23,6 +23,46 @@ class PlayniteError(Exception):
     with a clear message about what to check (path, credentials, network)."""
 
 
+def test_connection(smb_path: str, username: str | None, password: str | None) -> None:
+    """Tries to connect to the SMB server and access the share — raises PlayniteError
+    with a clear message if anything fails. Does not read any library files."""
+    try:
+        from smbprotocol.connection import Connection
+        from smbprotocol.session import Session
+        from smbprotocol.tree import TreeConnect
+    except ImportError as exc:
+        raise PlayniteError(
+            "The 'smbprotocol' package is required for Playnite sync — install it with "
+            "'pip install smbprotocol' and restart."
+        ) from exc
+
+    if not smb_path or not smb_path.strip():
+        raise PlayniteError("Enter the Playnite folder location first.")
+
+    server, share, _subpath = _parse_smb_path(smb_path)
+
+    connection = Connection(uuid.uuid4(), server, 445)
+    try:
+        connection.connect(timeout=15)
+    except Exception as exc:
+        raise PlayniteError(f"Could not connect to SMB server {server!r}: {exc}") from exc
+
+    try:
+        session = Session(connection, username or "", password or "")
+        try:
+            session.connect()
+        except Exception as exc:
+            raise PlayniteError(f"SMB authentication failed for {server!r}: {exc}") from exc
+
+        tree = TreeConnect(session, f"\\\\{server}\\{share}")
+        try:
+            tree.connect()
+        except Exception as exc:
+            raise PlayniteError(f"Could not access SMB share {share!r} on {server!r}: {exc}") from exc
+    finally:
+        connection.disconnect()
+
+
 class PlayniteEntryStatus(enum.StrEnum):
     NO_MATCH = "no_match"
     NEW = "new"
