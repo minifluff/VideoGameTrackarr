@@ -17,10 +17,10 @@ import { getCurrencySymbol, SUPPORTED_CURRENCIES, type CurrencyOption } from "..
 import { SUPPORTED_LANGUAGES, type LanguageOption } from "../utils/language";
 import { STORE_REGION_AUTO, STORE_REGION_OFF, STORE_REGIONS } from "../utils/storeRegion";
 import AutocompleteSelect from "./AutocompleteSelect";
-import AppearanceSection from "./AppearanceSection";
 import DataManagementSection from "./DataManagementSection";
 import SettingsSubNav from "./SettingsSubNav";
 import ShareSection from "./ShareSection";
+import DatabaseResetSection from "./DatabaseResetSection";
 
 const Settings = () => {
   const { t } = useTranslation();
@@ -95,13 +95,6 @@ const Settings = () => {
           <Divider sx={{ my: 3 }} />
 
           <Typography variant="subtitle1" gutterBottom>
-            {t("settings.appearance.heading")}
-          </Typography>
-          <AppearanceSection />
-
-          <Divider sx={{ my: 3 }} />
-
-          <Typography variant="subtitle1" gutterBottom>
             {t("settings.language.heading")}
           </Typography>
           <AutocompleteSelect<LanguageOption>
@@ -166,6 +159,13 @@ const Settings = () => {
             {t("settings.share.heading")}
           </Typography>
           <ShareSection />
+
+          <Divider sx={{ my: 3 }} />
+
+          <Typography variant="subtitle1" gutterBottom>
+            {t("settings.dangerZone.heading")}
+          </Typography>
+          <DatabaseResetSection />
         </CardContent>
       </Card>
     </Box>
