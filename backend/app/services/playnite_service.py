@@ -139,25 +139,10 @@ def scan_library(db: Session, user: User) -> dict[str, Any]:
     scanned = 0
     new_matches = 0
     for game_data in games_data:
-        playnite_id = str(game_data.get("Id", "")).strip()
-        name = str(game_data.get("Name", "")).strip()
-        if not playnite_id or not name:
+        normalized = _normalize_game_data(game_data, platforms)
+        if normalized is None:
             continue
-
-        platform_names = [
-            platforms.get(str(pid), "")
-            for pid in (game_data.get("Platforms") or [])
-            if platforms.get(str(pid))
-        ]
-        platform_name = platform_names[0] if platform_names else None
-
-        playtime_seconds = game_data.get("Playtime") or 0
-        try:
-            playtime_minutes = int(playtime_seconds // 60)
-        except (TypeError, ValueError):
-            playtime_minutes = 0
-
-        last_played = _parse_playnite_datetime(game_data.get("LastActivity"))
+        playnite_id, name, platform_name, playtime_minutes, last_played = normalized
 
         entry = playnite_repository.upsert_entry(
             db, playnite_id, name, platform_name, playtime_minutes, last_played
@@ -374,9 +359,55 @@ def _read_playnite_library(
         connection.disconnect()
 
     if not isinstance(games_data, list):
-        raise PlayniteError("Unexpected games.json format — expected a JSON list of games.")
+        # Playnite Library Exporter format wraps the list: { games: [...], ... }
+        if isinstance(games_data, dict) and isinstance(games_data.get("games"), list):
+            games_data = games_data["games"]
+        else:
+            raise PlayniteError("Unexpected games.json format — expected a JSON list of games.")
     platforms = {str(p.get("Id")): str(p.get("Name") or "") for p in platforms_data if isinstance(p, dict)}
     return games_data, platforms
+
+
+def _normalize_game_data(
+    game_data: dict[str, Any], platforms: dict[str, str]
+) -> tuple[str, str, str | None, int, datetime | None] | None:
+    """Extracts (playnite_id, name, platform_name, playtime_minutes, last_played) from a
+    raw game dict, handling both the native Playnite library format (Id/Name/Platforms
+    as GUIDs/Playtime in seconds) and the Playnite Library Exporter format
+    (playniteId/name/platforms as names/playtimeSeconds). Returns None if the row has
+    no usable id or name."""
+    # Exporter format uses camelCase keys; native uses PascalCase.
+    playnite_id = str(game_data.get("playniteId") or game_data.get("Id") or "").strip()
+    name = str(game_data.get("name") or game_data.get("Name") or "").strip()
+    if not playnite_id or not name:
+        return None
+
+    # Exporter format: platforms is already a list of names.
+    raw_platforms = game_data.get("platforms")
+    if isinstance(raw_platforms, list) and raw_platforms and isinstance(raw_platforms[0], str):
+        platform_name = str(raw_platforms[0]).strip() or None
+    else:
+        # Native format: Platforms is a list of GUIDs resolved via platforms.json.
+        platform_names = [
+            platforms.get(str(pid), "")
+            for pid in (game_data.get("Platforms") or [])
+            if platforms.get(str(pid))
+        ]
+        platform_name = platform_names[0] if platform_names else None
+
+    playtime_seconds = game_data.get("playtimeSeconds")
+    if playtime_seconds is None:
+        playtime_seconds = game_data.get("Playtime") or 0
+    try:
+        playtime_minutes = int(playtime_seconds // 60)
+    except (TypeError, ValueError):
+        playtime_minutes = 0
+
+    last_played = _parse_playnite_datetime(
+        game_data.get("lastActivity") or game_data.get("LastActivity")
+    )
+
+    return playnite_id, name, platform_name, playtime_minutes, last_played
 
 
 def _read_smb_json(tree: Any, path: str) -> Any:
