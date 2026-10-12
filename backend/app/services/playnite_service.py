@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.models.catalog import Game, GameCategory
@@ -149,9 +149,10 @@ def set_config(
 
 
 def scan_library(db: Session, user: User) -> dict[str, Any]:
-    """Reads the Playnite library from the configured SMB share and upserts every game
-    into the local entry cache. Idempotent — re-scanning updates existing rows rather
-    than duplicating them. Each entry is then matched against VGT's games table by
+    """Reads the Playnite library from the configured SMB share and rebuilds the local
+    entry cache from scratch — every previous entry is deleted first, so the cache
+    always mirrors the current Playnite library exactly (games removed from Playnite
+    disappear here too). Each entry is then matched against VGT's games table by
     case-insensitive name; matches link the entry (game_id), non-matches stay NO_MATCH
     until the user syncs them (which creates the game) or dismisses them."""
     if not user.playnite_smb_path:
@@ -168,6 +169,10 @@ def scan_library(db: Session, user: User) -> dict[str, Any]:
         raise
     except Exception as exc:  # noqa: BLE001 - surface any SMB failure as a clear user message
         raise PlayniteError(f"Could not read the Playnite library: {exc}") from exc
+
+    # Start fresh: clear all previously scanned entries (only after the library read
+    # succeeded, so a failed scan never wipes a good cache).
+    db.execute(delete(PlayniteLibraryEntry))
 
     scanned = 0
     new_matches = 0
