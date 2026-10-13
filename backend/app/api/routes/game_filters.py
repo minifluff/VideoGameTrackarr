@@ -43,4 +43,5 @@ class GameFilterParams:
     # A plain boolean, unlike every filter above — a copy either is or isn't a Steelbook, so
     # there's no multi-value list and no "Exclude" toggle worth offering for a single flag.
     steelbook_only: bool = Query(default=False, alias="steelbookOnly")
+    unlinked_only: bool = Query(default=False, alias="unlinkedOnly")
     sort: GameSortOption = Query(default=GameSortOption.NAME_ASC)
