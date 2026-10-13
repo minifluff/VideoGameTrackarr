@@ -31,6 +31,12 @@ class User(TimestampMixin, Base):
     playnite_smb_password: Mapped[str | None] = mapped_column(
         String(255), comment="Password for SMB authentication to the Playnite share"
     )
+    accent_color: Mapped[str | None] = mapped_column(
+        String(7), comment="Custom accent color hex (e.g. #RRGGBB) for the UI theme"
+    )
+    app_title: Mapped[str | None] = mapped_column(
+        String(255), comment="Custom application title shown in the UI"
+    )
 
 
 class RefreshToken(Base):
