@@ -6,15 +6,15 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db, get_igdb_client
 from app.schemas.game import (
-    IgdbGamePreviewResponse,
     IGDBAutolinkRequest,
     IGDBAutolinkResultResponse,
     IGDBParentGameResponse,
     IGDBSearchResultResponse,
+    IgdbGamePreviewResponse,
     UnlinkedGameResponse,
     igdb_game_preview_from_payload,
 )
-from app.services import game_service
+from app.services import game_service, igdb_autolink_service
 from app.services.game_service import resolve_igdb_category
 from app.services.igdb_client import IGDBClient
 
