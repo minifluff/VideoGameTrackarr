@@ -194,14 +194,13 @@ def scan_library(db: Session, user: User) -> dict[str, Any]:
         scanned += 1
 
         # Auto-match by exact name (case-insensitive) against VGT's catalog — only for
-        # entries that aren't already linked and haven't been dismissed.
+        # entries that aren't already linked and haven't been dismissed. Multiple
+        # Playnite entries with the same name share one VGT game.
         if entry.game_id is None and not entry.dismissed:
             game = _find_game_by_name(db, name)
             if game is not None:
-                # Don't steal a game another Playnite entry already claimed.
-                if playnite_repository.get_entry_by_game_id(db, game.id) is None:
-                    playnite_repository.set_game_id(db, entry, game.id)
-                    new_matches += 1
+                playnite_repository.set_game_id(db, entry, game.id)
+                new_matches += 1
 
     db.commit()
     return {"scanned": scanned, "new_count": new_matches}
@@ -253,10 +252,14 @@ def _existing_playnite_formats(db: Session, game_id: int, platform_id: int | Non
 
 
 def _sync_one(db: Session, entry: PlayniteLibraryEntry) -> None:
-    # A NO_MATCH entry has no VGT game yet — create one as a manual game (same as if the
-    # user had added it by hand), then link the entry so future scans recognize it.
+    # A NO_MATCH entry has no VGT game yet — reuse an existing game with the same
+    # name (case-insensitive) if one exists, so multiple Playnite entries for the
+    # same game (e.g. different platforms) share one VGT game. Otherwise create a
+    # new manual game (same as if the user had added it by hand).
     if entry.game_id is None:
-        game = game_repository.create_manual_game(db, name=entry.playnite_name, category=GameCategory.MAIN_GAME)
+        game = _find_game_by_name(db, entry.playnite_name)
+        if game is None:
+            game = game_repository.create_manual_game(db, name=entry.playnite_name, category=GameCategory.MAIN_GAME)
         playnite_repository.set_game_id(db, entry, game.id)
         db.flush()
 
