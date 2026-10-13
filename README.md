@@ -4,7 +4,7 @@ This is my personal customized build of [VideoGameTrackarr](https://github.com/w
 
 For the full documentation, features, screenshots, and installation instructions, see the [main project](https://github.com/wwwescape/VideoGameTrackarr).
 
-Currently built off Version 1.30.0 
+My code is free to use and is currently built off Version 1.30.0. Just let me know if you need assistance. 
 
 ## Customizations in this fork
 
