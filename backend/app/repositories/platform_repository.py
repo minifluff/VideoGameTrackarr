@@ -1,3 +1,6 @@
+from sqlalchemy import delete, exists, func, select, update
+from sqlalchemy.orm import Session
+
 from app.models.catalog import Game, GameCategory, GamePlatform, Platform
 from app.models.library import LibraryItem, MediaFormat
 from app.repositories.game_repository import (
@@ -11,8 +14,6 @@ from app.repositories.game_repository import (
     _row_to_game_with_status,
     _wishlisted_exists,
 )
-from sqlalchemy import delete, exists, func, select, update
-from sqlalchemy.orm import Session
 
 
 def list_platforms(db: Session) -> list[Platform]:
