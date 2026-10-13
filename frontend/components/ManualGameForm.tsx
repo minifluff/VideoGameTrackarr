@@ -6,6 +6,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs, { type Dayjs } from "dayjs";
 import CloseIcon from "@mui/icons-material/Close";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import LinkIcon from "@mui/icons-material/Link";
 import SearchIcon from "@mui/icons-material/Search";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
@@ -28,6 +29,7 @@ import { useLanguage } from "../theme/LanguageProvider";
 import { gameIdentifier } from "../utils/identifiers";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import CoverSearchDialog from "./CoverSearchDialog";
+import CoverUrlDialog from "./CoverUrlDialog";
 import AddGameSuggestionsDialog from "./AddGameSuggestionsDialog";
 import AutocompleteSelect from "./AutocompleteSelect";
 
@@ -83,6 +85,7 @@ const ManualGameForm = ({ initialValues, steamAppId }: ManualGameFormProps) => {
   const [releaseDate, setReleaseDate] = useState<Dayjs | null>(null);
   const [coverUrl, setCoverUrl] = useState(initialValues?.coverUrl ?? "");
   const [coverSearchOpen, setCoverSearchOpen] = useState(false);
+  const [coverUrlOpen, setCoverUrlOpen] = useState(false);
   const [developedBy, setDevelopedBy] = useState<string[]>([]);
   const [publishedBy, setPublishedBy] = useState<string[]>([]);
   const [platformNames, setPlatformNames] = useState<string[]>([]);
@@ -218,6 +221,9 @@ const ManualGameForm = ({ initialValues, steamAppId }: ManualGameFormProps) => {
               onClick={() => setCoverSearchOpen(true)}
             >
               {t("games.gameForm.searchCoverButton")}
+            </Button>
+            <Button variant="outlined" startIcon={<LinkIcon />} onClick={() => setCoverUrlOpen(true)}>
+              {t("games.gameForm.coverUrlButton")}
             </Button>
             {coverUrl ? (
               <>
@@ -362,6 +368,11 @@ const ManualGameForm = ({ initialValues, steamAppId }: ManualGameFormProps) => {
         initialQuery={name.trim() ? `${name.trim()} game cover` : ""}
         onSelect={(url) => setCoverUrl(url)}
         onClose={() => setCoverSearchOpen(false)}
+      />
+      <CoverUrlDialog
+        open={coverUrlOpen}
+        onSelect={(url) => setCoverUrl(url)}
+        onClose={() => setCoverUrlOpen(false)}
       />
     </Paper>
   );

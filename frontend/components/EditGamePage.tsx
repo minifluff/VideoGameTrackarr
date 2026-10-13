@@ -6,6 +6,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs, { type Dayjs } from "dayjs";
 import CloseIcon from "@mui/icons-material/Close";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import LinkIcon from "@mui/icons-material/Link";
 import SearchIcon from "@mui/icons-material/Search";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
@@ -30,6 +31,7 @@ import { gameIdentifier } from "../utils/identifiers";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import AutocompleteSelect from "./AutocompleteSelect";
 import CoverSearchDialog from "./CoverSearchDialog";
+import CoverUrlDialog from "./CoverUrlDialog";
 
 interface CategoryOption {
   value: GameCategory;
@@ -78,6 +80,7 @@ const EditGameForm = ({ game }: EditGameFormProps) => {
   );
   const [coverUrl, setCoverUrl] = useState(game.coverUrl ?? "");
   const [coverSearchOpen, setCoverSearchOpen] = useState(false);
+  const [coverUrlOpen, setCoverUrlOpen] = useState(false);
   const [developedBy, setDevelopedBy] = useState<string[]>(
     game.companies.filter((company) => company.role === "developer").map((company) => company.name)
   );
@@ -187,6 +190,9 @@ const EditGameForm = ({ game }: EditGameFormProps) => {
             </Button>
             <Button variant="outlined" startIcon={<SearchIcon />} onClick={() => setCoverSearchOpen(true)}>
               {t("games.gameForm.searchCoverButton")}
+            </Button>
+            <Button variant="outlined" startIcon={<LinkIcon />} onClick={() => setCoverUrlOpen(true)}>
+              {t("games.gameForm.coverUrlButton")}
             </Button>
             {coverUrl ? (
               <>
@@ -316,6 +322,11 @@ const EditGameForm = ({ game }: EditGameFormProps) => {
         initialQuery={name.trim() ? `${name.trim()} game cover` : ""}
         onSelect={(url) => setCoverUrl(url)}
         onClose={() => setCoverSearchOpen(false)}
+      />
+      <CoverUrlDialog
+        open={coverUrlOpen}
+        onSelect={(url) => setCoverUrl(url)}
+        onClose={() => setCoverUrlOpen(false)}
       />
     </Paper>
   );
