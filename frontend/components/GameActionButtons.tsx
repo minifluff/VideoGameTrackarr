@@ -14,11 +14,12 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import type { GameCategory, LibraryItem } from "../api/types";
-import { useClaimDiscoveredGame, useDeleteGame, useResyncGame } from "../hooks/useGames";
+import { useClaimDiscoveredGame, useDeleteGame, useResyncGame, useUnlinkIgdb } from "../hooks/useGames";
 import { hasPlayableRom } from "../utils/roms";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import ConfirmDialog from "./ConfirmDialog";
@@ -84,6 +85,19 @@ const GameActionButtons = ({
     } catch (error) {
       console.error("Error removing game:", error);
       toast.error(t("games.actions.removeErrorToast"), TOAST_OPTIONS);
+    }
+  };
+
+  const unlinkIgdbMutation = useUnlinkIgdb(gameId);
+
+  const handleUnlinkIgdb = async () => {
+    try {
+      await unlinkIgdbMutation.mutateAsync();
+      setRemoveGameDialogOpen(false);
+      toast.success(t("games.actions.unlinkSuccessToast"), TOAST_OPTIONS);
+    } catch (error) {
+      console.error("Error unlinking IGDB:", error);
+      toast.error(t("games.actions.unlinkErrorToast"), TOAST_OPTIONS);
     }
   };
 
@@ -246,15 +260,40 @@ const GameActionButtons = ({
             >
               {t("games.actions.removeGameButton")}
             </Button>
-            <ConfirmDialog
-              open={removeGameDialogOpen}
-              title={t("games.actions.removeConfirmTitle")}
-              description={t("games.actions.removeConfirmDescription", { name: gameName })}
-              confirmLabel={t("common.delete")}
-              confirmColor="error"
-              onClose={() => setRemoveGameDialogOpen(false)}
-              onConfirm={() => void handleRemoveGame()}
-            />
+            <Dialog open={removeGameDialogOpen} onClose={() => setRemoveGameDialogOpen(false)}>
+              <DialogTitle>{t("games.actions.removeConfirmTitle")}</DialogTitle>
+              <DialogContent>
+                <Typography variant="body2" sx={{ mb: 2 }}>
+                  {t("games.actions.removeConfirmDescription", { name: gameName })}
+                </Typography>
+                <Stack spacing={1.5} sx={{ minWidth: 300 }}>
+                  {hasIgdbId ? (
+                    <Button
+                      variant="outlined"
+                      startIcon={<LinkIcon />}
+                      onClick={() => void handleUnlinkIgdb()}
+                      disabled={unlinkIgdbMutation.isPending}
+                      fullWidth
+                    >
+                      {t("games.actions.unlinkIgdbButton")}
+                    </Button>
+                  ) : null}
+                  <Button
+                    variant="contained"
+                    color="error"
+                    startIcon={<RemoveIcon />}
+                    onClick={() => void handleRemoveGame()}
+                    disabled={deleteGameMutation.isPending}
+                    fullWidth
+                  >
+                    {t("games.actions.deleteEntirelyButton")}
+                  </Button>
+                </Stack>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setRemoveGameDialogOpen(false)}>{t("common.cancel")}</Button>
+              </DialogActions>
+            </Dialog>
           </>
         ) : null}
         {hasPlayableRom(libraryItems) ? (
