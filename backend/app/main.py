@@ -28,6 +28,7 @@ from app.api.routes import (
     hardware_stats,
     health,
     igdb,
+    images,
     import_export,
     insights,
     integrations,
@@ -169,6 +170,7 @@ app.include_router(platforms.router)
 app.include_router(regions.router)
 app.include_router(games.router)
 app.include_router(igdb.router)
+app.include_router(images.router)
 app.include_router(library.router)
 app.include_router(progress.router)
 app.include_router(notes.router)
