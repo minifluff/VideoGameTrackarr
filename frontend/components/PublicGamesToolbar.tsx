@@ -19,7 +19,7 @@ import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import type { GameSortOption } from "../api/types";
 import { GAME_SORT_OPTIONS, type GameSortOptionItem } from "../utils/gameSortOptions";
-import AutocompleteSelect from "./AutocompleteSelect";
+import AutocompleteMultiSelect from "./AutocompleteMultiSelect";
 
 interface PublicGamesToolbarProps {
   search: string;
@@ -90,14 +90,13 @@ const PublicGamesToolbar = ({
           {activeTab === "filter" ? (
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
               <Grid size={{ xs: 12 }}>
-                <AutocompleteSelect<{ id: number; name: string }>
+                <AutocompleteMultiSelect<{ id: number; name: string }>
                   label={t("games.listToolbar.platformsLabel")}
                   options={platformOptions}
                   value={platformOptions.filter((p) => platformIds.includes(p.id))}
-                  onChange={(_event, newValue) => onPlatformIdsChange(newValue.map((p) => p.id))}
+                  onChange={(newValue) => onPlatformIdsChange(newValue.map((p) => p.id))}
                   getOptionLabel={(option) => option.name}
                   isOptionEqualToValue={(option, val) => option.id === val.id}
-                  multiple
                   fullWidth
                 />
               </Grid>
