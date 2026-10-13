@@ -59,6 +59,13 @@ def ignore_entry(db: Session, steam_app_id: int) -> SteamWishlistEntryWithStatus
     return _with_status(db, entry)
 
 
+def unignore_entry(db: Session, steam_app_id: int) -> SteamWishlistEntryWithStatus:
+    entry = _require_entry(db, steam_app_id)
+    steam_wishlist_repository.set_ignored(db, entry, False)
+    db.commit()
+    return _with_status(db, entry)
+
+
 def relink_entry(db: Session, steam_app_id: int, game_id: int) -> SteamWishlistEntryWithStatus:
     """Same purpose as steam_service.relink_entry — repoints an already-matched wishlist entry
     at a different local game when the automatic match is wrong or has gone stale."""

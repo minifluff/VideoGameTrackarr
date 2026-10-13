@@ -70,6 +70,13 @@ def ignore_entry(db: Session, steam_app_id: int) -> SteamEntryWithStatus:
     return _with_status(db, entry)
 
 
+def unignore_entry(db: Session, steam_app_id: int) -> SteamEntryWithStatus:
+    entry = _require_entry(db, steam_app_id)
+    steam_repository.set_ignored(db, entry, False)
+    db.commit()
+    return _with_status(db, entry)
+
+
 def relink_entry(db: Session, steam_app_id: int, game_id: int) -> SteamEntryWithStatus:
     """Repoints an already-matched entry at a different local game — for when the automatic
     Steam-appid match is wrong or has gone stale (e.g. a publisher repurposes an old app id for
