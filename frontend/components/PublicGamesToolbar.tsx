@@ -26,12 +26,22 @@ interface PublicGamesToolbarProps {
   onSearchChange: (value: string) => void;
   sort: GameSortOption;
   onSortChange: (value: GameSortOption) => void;
+  platformOptions: { id: number; name: string }[];
+  platformIds: number[];
+  onPlatformIdsChange: (value: number[]) => void;
 }
 
 // A trimmed-down GameListToolbar for the read-only share page: search plus a Filter & Sort
-// dialog whose Filter tab is empty for now — the public endpoint exposes no filter
-// dimensions (platforms, tags, etc. aren't part of the public payload).
-const PublicGamesToolbar = ({ search, onSearchChange, sort, onSortChange }: PublicGamesToolbarProps) => {
+// dialog with platform filtering.
+const PublicGamesToolbar = ({
+  search,
+  onSearchChange,
+  sort,
+  onSortChange,
+  platformOptions,
+  platformIds,
+  onPlatformIdsChange,
+}: PublicGamesToolbarProps) => {
   const { t } = useTranslation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"filter" | "sort">("filter");
@@ -78,9 +88,20 @@ const PublicGamesToolbar = ({ search, onSearchChange, sort, onSortChange }: Publ
         </Tabs>
         <DialogContent>
           {activeTab === "filter" ? (
-            <Typography color="text.secondary" sx={{ mt: 1.5, textAlign: "center" }}>
-              {t("public.games.noFiltersAvailable")}
-            </Typography>
+            <Grid container spacing={2} sx={{ mt: 0.5 }}>
+              <Grid size={{ xs: 12 }}>
+                <AutocompleteSelect<{ id: number; name: string }>
+                  label={t("games.listToolbar.platformsLabel")}
+                  options={platformOptions}
+                  value={platformOptions.filter((p) => platformIds.includes(p.id))}
+                  onChange={(_event, newValue) => onPlatformIdsChange(newValue.map((p) => p.id))}
+                  getOptionLabel={(option) => option.name}
+                  isOptionEqualToValue={(option, val) => option.id === val.id}
+                  multiple
+                  fullWidth
+                />
+              </Grid>
+            </Grid>
           ) : (
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
               <Grid size={{ xs: 12 }}>
