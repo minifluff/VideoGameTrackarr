@@ -15,8 +15,10 @@ My code is free to use and is currently built off Version 1.30.0. Just let me kn
 - Master Database reset (Danger Zone in Settings)
 - IGDB auto-link all games
 - Ability to Change IGDB link
+- Unlink IGDB only option (keeps game as manual entry)
 - Added date added sort option
 - Added unlinked games section in insights
+- Google image search for cover art
 
 ## In-progress features (separate branches)
 
