@@ -22,6 +22,7 @@ import DataManagementSection from "./DataManagementSection";
 import SettingsSubNav from "./SettingsSubNav";
 import ShareSection from "./ShareSection";
 import DatabaseResetSection from "./DatabaseResetSection";
+import IGDBAutoLinkSection from "./IGDBAutoLinkSection";
 
 const Settings = () => {
   const { t } = useTranslation();
@@ -167,6 +168,13 @@ const Settings = () => {
             {t("settings.share.heading")}
           </Typography>
           <ShareSection />
+
+          <Divider sx={{ my: 3 }} />
+
+          <Typography variant="subtitle1" gutterBottom>
+            {t("settings.igdbAutoLink.heading")}
+          </Typography>
+          <IGDBAutoLinkSection />
 
           <Divider sx={{ my: 3 }} />
 
