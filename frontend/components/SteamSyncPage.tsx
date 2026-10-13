@@ -6,6 +6,7 @@ import LinkIcon from "@mui/icons-material/Link";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SyncIcon from "@mui/icons-material/Sync";
+import UndoIcon from "@mui/icons-material/Undo";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -40,6 +41,8 @@ import {
 import {
   useIgnoreSteamEntry,
   useIgnoreSteamWishlistEntry,
+  useUnignoreSteamEntry,
+  useUnignoreSteamWishlistEntry,
   useSteamEntries,
   useSteamWishlistEntries,
   useSyncSteamEntries,
@@ -156,6 +159,8 @@ const SteamSyncPage = () => {
   const syncWishlistEntries = useSyncSteamWishlistEntries();
   const ignoreEntry = useIgnoreSteamEntry();
   const ignoreWishlistEntry = useIgnoreSteamWishlistEntry();
+  const unignoreEntry = useUnignoreSteamEntry();
+  const unignoreWishlistEntry = useUnignoreSteamWishlistEntry();
   const unlinkEntry = useUnlinkSteamEntry();
   const unlinkWishlistEntry = useUnlinkSteamWishlistEntry();
   const { data: jobs } = useJobsList();
@@ -368,6 +373,19 @@ const SteamSyncPage = () => {
     }
   };
 
+  const handleUnignore = async (row: SyncRow) => {
+    try {
+      if (row.source === "owned") {
+        await unignoreEntry.mutateAsync(row.entry.steamAppId);
+      } else {
+        await unignoreWishlistEntry.mutateAsync(row.entry.steamAppId);
+      }
+    } catch (error) {
+      console.error(`Error unignoring Steam app ${row.entry.steamAppId}:`, error);
+      toast.error(t("insights.steamSync.unignoreErrorToast"), TOAST_OPTIONS);
+    }
+  };
+
   const handleConfirmUnlink = async () => {
     if (!unlinkTarget) return;
     try {
@@ -495,10 +513,16 @@ const SteamSyncPage = () => {
             </IconButton>
           </Tooltip>
         )}
-        {row.entry.status !== "ignored" && (
+        {row.entry.status !== "ignored" ? (
           <Tooltip title={t("insights.steamSync.ignoreButton")}>
             <IconButton size="small" onClick={() => void handleIgnore(row)}>
               <BlockIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        ) : (
+          <Tooltip title={t("insights.steamSync.unignoreButton")}>
+            <IconButton size="small" onClick={() => void handleUnignore(row)}>
+              <UndoIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         )}
