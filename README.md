@@ -19,11 +19,11 @@ My code is free to use and is currently built off Version 1.30.0. Just let me kn
 - Added date added sort option
 - Added unlinked games section in insights
 - Google image search for cover art
-
+- Platform page added
 - Many Fixes
 
 ## In-progress features (separate branches)
 
-- Platform browse pages scoped to owned copies
+
 - `feature/collapsible-headers` — collapsible title/description and sticky toolbar on catalog pages
 - `feature/remove-games` — Settings page for selecting and deleting library games with confirmation
