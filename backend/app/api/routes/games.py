@@ -210,6 +210,15 @@ async def change_igdb_link(
     return _game_detail_response(db, game)
 
 
+@router.post("/{game_id}/unlink-igdb", response_model=GameDetailResponse)
+def unlink_igdb(
+    game_id: int,
+    db: Session = Depends(get_db),
+) -> GameDetailResponse:
+    game = game_service.unlink_igdb(db, game_id)
+    return _game_detail_response(db, game)
+
+
 @router.post("/{game_id}/merge-into-igdb", response_model=GameDetailResponse)
 def merge_game_into_igdb(
     game_id: int,
