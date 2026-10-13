@@ -8,9 +8,9 @@ from app.api.deps import get_current_user, get_db, get_igdb_client
 from app.schemas.game import (
     IGDBAutolinkRequest,
     IGDBAutolinkResultResponse,
+    IgdbGamePreviewResponse,
     IGDBParentGameResponse,
     IGDBSearchResultResponse,
-    IgdbGamePreviewResponse,
     UnlinkedGameResponse,
     igdb_game_preview_from_payload,
 )
