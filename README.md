@@ -8,7 +8,7 @@ Currently built off Version 1.30.0
 
 ## Customizations in this fork
 
-- Playnite library sync (via network share)
+- Playnite library sync (via network share and JSON exporter plugin)
 - Platform browse pages scoped to owned copies
 - Steam sync "Sync all" button
 - CSV import
