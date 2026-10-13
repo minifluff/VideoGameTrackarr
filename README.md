@@ -6,7 +6,7 @@ For the full documentation, features, screenshots, and installation instructions
 
 ## Customizations in this fork
 
-- Playnite library sync (via network share) requires json exporter pluging to be installed and set to auto export. 
+- Playnite library sync (via network share) (requires json exporter playnite plugin to be installed and set to auto export creating playnite\library\games.json) 
 - Platform browse pages scoped to owned copies
 - Steam sync "Sync all" button
 - CSV import
