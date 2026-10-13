@@ -19,7 +19,6 @@ import TextField from "@mui/material/TextField";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import DeleteIcon from "@mui/icons-material/Delete";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SyncIcon from "@mui/icons-material/Sync";
 import { useTranslation } from "react-i18next";
@@ -234,28 +233,7 @@ const PlayniteSyncPage = () => {
                 ? t("settings.playniteSync.scanning")
                 : t("settings.playniteSync.scanButton")}
             </Button>
-            <Button
-              startIcon={<DeleteIcon />}
-              color="warning"
-              onClick={() =>
-                clearCache.mutate(undefined, {
-                  onSuccess: (result) =>
-                    toast.success(
-                      t("settings.playniteSync.clearCacheSuccess", {
-                        cleared: result.cleared,
-                      }),
-                      TOAST_OPTIONS
-                    ),
-                  onError: () =>
-                    toast.error(t("settings.playniteSync.clearCacheError"), TOAST_OPTIONS),
-                })
-              }
-              disabled={clearCache.isPending}
-            >
-              {clearCache.isPending
-                ? t("settings.playniteSync.clearingCache")
-                : t("settings.playniteSync.clearCacheButton")}
-            </Button>
+
             <Box sx={{ flexGrow: 1 }} />
             {selected.length > 0 ? (
               <Button

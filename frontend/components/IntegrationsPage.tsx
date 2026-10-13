@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
@@ -17,7 +22,7 @@ import itadLogo from "../assets/isthereanydeal-logo.png";
 import platpricesLogo from "../assets/platprices-logo.png";
 import steamLogo from "../assets/steam-logo.png";
 import { useIntegrationsStatus, useUpdateSteamId } from "../hooks/useIntegrations";
-import { usePlayniteConfig, useTestPlayniteConnection, useUpdatePlayniteConfig } from "../hooks/usePlaynite";
+import { useClearPlayniteCache, usePlayniteConfig, useTestPlayniteConnection, useUpdatePlayniteConfig } from "../hooks/usePlaynite";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import SettingsSubNav from "./SettingsSubNav";
 
@@ -135,6 +140,65 @@ const PlayniteSection = () => {
           </Alert>
         )}
       </Stack>
+      <ClearPlayniteCacheSection />
+    </>
+  );
+};
+
+const ClearPlayniteCacheSection = () => {
+  const { t } = useTranslation();
+  const clearCache = useClearPlayniteCache();
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleClear = () => {
+    clearCache.mutate(undefined, {
+      onSuccess: (result) => {
+        setDialogOpen(false);
+        toast.success(
+          t("settings.integrations.playniteClearCacheSuccess", { cleared: result.cleared }),
+          TOAST_OPTIONS
+        );
+      },
+      onError: () => {
+        setDialogOpen(false);
+        toast.error(t("settings.integrations.playniteClearCacheError"), TOAST_OPTIONS);
+      },
+    });
+  };
+
+  return (
+    <>
+      <Divider sx={{ my: 3 }} />
+      <Typography variant="subtitle1" sx={{ mb: 1 }}>
+        {t("settings.integrations.playniteCacheHeading")}
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        {t("settings.integrations.playniteCacheDescription")}
+      </Typography>
+      <Button
+        variant="outlined"
+        color="warning"
+        onClick={() => setDialogOpen(true)}
+        disabled={clearCache.isPending}
+      >
+        {t("settings.integrations.playniteClearCacheButton")}
+      </Button>
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
+        <DialogTitle>{t("settings.integrations.playniteClearCacheDialogTitle")}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {t("settings.integrations.playniteClearCacheDialogMessage")}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>
+          <Button onClick={handleClear} color="warning" variant="contained" disabled={clearCache.isPending}>
+            {clearCache.isPending
+              ? t("settings.integrations.playniteClearingCache")
+              : t("settings.integrations.playniteClearCacheConfirm")}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
