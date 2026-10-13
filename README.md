@@ -2,6 +2,8 @@
 
 This is my personal customized build of [VideoGameTrackarr](https://github.com/wwwescape/VideoGameTrackarr) — a self-hosted web app for tracking your video game collection.
 
+All code is free to copy just let me know if you need help accessing it.
+
 For the full documentation, features, screenshots, and installation instructions, see the [main project](https://github.com/wwwescape/VideoGameTrackarr).
 
 ## Customizations in this fork
