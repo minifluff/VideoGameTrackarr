@@ -5,6 +5,7 @@ import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import LinearProgress from "@mui/material/LinearProgress";
 import Paper from "@mui/material/Paper";
 import Switch from "@mui/material/Switch";
 import Table from "@mui/material/Table";
@@ -90,6 +91,7 @@ const PlayniteSyncPage = () => {
   const [selected, setSelected] = useState<string[]>([]);
   const selectedSet = useMemo(() => new Set(selected), [selected]);
   const [confirmIds, setConfirmIds] = useState<string[] | null>(null);
+  const [syncProgress, setSyncProgress] = useState<{ done: number; total: number } | null>(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
 
@@ -130,9 +132,22 @@ const PlayniteSyncPage = () => {
 
   const handleConfirmSync = async () => {
     if (!confirmIds || confirmIds.length === 0) return;
-    await syncEntries.mutateAsync(confirmIds);
-    setSelected((prev) => prev.filter((id) => !confirmIds.includes(id)));
-    setConfirmIds(null);
+    const CHUNK_SIZE = 50;
+    const total = confirmIds.length;
+    setSyncProgress({ done: 0, total });
+    let done = 0;
+    try {
+      for (let i = 0; i < total; i += CHUNK_SIZE) {
+        const chunk = confirmIds.slice(i, i + CHUNK_SIZE);
+        await syncEntries.mutateAsync(chunk);
+        done += chunk.length;
+        setSyncProgress({ done, total });
+      }
+    } finally {
+      setSelected((prev) => prev.filter((id) => !confirmIds.includes(id)));
+      setConfirmIds(null);
+      setSyncProgress(null);
+    }
   };
 
   const statusChip = (entry: PlayniteEntry) => {
@@ -344,12 +359,27 @@ const PlayniteSyncPage = () => {
         </Paper>
       )}
 
+      {syncProgress !== null && (
+        <Paper sx={{ p: 2, mt: 2 }}>
+          <Typography variant="body2" gutterBottom>
+            {t("settings.playniteSync.syncingProgress", {
+              done: syncProgress.done,
+              total: syncProgress.total,
+            })}
+          </Typography>
+          <LinearProgress
+            variant="determinate"
+            value={(syncProgress.done / syncProgress.total) * 100}
+          />
+        </Paper>
+      )}
+
       <ConfirmDialog
         open={confirmIds !== null}
         title={t("settings.playniteSync.confirmTitle", { count: confirmIds?.length ?? 0 })}
         description={t("settings.playniteSync.confirmDescription")}
         confirmLabel={t("settings.playniteSync.confirmButton")}
-        confirmDisabled={syncEntries.isPending}
+        confirmDisabled={syncEntries.isPending || syncProgress !== null}
         onClose={() => setConfirmIds(null)}
         onConfirm={() => void handleConfirmSync()}
       />
