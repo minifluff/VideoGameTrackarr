@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { useReleaseCalendar } from "../hooks/useDashboard";
@@ -11,6 +12,19 @@ interface ReleaseCalendarSectionProps {
   scope: "games" | "hardware";
   title: string;
 }
+
+const formatReleaseDate = (dateStr: string): string => {
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
+};
 
 const ReleaseCalendarSection = ({ scope, title }: ReleaseCalendarSectionProps) => {
   const { t } = useTranslation();
@@ -52,15 +66,25 @@ const ReleaseCalendarSection = ({ scope, title }: ReleaseCalendarSectionProps) =
       renderItem={(item) => {
         if (item.kind === "game" && item.game) {
           return (
-            <GameCard
-              game={item.game}
-              context="list"
-              contextFunction={() => navigate(`/game/${gameIdentifier(item.game!)}`)}
-            />
+            <Box>
+              <GameCard
+                game={item.game}
+                context="list"
+                contextFunction={() => navigate(`/game/${gameIdentifier(item.game!)}`)}
+              />
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", textAlign: "center", mt: 0.5 }}
+              >
+                {formatReleaseDate(item.releaseDate)}
+              </Typography>
+            </Box>
           );
         }
         if (item.kind === "device" && item.device) {
           return (
+            <Box>
             <HardwareCard
               name={item.device.officialName}
               subtitle={[item.device.manufacturerName, item.device.hardwarePlatformName]
@@ -76,10 +100,19 @@ const ReleaseCalendarSection = ({ scope, title }: ReleaseCalendarSectionProps) =
                 )
               }
             />
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", textAlign: "center", mt: 0.5 }}
+              >
+                {formatReleaseDate(item.releaseDate)}
+              </Typography>
+            </Box>
           );
         }
         if (item.kind === "accessory" && item.accessory) {
           return (
+            <Box>
             <HardwareCard
               name={item.accessory.officialName}
               subtitle={[item.accessory.manufacturerName, item.accessory.accessoryTypeName]
@@ -95,6 +128,14 @@ const ReleaseCalendarSection = ({ scope, title }: ReleaseCalendarSectionProps) =
                 )
               }
             />
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", textAlign: "center", mt: 0.5 }}
+              >
+                {formatReleaseDate(item.releaseDate)}
+              </Typography>
+            </Box>
           );
         }
         return null;
