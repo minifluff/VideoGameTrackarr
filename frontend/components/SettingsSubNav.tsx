@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 const SUB_NAV_ITEMS = [
   { to: "/settings", labelKey: "settings.subNav.overview" },
   { to: "/settings/tags", labelKey: "nav.tagManager" },
+  { to: "/settings/platforms", labelKey: "nav.platformManager" },
   { to: "/settings/jobs", labelKey: "nav.jobs" },
   { to: "/settings/integrations", labelKey: "nav.integrations" },
   { to: "/settings/emulation", labelKey: "nav.emulation" },
