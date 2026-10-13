@@ -198,6 +198,11 @@ export async function changeIgdbLink(gameId: number, igdbId: number): Promise<Ga
   return response.data;
 }
 
+export async function unlinkIgdb(gameId: number): Promise<GameDetail> {
+  const response = await apiClient.post<GameDetail>(`/api/games/${gameId}/unlink-igdb`);
+  return response.data;
+}
+
 export async function mergeGameIntoIgdb(gameId: number, igdbId: number): Promise<GameDetail> {
   const response = await apiClient.post<GameDetail>(`/api/games/${gameId}/merge-into-igdb`, {
     igdbId,
