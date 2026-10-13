@@ -11,7 +11,7 @@ from app.repositories.game_repository import (
     _row_to_game_with_status,
     _wishlisted_exists,
 )
-from sqlalchemy import delete, exists, func, select
+from sqlalchemy import delete, exists, func, select, update
 from sqlalchemy.orm import Session
 
 
@@ -211,3 +211,31 @@ def list_addons_for_platform(
         sort=sort,
     )
     return [_row_to_game_with_status(row) for row in db.execute(stmt)]
+
+
+def create_platform(db: Session, name: str, abbreviation: str | None) -> Platform:
+    platform = Platform(name=name, slug=_slugify(name), abbreviation=abbreviation)
+    db.add(platform)
+    db.flush()
+    return platform
+
+
+def update_platform(db: Session, platform: Platform, name: str, abbreviation: str | None) -> Platform:
+    platform.name = name
+    platform.abbreviation = abbreviation
+    # Regenerate the slug when the name changes so the platform page URL stays in sync.
+    platform.slug = _slugify(name)
+    db.flush()
+    return platform
+
+
+def delete_platform(db: Session, platform: Platform) -> None:
+    # Unlink library copies from the platform (the game stays, just with no platform set),
+    # drop IGDB release-list rows, then delete the platform itself — mirrors how tag
+    # deletion clears its association rows before deleting the tag.
+    db.execute(
+        update(LibraryItem).where(LibraryItem.platform_id == platform.id).values(platform_id=None)
+    )
+    db.execute(delete(GamePlatform).where(GamePlatform.platform_id == platform.id))
+    db.delete(platform)
+    db.flush()
