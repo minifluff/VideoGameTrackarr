@@ -4,6 +4,8 @@ This is my personal customized build of [VideoGameTrackarr](https://github.com/w
 
 For the full documentation, features, screenshots, and installation instructions, see the [main project](https://github.com/wwwescape/VideoGameTrackarr).
 
+Currently built off 1.3
+
 ## Customizations in this fork
 
 - Playnite library sync (via network share)
