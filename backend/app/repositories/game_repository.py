@@ -216,6 +216,7 @@ def _apply_optional_game_filters(
     play_status_exclude: bool = False,
     play_status_match_all: bool = False,
     steelbook_only: bool = False,
+    unlinked_only: bool = False,
     sort: GameSortOption = GameSortOption.NAME_ASC,
 ) -> Select[Any]:
     """The Games list's whole optional filter set (search + 8 dimensions + sort), factored
@@ -287,6 +288,8 @@ def _apply_optional_game_filters(
         # A plain presence check, unlike the list-based filters above — no Exclude toggle,
         # since "not a Steelbook" isn't a meaningful thing to filter for on its own.
         stmt = stmt.where(exists().where(LibraryItem.game_id == Game.id, LibraryItem.steelbook.is_(True)))
+    if unlinked_only:
+        stmt = stmt.where(Game.igdb_id.is_(None))
     return stmt.order_by(_order_by_for_sort(sort))
 
 
@@ -317,6 +320,7 @@ def list_top_level_games(
     play_status_exclude: bool = False,
     play_status_match_all: bool = False,
     steelbook_only: bool = False,
+    unlinked_only: bool = False,
     sort: GameSortOption = GameSortOption.NAME_ASC,
     required_collection_id: int | None = None,
     required_franchise_id: int | None = None,
@@ -367,6 +371,7 @@ def list_top_level_games(
         play_status_exclude=play_status_exclude,
         play_status_match_all=play_status_match_all,
         steelbook_only=steelbook_only,
+        unlinked_only=unlinked_only,
         sort=sort,
     )
     return [_row_to_game_with_status(row) for row in db.execute(stmt)]
