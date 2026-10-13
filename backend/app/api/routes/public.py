@@ -2,8 +2,6 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
-from app.models.library import LibraryStatus
-from app.repositories import library_item_repository
 from app.repositories.game_repository import GameSortOption
 from app.schemas.public import (
     PublicAccessorySummaryResponse,
@@ -32,14 +30,29 @@ def list_public_games(
 ) -> list[PublicGameSummaryResponse]:
     auth_service.get_user_by_share_token(db, token)
     games = game_service.search_local_games(db, search=search, platform_ids=platform_ids, sort=sort)
-    result = []
-    for game in games:
-        owned_platforms = []
-        for item in library_item_repository.list_library_items(db, game.game.id, status=LibraryStatus.OWNED):
-            if item.platform and item.platform.name not in owned_platforms:
-                owned_platforms.append(item.platform.name)
-        result.append(public_game_from_orm(game, owned_platforms=sorted(owned_platforms)))
-    return result
+    # Single query for all owned platforms across the returned games (avoids N+1).
+    game_ids = [g.game.id for g in games]
+    platforms_by_game: dict[int, set[str]] = {}
+    if game_ids:
+        from app.models.catalog import Platform
+        from app.models.library import LibraryItem
+        from sqlalchemy import select
+        rows = db.execute(
+            select(LibraryItem.game_id, Platform.name)
+            .join(Platform, LibraryItem.platform_id == Platform.id)
+            .where(
+                LibraryItem.game_id.in_(game_ids),
+                LibraryItem.status == LibraryStatus.OWNED,
+            )
+        ).all()
+        for game_id, platform_name in rows:
+            platforms_by_game.setdefault(game_id, set()).add(platform_name)
+    return [
+        public_game_from_orm(
+            g, owned_platforms=sorted(platforms_by_game.get(g.game.id, set()))
+        )
+        for g in games
+    ]
 
 
 @router.get("/platforms", response_model=list[dict])
