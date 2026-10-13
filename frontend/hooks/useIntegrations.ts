@@ -4,7 +4,9 @@ import {
   getSteamEntries,
   getSteamWishlistEntries,
   ignoreSteamEntry,
+  unignoreSteamEntry,
   ignoreSteamWishlistEntry,
+  unignoreSteamWishlistEntry,
   relinkSteamEntry,
   relinkSteamWishlistEntry,
   syncSteamEntries,
@@ -49,6 +51,14 @@ export function useIgnoreSteamEntry() {
   });
 }
 
+export function useUnignoreSteamEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: unignoreSteamEntry,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["steam-entries"] }),
+  });
+}
+
 export function useRelinkSteamEntry() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -85,6 +95,14 @@ export function useIgnoreSteamWishlistEntry() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ignoreSteamWishlistEntry,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["steam-wishlist-entries"] }),
+  });
+}
+
+export function useUnignoreSteamWishlistEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: unignoreSteamWishlistEntry,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["steam-wishlist-entries"] }),
   });
 }
