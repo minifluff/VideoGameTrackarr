@@ -35,6 +35,13 @@ const GAME_TYPE_CATEGORIES: GameCategory[] = [
   "expanded_game",
   "bundle",
   "remaster",
+  "remake",
+  "port",
+  "episode",
+  "season",
+  "mod",
+  "fork",
+  "update",
 ];
 const ADDON_TYPE_CATEGORIES: GameCategory[] = ["dlc_addon", "expansion", "pack"];
 
@@ -96,7 +103,7 @@ const LinkToIgdbDialog = ({ open, gameId, gameName, gameCategory, onClose, chang
   // The "game" scope search still includes remake (IGDB's own browsable-types query), which
   // isn't in the 5-category allowlist for linking a custom game — filter it out here too.
   const suggestions = (searchResults ?? []).filter(
-    (result) => result.category !== null && allowedCategories.includes(result.category)
+    (result) => result.category === null || allowedCategories.includes(result.category)
   );
   const igdbNotConfigured = isAxiosError(searchError) && searchError.response?.status === 503;
   const isPending = linkGameToIgdb.isPending || changeIgdbLink.isPending || linkViaParent.isPending || mergeIntoIgdb.isPending || isResolvingManualId;
