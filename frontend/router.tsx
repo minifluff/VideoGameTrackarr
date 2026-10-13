@@ -11,6 +11,7 @@ import ComparePage from "./components/ComparePage";
 import DashboardPage from "./components/DashboardPage";
 import DeviceDetails from "./components/DeviceDetails";
 import DuplicatesPage from "./components/DuplicatesPage";
+import UnlinkedGamesPage from "./components/UnlinkedGamesPage";
 import EditAccessoryPage from "./components/EditAccessoryPage";
 import EditDevicePage from "./components/EditDevicePage";
 import EditGamePage from "./components/EditGamePage";
@@ -74,6 +75,7 @@ import {
   notFoundCrumbs,
   onSaleCrumbs,
   orphanedAccessoriesCrumbs,
+  unlinkedGamesCrumbs,
   platformCrumbs,
   platformsCrumbs,
   saleTrackedCrumbs,
@@ -232,6 +234,11 @@ const router = createBrowserRouter([
             path: "/insights/on-sale",
             element: <OnSalePage />,
             handle: { crumbs: onSaleCrumbs },
+          },
+          {
+            path: "/insights/unlinked-games",
+            element: <UnlinkedGamesPage />,
+            handle: { crumbs: unlinkedGamesCrumbs },
           },
           { path: "/compare", element: <ComparePage />, handle: { crumbs: compareCrumbs } },
           { path: "/settings", element: <Settings />, handle: { crumbs: settingsCrumbs } },
