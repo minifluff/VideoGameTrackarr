@@ -550,7 +550,13 @@
       "coverSearchPlaceholder": "Search Google for cover art...",
       "coverSearchNotConfigured": "Google image search is not configured. Set GOOGLE_SEARCH_API_KEY and GOOGLE_SEARCH_ENGINE_ID in your environment to enable this feature.",
       "coverSearchError": "Search failed. Please try again.",
-      "coverSearchNoResults": "No images found. Try a different search."
+      "coverSearchNoResults": "No images found. Try a different search.",
+      "coverUrlButton": "Use web link",
+      "coverUrlTitle": "Add cover from web link",
+      "coverUrlLabel": "Image URL",
+      "coverUrlPlaceholder": "https://example.com/cover.jpg",
+      "coverUrlInvalid": "Please enter a valid http(s) URL",
+      "coverUrlUseButton": "Use image"
     },
     "edit": {
       "pageTitle": "Edit Game",
