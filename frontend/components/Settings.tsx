@@ -21,7 +21,6 @@ import AppearanceSection from "./AppearanceSection";
 import DataManagementSection from "./DataManagementSection";
 import SettingsSubNav from "./SettingsSubNav";
 import ShareSection from "./ShareSection";
-import DatabaseResetSection from "./DatabaseResetSection";
 
 const Settings = () => {
   const { t } = useTranslation();
@@ -168,12 +167,7 @@ const Settings = () => {
           </Typography>
           <ShareSection />
 
-          <Divider sx={{ my: 3 }} />
 
-          <Typography variant="subtitle1" gutterBottom>
-            {t("settings.dangerZone.heading")}
-          </Typography>
-          <DatabaseResetSection />
         </CardContent>
       </Card>
     </Box>
