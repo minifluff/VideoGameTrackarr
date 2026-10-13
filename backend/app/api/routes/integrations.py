@@ -59,6 +59,11 @@ def ignore_steam_entry(steam_app_id: int, db: Session = Depends(get_db)) -> Stea
     return _entry_response(steam_service.ignore_entry(db, steam_app_id))
 
 
+@router.post("/api/integrations/steam/{steam_app_id}/unignore", response_model=SteamEntryResponse)
+def unignore_steam_entry(steam_app_id: int, db: Session = Depends(get_db)) -> SteamEntryResponse:
+    return _entry_response(steam_service.unignore_entry(db, steam_app_id))
+
+
 @router.post("/api/integrations/steam/{steam_app_id}/relink", response_model=SteamEntryResponse)
 def relink_steam_entry(
     steam_app_id: int, payload: RelinkSteamEntryRequest, db: Session = Depends(get_db)
@@ -97,6 +102,13 @@ def sync_steam_wishlist_entries(
 )
 def ignore_steam_wishlist_entry(steam_app_id: int, db: Session = Depends(get_db)) -> SteamWishlistEntryResponse:
     return _wishlist_entry_response(steam_wishlist_service.ignore_entry(db, steam_app_id))
+
+
+@router.post(
+    "/api/integrations/steam/wishlist/{steam_app_id}/unignore", response_model=SteamWishlistEntryResponse
+)
+def unignore_steam_wishlist_entry(steam_app_id: int, db: Session = Depends(get_db)) -> SteamWishlistEntryResponse:
+    return _wishlist_entry_response(steam_wishlist_service.unignore_entry(db, steam_app_id))
 
 
 @router.post(
