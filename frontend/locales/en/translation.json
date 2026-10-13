@@ -355,6 +355,18 @@
       "regenerateSuccess": "Share links regenerated.",
       "regenerateError": "Could not regenerate the links. Please try again."
     },
+    "dangerZone": {
+      "heading": "Danger Zone",
+      "description": "Permanently delete every game in your library — all library items, catalog entries, progress, play sessions, notes, tags, and ROM files — and clear the Playnite, Steam, and wishlist sync caches so they can reimport from scratch. Your account, settings, and connection details are kept.",
+      "resetButton": "Reset Database",
+      "dialogTitle": "Reset the database?",
+      "dialogDescription": "This will permanently delete all games and reset the sync tools. There is no undo.",
+      "dialogWarning": "All games, library items, progress, notes, tags, and ROM files will be deleted. Sync caches will be cleared.",
+      "confirmLabel": "Type \"confirm\" to proceed",
+      "resetting": "Resetting...",
+      "resetSuccess": "Database reset: {{games}} games and {{items}} library items deleted.",
+      "resetError": "Could not reset the database. Please try again."
+    },
     "integrations": {
       "igdbHeading": "IGDB Credentials",
       "igdbLogoAlt": "IGDB",
