@@ -48,6 +48,7 @@ EDITION_TAGS = {
     "3ds roms",
     "sega genesis mini",
     "sega genesis mini 2",
+    "second account",
 }
 
 
