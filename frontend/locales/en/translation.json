@@ -1502,7 +1502,8 @@
       "filtersButtonLabel": "Filter & Sort",
       "sortTabLabel": "Sort",
       "noFiltersAvailable": "No filters are available yet.",
-      "loadError": "Couldn't load this game. Please try again."
+      "loadError": "Couldn't load this game. Please try again.",
+      "ownedOn": "Owned on"
     },
     "hardware": {
       "title": "Hardware",
