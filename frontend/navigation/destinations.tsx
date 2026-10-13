@@ -17,6 +17,7 @@ import LinkOffIcon from "@mui/icons-material/LinkOff";
 import MemoryIcon from "@mui/icons-material/Memory";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SellIcon from "@mui/icons-material/Sell";
+import LinkIcon from "@mui/icons-material/Link";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -81,6 +82,7 @@ export function getNavDestinations(t: TFunction): NavDestination[] {
           icon: <LinkOffIcon />,
         },
         { to: "/insights/on-sale", label: t("nav.onSale"), icon: <SellIcon /> },
+        { to: "/insights/unlinked-games", label: t("nav.unlinkedGames"), icon: <LinkIcon /> },
       ],
     },
     {

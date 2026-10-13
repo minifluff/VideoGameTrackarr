@@ -204,6 +204,11 @@ export const onSaleCrumbs: CrumbsFn = (_params, t) => [
   { label: t("nav.onSale") },
 ];
 
+export const unlinkedGamesCrumbs: CrumbsFn = (_params, t) => [
+  { label: t("nav.insights"), to: "/insights" },
+  { label: t("nav.unlinkedGames") },
+];
+
 export const dashboardCrumbs: CrumbsFn = (_params, t) => [{ label: t("nav.dashboard") }];
 
 export const eventsCrumbs: CrumbsFn = (_params, t) => [{ label: t("nav.events") }];
