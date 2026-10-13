@@ -28,6 +28,7 @@ const game: PublicGameDetail = {
   rating: null,
   owned: true,
   wishlisted: false,
+  ownedPlatforms: [],
   parentGameId: null,
   parentGameName: null,
   parentGameSlug: null,
