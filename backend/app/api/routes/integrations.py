@@ -200,6 +200,11 @@ def scan_playnite_library(
     return PlayniteScanResponse.model_validate(result)
 
 
+@router.post("/api/integrations/playnite/clear-cache")
+def clear_playnite_cache(db: Session = Depends(get_db)) -> dict[str, int]:
+    return playnite_service.clear_cache(db)
+
+
 @router.get("/api/integrations/playnite/entries", response_model=list[PlayniteEntryResponse])
 def get_playnite_entries(db: Session = Depends(get_db)) -> list[PlayniteEntryResponse]:
     return [_playnite_entry_response(item) for item in playnite_service.list_entries(db)]
