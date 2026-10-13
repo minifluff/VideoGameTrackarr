@@ -14,6 +14,8 @@ My code is free to use and is currently built off Version 1.30.0. Just let me kn
 - Custom appearance settings (accent color, app title)
 - Master Database reset (Danger Zone in Settings)
 - IGDB auto-link all games
+- Ability to Change IGDB link
+- Added date added sort option
 
 ## In-progress features (separate branches)
 
