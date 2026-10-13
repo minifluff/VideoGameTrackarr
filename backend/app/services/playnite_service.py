@@ -13,7 +13,13 @@ from app.models.catalog import Game, GameCategory
 from app.models.library import LibraryStatus, MediaFormat, Tag
 from app.models.playnite import PlayniteLibraryEntry
 from app.models.system import User
-from app.repositories import game_repository, library_item_repository, platform_repository, playnite_repository, tag_repository
+from app.repositories import (
+    game_repository,
+    library_item_repository,
+    platform_repository,
+    playnite_repository,
+    tag_repository,
+)
 from app.services import library_service, progress_service
 from app.services.exceptions import NotFoundError
 
