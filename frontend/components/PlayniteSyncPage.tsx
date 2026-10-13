@@ -15,6 +15,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
+import TableSortLabel from "@mui/material/TableSortLabel";
 import TextField from "@mui/material/TextField";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
@@ -99,6 +100,34 @@ const PlayniteSyncPage = () => {
   const [syncProgress, setSyncProgress] = useState<{ done: number; total: number } | null>(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
+  type SortKey = "name" | "platform" | "edition" | "format" | "status";
+  const [sortBy, setSortBy] = useState<SortKey>("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (key: SortKey) => {
+    if (sortBy === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(key);
+      setSortDir("asc");
+    }
+    setPage(0);
+  };
+
+  const sortValue = (e: PlayniteEntry, key: SortKey): string => {
+    switch (key) {
+      case "name":
+        return e.playniteName.toLowerCase();
+      case "platform":
+        return (e.playnitePlatform ?? "").toLowerCase();
+      case "edition":
+        return tagsToEdition(e.playniteTags).toLowerCase();
+      case "format":
+        return tagsToFormats(e.playniteTags).toLowerCase();
+      case "status":
+        return e.status;
+    }
+  };
 
   const filtered = useMemo(() => {
     let list = entries ?? [];
@@ -112,10 +141,21 @@ const PlayniteSyncPage = () => {
     return list;
   }, [entries, hideSynced, search]);
 
+  const sorted = useMemo(() => {
+    const dir = sortDir === "asc" ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      const va = sortValue(a, sortBy);
+      const vb = sortValue(b, sortBy);
+      if (va < vb) return -dir;
+      if (va > vb) return dir;
+      return 0;
+    });
+  }, [filtered, sortBy, sortDir]);
+
   const paged = useMemo(() => {
     const start = page * rowsPerPage;
-    return filtered.slice(start, start + rowsPerPage);
-  }, [filtered, page, rowsPerPage]);
+    return sorted.slice(start, start + rowsPerPage);
+  }, [sorted, page, rowsPerPage]);
 
   const actionableRows = useMemo(() => filtered.filter(isEntryActionable), [filtered]);
   const actionablePageRows = useMemo(() => paged.filter(isEntryActionable), [paged]);
@@ -291,12 +331,52 @@ const PlayniteSyncPage = () => {
                           disabled={actionablePageRows.length === 0}
                         />
                       </TableCell>
-                      <TableCell>{t("settings.playniteSync.columnName")}</TableCell>
-                      <TableCell>{t("settings.playniteSync.columnPlatform")}</TableCell>
-                      <TableCell>{t("settings.playniteSync.columnEdition")}</TableCell>
-                      <TableCell>{t("settings.playniteSync.columnFormat")}</TableCell>
+                      <TableCell>
+                        <TableSortLabel
+                          active={sortBy === "name"}
+                          direction={sortBy === "name" ? sortDir : "asc"}
+                          onClick={() => handleSort("name")}
+                        >
+                          {t("settings.playniteSync.columnName")}
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell>
+                        <TableSortLabel
+                          active={sortBy === "platform"}
+                          direction={sortBy === "platform" ? sortDir : "asc"}
+                          onClick={() => handleSort("platform")}
+                        >
+                          {t("settings.playniteSync.columnPlatform")}
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell>
+                        <TableSortLabel
+                          active={sortBy === "edition"}
+                          direction={sortBy === "edition" ? sortDir : "asc"}
+                          onClick={() => handleSort("edition")}
+                        >
+                          {t("settings.playniteSync.columnEdition")}
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell>
+                        <TableSortLabel
+                          active={sortBy === "format"}
+                          direction={sortBy === "format" ? sortDir : "asc"}
+                          onClick={() => handleSort("format")}
+                        >
+                          {t("settings.playniteSync.columnFormat")}
+                        </TableSortLabel>
+                      </TableCell>
                       <TableCell>{t("settings.playniteSync.columnNotes")}</TableCell>
-                      <TableCell>{t("settings.playniteSync.columnStatus")}</TableCell>
+                      <TableCell>
+                        <TableSortLabel
+                          active={sortBy === "status"}
+                          direction={sortBy === "status" ? sortDir : "asc"}
+                          onClick={() => handleSort("status")}
+                        >
+                          {t("settings.playniteSync.columnStatus")}
+                        </TableSortLabel>
+                      </TableCell>
                       <TableCell align="right">{t("settings.playniteSync.columnActions")}</TableCell>
                     </TableRow>
                   </TableHead>
