@@ -91,6 +91,7 @@ export function getNavDestinations(t: TFunction): NavDestination[] {
       icon: <SettingsIcon />,
       subItems: [
         { to: "/settings/tags", label: t("nav.tagManager"), icon: <LabelIcon /> },
+        { to: "/settings/platforms", label: t("nav.platformManager"), icon: <GamesIcon /> },
         { to: "/settings/jobs", label: t("nav.jobs"), icon: <RefreshIcon /> },
         { to: "/settings/integrations", label: t("nav.integrations"), icon: <CableIcon /> },
         { to: "/settings/emulation", label: t("nav.emulation"), icon: <SportsEsportsIcon /> },
