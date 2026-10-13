@@ -489,6 +489,15 @@
       "columnEdition": "Edition",
       "columnFormat": "Format",
       "syncingProgress": "Syncing {{done}} of {{total}} games..."
+    },
+    "igdbAutoLink": {
+      "heading": "IGDB Auto-Link",
+      "description": "Automatically link games in your library to IGDB by matching their names. Only exact name matches are linked — anything ambiguous is left alone for you to link manually.",
+      "unlinkedCount": "{{count}} games not linked to IGDB",
+      "linkButton": "Auto-link {{count}} games",
+      "progress": "Linking {{done}} of {{total}} games...",
+      "success": "Linked {{linked}} games ({{noMatch}} had no match, {{failed}} failed)",
+      "error": "Auto-link failed"
     }
   },
   "auth": {
