@@ -632,7 +632,9 @@
       "steelbookOnlyLabel": "Steelbooks only",
       "clearFiltersButton": "Clear filters",
       "noFiltersAvailable": "No filters available",
-      "noSearchMatches": "No matches found."
+      "noSearchMatches": "No matches found.",
+      "sortDateAddedAsc": "Date added (oldest first)",
+      "sortDateAddedDesc": "Date added (newest first)"
     },
     "card": {
       "playStatusBacklog": "Backlog",
