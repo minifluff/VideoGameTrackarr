@@ -9,7 +9,6 @@ Currently built off Version 1.30.0
 ## Customizations in this fork
 
 - Playnite library sync (via network share and JSON exporter plugin)
-- Platform browse pages scoped to owned copies
 - Steam sync "Sync all" button
 - CSV import
 - Custom appearance settings (accent color, app title)
@@ -17,5 +16,6 @@ Currently built off Version 1.30.0
 
 ## In-progress features (separate branches)
 
+- Platform browse pages scoped to owned copies
 - `feature/collapsible-headers` — collapsible title/description and sticky toolbar on catalog pages
 - `feature/remove-games` — Settings page for selecting and deleting library games with confirmation
