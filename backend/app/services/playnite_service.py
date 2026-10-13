@@ -10,10 +10,10 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.models.catalog import Game, GameCategory
-from app.models.library import LibraryStatus, MediaFormat
+from app.models.library import LibraryStatus, MediaFormat, Tag
 from app.models.playnite import PlayniteLibraryEntry
 from app.models.system import User
-from app.repositories import game_repository, library_item_repository, platform_repository, playnite_repository
+from app.repositories import game_repository, library_item_repository, platform_repository, playnite_repository, tag_repository
 from app.services import library_service, progress_service
 from app.services.exceptions import NotFoundError
 
@@ -290,6 +290,16 @@ def _sync_one(db: Session, entry: PlayniteLibraryEntry) -> None:
                 notes=entry.playnite_tags,
             )
     sync_platform_id = platform_id
+
+    # A "Z-Adult" Playnite tag marks the game as adult-only.
+    tags_lower = [t.strip().lower() for t in (entry.playnite_tags or "").split(",")]
+    if "z-adult" in tags_lower:
+        adult_tag = tag_repository.get_tag_by_name(db, "Adult-Only")
+        if adult_tag is None:
+            adult_tag = Tag(name="Adult-Only")
+            db.add(adult_tag)
+            db.flush()
+        tag_repository.attach_tag(db, entry.game_id, adult_tag.id)
 
     # A straight set to Playnite's numbers, not a merge — Sync is an explicit, confirmed
     # action so it's allowed to overwrite, including downward. play_status is deliberately
