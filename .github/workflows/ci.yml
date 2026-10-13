@@ -65,10 +65,12 @@ jobs:
           cache: true
 
       - name: Install dependencies
-        run: uv pip install --system -r requirements-dev.txt -r <(echo "pytest-xdist>=3.0,<4.0")
+        run: |
+          uv venv
+          uv pip install -r requirements-dev.txt "pytest-xdist>=3.0,<4.0"
 
       - name: Test
-        run: pytest -n auto --cov=app --cov-report=term-missing --cov-fail-under=70
+        run: uv run pytest -n auto --cov=app --cov-report=term-missing --cov-fail-under=70
 
   frontend-lint:
     needs: changes
