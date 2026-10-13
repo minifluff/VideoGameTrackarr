@@ -1,6 +1,10 @@
 import type { ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
+import AddIcon from "@mui/icons-material/Add";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
+import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { useReleaseCalendar } from "../hooks/useDashboard";
@@ -15,6 +19,7 @@ interface DashboardSection {
 
 const DashboardPage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data: releases, isLoading: releasesLoading } = useReleaseCalendar();
   const { data: onSaleItems, isLoading: onSaleLoading } = useOnSale();
   if (releasesLoading || onSaleLoading) {
@@ -62,6 +67,18 @@ const DashboardPage = () => {
 
   return (
     <>
+      <Stack direction="row" sx={{ mb: 3, alignItems: "center" }}>
+        <Typography variant="h4" component="h1" sx={{ flexGrow: 1 }}>
+          {t("insights.dashboard.pageTitle")}
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => navigate("/games/add")}
+        >
+          {t("insights.dashboard.addGameButton")}
+        </Button>
+      </Stack>
       {sections.map((section, index) => (
         <Box key={section.key}>
           {index > 0 && <Divider sx={{ my: 3 }} />}
