@@ -178,6 +178,20 @@ def scan_library(db: Session, user: User) -> dict[str, Any]:
     except Exception as exc:  # noqa: BLE001 - surface any SMB failure as a clear user message
         raise PlayniteError(f"Could not read the Playnite library: {exc}") from exc
 
+    # Preserve existing entry -> game links across the rebuild, keyed by Playnite's
+    # own ID — each Playnite entry gets its own VGT game, even when names match
+    # (the user may own multiple copies of the same game on different platforms).
+    existing_links = {
+        entry.playnite_id: entry.game_id
+        for entry in db.scalars(select(PlayniteLibraryEntry)).all()
+        if entry.game_id is not None
+    }
+    dismissed_ids = {
+        entry.playnite_id
+        for entry in db.scalars(select(PlayniteLibraryEntry)).all()
+        if entry.dismissed
+    }
+
     # Start fresh: clear all previously scanned entries (only after the library read
     # succeeded, so a failed scan never wipes a good cache).
     db.execute(delete(PlayniteLibraryEntry))
@@ -195,14 +209,13 @@ def scan_library(db: Session, user: User) -> dict[str, Any]:
         )
         scanned += 1
 
-        # Auto-match by exact name (case-insensitive) against VGT's catalog — only for
-        # entries that aren't already linked and haven't been dismissed. Multiple
-        # Playnite entries with the same name share one VGT game.
-        if entry.game_id is None and not entry.dismissed:
-            game = _find_game_by_name(db, name)
-            if game is not None:
-                playnite_repository.set_game_id(db, entry, game.id)
-                new_matches += 1
+        # Restore the previous game link for this Playnite ID, if any — no name
+        # matching, so duplicate names across platforms stay as separate games.
+        if playnite_id in existing_links:
+            playnite_repository.set_game_id(db, entry, existing_links[playnite_id])
+            new_matches += 1
+        elif playnite_id in dismissed_ids:
+            playnite_repository.set_ignored(db, entry, True)
 
     db.commit()
     return {"scanned": scanned, "new_count": new_matches}
@@ -254,14 +267,11 @@ def _existing_playnite_formats(db: Session, game_id: int, platform_id: int | Non
 
 
 def _sync_one(db: Session, entry: PlayniteLibraryEntry) -> None:
-    # A NO_MATCH entry has no VGT game yet — reuse an existing game with the same
-    # name (case-insensitive) if one exists, so multiple Playnite entries for the
-    # same game (e.g. different platforms) share one VGT game. Otherwise create a
-    # new manual game (same as if the user had added it by hand).
+    # A NO_MATCH entry has no VGT game yet — always create a new manual game, even
+    # if another game shares the name (the user may own multiple copies across
+    # platforms). Each Playnite entry gets its own VGT game.
     if entry.game_id is None:
-        game = _find_game_by_name(db, entry.playnite_name)
-        if game is None:
-            game = game_repository.create_manual_game(db, name=entry.playnite_name, category=GameCategory.MAIN_GAME)
+        game = game_repository.create_manual_game(db, name=entry.playnite_name, category=GameCategory.MAIN_GAME)
         playnite_repository.set_game_id(db, entry, game.id)
         db.flush()
 
@@ -355,11 +365,6 @@ def _with_status(db: Session, entry: PlayniteLibraryEntry) -> PlayniteEntryWithS
     else:
         status = PlayniteEntryStatus.NEW
     return PlayniteEntryWithStatus(entry, status, vgt_minutes)
-
-
-def _find_game_by_name(db: Session, name: str) -> Game | None:
-    """Case-insensitive exact name match against VGT's games table."""
-    return db.scalars(select(Game).where(func.lower(Game.name) == name.lower())).first()
 
 
 def _require_entry(db: Session, playnite_id: str) -> PlayniteLibraryEntry:
