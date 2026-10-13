@@ -72,3 +72,17 @@ jobs:
           gh release create "${{ github.ref_name }}" \
             --title "${{ github.ref_name }}" \
             --generate-notes
+
+      - name: Update latest rolling release
+        if: github.ref_type == 'branch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Keep a rolling "latest" release so the :latest image always has
+          # auto-generated notes describing what changed.
+          gh release delete latest --yes 2>/dev/null || true
+          gh release create latest \
+            --title "Latest (master)" \
+            --generate-notes \
+            --target "${{ github.sha }}" \
+            --prerelease
