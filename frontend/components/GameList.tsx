@@ -7,7 +7,7 @@ import Collapse from "@mui/material/Collapse";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
-import type { MatchAllFilters } from "../api/games";
+import type { GameListFilters, MatchAllFilters } from "../api/games";
 import type { GameCategory, GameSortOption, GameSummary, MediaFormat, PlayStatus } from "../api/types";
 import { useCollections, useFranchises } from "../hooks/useCatalogBrowse";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
@@ -30,31 +30,39 @@ import { useScrollCollapse } from "../hooks/useScrollCollapse";
 
 const MIN_SEARCH_LENGTH = 3;
 
-const GameList = () => {
+interface GameListProps {
+  sessionPrefix?: string;
+  forcedFilters?: Partial<GameListFilters>;
+  header?: React.ReactNode;
+  subNav?: React.ReactNode;
+}
+
+const GameList = ({ sessionPrefix = "games", forcedFilters, header, subNav }: GameListProps) => {
   const { t } = useTranslation();
   const collapsed = useScrollCollapse();
-  const [searchKeyword, setSearchKeyword] = useSessionState("games.searchKeyword", "");
-  const [ownershipStatuses, setOwnershipStatuses] = useSessionState<OwnershipStatus[]>("games.ownershipStatuses", []);
-  const [ownershipExclude, setOwnershipExclude] = useSessionState("games.ownershipExclude", false);
-  const [platformIds, setPlatformIds] = useSessionState<number[]>("games.platformIds", []);
-  const [platformExclude, setPlatformExclude] = useSessionState("games.platformExclude", false);
-  const [tagIds, setTagIds] = useSessionState<number[]>("games.tagIds", []);
-  const [tagExclude, setTagExclude] = useSessionState("games.tagExclude", false);
-  const [collectionIds, setCollectionIds] = useSessionState<number[]>("games.collectionIds", []);
-  const [collectionExclude, setCollectionExclude] = useSessionState("games.collectionExclude", false);
-  const [franchiseIds, setFranchiseIds] = useSessionState<number[]>("games.franchiseIds", []);
-  const [franchiseExclude, setFranchiseExclude] = useSessionState("games.franchiseExclude", false);
-  const [gameTypes, setGameTypes] = useSessionState<GameCategory[]>("games.gameTypes", []);
-  const [gameTypeExclude, setGameTypeExclude] = useSessionState("games.gameTypeExclude", false);
-  const [formats, setFormats] = useSessionState<MediaFormat[]>("games.formats", []);
-  const [formatExclude, setFormatExclude] = useSessionState("games.formatExclude", false);
-  const [storefronts, setStorefronts] = useSessionState<string[]>("games.storefronts", []);
-  const [storefrontExclude, setStorefrontExclude] = useSessionState("games.storefrontExclude", false);
-  const [playStatuses, setPlayStatuses] = useSessionState<PlayStatus[]>("games.playStatuses", []);
-  const [playStatusExclude, setPlayStatusExclude] = useSessionState("games.playStatusExclude", false);
-  const [matchAll, setMatchAll] = useSessionState<MatchAllFilters>("games.matchAll", {});
-  const [steelbookOnly, setSteelbookOnly] = useSessionState("games.steelbookOnly", false);
-  const [sort, setSort] = useSessionState<GameSortOption>("games.sort", "name_asc");
+  const sp = sessionPrefix;
+  const [searchKeyword, setSearchKeyword] = useSessionState(`${sp}.\1`, "");
+  const [ownershipStatuses, setOwnershipStatuses] = useSessionState<OwnershipStatus[]>(`${sp}.ownershipStatuses`, []);
+  const [ownershipExclude, setOwnershipExclude] = useSessionState(`${sp}.\1`, false);
+  const [platformIds, setPlatformIds] = useSessionState<number[]>(`${sp}.platformIds`, []);
+  const [platformExclude, setPlatformExclude] = useSessionState(`${sp}.\1`, false);
+  const [tagIds, setTagIds] = useSessionState<number[]>(`${sp}.tagIds`, []);
+  const [tagExclude, setTagExclude] = useSessionState(`${sp}.\1`, false);
+  const [collectionIds, setCollectionIds] = useSessionState<number[]>(`${sp}.collectionIds`, []);
+  const [collectionExclude, setCollectionExclude] = useSessionState(`${sp}.\1`, false);
+  const [franchiseIds, setFranchiseIds] = useSessionState<number[]>(`${sp}.franchiseIds`, []);
+  const [franchiseExclude, setFranchiseExclude] = useSessionState(`${sp}.\1`, false);
+  const [gameTypes, setGameTypes] = useSessionState<GameCategory[]>(`${sp}.gameTypes`, []);
+  const [gameTypeExclude, setGameTypeExclude] = useSessionState(`${sp}.\1`, false);
+  const [formats, setFormats] = useSessionState<MediaFormat[]>(`${sp}.formats`, []);
+  const [formatExclude, setFormatExclude] = useSessionState(`${sp}.\1`, false);
+  const [storefronts, setStorefronts] = useSessionState<string[]>(`${sp}.storefronts`, []);
+  const [storefrontExclude, setStorefrontExclude] = useSessionState(`${sp}.\1`, false);
+  const [playStatuses, setPlayStatuses] = useSessionState<PlayStatus[]>(`${sp}.playStatuses`, []);
+  const [playStatusExclude, setPlayStatusExclude] = useSessionState(`${sp}.\1`, false);
+  const [matchAll, setMatchAll] = useSessionState<MatchAllFilters>(`${sp}.matchAll`, {});
+  const [steelbookOnly, setSteelbookOnly] = useSessionState(`${sp}.\1`, false);
+  const [sort, setSort] = useSessionState<GameSortOption>(`${sp}.sort`, "name_asc");
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<number>>(new Set());
   const [manageTagsOpen, setManageTagsOpen] = useState(false);
@@ -86,6 +94,7 @@ const GameList = () => {
 
   const gameListFilters = useMemo(
     () => ({
+      ...forcedFilters,
       search: isSearchActive ? debouncedKeyword : undefined,
       platformIds: platformIds.length > 0 ? platformIds : undefined,
       platformExclude,
@@ -129,6 +138,7 @@ const GameList = () => {
       matchAll,
       steelbookOnly,
       sort,
+      forcedFilters,
     ]
   );
   const { data: games, isLoading, isFetching } = useGames(gameListFilters);
@@ -228,8 +238,9 @@ const GameList = () => {
           boxShadow: "0 4px 8px -4px rgba(0, 0, 0, 0.2)",
         }}
       >
-        <GamesSubNav />
+        {subNav ?? <GamesSubNav />}
         <Collapse in={!collapsed}>
+        {header ?? (
         <Box
           sx={{
             display: "flex",
@@ -256,6 +267,7 @@ const GameList = () => {
             {t("games.list.addGameButton")}
           </Button>
         </Box>
+        )}
         </Collapse>
         <GameListToolbar
           searchKeyword={searchKeyword}
