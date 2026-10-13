@@ -18,12 +18,13 @@ My code is free to use and is currently built off Version 1.30.0. Just let me kn
 - Unlink IGDB only option (keeps game as manual entry)
 - Added date added sort option
 - Added unlinked games section in insights
-- Google image search for cover art
+- Google image search for cover art(broken)
 - Platform page added
 - Platform Manager page added
 - Added platforms to Public page
 - Added dates to Games Calender section
 - Removed Events from Dashboard
+- Added Linked cover art (local nas or web).
 - Many Fixes
 
 ## In-progress features (separate branches)
