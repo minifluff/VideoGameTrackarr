@@ -1,3 +1,6 @@
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.orm import Session
+
 from app.api.deps import get_current_user, get_db
 from app.api.routes.game_filters import GameFilterParams
 from app.schemas.game import GameSummaryResponse, game_summary_from_orm
@@ -10,8 +13,6 @@ from app.schemas.platform_detail import (
     platform_summary_from_orm,
 )
 from app.services import insight_service, platform_service
-from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/api/platforms", tags=["platforms"], dependencies=[Depends(get_current_user)])
 
