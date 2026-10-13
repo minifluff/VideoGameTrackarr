@@ -59,6 +59,8 @@ const EDITION_TAGS = new Set([
   "vr",
   "wii u roms",
   "3ds roms",
+  "sega genesis mini",
+  "sega genesis mini 2",
 ]);
 
 const tagsToEdition = (tags: string | null): string => {
