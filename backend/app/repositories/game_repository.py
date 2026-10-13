@@ -136,6 +136,8 @@ class GameSortOption(enum.Enum):
     NAME_DESC = "name_desc"
     RELEASE_DATE_ASC = "release_date_asc"
     RELEASE_DATE_DESC = "release_date_desc"
+    DATE_ADDED_ASC = "date_added_asc"
+    DATE_ADDED_DESC = "date_added_desc"
 
 
 def _order_by_for_sort(sort: GameSortOption) -> ColumnElement[Any]:
@@ -145,6 +147,10 @@ def _order_by_for_sort(sort: GameSortOption) -> ColumnElement[Any]:
         return Game.first_release_date.asc()
     if sort == GameSortOption.RELEASE_DATE_DESC:
         return Game.first_release_date.desc()
+    if sort == GameSortOption.DATE_ADDED_ASC:
+        return Game.created_at.asc()
+    if sort == GameSortOption.DATE_ADDED_DESC:
+        return Game.created_at.desc()
     return Game.name.asc()
 
 
