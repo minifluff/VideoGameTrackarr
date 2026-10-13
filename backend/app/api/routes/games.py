@@ -199,6 +199,17 @@ async def link_game_to_igdb_via_parent(
     return _game_detail_response(db, game)
 
 
+@router.post("/{game_id}/change-igdb-link", response_model=GameDetailResponse)
+async def change_igdb_link(
+    game_id: int,
+    body: GameImportRequest,
+    db: Session = Depends(get_db),
+    igdb_client: IGDBClient = Depends(get_igdb_client),
+) -> GameDetailResponse:
+    game = await game_service.change_igdb_link(db, igdb_client, game_id, body.igdb_id)
+    return _game_detail_response(db, game)
+
+
 @router.post("/{game_id}/merge-into-igdb", response_model=GameDetailResponse)
 def merge_game_into_igdb(
     game_id: int,
