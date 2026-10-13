@@ -90,6 +90,19 @@ def get_public_game(token: str, game_id: int, db: Session = Depends(get_db)) -> 
     return public_game_detail_from_orm(status, owned_platforms=owned_platforms)
 
 
+@router.get("/appearance", response_model=dict)
+def get_public_appearance(
+    token: str,
+    db: Session = Depends(get_db),
+) -> dict:
+    """Public appearance settings for the share page."""
+    user = auth_service.get_user_by_share_token(db, token)
+    return {
+        "accentColor": user.accent_color,
+        "appTitle": user.app_title,
+    }
+
+
 @router.get("/devices", response_model=list[PublicDeviceSummaryResponse])
 def list_public_devices(
     token: str, search: str | None = Query(default=None), db: Session = Depends(get_db)
