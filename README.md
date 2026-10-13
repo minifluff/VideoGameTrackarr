@@ -23,6 +23,7 @@ My code is free to use and is currently built off Version 1.30.0. Just let me kn
 - Platform Manager page added
 - Added platforms to Public page
 - Added dates to Games Calender section
+- Removed Events from Dashboard
 - Many Fixes
 
 ## In-progress features (separate branches)
