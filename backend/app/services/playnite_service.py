@@ -209,20 +209,26 @@ def scan_library(db: Session, user: User) -> dict[str, Any]:
         normalized = _normalize_game_data(game_data, platforms)
         if normalized is None:
             continue
-        playnite_id, name, platform_name, playtime_minutes, last_played, tags = normalized
+        playnite_id, name, platform_names, playtime_minutes, last_played, tags = normalized
 
-        entry = playnite_repository.upsert_entry(
-            db, playnite_id, name, platform_name, playtime_minutes, last_played, tags
-        )
-        scanned += 1
+        # One entry per platform — a game on multiple platforms creates multiple
+        # entries, each getting its own VGT game on sync. The entry ID is suffixed
+        # with the platform index so re-scans restore the same links.
+        platforms_to_scan = platform_names if platform_names else [None]
+        for idx, platform_name in enumerate(platforms_to_scan):
+            entry_id = playnite_id if idx == 0 else f"{playnite_id}#platform{idx}"
+            entry = playnite_repository.upsert_entry(
+                db, entry_id, name, platform_name, playtime_minutes, last_played, tags
+            )
+            scanned += 1
 
-        # Restore the previous game link for this Playnite ID, if any — no name
-        # matching, so duplicate names across platforms stay as separate games.
-        if playnite_id in existing_links:
-            playnite_repository.set_game_id(db, entry, existing_links[playnite_id])
-            new_matches += 1
-        elif playnite_id in dismissed_ids:
-            playnite_repository.set_ignored(db, entry, True)
+            # Restore the previous game link for this entry ID, if any — no name
+            # matching, so duplicate names across platforms stay as separate games.
+            if entry_id in existing_links:
+                playnite_repository.set_game_id(db, entry, existing_links[entry_id])
+                new_matches += 1
+            elif entry_id in dismissed_ids:
+                playnite_repository.set_ignored(db, entry, True)
 
     db.commit()
     return {"scanned": scanned, "new_count": new_matches}
@@ -468,12 +474,13 @@ def _read_playnite_library(
 
 def _normalize_game_data(
     game_data: dict[str, Any], platforms: dict[str, str]
-) -> tuple[str, str, str | None, int, datetime | None, str | None] | None:
-    """Extracts (playnite_id, name, platform_name, playtime_minutes, last_played, tags)
+) -> tuple[str, str, list[str], int, datetime | None, str | None] | None:
+    """Extracts (playnite_id, name, platform_names, playtime_minutes, last_played, tags)
     from a raw game dict, handling both the native Playnite library format
     (Id/Name/Platforms as GUIDs/Playtime in seconds) and the Playnite Library Exporter
     format (playniteId/name/platforms as names/playtimeSeconds). Returns None if the
-    row has no usable id or name. Tags are joined into a comma-separated string."""
+    row has no usable id or name. Tags are joined into a comma-separated string.
+    platform_names is a list — one entry is created per platform."""
     # Exporter format uses camelCase keys; native uses PascalCase.
     playnite_id = str(game_data.get("playniteId") or game_data.get("Id") or "").strip()
     name = str(game_data.get("name") or game_data.get("Name") or "").strip()
@@ -483,7 +490,7 @@ def _normalize_game_data(
     # Exporter format: platforms is already a list of names.
     raw_platforms = game_data.get("platforms")
     if isinstance(raw_platforms, list) and raw_platforms and isinstance(raw_platforms[0], str):
-        platform_name = str(raw_platforms[0]).strip() or None
+        platform_names = [str(p).strip() for p in raw_platforms if str(p).strip()]
     else:
         # Native format: Platforms is a list of GUIDs resolved via platforms.json.
         platform_names = [
@@ -491,7 +498,6 @@ def _normalize_game_data(
             for pid in (game_data.get("Platforms") or [])
             if platforms.get(str(pid))
         ]
-        platform_name = platform_names[0] if platform_names else None
 
     playtime_seconds = game_data.get("playtimeSeconds")
     if playtime_seconds is None:
@@ -508,7 +514,7 @@ def _normalize_game_data(
     raw_tags = game_data.get("tags") or game_data.get("Tags") or []
     tags = ", ".join(str(t).strip() for t in raw_tags if str(t).strip()) or None
 
-    return playnite_id, name, platform_name, playtime_minutes, last_played, tags
+    return playnite_id, name, platform_names, playtime_minutes, last_played, tags
 
 
 def _read_smb_json(tree: Any, path: str) -> Any:
