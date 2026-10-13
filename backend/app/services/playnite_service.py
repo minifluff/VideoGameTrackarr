@@ -6,10 +6,10 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.models.catalog import Game, GameCategory
+from app.models.catalog import GameCategory
 from app.models.library import LibraryStatus, MediaFormat, Tag
 from app.models.playnite import PlayniteLibraryEntry
 from app.models.system import User
