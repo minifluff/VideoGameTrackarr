@@ -489,7 +489,11 @@
       "columnNotes": "Notes",
       "columnEdition": "Edition",
       "columnFormat": "Format",
-      "syncingProgress": "Syncing {{done}} of {{total}} games..."
+      "syncingProgress": "Syncing {{done}} of {{total}} games...",
+      "clearCacheButton": "Clear cache",
+      "clearingCache": "Clearing...",
+      "clearCacheSuccess": "Cleared {{cleared}} cached entries",
+      "clearCacheError": "Failed to clear cache"
     },
     "igdbAutoLink": {
       "heading": "IGDB Auto-Link",
