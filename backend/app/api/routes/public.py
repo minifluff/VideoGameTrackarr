@@ -1,6 +1,3 @@
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
-
 from app.api.deps import get_db
 from app.models.library import LibraryStatus
 from app.repositories.game_repository import GameSortOption
@@ -15,6 +12,8 @@ from app.schemas.public import (
     public_game_from_orm,
 )
 from app.services import accessory_service, auth_service, device_service, game_service
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm import Session
 
 # No auth dependency — this is the app's one deliberately unauthenticated router, gated
 # instead by the unlisted per-user token in the path. See auth_service.get_user_by_share_token.
@@ -35,10 +34,9 @@ def list_public_games(
     game_ids = [g.game.id for g in games]
     platforms_by_game: dict[int, set[str]] = {}
     if game_ids:
-        from sqlalchemy import select
-
         from app.models.catalog import Platform
         from app.models.library import LibraryItem
+        from sqlalchemy import select
         rows = db.execute(
             select(LibraryItem.game_id, Platform.name)
             .join(Platform, LibraryItem.platform_id == Platform.id)
@@ -73,10 +71,9 @@ def get_public_game(token: str, game_id: int, db: Session = Depends(get_db)) -> 
     auth_service.get_user_by_share_token(db, token)
     status = game_service.get_public_game_detail(db, game_id)
     # Owned platforms for this game.
-    from sqlalchemy import select
-
     from app.models.catalog import Platform
     from app.models.library import LibraryItem
+    from sqlalchemy import select
 
     rows = db.execute(
         select(Platform.name)
