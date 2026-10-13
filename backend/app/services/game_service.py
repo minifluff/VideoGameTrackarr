@@ -280,6 +280,23 @@ async def link_game_to_igdb(db: Session, igdb_client: IGDBClient, game_id: int, 
     return result
 
 
+async def change_igdb_link(db: Session, igdb_client: IGDBClient, game_id: int, new_igdb_id: int) -> GameWithStatus:
+    """Changes a game's IGDB link to a different IGDB game: clears the existing
+    link, then links to the new IGDB ID (same as link_game_to_igdb)."""
+    game = db.get(Game, game_id)
+    if game is None:
+        raise NotFoundError(f"Game {game_id} not found")
+    if game.igdb_id is None:
+        raise ConflictError(f"Game {game_id} is not linked to IGDB")
+    if game.igdb_id == new_igdb_id:
+        raise ConflictError(f"Game {game_id} is already linked to IGDB game {new_igdb_id}")
+
+    # Clear the old link so link_game_to_igdb's "already linked" check passes.
+    game.igdb_id = None
+    db.flush()
+    return await link_game_to_igdb(db, igdb_client, game_id, new_igdb_id)
+
+
 async def link_addon_via_new_parent(
     db: Session, igdb_client: IGDBClient, game_id: int, addon_igdb_id: int
 ) -> GameWithStatus:
