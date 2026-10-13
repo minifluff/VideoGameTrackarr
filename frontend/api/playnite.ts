@@ -59,6 +59,11 @@ export async function scanPlayniteLibrary(): Promise<PlayniteScanResult> {
   return response.data;
 }
 
+export async function clearPlayniteCache(): Promise<{ cleared: number }> {
+  const response = await apiClient.post<{ cleared: number }>("/api/integrations/playnite/clear-cache");
+  return response.data;
+}
+
 export async function listPlayniteEntries(): Promise<PlayniteEntry[]> {
   const response = await apiClient.get<PlayniteEntry[]>("/api/integrations/playnite/entries");
   return response.data;
