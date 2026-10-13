@@ -8,6 +8,7 @@ import {
   getGame,
   importGame,
   changeIgdbLink,
+  unlinkIgdb,
   linkGameToIgdb,
   linkGameToIgdbViaParent,
   listAddons,
@@ -199,6 +200,17 @@ export function useChangeIgdbLink(gameId: number) {
       queryClient.invalidateQueries({ queryKey: ["games"] });
       queryClient.invalidateQueries({ queryKey: ["insights"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+export function useUnlinkIgdb(gameId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => unlinkIgdb(gameId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["games", gameId] });
+      queryClient.invalidateQueries({ queryKey: ["games"] });
     },
   });
 }
