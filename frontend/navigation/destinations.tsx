@@ -48,7 +48,6 @@ export interface NavDestination {
 export function getNavDestinations(t: TFunction): NavDestination[] {
   return [
     { to: "/", label: t("nav.dashboard"), icon: <DashboardIcon /> },
-    { to: "/events", label: t("nav.events"), icon: <EventIcon /> },
     {
       to: "/games",
       label: t("nav.games"),
@@ -69,6 +68,7 @@ export function getNavDestinations(t: TFunction): NavDestination[] {
         { to: "/hardware/accessory/add", label: t("nav.addAccessory"), icon: <AddIcon /> },
       ],
     },
+    { to: "/events", label: t("nav.events"), icon: <EventIcon /> },
     {
       to: "/insights",
       label: t("nav.insights"),
