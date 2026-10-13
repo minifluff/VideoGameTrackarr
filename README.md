@@ -12,7 +12,6 @@ For the full documentation, features, screenshots, and installation instructions
 - CSV import
 - Custom appearance settings (accent color, app title)
 - Database reset (Danger Zone in Settings)
-- GHCR image auto-rebuild on every push to `master`
 
 ## In-progress features (separate branches)
 
