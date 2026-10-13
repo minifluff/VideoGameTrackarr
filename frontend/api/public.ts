@@ -11,9 +11,10 @@ export async function listPublicGames(
   token: string,
   search?: string,
   sort?: GameSortOption,
+  platformIds?: number[],
 ): Promise<PublicGameSummary[]> {
   const response = await publicClient.get<PublicGameSummary[]>(`/api/public/${token}/games`, {
-    params: { search: search || undefined, sort },
+    params: { search: search || undefined, sort, platformId: platformIds?.length ? platformIds : undefined },
   });
   return response.data;
 }
@@ -34,5 +35,10 @@ export async function listPublicAccessories(token: string, search?: string): Pro
   const response = await publicClient.get<PublicAccessorySummary[]>(`/api/public/${token}/accessories`, {
     params: { search: search || undefined },
   });
+  return response.data;
+}
+
+export async function listPublicPlatforms(token: string): Promise<{ id: number; name: string }[]> {
+  const response = await publicClient.get<{ id: number; name: string }[]>(`/api/public/${token}/platforms`);
   return response.data;
 }
