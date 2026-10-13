@@ -14,7 +14,7 @@ def test_public_games_with_valid_token(auth_client, client, seed_game):
     body = response.json()
     assert [game["name"] for game in body] == ["Test Game"]
     game = body[0]
-    assert set(game.keys()) == {"id", "name", "coverUrl", "category", "firstReleaseDate", "owned", "wishlisted"}
+    assert set(game.keys()) == {"id", "name", "coverUrl", "category", "firstReleaseDate", "owned", "wishlisted", "ownedPlatforms"}
 
 
 def test_public_games_wrong_token_is_404(client, seed_game):
@@ -119,6 +119,7 @@ PUBLIC_GAME_DETAIL_KEYS = {
     "firstReleaseDate",
     "owned",
     "wishlisted",
+    "ownedPlatforms",
     "igdbId",
     "igdbUrl",
     "summary",
