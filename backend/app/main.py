@@ -41,7 +41,6 @@ from app.api.routes import (
     roms,
     sales_tracking,
     share,
-    system,
     tags,
     uploads,
     version,
@@ -190,7 +189,6 @@ app.include_router(uploads.router)
 app.include_router(jobs.router)
 app.include_router(version.router)
 app.include_router(share.router)
-app.include_router(system.router)
 app.include_router(integrations.router)
 app.include_router(sales_tracking.router)
 app.include_router(roms.router)
