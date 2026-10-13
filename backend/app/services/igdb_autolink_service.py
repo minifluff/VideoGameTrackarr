@@ -5,6 +5,7 @@ name, and links them automatically when there's a confident exact match.
 """
 
 import re
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
