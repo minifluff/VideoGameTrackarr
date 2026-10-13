@@ -156,6 +156,13 @@ def set_config(
     return user
 
 
+def clear_cache(db: Session) -> dict[str, int]:
+    """Deletes all cached Playnite library entries so the next scan starts fresh."""
+    result = db.execute(delete(PlayniteLibraryEntry))
+    db.commit()
+    return {"cleared": result.rowcount}
+
+
 def scan_library(db: Session, user: User) -> dict[str, Any]:
     """Reads the Playnite library from the configured SMB share and rebuilds the local
     entry cache from scratch — every previous entry is deleted first, so the cache
