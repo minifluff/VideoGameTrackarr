@@ -7,6 +7,7 @@ import {
   getBulkImportStatus,
   getGame,
   importGame,
+  changeIgdbLink,
   linkGameToIgdb,
   linkGameToIgdbViaParent,
   listAddons,
@@ -182,6 +183,19 @@ export function useLinkGameToIgdb(gameId: number) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["games", gameId] });
       queryClient.invalidateQueries({ queryKey: ["games", gameId, "addons"] });
+      queryClient.invalidateQueries({ queryKey: ["games"] });
+      queryClient.invalidateQueries({ queryKey: ["insights"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+export function useChangeIgdbLink(gameId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (igdbId: number) => changeIgdbLink(gameId, igdbId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["games", gameId] });
       queryClient.invalidateQueries({ queryKey: ["games"] });
       queryClient.invalidateQueries({ queryKey: ["insights"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
