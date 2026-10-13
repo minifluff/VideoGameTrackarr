@@ -227,6 +227,11 @@ export const tagManagerCrumbs: CrumbsFn = (_params, t) => [
   { label: t("nav.tagManager") },
 ];
 
+export const platformManagerCrumbs: CrumbsFn = (_params, t) => [
+  { label: t("nav.settings"), to: "/settings" },
+  { label: t("nav.platformManager") },
+];
+
 export const jobsCrumbs: CrumbsFn = (_params, t) => [
   { label: t("nav.settings"), to: "/settings" },
   { label: t("nav.jobs") },
