@@ -20,11 +20,27 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+def _column_exists(table: str, column: str) -> bool:
+    bind = op.get_bind()
+    insp = sa.inspect(bind)
+    return any(c["name"] == column for c in insp.get_columns(table))
+
+
+def _table_exists(table: str) -> bool:
+    return sa.inspect(op.get_bind()).has_table(table)
+
+
 def upgrade() -> None:
-    op.add_column('users', sa.Column('playnite_smb_path', sa.String(1024), nullable=True))
-    op.add_column('users', sa.Column('playnite_smb_username', sa.String(255), nullable=True))
-    op.add_column('users', sa.Column('playnite_smb_password', sa.String(255), nullable=True))
-    op.create_table(
+    # Idempotent: the original version of this migration partially applied on SQLite
+    # (added the users columns, then failed on a bad add_column), so guard each step.
+    if not _column_exists("users", "playnite_smb_path"):
+        op.add_column('users', sa.Column('playnite_smb_path', sa.String(1024), nullable=True))
+    if not _column_exists("users", "playnite_smb_username"):
+        op.add_column('users', sa.Column('playnite_smb_username', sa.String(255), nullable=True))
+    if not _column_exists("users", "playnite_smb_password"):
+        op.add_column('users', sa.Column('playnite_smb_password', sa.String(255), nullable=True))
+    if not _table_exists("playnite_library_entries"):
+        op.create_table(
         'playnite_library_entries',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('playnite_id', sa.String(64), nullable=False),
