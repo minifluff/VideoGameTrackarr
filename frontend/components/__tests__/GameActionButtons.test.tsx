@@ -10,6 +10,15 @@ vi.mock("../../hooks/useGames", () => ({
   useDeleteGame: () => mutation,
   useResyncGame: () => mutation,
   useClaimDiscoveredGame: () => mutation,
+  useLinkGameToIgdb: () => mutation,
+  useChangeIgdbLink: () => mutation,
+  useLinkGameToIgdbViaParent: () => mutation,
+  useMergeGameIntoIgdb: () => mutation,
+  useGames: () => ({ data: [] }),
+}));
+
+vi.mock("../../hooks/useIgdbSearch", () => ({
+  useIgdbSearch: () => ({ data: [], isFetching: false, error: null }),
 }));
 
 function renderButtons(libraryItems: LibraryItem[] | undefined) {
