@@ -60,6 +60,9 @@ interface CatalogBrowseGridProps {
   resyncKind?: CatalogResyncKind;
   slug: string | undefined;
   resyncLabel?: string;
+  // When set (platform pages), games are scoped to this platform ID via the
+  // platformIds filter, and the platform filter is hidden from the toolbar.
+  lockedPlatformId?: number;
 }
 
 // A sibling of GameList.tsx — same filter-state shape, same GameListToolbar, reused as-is —
@@ -74,6 +77,7 @@ const CatalogBrowseGrid = ({
   resyncKind,
   slug,
   resyncLabel,
+  lockedPlatformId,
 }: CatalogBrowseGridProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -129,10 +133,12 @@ const CatalogBrowseGrid = ({
     [realStorefronts]
   );
 
+  const effectivePlatformIds =
+    lockedPlatformId !== undefined ? [lockedPlatformId] : platformIds;
   const sharedFilters = useMemo(
     () => ({
       search: isSearchActive ? debouncedKeyword : undefined,
-      platformIds: platformIds.length > 0 ? platformIds : undefined,
+      platformIds: effectivePlatformIds.length > 0 ? effectivePlatformIds : undefined,
       platformExclude,
       tagIds: tagIds.length > 0 ? tagIds : undefined,
       tagExclude,
@@ -177,13 +183,14 @@ const CatalogBrowseGrid = ({
     ]
   );
 
+  const isPlatform = lockedPlatformId !== undefined;
   const gamesFilters = useMemo(
     () => ({
       ...sharedFilters,
       requiredCollectionId: isCollection ? entityId : undefined,
-      requiredFranchiseId: !isCollection ? entityId : undefined,
+      requiredFranchiseId: !isCollection && !isPlatform ? entityId : undefined,
     }),
-    [sharedFilters, isCollection, entityId]
+    [sharedFilters, isCollection, isPlatform, entityId]
   );
   const { data: games, isLoading: isGamesLoading } = useGames(gamesFilters, { enabled: !!entityId });
 

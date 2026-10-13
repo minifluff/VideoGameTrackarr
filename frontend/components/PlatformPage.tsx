@@ -27,6 +27,7 @@ const PlatformPage = () => {
       entityId={data?.id}
       isLoading={isLoading}
       slug={platformSlug}
+      lockedPlatformId={data?.id}
     />
   );
 };
