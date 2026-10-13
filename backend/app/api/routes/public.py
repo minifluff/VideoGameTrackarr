@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
+from app.models.library import LibraryStatus
 from app.repositories.game_repository import GameSortOption
 from app.schemas.public import (
     PublicAccessorySummaryResponse,
@@ -34,9 +35,10 @@ def list_public_games(
     game_ids = [g.game.id for g in games]
     platforms_by_game: dict[int, set[str]] = {}
     if game_ids:
+        from sqlalchemy import select
+
         from app.models.catalog import Platform
         from app.models.library import LibraryItem
-        from sqlalchemy import select
         rows = db.execute(
             select(LibraryItem.game_id, Platform.name)
             .join(Platform, LibraryItem.platform_id == Platform.id)
