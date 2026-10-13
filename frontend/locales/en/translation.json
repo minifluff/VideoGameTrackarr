@@ -66,7 +66,8 @@
     "emulation": "Emulation",
     "platforms": "Platforms",
     "removeGames": "Remove Games",
-    "playniteSync": "Playnite Sync"
+    "playniteSync": "Playnite Sync",
+    "unlinkedGames": "Unlinked Games"
   },
   "breadcrumbs": {
     "edit": "Edit",
@@ -1085,6 +1086,11 @@
       "currentPriceLabel": "{{price}} at {{shop}} (-{{cut}}%)",
       "historicalLowLabel": "Historical low: {{price}}",
       "targetPriceLabel": "Target: {{price}}"
+    },
+    "unlinkedGames": {
+      "description": "Games in your library that aren't linked to IGDB yet.",
+      "emptyState": "All games are linked to IGDB.",
+      "columnName": "Name"
     }
   },
   "catalog": {
