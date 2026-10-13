@@ -4,6 +4,7 @@ Finds games in the library that have no IGDB link, searches IGDB for each by
 name, and links them automatically when there's a confident exact match.
 """
 
+import re
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -19,12 +20,18 @@ def list_unlinked_games(db: Session) -> list[Game]:
     )
 
 
+def _normalize_name(name: str) -> str:
+    """Normalizes a game name for fuzzy matching: lowercase, strip all
+    non-alphanumeric characters (spaces, punctuation, symbols)."""
+    return re.sub(r"[^a-z0-9]", "", name.lower())
+
+
 def _find_exact_match(game_name: str, results: list[dict]) -> dict | None:
-    """Returns the IGDB result whose name matches exactly (case-insensitive),
-    or None if there's no exact match."""
-    target = game_name.strip().lower()
+    """Returns the IGDB result whose name matches after normalization
+    (case-insensitive, ignoring spaces and symbols), or None if no match."""
+    target = _normalize_name(game_name.strip())
     for result in results:
-        name = str(result.get("name", "")).strip().lower()
+        name = _normalize_name(str(result.get("name", "")).strip())
         if name == target:
             return result
     return None
