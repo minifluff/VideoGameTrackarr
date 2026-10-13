@@ -12,7 +12,7 @@ Currently built off Version 1.30.0
 - Steam sync "Sync all" button
 - CSV import
 - Custom appearance settings (accent color, app title)
-- Database reset (Danger Zone in Settings)
+- Master Database reset (Danger Zone in Settings)
 
 ## In-progress features (separate branches)
 
