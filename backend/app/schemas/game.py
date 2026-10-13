@@ -326,3 +326,23 @@ def igdb_game_preview_from_payload(
         ),
         **store_urls,
     )
+
+
+class IGDBAutolinkRequest(CamelModel):
+    game_ids: list[int]
+
+
+class IGDBAutolinkFailure(CamelModel):
+    game_id: int
+    error: str
+
+
+class IGDBAutolinkResultResponse(CamelModel):
+    linked: list[str]
+    no_match: list[str]
+    failed: list[IGDBAutolinkFailure]
+
+
+class UnlinkedGameResponse(CamelModel):
+    id: int
+    name: str
