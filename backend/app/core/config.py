@@ -44,6 +44,13 @@ class Settings(BaseSettings):
     # see app/api/routes/integrations.py for the configured/not-configured status check.
     steam_api_key: str | None = None
 
+    # Google Custom Search API for cover art image search — same "bring your own
+    # credentials" shape as Steam/IGDB above. Get a free key from Google Cloud
+    # Console (enable Custom Search JSON API) and create a search engine at
+    # https://programmablesearchengine.google.com/
+    google_search_api_key: str | None = None
+    google_search_engine_id: str | None = None
+
     # IsThereAnyDeal API key — same "bring your own credentials," optional shape as Steam
     # above. itad_country picks which region's shops/currency prices come back in;
     # deliberately separate from the app's own display-currency setting (that's a display
