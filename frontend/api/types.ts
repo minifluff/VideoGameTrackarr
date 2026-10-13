@@ -164,6 +164,7 @@ export interface PublicGameSummary {
   firstReleaseDate: number | null;
   owned: boolean;
   wishlisted: boolean;
+  ownedPlatforms: string[];
 }
 
 // GET /api/public/{token}/games/{id}: just the About section's data (no tags, library
