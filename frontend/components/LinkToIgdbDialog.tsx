@@ -129,7 +129,7 @@ const LinkToIgdbDialog = ({ open, gameId, gameName, gameCategory, onClose, chang
   // to the right outcome based on its category — link directly, check for/offer to import
   // its parent, or refuse.
   const resolveAndLink = (result: IgdbSearchResult) => {
-    if (result.category !== null && GAME_TYPE_CATEGORIES.includes(result.category)) {
+    if (result.category === null || GAME_TYPE_CATEGORIES.includes(result.category)) {
       void handleLink(result.igdbId, result.name);
       return;
     }
