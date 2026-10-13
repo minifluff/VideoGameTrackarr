@@ -1086,7 +1086,9 @@
       "wishlist": {
         "confirmAddDescription": "This will add \"{{name}}\" to your Wishlist (PC, Digital, Steam)."
       },
-      "syncAllButton": "Sync all"
+      "syncAllButton": "Sync all",
+      "unignoreButton": "Unignore",
+      "unignoreErrorToast": "Could not unignore this entry. Please try again."
     },
     "saleTracked": {
       "heading": "Sale - Tracked",
