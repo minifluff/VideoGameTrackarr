@@ -24,14 +24,27 @@ def get_by_name(db: Session, name: str) -> Platform | None:
     return db.scalars(select(Platform).where(Platform.name == name)).first()
 
 
+def _slugify(name: str) -> str:
+    """Simple slug generator for platform names (e.g. 'PlayStation 5' -> 'playstation-5')."""
+    import re
+    slug = name.lower().strip()
+    slug = re.sub(r"[^a-z0-9]+", "-", slug)
+    return slug.strip("-") or "platform"
+
+
 def get_or_create_by_name(db: Session, name: str) -> Platform:
     # CSV import names platforms/regions as free text (matching what a personal
     # spreadsheet would have) — get-or-create by name, same lenient pattern as tags.
     platform = get_by_name(db, name)
     if platform is not None:
+        # Backfill slug for platforms created before slugs were generated —
+        # the Platforms page filters out slugless entries.
+        if not platform.slug:
+            platform.slug = _slugify(platform.name)
+            db.flush()
         return platform
 
-    platform = Platform(name=name)
+    platform = Platform(name=name, slug=_slugify(name))
     db.add(platform)
     db.flush()
     return platform
