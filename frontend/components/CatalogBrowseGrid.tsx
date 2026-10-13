@@ -161,6 +161,7 @@ const CatalogBrowseGrid = ({
     [
       isSearchActive,
       debouncedKeyword,
+      lockedPlatformId,
       platformIds,
       platformExclude,
       tagIds,
