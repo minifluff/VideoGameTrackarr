@@ -778,7 +778,11 @@
       "playGameButton": "Play Game",
       "resyncChoiceTitle": "Resync or change IGDB link?",
       "resyncExistingButton": "Resync existing link",
-      "changeLinkButton": "Change IGDB link"
+      "changeLinkButton": "Change IGDB link",
+      "unlinkIgdbButton": "Unlink IGDB only",
+      "deleteEntirelyButton": "Delete entirely",
+      "unlinkSuccessToast": "Unlinked from IGDB",
+      "unlinkErrorToast": "Failed to unlink from IGDB"
     },
     "addons": {
       "title": "Addons",
