@@ -1,11 +1,13 @@
+from datetime import date
 import enum
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.identifiers import extract_uuid
 from app.models.catalog import CompanyRole, Game, GameCategory, IgdbReleaseRegion
-from app.models.library import MediaFormat, PlayStatus
+from app.models.library import GameProgress, MediaFormat, PlayStatus
 from app.repositories import (
     collection_repository,
     company_repository,
@@ -364,8 +366,25 @@ def merge_duplicate_game(db: Session, game_id: int, igdb_id: int) -> GameWithSta
     if target is None:
         raise NotFoundError(f"IGDB game {igdb_id} is not in your library")
 
-    if game_repository.game_has_progress(db, game.id) and game_repository.game_has_progress(db, target.id):
-        raise ConflictError("Both entries already track play progress — resolve that manually before merging")
+    # GameProgress is unique per (game_id, platform_id), so a blind merge would violate
+    # that constraint where both entries track progress for the same platform. Auto-resolve
+    # per-platform: keep the progress with more playtime (tie-break: most recently played),
+    # drop the loser, then let the merge re-point the survivor.
+    source_progress = db.scalars(select(GameProgress).where(GameProgress.game_id == game.id)).all()
+    target_progress_by_platform = {
+        p.platform_id: p
+        for p in db.scalars(select(GameProgress).where(GameProgress.game_id == target.id)).all()
+    }
+    for sp in source_progress:
+        tp = target_progress_by_platform.get(sp.platform_id)
+        if tp is None:
+            continue
+        source_wins = (sp.playtime_minutes, sp.last_played_at or date.min) > (
+            tp.playtime_minutes,
+            tp.last_played_at or date.min,
+        )
+        db.delete(tp if source_wins else sp)
+    db.flush()
 
     old_cover_url = game.cover_url
     game_repository.merge_game(db, source=game, target=target)
