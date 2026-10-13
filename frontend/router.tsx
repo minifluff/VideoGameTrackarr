@@ -44,6 +44,7 @@ import RemoveGamesPage from "./components/RemoveGamesPage";
 import PlayniteSyncPage from "./components/PlayniteSyncPage";
 import OnSalePage from "./components/OnSalePage";
 import TagManagerPage from "./components/TagManagerPage";
+import PlatformManagerPage from "./components/PlatformManagerPage";
 import PublicShell from "./PublicShell";
 import {
   accessoryCrumbs,
@@ -86,6 +87,7 @@ import {
   removeGamesCrumbs,
   playniteSyncCrumbs,
   tagManagerCrumbs,
+  platformManagerCrumbs,
 } from "./navigation/breadcrumbConfig";
 import Login from "./pages/Login";
 import ProtectedLayout from "./routes/ProtectedLayout";
@@ -246,6 +248,11 @@ const router = createBrowserRouter([
             path: "/settings/tags",
             element: <TagManagerPage />,
             handle: { crumbs: tagManagerCrumbs },
+          },
+          {
+            path: "/settings/platforms",
+            element: <PlatformManagerPage />,
+            handle: { crumbs: platformManagerCrumbs },
           },
           { path: "/settings/jobs", element: <JobsPage />, handle: { crumbs: jobsCrumbs } },
           {
