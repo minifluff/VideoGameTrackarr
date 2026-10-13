@@ -487,7 +487,8 @@
       "scanning": "Scanning...",
       "columnNotes": "Notes",
       "columnEdition": "Edition",
-      "columnFormat": "Format"
+      "columnFormat": "Format",
+      "syncingProgress": "Syncing {{done}} of {{total}} games..."
     }
   },
   "auth": {
