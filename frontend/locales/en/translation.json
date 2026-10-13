@@ -543,7 +543,13 @@
       "linkedGameHelperText": "Which game is this an addon of?",
       "officialNameRequiredError": "Official Name is required.",
       "linkedGameRequiredError": "Linked Game is required for this category.",
-      "uploadCoverError": "Error uploading cover image. Please try again."
+      "uploadCoverError": "Error uploading cover image. Please try again.",
+      "searchCoverButton": "Search web",
+      "coverSearchTitle": "Search for cover art",
+      "coverSearchPlaceholder": "Search Google for cover art...",
+      "coverSearchNotConfigured": "Google image search is not configured. Set GOOGLE_SEARCH_API_KEY and GOOGLE_SEARCH_ENGINE_ID in your environment to enable this feature.",
+      "coverSearchError": "Search failed. Please try again.",
+      "coverSearchNoResults": "No images found. Try a different search."
     },
     "edit": {
       "pageTitle": "Edit Game",
