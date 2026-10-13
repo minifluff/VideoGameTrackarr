@@ -404,7 +404,16 @@
       "playniteSaved": "Playnite settings saved",
       "playniteSaveError": "Failed to save Playnite settings",
       "playniteTestButton": "Test connection",
-      "playniteTestError": "Could not test the connection."
+      "playniteTestError": "Could not test the connection.",
+      "playniteCacheHeading": "Playnite Sync Cache",
+      "playniteCacheDescription": "Clears the cached Playnite library entries. Your games and settings are kept — the next scan will start fresh.",
+      "playniteClearCacheButton": "Clear cache",
+      "playniteClearCacheDialogTitle": "Clear Playnite cache?",
+      "playniteClearCacheDialogMessage": "This will delete all cached Playnite library entries, including sync links and ignored-entry state. Your VideoGameTrackarr games and integration settings will not be deleted. The next scan will start completely fresh.",
+      "playniteClearCacheConfirm": "Clear cache",
+      "playniteClearingCache": "Clearing…",
+      "playniteClearCacheSuccess": "Cleared {{cleared}} cached entries",
+      "playniteClearCacheError": "Failed to clear the cache"
     },
     "emulation": {
       "description": "Some systems need the console's BIOS to play in the browser. Upload them here once and every game on that system can use them.",
