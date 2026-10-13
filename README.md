@@ -13,6 +13,7 @@ Currently built off Version 1.30.0
 - CSV import
 - Custom appearance settings (accent color, app title)
 - Master Database reset (Danger Zone in Settings)
+- IGDB auto-link all games
 
 ## In-progress features (separate branches)
 
