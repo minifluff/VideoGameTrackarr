@@ -24,3 +24,24 @@ export async function listPlatformAddons(
   });
   return response.data;
 }
+
+export async function createPlatform(name: string, abbreviation?: string | null): Promise<PlatformResponse> {
+  const response = await apiClient.post<PlatformResponse>("/api/platforms", { name, abbreviation });
+  return response.data;
+}
+
+export async function updatePlatform(
+  platformId: number,
+  name: string,
+  abbreviation?: string | null
+): Promise<PlatformResponse> {
+  const response = await apiClient.patch<PlatformResponse>(`/api/platforms/${platformId}`, {
+    name,
+    abbreviation,
+  });
+  return response.data;
+}
+
+export async function deletePlatform(platformId: number): Promise<void> {
+  await apiClient.delete(`/api/platforms/${platformId}`);
+}
