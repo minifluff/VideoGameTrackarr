@@ -1,14 +1,16 @@
+
 """Auto-link manually-added games to IGDB by name matching.
 
 Finds games in the library that have no IGDB link, searches IGDB for each by
 name, and links them automatically when there's a confident exact match.
 """
 
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from app.models.catalog import Game
 from app.services import game_service
 from app.services.igdb_client import IGDBClient
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 
 def list_unlinked_games(db: Session) -> list[Game]:

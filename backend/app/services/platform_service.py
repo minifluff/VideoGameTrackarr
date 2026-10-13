@@ -1,10 +1,11 @@
 from typing import Any
 
+from sqlalchemy.orm import Session
+
 from app.models.catalog import Platform
 from app.repositories import platform_repository
 from app.repositories.game_repository import GameWithStatus
 from app.services.exceptions import ConflictError, NotFoundError
-from sqlalchemy.orm import Session
 
 
 def get_platform_with_games(db: Session, slug: str) -> tuple[Platform, list[GameWithStatus], list[GameWithStatus]]:
