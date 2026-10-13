@@ -6,6 +6,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs, { type Dayjs } from "dayjs";
 import CloseIcon from "@mui/icons-material/Close";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import SearchIcon from "@mui/icons-material/Search";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -28,6 +29,7 @@ import { useLanguage } from "../theme/LanguageProvider";
 import { gameIdentifier } from "../utils/identifiers";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import AutocompleteSelect from "./AutocompleteSelect";
+import CoverSearchDialog from "./CoverSearchDialog";
 
 interface CategoryOption {
   value: GameCategory;
@@ -75,6 +77,7 @@ const EditGameForm = ({ game }: EditGameFormProps) => {
     game.firstReleaseDate ? dayjs.unix(game.firstReleaseDate) : null
   );
   const [coverUrl, setCoverUrl] = useState(game.coverUrl ?? "");
+  const [coverSearchOpen, setCoverSearchOpen] = useState(false);
   const [developedBy, setDevelopedBy] = useState<string[]>(
     game.companies.filter((company) => company.role === "developer").map((company) => company.name)
   );
@@ -181,6 +184,9 @@ const EditGameForm = ({ game }: EditGameFormProps) => {
             >
               {coverUrl ? t("games.gameForm.replaceCoverButton") : t("games.gameForm.uploadCoverButton")}
               <input type="file" accept="image/*" hidden onChange={(event) => void handleCoverFileChange(event)} />
+            </Button>
+            <Button variant="outlined" startIcon={<SearchIcon />} onClick={() => setCoverSearchOpen(true)}>
+              {t("games.gameForm.searchCoverButton")}
             </Button>
             {coverUrl ? (
               <>
@@ -305,6 +311,12 @@ const EditGameForm = ({ game }: EditGameFormProps) => {
           </Stack>
         </Grid>
       </Grid>
+      <CoverSearchDialog
+        open={coverSearchOpen}
+        initialQuery={name.trim() ? `${name.trim()} game cover` : ""}
+        onSelect={(url) => setCoverUrl(url)}
+        onClose={() => setCoverSearchOpen(false)}
+      />
     </Paper>
   );
 };
