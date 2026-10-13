@@ -961,7 +961,9 @@
       "hardwareCalendarHeading": "Hardware Release Calendar",
       "onSaleHeading": "On Sale Now",
       "eventsHeading": "Ongoing/Upcoming Events",
-      "welcomeMessage": "Welcome to VideoGameTrackarr"
+      "welcomeMessage": "Welcome to VideoGameTrackarr",
+      "pageTitle": "Dashboard",
+      "addGameButton": "Add game"
     },
     "page": {
       "gamesHeading": "Games",
