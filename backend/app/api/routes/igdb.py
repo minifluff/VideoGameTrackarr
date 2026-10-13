@@ -7,8 +7,11 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user, get_db, get_igdb_client
 from app.schemas.game import (
     IgdbGamePreviewResponse,
+    IGDBAutolinkRequest,
+    IGDBAutolinkResultResponse,
     IGDBParentGameResponse,
     IGDBSearchResultResponse,
+    UnlinkedGameResponse,
     igdb_game_preview_from_payload,
 )
 from app.services import game_service
@@ -66,3 +69,23 @@ async def preview_igdb_game(
         db, igdb_client, igdb_id
     )
     return igdb_game_preview_from_payload(payload, category, store_urls, local_game)
+
+
+@router.get("/autolink/unlinked", response_model=list[UnlinkedGameResponse])
+def list_unlinked_games(
+    db: Session = Depends(get_db),
+) -> list[UnlinkedGameResponse]:
+    """Games in the library that aren't linked to IGDB yet."""
+    games = igdb_autolink_service.list_unlinked_games(db)
+    return [UnlinkedGameResponse(id=g.id, name=g.name) for g in games]
+
+
+@router.post("/autolink", response_model=IGDBAutolinkResultResponse)
+async def autolink_games(
+    payload: IGDBAutolinkRequest,
+    db: Session = Depends(get_db),
+    igdb_client: IGDBClient = Depends(get_igdb_client),
+) -> IGDBAutolinkResultResponse:
+    """Auto-links games to IGDB by exact name match."""
+    result = await igdb_autolink_service.autolink_games(db, igdb_client, payload.game_ids)
+    return IGDBAutolinkResultResponse.model_validate(result)
