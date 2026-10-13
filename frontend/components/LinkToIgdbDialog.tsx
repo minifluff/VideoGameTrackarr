@@ -17,7 +17,7 @@ import { toast } from "react-toastify";
 import { searchIgdb } from "../api/igdb";
 import type { GameCategory, IgdbSearchResult } from "../api/types";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
-import { useGames, useLinkGameToIgdb, useLinkGameToIgdbViaParent, useMergeGameIntoIgdb } from "../hooks/useGames";
+import { useChangeIgdbLink, useGames, useLinkGameToIgdb, useLinkGameToIgdbViaParent, useMergeGameIntoIgdb } from "../hooks/useGames";
 import { useIgdbSearch } from "../hooks/useIgdbSearch";
 import { gameIdentifier } from "../utils/identifiers";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
@@ -44,6 +44,7 @@ interface LinkToIgdbDialogProps {
   gameName: string;
   gameCategory: GameCategory | null;
   onClose: () => void;
+  changeMode?: boolean;
 }
 
 interface ParentNeeded {
@@ -57,7 +58,7 @@ interface DuplicateFound {
   name: string;
 }
 
-const LinkToIgdbDialog = ({ open, gameId, gameName, gameCategory, onClose }: LinkToIgdbDialogProps) => {
+const LinkToIgdbDialog = ({ open, gameId, gameName, gameCategory, onClose, changeMode = false }: LinkToIgdbDialogProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [query, setQuery] = useState(gameName);
@@ -67,6 +68,7 @@ const LinkToIgdbDialog = ({ open, gameId, gameName, gameCategory, onClose }: Lin
   const [duplicateFound, setDuplicateFound] = useState<DuplicateFound | null>(null);
   const [cannotBeAddedOpen, setCannotBeAddedOpen] = useState(false);
   const linkGameToIgdb = useLinkGameToIgdb(gameId);
+  const changeIgdbLink = useChangeIgdbLink(gameId);
   const linkViaParent = useLinkGameToIgdbViaParent(gameId);
   const mergeIntoIgdb = useMergeGameIntoIgdb(gameId);
   const { data: localGames } = useGames();
@@ -97,7 +99,7 @@ const LinkToIgdbDialog = ({ open, gameId, gameName, gameCategory, onClose }: Lin
     (result) => result.category !== null && allowedCategories.includes(result.category)
   );
   const igdbNotConfigured = isAxiosError(searchError) && searchError.response?.status === 503;
-  const isPending = linkGameToIgdb.isPending || linkViaParent.isPending || mergeIntoIgdb.isPending || isResolvingManualId;
+  const isPending = linkGameToIgdb.isPending || changeIgdbLink.isPending || linkViaParent.isPending || mergeIntoIgdb.isPending || isResolvingManualId;
 
   const handleLinkError = (error: unknown) => {
     console.error("Error linking game to IGDB:", error);
@@ -106,8 +108,13 @@ const LinkToIgdbDialog = ({ open, gameId, gameName, gameCategory, onClose }: Lin
 
   const handleLink = async (igdbId: number, name: string) => {
     try {
-      await linkGameToIgdb.mutateAsync(igdbId);
-      toast.success(t("igdb.linkedSuccess"), TOAST_OPTIONS);
+      if (changeMode) {
+        await changeIgdbLink.mutateAsync(igdbId);
+        toast.success(t("igdb.linkChangedSuccess"), TOAST_OPTIONS);
+      } else {
+        await linkGameToIgdb.mutateAsync(igdbId);
+        toast.success(t("igdb.linkedSuccess"), TOAST_OPTIONS);
+      }
       onClose();
     } catch (error) {
       if (isAxiosError(error) && error.response?.status === 409) {
