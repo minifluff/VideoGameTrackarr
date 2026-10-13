@@ -2,6 +2,7 @@ from app.models.catalog import Platform
 from app.repositories.game_repository import GameWithStatus
 from app.schemas.base import CamelModel
 from app.schemas.game import GameSummaryResponse, game_summary_from_orm
+from pydantic import Field
 
 
 class PlatformDetailResponse(CamelModel):
@@ -47,3 +48,13 @@ def platform_summary_from_orm(platform: Platform, game_count: int) -> PlatformSu
         abbreviation=platform.abbreviation,
         game_count=game_count,
     )
+
+
+class PlatformCreateRequest(CamelModel):
+    name: str = Field(min_length=1, max_length=255)
+    abbreviation: str | None = Field(default=None, max_length=50)
+
+
+class PlatformUpdateRequest(CamelModel):
+    name: str = Field(min_length=1, max_length=255)
+    abbreviation: str | None = Field(default=None, max_length=50)
