@@ -61,6 +61,7 @@ const EDITION_TAGS = new Set([
   "3ds roms",
   "sega genesis mini",
   "sega genesis mini 2",
+  "second account",
 ]);
 
 const tagsToEdition = (tags: string | null): string => {
