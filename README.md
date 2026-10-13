@@ -20,6 +20,8 @@ My code is free to use and is currently built off Version 1.30.0. Just let me kn
 - Added unlinked games section in insights
 - Google image search for cover art
 
+- Many Fixes
+
 ## In-progress features (separate branches)
 
 - Platform browse pages scoped to owned copies
