@@ -280,7 +280,7 @@ async def link_game_to_igdb(db: Session, igdb_client: IGDBClient, game_id: int, 
     return result
 
 
-def unlink_igdb(db: Session, game_id: int) -> Game:
+def unlink_igdb(db: Session, game_id: int) -> GameWithStatus:
     """Removes a game's IGDB link, keeping it as a manual game in the library."""
     game = db.get(Game, game_id)
     if game is None:
@@ -289,8 +289,7 @@ def unlink_igdb(db: Session, game_id: int) -> Game:
         raise ConflictError(f"Game {game_id} is not linked to IGDB")
     game.igdb_id = None
     db.commit()
-    db.refresh(game)
-    return game
+    return get_game_detail(db, game_id)
 
 
 async def change_igdb_link(db: Session, igdb_client: IGDBClient, game_id: int, new_igdb_id: int) -> GameWithStatus:
