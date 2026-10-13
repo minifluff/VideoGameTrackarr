@@ -1,7 +1,7 @@
 """add appearance settings to users
 
 Revision ID: a1b2c3d4e5f7
-Revises: fda7168df178
+Revises: c4d5e6f7a8b9
 Create Date: 2026-10-13 15:30:00.000000
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = 'a1b2c3d4e5f7'
-down_revision: Union[str, None] = 'fda7168df178'
+down_revision: Union[str, None] = 'c4d5e6f7a8b9'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
