@@ -10,6 +10,10 @@ import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import Backdrop from "@mui/material/Backdrop";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import Stack from "@mui/material/Stack";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
@@ -65,6 +69,8 @@ const GameActionButtons = ({
   const claimGameMutation = useClaimDiscoveredGame(gameId);
 
   const [resyncGameDialogOpen, setResyncGameDialogOpen] = useState(false);
+  const [resyncChoiceOpen, setResyncChoiceOpen] = useState(false);
+  const [changeLinkDialogOpen, setChangeLinkDialogOpen] = useState(false);
   const [linkIgdbDialogOpen, setLinkIgdbDialogOpen] = useState(false);
   const [removeGameDialogOpen, setRemoveGameDialogOpen] = useState(false);
   const [playDialogOpen, setPlayDialogOpen] = useState(false);
@@ -141,11 +147,45 @@ const GameActionButtons = ({
               variant="contained"
               color="primary"
               startIcon={<RefreshIcon />}
-              onClick={() => setResyncGameDialogOpen(true)}
+              onClick={() => setResyncChoiceOpen(true)}
               fullWidth
             >
               {hasParentGame ? t("games.actions.resyncAddonButton") : t("games.actions.resyncGameButton")}
             </Button>
+            <Dialog open={resyncChoiceOpen} onClose={() => setResyncChoiceOpen(false)}>
+              <DialogTitle>{t("games.actions.resyncChoiceTitle")}</DialogTitle>
+              <DialogContent>
+                <Stack spacing={1.5} sx={{ mt: 1, minWidth: 300 }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<RefreshIcon />}
+                    onClick={() => {
+                      setResyncChoiceOpen(false);
+                      setResyncGameDialogOpen(true);
+                    }}
+                    fullWidth
+                  >
+                    {t("games.actions.resyncExistingButton")}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<LinkIcon />}
+                    onClick={() => {
+                      setResyncChoiceOpen(false);
+                      setChangeLinkDialogOpen(true);
+                    }}
+                    fullWidth
+                  >
+                    {t("games.actions.changeLinkButton")}
+                  </Button>
+                </Stack>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setResyncChoiceOpen(false)}>
+                  {t("common.cancel")}
+                </Button>
+              </DialogActions>
+            </Dialog>
             <ConfirmDialog
               open={resyncGameDialogOpen}
               title={t("games.actions.resyncConfirmTitle")}
@@ -157,6 +197,14 @@ const GameActionButtons = ({
               confirmLabel={t("games.actions.resyncConfirmLabel")}
               onClose={() => setResyncGameDialogOpen(false)}
               onConfirm={handleResyncGame}
+            />
+            <LinkToIgdbDialog
+              open={changeLinkDialogOpen}
+              gameId={gameId}
+              gameName={gameName}
+              gameCategory={gameCategory}
+              onClose={() => setChangeLinkDialogOpen(false)}
+              changeMode
             />
           </>
         ) : (
