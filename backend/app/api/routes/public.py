@@ -1,3 +1,6 @@
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm import Session
+
 from app.api.deps import get_db
 from app.models.library import LibraryStatus
 from app.repositories.game_repository import GameSortOption
@@ -12,8 +15,6 @@ from app.schemas.public import (
     public_game_from_orm,
 )
 from app.services import accessory_service, auth_service, device_service, game_service
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
 
 # No auth dependency — this is the app's one deliberately unauthenticated router, gated
 # instead by the unlisted per-user token in the path. See auth_service.get_user_by_share_token.
