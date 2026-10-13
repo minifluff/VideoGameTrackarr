@@ -65,8 +65,10 @@ const CoverSearchDialog = ({ open, initialQuery, onSelect, onClose }: CoverSearc
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t("games.gameForm.coverSearchPlaceholder")}
-              InputProps={{
-                startAdornment: <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />,
+              slotProps={{
+                input: {
+                  startAdornment: <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />,
+                },
               }}
               sx={{ mt: 1, mb: 2 }}
             />
