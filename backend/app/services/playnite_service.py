@@ -198,7 +198,7 @@ def scan_library(db: Session, user: User) -> dict[str, Any]:
                     new_matches += 1
 
     db.commit()
-    return {"scanned": scanned, "new": new_matches}
+    return {"scanned": scanned, "new_count": new_matches}
 
 
 def sync_entries(db: Session, playnite_ids: list[str]) -> dict[str, Any]:
