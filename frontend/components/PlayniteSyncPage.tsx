@@ -27,7 +27,6 @@ import { toast } from "react-toastify";
 import { isAxiosError } from "axios";
 import type { PlayniteEntry } from "../api/playnite";
 import {
-  useClearPlayniteCache,
   useIgnorePlayniteEntry,
   usePlayniteConfig,
   usePlayniteEntries,
@@ -87,7 +86,6 @@ const PlayniteSyncPage = () => {
   const { data: config } = usePlayniteConfig();
   const { data: entries, isLoading } = usePlayniteEntries(!!config?.smbPath);
   const scan = useScanPlaynite();
-  const clearCache = useClearPlayniteCache();
   const syncEntries = useSyncPlayniteEntries();
   const ignoreEntry = useIgnorePlayniteEntry();
   const unignoreEntry = useUnignorePlayniteEntry();
@@ -114,21 +112,6 @@ const PlayniteSyncPage = () => {
     setPage(0);
   };
 
-  const sortValue = (e: PlayniteEntry, key: SortKey): string => {
-    switch (key) {
-      case "name":
-        return e.playniteName.toLowerCase();
-      case "platform":
-        return (e.playnitePlatform ?? "").toLowerCase();
-      case "edition":
-        return tagsToEdition(e.playniteTags).toLowerCase();
-      case "format":
-        return tagsToFormats(e.playniteTags).toLowerCase();
-      case "status":
-        return e.status;
-    }
-  };
-
   const filtered = useMemo(() => {
     let list = entries ?? [];
     if (hideSynced) {
@@ -143,9 +126,23 @@ const PlayniteSyncPage = () => {
 
   const sorted = useMemo(() => {
     const dir = sortDir === "asc" ? 1 : -1;
+    const getValue = (e: PlayniteEntry): string => {
+      switch (sortBy) {
+        case "name":
+          return e.playniteName.toLowerCase();
+        case "platform":
+          return (e.playnitePlatform ?? "").toLowerCase();
+        case "edition":
+          return tagsToEdition(e.playniteTags).toLowerCase();
+        case "format":
+          return tagsToFormats(e.playniteTags).toLowerCase();
+        case "status":
+          return e.status;
+      }
+    };
     return [...filtered].sort((a, b) => {
-      const va = sortValue(a, sortBy);
-      const vb = sortValue(b, sortBy);
+      const va = getValue(a);
+      const vb = getValue(b);
       if (va < vb) return -dir;
       if (va > vb) return dir;
       return 0;

@@ -133,8 +133,10 @@ const CatalogBrowseGrid = ({
     [realStorefronts]
   );
 
-  const effectivePlatformIds =
-    lockedPlatformId !== undefined ? [lockedPlatformId] : platformIds;
+  const effectivePlatformIds = useMemo(
+    () => (lockedPlatformId !== undefined ? [lockedPlatformId] : platformIds),
+    [lockedPlatformId, platformIds]
+  );
   const sharedFilters = useMemo(
     () => ({
       search: isSearchActive ? debouncedKeyword : undefined,
@@ -161,8 +163,7 @@ const CatalogBrowseGrid = ({
     [
       isSearchActive,
       debouncedKeyword,
-      lockedPlatformId,
-      platformIds,
+      effectivePlatformIds,
       platformExclude,
       tagIds,
       tagExclude,
