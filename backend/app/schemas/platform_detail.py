@@ -1,8 +1,9 @@
+from pydantic import Field
+
 from app.models.catalog import Platform
 from app.repositories.game_repository import GameWithStatus
 from app.schemas.base import CamelModel
 from app.schemas.game import GameSummaryResponse, game_summary_from_orm
-from pydantic import Field
 
 
 class PlatformDetailResponse(CamelModel):
