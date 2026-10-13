@@ -19,8 +19,15 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column('users', sa.Column('accent_color', sa.String(length=7), nullable=True, comment="Custom accent color hex (e.g. #RRGGBB) for the UI theme"))
-    op.add_column('users', sa.Column('app_title', sa.String(length=255), nullable=True, comment="Custom application title shown in the UI"))
+    # Check if columns already exist to make migration idempotent
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    columns = [c['name'] for c in inspector.get_columns('users')]
+    
+    if 'accent_color' not in columns:
+        op.add_column('users', sa.Column('accent_color', sa.String(), nullable=True))
+    if 'app_title' not in columns:
+        op.add_column('users', sa.Column('app_title', sa.String(), nullable=True))
 
 
 def downgrade() -> None:
