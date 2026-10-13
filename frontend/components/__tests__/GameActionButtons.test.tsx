@@ -14,6 +14,7 @@ vi.mock("../../hooks/useGames", () => ({
   useChangeIgdbLink: () => mutation,
   useLinkGameToIgdbViaParent: () => mutation,
   useMergeGameIntoIgdb: () => mutation,
+  useUnlinkIgdb: () => mutation,
   useGames: () => ({ data: [] }),
 }));
 
