@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  clearPlayniteCache,
   getPlayniteConfig,
   ignorePlayniteEntry,
   listPlayniteEntries,
@@ -40,6 +41,16 @@ export function useScanPlaynite() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: scanPlayniteLibrary,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["integrations", "playnite", "entries"] });
+    },
+  });
+}
+
+export function useClearPlayniteCache() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: clearPlayniteCache,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["integrations", "playnite", "entries"] });
     },
