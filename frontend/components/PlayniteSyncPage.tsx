@@ -19,6 +19,7 @@ import TextField from "@mui/material/TextField";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import DeleteIcon from "@mui/icons-material/Delete";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SyncIcon from "@mui/icons-material/Sync";
 import { useTranslation } from "react-i18next";
@@ -26,6 +27,7 @@ import { toast } from "react-toastify";
 import { isAxiosError } from "axios";
 import type { PlayniteEntry } from "../api/playnite";
 import {
+  useClearPlayniteCache,
   useIgnorePlayniteEntry,
   usePlayniteConfig,
   usePlayniteEntries,
@@ -82,6 +84,7 @@ const PlayniteSyncPage = () => {
   const { data: config } = usePlayniteConfig();
   const { data: entries, isLoading } = usePlayniteEntries(!!config?.smbPath);
   const scan = useScanPlaynite();
+  const clearCache = useClearPlayniteCache();
   const syncEntries = useSyncPlayniteEntries();
   const ignoreEntry = useIgnorePlayniteEntry();
   const unignoreEntry = useUnignorePlayniteEntry();
@@ -227,6 +230,28 @@ const PlayniteSyncPage = () => {
               {scan.isPending
                 ? t("settings.playniteSync.scanning")
                 : t("settings.playniteSync.scanButton")}
+            </Button>
+            <Button
+              startIcon={<DeleteIcon />}
+              color="warning"
+              onClick={() =>
+                clearCache.mutate(undefined, {
+                  onSuccess: (result) =>
+                    toast.success(
+                      t("settings.playniteSync.clearCacheSuccess", {
+                        cleared: result.cleared,
+                      }),
+                      TOAST_OPTIONS
+                    ),
+                  onError: () =>
+                    toast.error(t("settings.playniteSync.clearCacheError"), TOAST_OPTIONS),
+                })
+              }
+              disabled={clearCache.isPending}
+            >
+              {clearCache.isPending
+                ? t("settings.playniteSync.clearingCache")
+                : t("settings.playniteSync.clearCacheButton")}
             </Button>
             <Box sx={{ flexGrow: 1 }} />
             {selected.length > 0 ? (
