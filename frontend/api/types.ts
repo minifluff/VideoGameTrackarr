@@ -471,7 +471,7 @@ export interface VersionInfo {
 
 export type LibraryStatus = "owned" | "wishlist";
 export type MediaFormat = "physical" | "digital" | "iso" | "rom" | "abandonware" | "other";
-export type GameSortOption = "name_asc" | "name_desc" | "release_date_asc" | "release_date_desc";
+export type GameSortOption = "name_asc" | "name_desc" | "release_date_asc" | "release_date_desc" | "date_added_asc" | "date_added_desc";
 export type CatalogSortOption = "name_asc" | "name_desc";
 export type RatingBoard = "esrb" | "pegi" | "cero" | "usk" | "grac" | "classind" | "acb" | "iarc";
 
