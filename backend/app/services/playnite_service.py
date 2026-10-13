@@ -310,6 +310,13 @@ def _sync_one(db: Session, entry: PlayniteLibraryEntry) -> None:
                 edition=edition,
                 notes=entry.playnite_tags,
             )
+    # Re-syncing also refreshes the edition on existing items, so newly-added
+    # edition tags apply without deleting and re-adding the game.
+    if edition is not None:
+        for item in library_item_repository.list_library_items(db, entry.game_id, status=LibraryStatus.OWNED):
+            if item.platform_id == platform_id and item.edition != edition:
+                item.edition = edition
+        db.flush()
     sync_platform_id = platform_id
 
     # A "Z-Adult" Playnite tag marks the game as adult-only.
