@@ -48,6 +48,7 @@ export interface GameListFilters {
   // Plain boolean, unlike every filter above — a copy either is or isn't a Steelbook, so
   // there's no list/Exclude pair for it. See game_repository._apply_optional_game_filters.
   steelbookOnly?: boolean;
+  unlinkedOnly?: boolean;
   sort?: GameSortOption;
   // Only meaningful on GET /api/games — an always-applied AND-scope, independent of the
   // collectionIds/franchiseIds OR-filter above. Used by a Collection/Series detail page's
@@ -82,6 +83,7 @@ export function buildGameFilterParams(filters: GameListFilters) {
     playStatusExclude,
     matchAll,
     steelbookOnly,
+    unlinkedOnly,
     sort,
     requiredCollectionId,
     requiredFranchiseId,
@@ -115,6 +117,7 @@ export function buildGameFilterParams(filters: GameListFilters) {
     playStatusExclude: playStatuses?.length ? playStatusExclude : undefined,
     playStatusMatchAll: matchAllParam("playStatus", playStatuses),
     steelbookOnly: steelbookOnly || undefined,
+    unlinkedOnly: unlinkedOnly || undefined,
     sort: sort || undefined,
     requiredCollectionId,
     requiredFranchiseId,
