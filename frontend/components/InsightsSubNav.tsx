@@ -9,6 +9,7 @@ const SUB_NAV_ITEMS = [
   { to: "/insights/missing-addons", labelKey: "nav.missingAddons" },
   { to: "/insights/orphaned-accessories", labelKey: "nav.orphanedAccessories" },
   { to: "/insights/on-sale", labelKey: "nav.onSale" },
+  { to: "/insights/unlinked-games", labelKey: "nav.unlinkedGames" },
 ] as const;
 
 // Mirrors GamesSubNav.tsx — keeps Duplicates/Missing Addons/Orphaned Accessories reachable
