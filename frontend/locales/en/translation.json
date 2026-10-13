@@ -769,7 +769,10 @@
       "claimAddonSuccessToast": "Addon added!",
       "claimGameErrorToast": "Error adding game. Please try again.",
       "claimAddonErrorToast": "Error adding addon. Please try again.",
-      "playGameButton": "Play Game"
+      "playGameButton": "Play Game",
+      "resyncChoiceTitle": "Resync or change IGDB link?",
+      "resyncExistingButton": "Resync existing link",
+      "changeLinkButton": "Change IGDB link"
     },
     "addons": {
       "title": "Addons",
@@ -1318,7 +1321,8 @@
     "mergeButton": "Merge",
     "mergeSuccess": "Merged into the existing entry!",
     "mergeError": "Error merging into the existing entry. Please try again.",
-    "mergeProgressConflictError": "Both entries already track play progress — resolve that manually, then try again."
+    "mergeProgressConflictError": "Both entries already track play progress — resolve that manually, then try again.",
+    "linkChangedSuccess": "IGDB link changed successfully"
   },
   "about": {
     "title": "About",
