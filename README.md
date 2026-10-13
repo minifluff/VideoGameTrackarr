@@ -20,6 +20,9 @@ My code is free to use and is currently built off Version 1.30.0. Just let me kn
 - Added unlinked games section in insights
 - Google image search for cover art
 - Platform page added
+- Platform Manager page added
+- Added platforms to Public page
+- Added dates to Games Calender section
 - Many Fixes
 
 ## In-progress features (separate branches)
