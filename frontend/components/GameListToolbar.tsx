@@ -9,6 +9,7 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import LabelIcon from "@mui/icons-material/Label";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import ConfirmDialog from "./ConfirmDialog";
 import Badge from "@mui/material/Badge";
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -417,6 +418,7 @@ const GameListToolbar = ({
   // ButtonGroup (via buttonGroupRef), not just the small arrow segment, so the menu below
   // can match its full width/left/right bounds instead of hugging the arrow alone.
   const [bulkActionsMenuOpen, setBulkActionsMenuOpen] = useState(false);
+  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
   const buttonGroupRef = useRef<HTMLDivElement>(null);
 
   // Storefront only makes sense once Digital is one of the selected Formats — if Digital
@@ -528,7 +530,7 @@ const GameListToolbar = ({
             <MenuItem
               onClick={() => {
                 setBulkActionsMenuOpen(false);
-                onBulkDelete?.();
+                setConfirmRemoveOpen(true);
               }}
               sx={{ minHeight: buttonGroupRef.current?.offsetHeight }}
             >
@@ -552,6 +554,17 @@ const GameListToolbar = ({
               </MenuItem>
             ) : null}
           </Menu>
+          <ConfirmDialog
+            open={confirmRemoveOpen}
+            title={t("games.listToolbar.confirmRemoveTitle")}
+            message={t("games.listToolbar.confirmRemoveMessage", { count: selectedCount })}
+            confirmLabel={t("common.remove")}
+            onClose={() => setConfirmRemoveOpen(false)}
+            onConfirm={() => {
+              setConfirmRemoveOpen(false);
+              onBulkDelete?.();
+            }}
+          />
         </Stack>
       </Paper>
     );
