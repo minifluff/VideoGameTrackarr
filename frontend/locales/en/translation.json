@@ -477,7 +477,11 @@
       "cardSizeHelp": "Smaller cards fit more games on screen. Syncs across devices.",
       "cardSizeSmall": "Small",
       "cardSizeMedium": "Medium",
-      "cardSizeLarge": "Large"
+      "cardSizeLarge": "Large",
+      "uploadIcon": "Upload custom icon",
+      "customIcon": "Custom icon",
+      "defaultIcon": "Default icon",
+      "iconTooLarge": "Image must be under 500KB"
     },
     "removeGames": {
       "title": "Remove Games",
