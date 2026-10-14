@@ -29,6 +29,8 @@ My code is free to use and is currently built off Version 1.30.0. Just let me kn
 - Added Navigation Menu hides on scroll on phones
 - Changed Steam sync to import to platform Steam instead of PC(Microsoft Windows)
 - Added Public Games Collection button to Dashboard and updated public search
+- Added public game hiding feature
+- Move Remove to dropdown of multi-select and added confirm. Making tags the default action.
 - Many more Fixes and changes
 
 ## In-progress features (separate branches)
