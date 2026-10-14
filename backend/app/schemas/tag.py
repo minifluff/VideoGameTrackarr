@@ -9,10 +9,13 @@ class TagResponse(CamelModel):
     name: str
     color: str | None
     text_color: str | None
+    game_count: int = 0
 
 
-def tag_from_orm(tag: Tag) -> TagResponse:
-    return TagResponse(id=tag.id, name=tag.name, color=tag.color, text_color=tag.text_color)
+def tag_from_orm(tag: Tag, game_count: int = 0) -> TagResponse:
+    return TagResponse(
+        id=tag.id, name=tag.name, color=tag.color, text_color=tag.text_color, game_count=game_count
+    )
 
 
 class TagCoverageResponse(CamelModel):
