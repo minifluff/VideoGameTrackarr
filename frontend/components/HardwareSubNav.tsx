@@ -1,12 +1,15 @@
 import { Link, useLocation } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
+import Collapse from "@mui/material/Collapse";
 import { useTranslation } from "react-i18next";
+import { useScrollCollapse } from "../hooks/useScrollCollapse";
 
 // Mirrors GamesSubNav.tsx — keeps Add Device/Add Accessory reachable at every breakpoint,
 // since NavDrawer's nested sub-items are desktop-only.
 const HardwareSubNav = () => {
   const { t } = useTranslation();
+  const collapsed = useScrollCollapse(80);
   const location = useLocation();
 
   const subNavItems = [
@@ -16,7 +19,8 @@ const HardwareSubNav = () => {
   ] as const;
 
   return (
-    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 3 }}>
+    <Collapse in={!collapsed} timeout={200}>
+      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 3 }}>
       {subNavItems.map((item) => {
         const isSelected = location.pathname === item.to;
         return (
@@ -31,7 +35,8 @@ const HardwareSubNav = () => {
           />
         );
       })}
-    </Box>
+      </Box>
+    </Collapse>
   );
 };
 
