@@ -163,6 +163,7 @@ const GameDetails = () => {
                 platforms={platforms}
                 regions={regions}
                 gameCategory={game.category}
+                hideFromPublic={game.hideFromPublic}
               />
             </Card>
           ) : null}
