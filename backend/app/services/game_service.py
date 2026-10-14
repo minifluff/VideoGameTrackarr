@@ -180,6 +180,18 @@ def set_game_visibility(db: Session, game_id: int, hide_from_public: bool) -> Ga
     return get_game_detail(db, game_id)
 
 
+def bulk_set_game_visibility(db: Session, game_ids: list[int], hide_from_public: bool) -> int:
+    """Bulk version of set_game_visibility — single commit for all games."""
+    count = 0
+    for game_id in game_ids:
+        game = db.get(Game, game_id)
+        if game is not None:
+            game.hide_from_public = hide_from_public
+            count += 1
+    db.commit()
+    return count
+
+
 def delete_game(db: Session, game_id: int) -> None:
     game_with_status = get_game_detail(db, game_id)
     rom_filenames = game_repository.delete_game_with_addons(db, game_with_status.game)
