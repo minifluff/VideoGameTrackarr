@@ -1,8 +1,7 @@
 from typing import Any
 
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
-
-from sqlalchemy import delete, func, select, update
 
 from app.models.catalog import GamePlatform, Platform
 from app.models.library import GameProgress, LibraryItem, PlaySession
