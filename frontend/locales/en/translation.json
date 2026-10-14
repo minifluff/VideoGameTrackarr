@@ -666,7 +666,9 @@
       "noGamesMatchFilter": "No games match this filter",
       "pleaseAddGames": "Please add some games",
       "gamesRemovedToast_one": "{{count}} game removed from your library",
-      "gamesRemovedToast_other": "{{count}} games removed from your library"
+      "gamesRemovedToast_other": "{{count}} games removed from your library",
+      "gamesHiddenToast": "{{count}} game(s) hidden from public",
+      "gamesHiddenErrorToast": "Failed to hide games from public"
     },
     "listToolbar": {
       "exitSelectionModeAriaLabel": "Exit selection mode",
@@ -711,7 +713,8 @@
       "noFiltersAvailable": "No filters available",
       "noSearchMatches": "No matches found.",
       "sortDateAddedAsc": "Date added (oldest first)",
-      "sortDateAddedDesc": "Date added (newest first)"
+      "sortDateAddedDesc": "Date added (newest first)",
+      "hideFromPublicButton": "Hide from Public"
     },
     "card": {
       "playStatusBacklog": "Backlog",
