@@ -134,6 +134,19 @@ def update_game_visibility(
     return _game_detail_response(db, game)
 
 
+class BulkGameVisibilityUpdateRequest(CamelModel):
+    game_ids: list[int]
+    hide_from_public: bool
+
+
+@router.post("/bulk-visibility", response_model=dict)
+def bulk_update_game_visibility(
+    body: BulkGameVisibilityUpdateRequest, db: Session = Depends(get_db)
+) -> dict:
+    count = game_service.bulk_set_game_visibility(db, body.game_ids, body.hide_from_public)
+    return {"updated": count}
+
+
 @router.get("/{game_id}/addons", response_model=list[GameSummaryResponse])
 def list_addons(game_id: int, db: Session = Depends(get_db)) -> list[GameSummaryResponse]:
     addons = game_service.list_addons(db, game_id)
