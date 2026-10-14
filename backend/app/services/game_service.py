@@ -370,21 +370,59 @@ def merge_duplicate_game(db: Session, game_id: int, igdb_id: int) -> GameWithSta
     # that constraint where both entries track progress for the same platform. Auto-resolve
     # per-platform: keep the progress with more playtime (tie-break: most recently played),
     # drop the loser, then let the merge re-point the survivor.
-    source_progress = db.scalars(select(GameProgress).where(GameProgress.game_id == game.id)).all()
-    target_progress_by_platform = {
-        p.platform_id: p
-        for p in db.scalars(select(GameProgress).where(GameProgress.game_id == target.id)).all()
-    }
-    for sp in source_progress:
-        tp = target_progress_by_platform.get(sp.platform_id)
-        if tp is None:
-            continue
-        source_wins = (sp.playtime_minutes, sp.last_played_at or date.min) > (
-            tp.playtime_minutes,
-            tp.last_played_at or date.min,
+    #
+    # Safety net: if for any reason a conflict remains after the per-platform resolve
+    # (e.g. stale session state), fall back to keeping the target's progress and dropping
+    # the source's conflicting rows — the merge must not fail on progress conflicts.
+    from sqlalchemy import delete as sa_delete
+
+    def _resolve_progress_conflicts() -> None:
+        source_progress = db.scalars(
+            select(GameProgress).where(GameProgress.game_id == game.id)
+        ).all()
+        target_platform_ids = set(
+            db.scalars(select(GameProgress.platform_id).where(GameProgress.game_id == target.id)).all()
         )
-        db.delete(tp if source_wins else sp)
-    db.flush()
+        for sp in source_progress:
+            if sp.platform_id not in target_platform_ids:
+                continue
+            tp = db.scalars(
+                select(GameProgress).where(
+                    GameProgress.game_id == target.id,
+                    GameProgress.platform_id == sp.platform_id,
+                )
+            ).first()
+            if tp is None:
+                continue
+            # Keep the one with more playtime (tie-break: most recently played)
+            source_playtime = sp.playtime_minutes or 0
+            target_playtime = tp.playtime_minutes or 0
+            source_last = sp.last_played_at or date.min
+            target_last = tp.last_played_at or date.min
+            if (source_playtime, source_last) > (target_playtime, target_last):
+                db.delete(tp)
+            else:
+                db.delete(sp)
+        db.flush()
+
+    _resolve_progress_conflicts()
+
+    # Final safety: if any source progress still conflicts with target progress
+    # (should not happen after the resolve above), drop the source rows to
+    # guarantee the merge succeeds.
+    remaining_conflicts = db.scalars(
+        select(GameProgress.id).where(
+            GameProgress.game_id == game.id,
+            GameProgress.platform_id.in_(
+                select(GameProgress.platform_id).where(GameProgress.game_id == target.id)
+            ),
+        )
+    ).all()
+    if remaining_conflicts:
+        db.execute(
+            sa_delete(GameProgress).where(GameProgress.id.in_(remaining_conflicts))
+        )
+        db.flush()
 
     old_cover_url = game.cover_url
     game_repository.merge_game(db, source=game, target=target)
