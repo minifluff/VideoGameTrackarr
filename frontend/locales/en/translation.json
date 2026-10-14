@@ -342,7 +342,8 @@
       "addSuccess": "Tag added.",
       "updateSuccess": "Tag updated.",
       "saveError": "Error saving tag. Please try again.",
-      "duplicateNameError": "A tag with that name already exists."
+      "duplicateNameError": "A tag with that name already exists.",
+      "gamesColumn": "Games"
     },
     "platformManager": {
       "description": "Add, rename, or delete platforms. Deleting a platform unlinks it from every library copy that uses it — the games themselves are kept. Renaming a platform also updates its page URL.",
