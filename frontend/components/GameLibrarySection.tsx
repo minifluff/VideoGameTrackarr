@@ -466,6 +466,15 @@ const GameLibrarySection = ({
           onSubmit={(values, romChange) => void handleDialogSubmit(values, romChange)}
           submitLabel={dialogItem ? t("games.library.updateLabel") : t("common.add")}
         />
+      {transferItemId !== null && (
+        <MoveLibraryItemDialog
+          open={transferItemId !== null}
+          onClose={() => setTransferItemId(null)}
+          itemId={transferItemId}
+          itemLabel=""
+          currentGameId={gameId}
+        />
+      )}
         <ConfirmDialog
           open={moveConfirmItem != null}
           title={t("games.library.moveWithRomTitle")}
