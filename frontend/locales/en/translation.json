@@ -714,7 +714,9 @@
       "noSearchMatches": "No matches found.",
       "sortDateAddedAsc": "Date added (oldest first)",
       "sortDateAddedDesc": "Date added (newest first)",
-      "hideFromPublicButton": "Hide from Public"
+      "hideFromPublicButton": "Hide from Public",
+      "confirmRemoveTitle": "Remove Games?",
+      "confirmRemoveMessage": "Are you sure you want to remove {{count}} game(s)? This can be undone."
     },
     "card": {
       "playStatusBacklog": "Backlog",
