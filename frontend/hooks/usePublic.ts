@@ -1,11 +1,35 @@
 import { useQuery } from "@tanstack/react-query";
-import { getPublicGame, listPublicAccessories, listPublicDevices, listPublicGames, listPublicPlatforms } from "../api/public";
+import { getPublicGame, listPublicAccessories, listPublicCollections, listPublicDevices, listPublicFranchises, listPublicGames, listPublicPlatforms, listPublicTags, type PublicGameFilters } from "../api/public";
 import type { GameSortOption } from "../api/types";
 
-export function usePublicGames(token: string | undefined, search?: string, sort?: GameSortOption, platformIds?: number[]) {
+export function usePublicGames(token: string | undefined, filters: PublicGameFilters) {
   return useQuery({
-    queryKey: ["public", token, "games", search, sort, platformIds],
-    queryFn: () => listPublicGames(token!, search, sort, platformIds),
+    queryKey: ["public", token, "games", filters],
+    queryFn: () => listPublicGames(token!, filters),
+    enabled: !!token,
+  });
+}
+
+export function usePublicTags(token: string | undefined) {
+  return useQuery({
+    queryKey: ["public", token, "tags"],
+    queryFn: () => listPublicTags(token!),
+    enabled: !!token,
+  });
+}
+
+export function usePublicCollections(token: string | undefined) {
+  return useQuery({
+    queryKey: ["public", token, "collections"],
+    queryFn: () => listPublicCollections(token!),
+    enabled: !!token,
+  });
+}
+
+export function usePublicFranchises(token: string | undefined) {
+  return useQuery({
+    queryKey: ["public", token, "franchises"],
+    queryFn: () => listPublicFranchises(token!),
     enabled: !!token,
   });
 }
