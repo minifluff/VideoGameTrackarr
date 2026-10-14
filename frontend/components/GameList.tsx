@@ -14,7 +14,9 @@ import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useDeleteGame, useGames } from "../hooks/useGames";
 import { usePlatforms } from "../hooks/usePlatforms";
 import { useStorefronts } from "../hooks/useStorefronts";
+import { toast } from "react-toastify";
 import { useTags } from "../hooks/useTags";
+import { updateGameVisibility } from "../api/games";
 import { useUndoableAction } from "../hooks/useUndoableAction";
 import { gameIdentifier } from "../utils/identifiers";
 import { matchesOwnership } from "../utils/ownershipFilter";
@@ -241,6 +243,21 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
     );
   };
 
+  const handleBulkHideFromPublic = async () => {
+    const gamesToHide = visibleGames.filter((game) => selectedIds.has(game.id));
+    if (gamesToHide.length === 0) {
+      return;
+    }
+    try {
+      await Promise.all(gamesToHide.map((game) => updateGameVisibility(game.id, true)));
+      toast.success(t("games.list.gamesHiddenToast", { count: gamesToHide.length }));
+    } catch {
+      toast.error(t("games.list.gamesHiddenErrorToast"));
+    }
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  };
+
   return (
     <>
       <Box
@@ -305,6 +322,7 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
           onToggleSelectAll={handleToggleSelectAll}
           onManageTagsClick={() => setManageTagsOpen(true)}
           onBulkDelete={handleBulkDelete}
+          onBulkHideFromPublic={handleBulkHideFromPublic}
           platformOptions={platforms}
           platformIds={platformIds}
           onPlatformIdsChange={setPlatformIds}

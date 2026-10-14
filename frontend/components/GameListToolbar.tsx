@@ -8,6 +8,7 @@ import DoneAllIcon from "@mui/icons-material/DoneAll";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import LabelIcon from "@mui/icons-material/Label";
 import SearchIcon from "@mui/icons-material/Search";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Badge from "@mui/material/Badge";
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -223,6 +224,7 @@ interface GameListToolbarProps {
   // dialog (ManageTagsDialog), whose own state/data live in GameList.tsx, keeping this
   // toolbar itself generic.
   onManageTagsClick?: () => void;
+  onBulkHideFromPublic?: () => void;
   onBulkDelete?: () => void;
   platformOptions: PlatformResponse[];
   platformIds: number[];
@@ -317,6 +319,7 @@ const GameListToolbar = ({
   allVisibleSelected = false,
   onToggleSelectAll = () => {},
   onManageTagsClick,
+  onBulkHideFromPublic,
   onBulkDelete = () => {},
   platformOptions,
   platformIds,
@@ -490,21 +493,19 @@ const GameListToolbar = ({
               <DoneAllIcon />
             </IconButton>
           </Tooltip>
-          <ButtonGroup ref={buttonGroupRef} color="error" variant="contained" disabled={selectedCount === 0}>
-            <Button startIcon={<DeleteIcon />} onClick={onBulkDelete}>
-              {t("common.remove")}
+          <ButtonGroup ref={buttonGroupRef} color="primary" variant="contained" disabled={selectedCount === 0}>
+            <Button startIcon={<LabelIcon />} onClick={onManageTagsClick}>
+              {t("games.listToolbar.manageTagsButton")}
             </Button>
-            {onManageTagsClick ? (
-              <Button
-                size="small"
-                onClick={() => setBulkActionsMenuOpen(true)}
-                aria-label={t("games.listToolbar.moreBulkActionsAriaLabel")}
-                aria-haspopup="menu"
-                aria-expanded={bulkActionsMenuOpen}
-              >
-                <ArrowDropDownIcon />
-              </Button>
-            ) : null}
+            <Button
+              size="small"
+              onClick={() => setBulkActionsMenuOpen(true)}
+              aria-label={t("games.listToolbar.moreBulkActionsAriaLabel")}
+              aria-haspopup="menu"
+              aria-expanded={bulkActionsMenuOpen}
+            >
+              <ArrowDropDownIcon />
+            </Button>
           </ButtonGroup>
           <Menu
             anchorEl={buttonGroupRef.current}
@@ -524,18 +525,30 @@ const GameListToolbar = ({
               },
             }}
           >
-            {onManageTagsClick ? (
+            <MenuItem
+              onClick={() => {
+                setBulkActionsMenuOpen(false);
+                onBulkDelete?.();
+              }}
+              sx={{ minHeight: buttonGroupRef.current?.offsetHeight }}
+            >
+              <ListItemIcon>
+                <DeleteIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>{t("common.remove")}</ListItemText>
+            </MenuItem>
+            {onBulkHideFromPublic ? (
               <MenuItem
                 onClick={() => {
                   setBulkActionsMenuOpen(false);
-                  onManageTagsClick();
+                  onBulkHideFromPublic();
                 }}
                 sx={{ minHeight: buttonGroupRef.current?.offsetHeight }}
               >
                 <ListItemIcon>
-                  <LabelIcon fontSize="small" />
+                  <VisibilityOffIcon fontSize="small" />
                 </ListItemIcon>
-                <ListItemText>{t("games.listToolbar.manageTagsButton")}</ListItemText>
+                <ListItemText>{t("games.listToolbar.hideFromPublicButton")}</ListItemText>
               </MenuItem>
             ) : null}
           </Menu>
