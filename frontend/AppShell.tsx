@@ -128,7 +128,9 @@ const AppShell = () => {
           minWidth: 0,
           width: { sm: `calc(100% - ${sideNavWidth}px)` },
           p: { xs: 1.5, sm: 2, md: 3 },
-          pb: isCompact ? `${BOTTOM_NAV_HEIGHT + 24}px` : undefined,
+          // Bottom nav is 64px + safe-area for phones with home indicator — keep
+          // page content (incl. Save buttons at the bottom) clear of it.
+          pb: isCompact ? `calc(${BOTTOM_NAV_HEIGHT + 24}px + env(safe-area-inset-bottom, 0px))` : undefined,
         }}
       >
         <Toolbar />
