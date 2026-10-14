@@ -365,7 +365,15 @@
       "addSuccess": "Platform added.",
       "updateSuccess": "Platform updated.",
       "saveError": "Error saving platform. Please try again.",
-      "duplicateNameError": "A platform with that name already exists."
+      "duplicateNameError": "A platform with that name already exists.",
+      "massMoveTitle": "Move Games Between Platforms",
+      "massMoveDescription": "Move all games, progress, and play sessions from one platform to another. This cannot be undone.",
+      "massMoveSource": "From Platform",
+      "massMoveTarget": "To Platform",
+      "massMoveButton": "Move Games",
+      "massMoveConfirm": "This will move {count} games from {source} to {target}.",
+      "massMoveSuccess": "Moved {count} games.",
+      "massMoveError": "Failed to move games. Please try again."
     },
     "share": {
       "heading": "Share",
