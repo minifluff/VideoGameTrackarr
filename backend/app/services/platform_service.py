@@ -2,7 +2,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from sqlalchemy import delete, update
+from sqlalchemy import delete, func, select, update
 
 from app.models.catalog import GamePlatform, Platform
 from app.models.library import GameProgress, LibraryItem, PlaySession
@@ -74,7 +74,9 @@ def mass_move_games(db: Session, source_platform_id: int, target_platform_id: in
         raise ConflictError("Source and target platforms must be different")
 
     # Count items being moved for the response
-    moved_count = db.query(LibraryItem).filter(LibraryItem.platform_id == source.id).count()
+    moved_count = db.scalar(
+        select(func.count()).select_from(LibraryItem).where(LibraryItem.platform_id == source.id)
+    ) or 0
 
     # Move library items
     db.execute(
@@ -91,9 +93,13 @@ def mass_move_games(db: Session, source_platform_id: int, target_platform_id: in
     # Move IGDB release-platform links (avoid duplicates if target already has the link)
     existing_target_links = {
         gp.game_id
-        for gp in db.query(GamePlatform).filter(GamePlatform.platform_id == target.id).all()
+        for gp in db.scalars(
+            select(GamePlatform).where(GamePlatform.platform_id == target.id)
+        ).all()
     }
-    source_links = db.query(GamePlatform).filter(GamePlatform.platform_id == source.id).all()
+    source_links = db.scalars(
+        select(GamePlatform).where(GamePlatform.platform_id == source.id)
+    ).all()
     for link in source_links:
         if link.game_id in existing_target_links:
             db.delete(link)
