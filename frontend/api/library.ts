@@ -159,14 +159,14 @@ export async function putInGameSave(romId: number, save: Blob): Promise<void> {
 
 export async function moveLibraryItem(itemId: number, targetGameId: number): Promise<LibraryItem> {
   const { data } = await apiClient.post<LibraryItem>(`/api/library/${itemId}/move`, {
-    targetGameId,
+    target_game_id: targetGameId,
   });
   return data;
 }
 
 export async function splitLibraryItem(itemId: number, newGameName: string): Promise<LibraryItem> {
   const { data } = await apiClient.post<LibraryItem>(`/api/library/${itemId}/split`, {
-    newGameName,
+    new_game_name: newGameName,
   });
   return data;
 }
