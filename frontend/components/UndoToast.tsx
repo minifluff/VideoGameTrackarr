@@ -12,13 +12,15 @@ interface UndoToastContentProps extends Partial<ToastContentProps> {
 const UndoToastContent = ({ message, onUndo, closeToast }: UndoToastContentProps) => {
   const { t } = useTranslation();
   return (
-    <Stack direction="row" spacing={2} sx={{ alignItems: "center", width: "100%" }}>
+    <Stack direction="row" spacing={2} sx={{ alignItems: "center", width: "100%", py: 0.5, px: 0.5 }}>
       <Typography variant="body2" sx={{ flexGrow: 1 }}>
         {message}
       </Typography>
       <Button
         size="small"
-        color="inherit"
+        variant="contained"
+        color="primary"
+        sx={{ flexShrink: 0, whiteSpace: "nowrap" }}
         onClick={() => {
           onUndo();
           closeToast?.();
