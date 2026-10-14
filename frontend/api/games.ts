@@ -49,6 +49,7 @@ export interface GameListFilters {
   // there's no list/Exclude pair for it. See game_repository._apply_optional_game_filters.
   steelbookOnly?: boolean;
   unlinkedOnly?: boolean;
+  hideWithCoverArt?: boolean;
   sort?: GameSortOption;
   // Only meaningful on GET /api/games — an always-applied AND-scope, independent of the
   // collectionIds/franchiseIds OR-filter above. Used by a Collection/Series detail page's
@@ -84,6 +85,7 @@ export function buildGameFilterParams(filters: GameListFilters) {
     matchAll,
     steelbookOnly,
     unlinkedOnly,
+    hideWithCoverArt,
     sort,
     requiredCollectionId,
     requiredFranchiseId,
@@ -118,6 +120,7 @@ export function buildGameFilterParams(filters: GameListFilters) {
     playStatusMatchAll: matchAllParam("playStatus", playStatuses),
     steelbookOnly: steelbookOnly || undefined,
     unlinkedOnly: unlinkedOnly || undefined,
+    hideWithCoverArt: hideWithCoverArt || undefined,
     sort: sort || undefined,
     requiredCollectionId,
     requiredFranchiseId,
