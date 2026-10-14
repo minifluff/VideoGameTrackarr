@@ -1,8 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { useReleaseCalendar } from "../hooks/useDashboard";
+import { useShareLink } from "../hooks/useShareLink";
 import { gameIdentifier, hardwareIdentifier } from "../utils/identifiers";
 import CardCarousel from "./CardCarousel";
 import GameCard from "./GameCard";
@@ -30,6 +32,7 @@ const ReleaseCalendarSection = ({ scope, title }: ReleaseCalendarSectionProps) =
   const { t } = useTranslation();
   const { data, isLoading } = useReleaseCalendar();
   const navigate = useNavigate();
+  const { data: shareToken } = useShareLink();
 
   if (isLoading) {
     return <Typography color="text.secondary">{t("releaseCalendar.loading")}</Typography>;
@@ -141,6 +144,17 @@ const ReleaseCalendarSection = ({ scope, title }: ReleaseCalendarSectionProps) =
         return null;
       }}
     />
+    {scope === "games" && shareToken && (
+      <Button
+        variant="contained"
+        size="large"
+        fullWidth
+        sx={{ mt: 2, py: 1.5, fontSize: "1.1rem" }}
+        onClick={() => navigate(`/public/${shareToken}/games`)}
+      >
+        {t("insights.dashboard.publicCollectionButton")}
+      </Button>
+    )}
   );
 };
 
