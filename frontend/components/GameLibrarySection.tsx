@@ -89,6 +89,7 @@ const GameLibrarySection = ({
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [transferItemId, setTransferItemId] = useState<number | null>(null);
+  const queryClient = useQueryClient();
   const [dialogItem, setDialogItem] = useState<LibraryItem | null>(null);
   const [dialogStatus, setDialogStatus] = useState<LibraryStatus>("owned");
 
@@ -473,6 +474,10 @@ const GameLibrarySection = ({
           itemId={transferItemId}
           itemLabel=""
           currentGameId={gameId}
+          onMoved={() => {
+            setTransferItemId(null);
+            queryClient.invalidateQueries({ queryKey: ["library"] });
+          }}
         />
       )}
         <ConfirmDialog
