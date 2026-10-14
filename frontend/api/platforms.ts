@@ -45,3 +45,10 @@ export async function updatePlatform(
 export async function deletePlatform(platformId: number): Promise<void> {
   await apiClient.delete(`/api/platforms/${platformId}`);
 }
+
+export async function massMoveGames(sourceId: number, targetId: number): Promise<{ moved_count: number }> {
+  const response = await apiClient.post<{ moved_count: number }>(
+    `/api/platforms/${sourceId}/move-to/${targetId}`
+  );
+  return response.data;
+}
