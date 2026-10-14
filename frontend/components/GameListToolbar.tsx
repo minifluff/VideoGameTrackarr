@@ -9,6 +9,7 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import LabelIcon from "@mui/icons-material/Label";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import ConfirmDialog from "./ConfirmDialog";
 import Badge from "@mui/material/Badge";
 import Button from "@mui/material/Button";
@@ -225,7 +226,8 @@ interface GameListToolbarProps {
   // dialog (ManageTagsDialog), whose own state/data live in GameList.tsx, keeping this
   // toolbar itself generic.
   onManageTagsClick?: () => void;
-  onBulkHideFromPublic?: () => void;
+  onBulkHide?: () => void;
+  onBulkUnhide?: () => void;
   onBulkDelete?: () => void;
   platformOptions: PlatformResponse[];
   platformIds: number[];
@@ -320,7 +322,8 @@ const GameListToolbar = ({
   allVisibleSelected = false,
   onToggleSelectAll = () => {},
   onManageTagsClick,
-  onBulkHideFromPublic,
+  onBulkHide,
+  onBulkUnhide,
   onBulkDelete = () => {},
   platformOptions,
   platformIds,
@@ -527,11 +530,25 @@ const GameListToolbar = ({
               },
             }}
           >
-            {onBulkHideFromPublic ? (
+            {onBulkUnhide ? (
               <MenuItem
                 onClick={() => {
                   setBulkActionsMenuOpen(false);
-                  onBulkHideFromPublic();
+                  onBulkUnhide();
+                }}
+                sx={{ minHeight: buttonGroupRef.current?.offsetHeight }}
+              >
+                <ListItemIcon>
+                  <VisibilityIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>{t("games.listToolbar.unhideButton")}</ListItemText>
+              </MenuItem>
+            ) : null}
+            {onBulkHide ? (
+              <MenuItem
+                onClick={() => {
+                  setBulkActionsMenuOpen(false);
+                  onBulkHide();
                 }}
                 sx={{ minHeight: buttonGroupRef.current?.offsetHeight }}
               >
@@ -557,7 +574,7 @@ const GameListToolbar = ({
           <ConfirmDialog
             open={confirmRemoveOpen}
             title={t("games.listToolbar.confirmRemoveTitle")}
-            message={t("games.listToolbar.confirmRemoveMessage", { count: selectedCount })}
+            description={t("games.listToolbar.confirmRemoveMessage", { count: selectedCount })}
             confirmLabel={t("common.remove")}
             onClose={() => setConfirmRemoveOpen(false)}
             onConfirm={() => {
