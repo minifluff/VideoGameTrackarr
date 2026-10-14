@@ -26,12 +26,14 @@ const TagManagerPage = () => {
 
   const headCells: HeadCell[] = [
     { id: "name", numeric: false, disablePadding: false, label: t("settings.tagManager.nameColumn"), disableHeader: false },
+    { id: "gameCount", numeric: true, disablePadding: false, label: t("settings.tagManager.gamesColumn"), disableHeader: false },
     { id: "actions", numeric: false, disablePadding: true, label: t("common.actions"), disableHeader: true },
   ];
 
   const toTableRow = (tag: Tag) => ({
     id: tag.id,
     name: tag.name,
+    gameCount: tag.gameCount ?? 0,
   });
 
   const rows = (tags ?? []).map(toTableRow);
