@@ -189,6 +189,14 @@ export async function updateGameVisibility(gameId: number, hideFromPublic: boole
   return response.data;
 }
 
+export async function bulkUpdateGameVisibility(gameIds: number[], hideFromPublic: boolean): Promise<{ updated: number }> {
+  const response = await apiClient.post<{ updated: number }>(`/api/games/bulk-visibility`, {
+    gameIds,
+    hideFromPublic,
+  });
+  return response.data;
+}
+
 export async function linkGameToIgdb(gameId: number, igdbId: number): Promise<GameDetail> {
   const response = await apiClient.post<GameDetail>(`/api/games/${gameId}/link-igdb`, { igdbId });
   return response.data;
