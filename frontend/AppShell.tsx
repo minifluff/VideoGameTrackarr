@@ -129,8 +129,9 @@ const AppShell = () => {
           width: { sm: `calc(100% - ${sideNavWidth}px)` },
           p: { xs: 1.5, sm: 2, md: 3 },
           // Bottom nav is 64px + safe-area for phones with home indicator — keep
-          // page content (incl. Save buttons at the bottom) clear of it.
-          pb: isCompact ? `calc(${BOTTOM_NAV_HEIGHT + 24}px + env(safe-area-inset-bottom, 0px))` : undefined,
+          // page content (incl. Save buttons at the bottom) well clear of it.
+          // 140px gives comfortable clearance even with Android's gesture nav bar.
+          pb: isCompact ? `calc(140px + env(safe-area-inset-bottom, 0px))` : undefined,
         }}
       >
         <Toolbar />
