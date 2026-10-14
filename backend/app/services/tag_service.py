@@ -9,6 +9,10 @@ def list_tags(db: Session) -> list[Tag]:
     return tag_repository.list_tags(db)
 
 
+def get_tag_game_counts(db: Session) -> dict[int, int]:
+    return tag_repository.get_tag_game_counts(db)
+
+
 def get_tag_coverage_for_games(db: Session, game_ids: list[int]) -> list[tuple[Tag, list[int]]]:
     # No existence check on game_ids, deliberately — this is a read-only informational query
     # (powers the bulk "Manage Tags" dialog), and a stale or bogus id just never matches
