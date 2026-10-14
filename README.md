@@ -6,7 +6,7 @@ For the full documentation, features, screenshots, and installation instructions
 
 My code is free to use and is currently built off Version 1.30.0. Just let me know if you need assistance. 
 
-## Customizations in this fork (most customizeations are only under english pages)
+## Customizations in this fork (most customizations are only under english pages)
 
 - Playnite library sync (via network share and JSON exporter plugin)
 - Steam sync "Sync all" button
