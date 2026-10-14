@@ -114,6 +114,7 @@ async def _import(db: Session, report_progress: Callable[[int, int], None]) -> d
             semaphore = asyncio.Semaphore(_IGDB_MATCH_CONCURRENCY)
 
             async def _match_one(app_id: int, game_name: str) -> None:
+                nonlocal succeeded
                 async with semaphore:
                     try:
                         game_id = await _match_to_igdb(db, igdb_client, app_id)
@@ -124,6 +125,9 @@ async def _import(db: Session, report_progress: Callable[[int, int], None]) -> d
                                 db.commit()
                     except Exception as exc:  # noqa: BLE001 - one bad match must not abort the batch
                         db.rollback()
+                        # Phase 1 already counted this game as succeeded — a Phase 2
+                        # IGDB failure means the import actually failed for it.
+                        succeeded -= 1
                         failures.append({"gameId": app_id, "gameName": game_name, "error": str(exc)})
 
             await asyncio.gather(*(_match_one(app_id, name) for app_id, name in unmatched))
@@ -218,6 +222,7 @@ async def _import_wishlist(
         semaphore = asyncio.Semaphore(_IGDB_MATCH_CONCURRENCY)
 
         async def _match_one(app_id: int) -> None:
+            nonlocal succeeded
             async with semaphore:
                 try:
                     game_id = await _match_to_igdb(db, igdb_client, app_id)
@@ -228,6 +233,9 @@ async def _import_wishlist(
                             db.commit()
                 except Exception as exc:  # noqa: BLE001 - one bad match must not abort the batch
                     db.rollback()
+                    # Phase 1 already counted this item as succeeded — a Phase 2
+                    # IGDB failure means the import actually failed for it.
+                    succeeded -= 1
                     failures.append({"gameId": app_id, "error": str(exc)})
 
         await asyncio.gather(*(_match_one(app_id) for app_id in unmatched_app_ids))
