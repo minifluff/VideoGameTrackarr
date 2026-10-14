@@ -527,18 +527,6 @@ const GameListToolbar = ({
               },
             }}
           >
-            <MenuItem
-              onClick={() => {
-                setBulkActionsMenuOpen(false);
-                setConfirmRemoveOpen(true);
-              }}
-              sx={{ minHeight: buttonGroupRef.current?.offsetHeight }}
-            >
-              <ListItemIcon>
-                <DeleteIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>{t("common.remove")}</ListItemText>
-            </MenuItem>
             {onBulkHideFromPublic ? (
               <MenuItem
                 onClick={() => {
@@ -553,6 +541,18 @@ const GameListToolbar = ({
                 <ListItemText>{t("games.listToolbar.hideFromPublicButton")}</ListItemText>
               </MenuItem>
             ) : null}
+            <MenuItem
+              onClick={() => {
+                setBulkActionsMenuOpen(false);
+                setConfirmRemoveOpen(true);
+              }}
+              sx={{ minHeight: buttonGroupRef.current?.offsetHeight }}
+            >
+              <ListItemIcon>
+                <DeleteIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>{t("common.remove")}</ListItemText>
+            </MenuItem>
           </Menu>
           <ConfirmDialog
             open={confirmRemoveOpen}
