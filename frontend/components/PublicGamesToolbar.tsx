@@ -11,8 +11,6 @@ import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import Stack from "@mui/material/Stack";
-import Tab from "@mui/material/Tab";
-import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Collapse from "@mui/material/Collapse";
@@ -70,7 +68,6 @@ const PublicGamesToolbar = ({
   const { t } = useTranslation();
   const collapsed = useScrollCollapse(80);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"filter" | "sort">("filter");
 
   const selectedSortOption =
     GAME_SORT_OPTIONS.find((option) => option.value === sort) ?? GAME_SORT_OPTIONS[0];
@@ -112,13 +109,20 @@ const PublicGamesToolbar = ({
       </Tooltip>
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>{t("public.games.filtersButtonLabel")}</DialogTitle>
-        <Tabs value={activeTab} onChange={(_event, value) => setActiveTab(value)} variant="fullWidth">
-          <Tab value="filter" label={t("games.listToolbar.filterTabLabel")} />
-          <Tab value="sort" label={t("public.games.sortTabLabel")} />
-        </Tabs>
         <DialogContent>
-          {activeTab === "filter" ? (
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
+              <Grid size={{ xs: 12 }}>
+                <AutocompleteSelect<GameSortOptionItem>
+                  label={t("games.listToolbar.sortByLabel")}
+                  options={GAME_SORT_OPTIONS}
+                  value={selectedSortOption}
+                  onChange={(newValue) => onSortChange(newValue?.value ?? "name_asc")}
+                  getOptionLabel={(option) => t(option.labelKey)}
+                  isOptionEqualToValue={(option, val) => option.value === val.value}
+                  disableClearable
+                  fullWidth
+                />
+              </Grid>
               <Grid size={{ xs: 12 }}>
                 <AutocompleteMultiSelect<FilterOption>
                   label={t("games.listToolbar.consoleLabel")}
@@ -167,22 +171,7 @@ const PublicGamesToolbar = ({
               </Grid>
 
             </Grid>
-          ) : (
-            <Grid container spacing={2} sx={{ mt: 0.5 }}>
-              <Grid size={{ xs: 12 }}>
-                <AutocompleteSelect<GameSortOptionItem>
-                  label={t("games.listToolbar.sortByLabel")}
-                  options={GAME_SORT_OPTIONS}
-                  value={selectedSortOption}
-                  onChange={(newValue) => onSortChange(newValue?.value ?? "name_asc")}
-                  getOptionLabel={(option) => t(option.labelKey)}
-                  isOptionEqualToValue={(option, val) => option.value === val.value}
-                  disableClearable
-                  fullWidth
-                />
-              </Grid>
             </Grid>
-          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)} variant="contained">
