@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createPlatform, deletePlatform, listPlatforms, updatePlatform } from "../api/platforms";
+import { createPlatform, deletePlatform, listPlatforms, massMoveGames, updatePlatform } from "../api/platforms";
 
 export function usePlatforms() {
   return useQuery({ queryKey: ["platforms"], queryFn: listPlatforms });
@@ -31,6 +31,19 @@ export function useUpdatePlatform() {
       // A rename changes the platform's name embedded in cached game data — drop the
       // games cache so cards and detail pages reflect the new name.
       queryClient.invalidateQueries({ queryKey: ["games"] });
+    },
+  });
+}
+
+export function useMassMoveGames() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sourceId, targetId }: { sourceId: number; targetId: number }) =>
+      massMoveGames(sourceId, targetId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["platforms"] });
+      queryClient.invalidateQueries({ queryKey: ["games"] });
+      queryClient.invalidateQueries({ queryKey: ["library"] });
     },
   });
 }
