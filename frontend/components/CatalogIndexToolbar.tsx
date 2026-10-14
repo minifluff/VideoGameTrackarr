@@ -17,6 +17,7 @@ import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import Collapse from "@mui/material/Collapse";
 import { useTranslation } from "react-i18next";
 import type { CatalogSortOption } from "../api/types";
 import AutocompleteSelect from "./AutocompleteSelect";
@@ -53,13 +54,15 @@ const CatalogIndexToolbar = ({
   onSortChange,
 }: CatalogIndexToolbarProps) => {
   const { t } = useTranslation();
+  const collapsed = useScrollCollapse(80);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"filter" | "more">("filter");
   const selectedSortOption =
     SORT_OPTIONS.find((option) => option.value === sort) ?? SORT_OPTIONS[0];
 
   return (
-    <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2, mb: 3 }}>
+    <Collapse in={!collapsed} timeout={200}>
+      <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2, mb: 3 }}>
       <Stack direction="row" spacing={1}>
         <TextField
           label={searchLabel}
@@ -131,7 +134,8 @@ const CatalogIndexToolbar = ({
           </Button>
         </DialogActions>
       </Dialog>
-    </Paper>
+      </Paper>
+    </Collapse>
   );
 };
 

@@ -34,6 +34,7 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import Collapse from "@mui/material/Collapse";
 import { useTranslation } from "react-i18next";
 import type { MatchAllField, MatchAllFilters } from "../api/games";
 import type {
@@ -366,6 +367,7 @@ const GameListToolbar = ({
   onIncludeAddonsChange,
 }: GameListToolbarProps) => {
   const { t } = useTranslation();
+  const collapsed = useScrollCollapse(80);
   const allPlaceholder = t("games.listToolbar.allOption");
   const selectedTags = tagOptions.filter((tag) => tagIds.includes(tag.id));
   const selectedPlatforms = platformOptions.filter((platform) => platformIds.includes(platform.id));
@@ -540,7 +542,8 @@ const GameListToolbar = ({
   }
 
   return (
-    <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
+    <Collapse in={!collapsed} timeout={200}>
+      <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
       <Stack spacing={1.5}>
         <Stack direction="row" spacing={1}>
           <TextField
@@ -880,7 +883,8 @@ const GameListToolbar = ({
           </DialogActions>
         </Dialog>
       </Stack>
-    </Paper>
+      </Paper>
+    </Collapse>
   );
 };
 

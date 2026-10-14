@@ -1,5 +1,6 @@
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Collapse from "@mui/material/Collapse";
 import { useTranslation } from "react-i18next";
 import type { NamedLookup } from "../api/types";
 import AutocompleteMultiSelect from "./AutocompleteMultiSelect";
@@ -68,6 +69,7 @@ const HardwareListToolbar = ({
   onPlatformIdsChange,
 }: HardwareListToolbarProps) => {
   const { t } = useTranslation();
+  const collapsed = useScrollCollapse(80);
 
   const sortOptions: SortOption[] = [
     { value: "name", label: t("hardware.listToolbar.sortOptionName") },
@@ -77,7 +79,8 @@ const HardwareListToolbar = ({
   const allPlaceholder = t("hardware.listToolbar.allOption");
 
   return (
-    <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
+    <Collapse in={!collapsed} timeout={200}>
+      <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
       <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap" }}>
         <LookupFilter
           label={t("hardware.listToolbar.manufacturerLabel")}
@@ -111,7 +114,8 @@ const HardwareListToolbar = ({
           sx={{ minWidth: 160 }}
         />
       </Stack>
-    </Paper>
+      </Paper>
+    </Collapse>
   );
 };
 

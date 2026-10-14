@@ -15,6 +15,7 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
+import Collapse from "@mui/material/Collapse";
 import { useTranslation } from "react-i18next";
 import type { GameSortOption } from "../api/types";
 import { GAME_SORT_OPTIONS, type GameSortOptionItem } from "../utils/gameSortOptions";
@@ -43,6 +44,7 @@ const PublicGamesToolbar = ({
   onPlatformIdsChange,
 }: PublicGamesToolbarProps) => {
   const { t } = useTranslation();
+  const collapsed = useScrollCollapse(80);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"filter" | "sort">("filter");
 
@@ -50,7 +52,8 @@ const PublicGamesToolbar = ({
     GAME_SORT_OPTIONS.find((option) => option.value === sort) ?? GAME_SORT_OPTIONS[0];
 
   return (
-    <Stack direction="row" spacing={1} sx={{ mb: 3 }}>
+    <Collapse in={!collapsed} timeout={200}>
+      <Stack direction="row" spacing={1} sx={{ mb: 3 }}>
       <TextField
         label={t("public.games.searchLabel")}
         value={search}
@@ -124,7 +127,8 @@ const PublicGamesToolbar = ({
           </Button>
         </DialogActions>
       </Dialog>
-    </Stack>
+      </Stack>
+    </Collapse>
   );
 };
 
