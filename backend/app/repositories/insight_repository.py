@@ -62,6 +62,7 @@ def find_missing_addons(
     play_status_match_all: bool = False,
     steelbook_only: bool = False,
     unlinked_only: bool = False,
+    hide_with_cover_art: bool = False,
     sort: GameSortOption = GameSortOption.NAME_ASC,
 ) -> list[tuple[Game, list[tuple[Game, bool]]]]:
     """For every owned, top-level game: its DLC/expansions/packs (per parent_game_id,
@@ -120,6 +121,7 @@ def find_missing_addons(
         play_status_match_all=play_status_match_all,
         steelbook_only=steelbook_only,
         unlinked_only=unlinked_only,
+        hide_with_cover_art=hide_with_cover_art,
         sort=sort,
     )
     # _apply_optional_game_filters' own order_by only covers Game's sort field — Addon.name

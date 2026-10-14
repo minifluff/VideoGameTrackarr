@@ -116,6 +116,7 @@ def list_addons_for_collection(
     play_status_match_all: bool = False,
     steelbook_only: bool = False,
     unlinked_only: bool = False,
+    hide_with_cover_art: bool = False,
     sort: GameSortOption = GameSortOption.NAME_ASC,
 ) -> list[GameWithStatus]:
     """Addons of this collection's top-level games — parent_game_id is only ever set for
@@ -175,6 +176,7 @@ def list_addons_for_collection(
         play_status_match_all=play_status_match_all,
         steelbook_only=steelbook_only,
         unlinked_only=unlinked_only,
+        hide_with_cover_art=hide_with_cover_art,
         sort=sort,
     )
     return [_row_to_game_with_status(row) for row in db.execute(stmt)]
