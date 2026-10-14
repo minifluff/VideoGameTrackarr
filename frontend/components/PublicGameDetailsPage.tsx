@@ -8,6 +8,12 @@ import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import { isAxiosError } from "axios";
 import { useTranslation } from "react-i18next";
@@ -55,6 +61,13 @@ const PublicGameDetailsPage = () => {
     );
   }
 
+  const formatLabel = (format: string | null) => {
+    if (!format) return "—";
+    const key = `library.format.${format}`;
+    const translated = t(key);
+    return translated === key ? format.charAt(0).toUpperCase() + format.slice(1) : translated;
+  };
+
   return (
     <Grid container spacing={{ xs: 2, md: 3 }} sx={{ alignItems: "flex-start" }}>
       <Grid size={{ xs: 12, md: 3 }}>
@@ -87,6 +100,41 @@ const PublicGameDetailsPage = () => {
       <Grid size={{ xs: 12, md: 9 }}>
         <Card sx={sectionCardSx}>
           <GameAboutSection game={game} publicToken={token} />
+        </Card>
+      </Grid>
+      <Grid size={{ xs: 12 }}>
+        <Card sx={sectionCardSx}>
+          <Box sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              {t("public.games.collectionTitle")}
+            </Typography>
+            {game.ownedCopies.length > 0 ? (
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>{t("public.games.collectionPlatform")}</TableCell>
+                      <TableCell>{t("public.games.collectionEdition")}</TableCell>
+                      <TableCell>{t("public.games.collectionFormat")}</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {game.ownedCopies.map((copy, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{copy.platform ?? "—"}</TableCell>
+                        <TableCell>{copy.edition ?? "—"}</TableCell>
+                        <TableCell>{formatLabel(copy.format)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                {t("public.games.collectionEmpty")}
+              </Typography>
+            )}
+          </Box>
         </Card>
       </Grid>
     </Grid>
