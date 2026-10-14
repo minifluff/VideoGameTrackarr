@@ -26,7 +26,7 @@ import GamesSubNav from "./GamesSubNav";
 import ManageTagsDialog from "./ManageTagsDialog";
 import VirtualGameGrid from "./VirtualGameGrid";
 import { usePruneStaleIds, useSessionState } from "../hooks/useSessionState";
-import { useScrollCollapse, useScrollDirection } from "../hooks/useScrollCollapse";
+import { useScrollCollapse } from "../hooks/useScrollCollapse";
 
 const MIN_SEARCH_LENGTH = 3;
 
@@ -43,8 +43,6 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
   const collapsed = useScrollCollapse();
   // Tabs and title: hidden once scrolled, only return when back at the very top
   const hideHeader = useScrollCollapse(10);
-  // Search bar: directional — hides on scroll down, reappears on scroll up
-  const searchHidden = useScrollDirection(80);
   const sp = sessionPrefix;
   const [searchKeyword, setSearchKeyword] = useSessionState(`${sp}.searchKeyword`, "");
   const [ownershipStatuses, setOwnershipStatuses] = useSessionState<OwnershipStatus[]>(
@@ -290,7 +288,6 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
         </Box>
         )}
         </Collapse>
-        <Collapse in={!searchHidden}>
         <GameListToolbar
           searchKeyword={searchKeyword}
           onSearchKeywordChange={handleSearchKeywordChange}
@@ -352,7 +349,6 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
           matchAll={matchAll}
           onMatchAllChange={setMatchAll}
         />
-        </Collapse>
       </Box>
       {/* Contains z-index in here to its own stacking context — otherwise MUI's
           shrunk-label z-index (1, same as the sticky header above) ties with the sticky
