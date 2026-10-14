@@ -712,7 +712,34 @@ const LibraryItemDialog = ({
               )}
             />
           </FormControl>
-        ) : null}
+        ) : (
+          // Storefront field is always visible — free text for physical copies or
+          // platforms without a predefined storefront list.
+          <FormControl fullWidth sx={{ margin: "10px 0 20px 0" }}>
+            <Controller
+              name="digitalStorefront"
+              control={control}
+              render={({ field }) => (
+                <Autocomplete
+                  freeSolo
+                  options={[]}
+                  value={field.value ?? null}
+                  inputValue={field.value ?? ""}
+                  onChange={(_event, value) => field.onChange(value ?? undefined)}
+                  onInputChange={(_event, value, reason) => {
+                    if (reason === "input") field.onChange(value || undefined);
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={t("dialogs.libraryItem.digitalStorefrontLabel")}
+                    />
+                  )}
+                />
+              )}
+            />
+          </FormControl>
+        )}
         <FormControl fullWidth sx={{ margin: "10px 0 20px 0" }}>
           <Controller
             name="edition"
