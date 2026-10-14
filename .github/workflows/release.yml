@@ -80,7 +80,8 @@ jobs:
         run: |
           # Keep a rolling "latest" release so the :latest image always has
           # auto-generated notes describing what changed.
-          gh release delete latest --yes 2>/dev/null || true
+          gh release delete latest --yes --cleanup-tag 2>/dev/null || true
+          sleep 5
           gh release create latest \
             --title "Latest (master)" \
             --generate-notes \
