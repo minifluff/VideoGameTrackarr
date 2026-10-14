@@ -95,7 +95,7 @@ const PublicGamesToolbar = ({
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
               <Grid size={{ xs: 12 }}>
                 <AutocompleteMultiSelect<{ id: number; name: string }>
-                  label={t("games.listToolbar.platformsLabel")}
+                  label={t("games.listToolbar.consoleLabel")}
                   options={platformOptions}
                   value={platformOptions.filter((p) => platformIds.includes(p.id))}
                   onChange={(newValue) => onPlatformIdsChange(newValue.map((p) => p.id))}
