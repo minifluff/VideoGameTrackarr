@@ -53,7 +53,7 @@ const platforms: PlatformResponse[] = [
 const regions: RegionResponse[] = [{ id: 1, name: "Worldwide" }];
 
 describe("LibraryItemDialog", () => {
-  it("shows Digital Storefront when PC and Digital format are selected", async () => {
+  it("shows Digital Storefront always (even before platform/format selection)", async () => {
     const user = userEvent.setup();
     render(
       <LibraryItemDialog
@@ -68,7 +68,8 @@ describe("LibraryItemDialog", () => {
       />
     );
 
-    expect(screen.queryByLabelText("Digital Storefront")).not.toBeInTheDocument();
+    // Storefront field is always visible now — even before platform/format are picked
+    expect(screen.getByLabelText("Digital Storefront")).toBeInTheDocument();
 
     await user.click(screen.getByLabelText("Platform *"));
     await user.click(await screen.findByRole("option", { name: "PC (Microsoft Windows)" }));
