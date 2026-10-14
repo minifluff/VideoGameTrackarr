@@ -82,10 +82,34 @@ def mass_move_games(db: Session, source_platform_id: int, target_platform_id: in
     db.execute(
         update(LibraryItem).where(LibraryItem.platform_id == source.id).values(platform_id=target.id)
     )
-    # Move progress records
-    db.execute(
-        update(GameProgress).where(GameProgress.platform_id == source.id).values(platform_id=target.id)
-    )
+    # Move progress records — GameProgress has a unique (game_id, platform_id) constraint,
+    # so a bulk update would violate it if the target already has progress for the same
+    # game. Handle those conflicts per-row: keep the greater playtime, then delete the
+    # losing source row instead of moving it.
+    source_progress = db.scalars(
+        select(GameProgress).where(GameProgress.platform_id == source.id)
+    ).all()
+    target_progress_by_game = {
+        gp.game_id: gp
+        for gp in db.scalars(
+            select(GameProgress).where(GameProgress.platform_id == target.id)
+        ).all()
+    }
+    for progress in source_progress:
+        existing = target_progress_by_game.get(progress.game_id)
+        if existing is None:
+            progress.platform_id = target.id
+        else:
+            # Merge: keep the greater playtime on the target row, then drop the source.
+            if (progress.playtime_minutes or 0) > (existing.playtime_minutes or 0):
+                existing.playtime_minutes = progress.playtime_minutes
+            # Keep the latest last_played_at
+            if progress.last_played_at and (
+                not existing.last_played_at or progress.last_played_at > existing.last_played_at
+            ):
+                existing.last_played_at = progress.last_played_at
+            db.delete(progress)
+    db.flush()
     # Move play sessions
     db.execute(
         update(PlaySession).where(PlaySession.platform_id == source.id).values(platform_id=target.id)
