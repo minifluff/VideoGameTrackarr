@@ -3,12 +3,10 @@ import ClearIcon from "@mui/icons-material/Clear";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import SearchIcon from "@mui/icons-material/Search";
 import Button from "@mui/material/Button";
-import Checkbox from "@mui/material/Checkbox";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -41,18 +39,11 @@ interface PublicGamesToolbarProps {
   tagOptions: FilterOption[];
   tagIds: number[];
   onTagIdsChange: (value: number[]) => void;
-  collectionOptions: FilterOption[];
-  collectionIds: number[];
-  onCollectionIdsChange: (value: number[]) => void;
-  franchiseOptions: FilterOption[];
-  franchiseIds: number[];
-  onFranchiseIdsChange: (value: number[]) => void;
+
   formats: string[];
   onFormatsChange: (value: string[]) => void;
   playStatuses: string[];
   onPlayStatusesChange: (value: string[]) => void;
-  steelbookOnly: boolean;
-  onSteelbookOnlyChange: (value: boolean) => void;
 }
 
 const FORMAT_OPTIONS = ["physical", "digital", "iso", "rom", "abandonware", "other"];
@@ -70,18 +61,11 @@ const PublicGamesToolbar = ({
   tagOptions,
   tagIds,
   onTagIdsChange,
-  collectionOptions,
-  collectionIds,
-  onCollectionIdsChange,
-  franchiseOptions,
-  franchiseIds,
-  onFranchiseIdsChange,
+
   formats,
   onFormatsChange,
   playStatuses,
   onPlayStatusesChange,
-  steelbookOnly,
-  onSteelbookOnlyChange,
 }: PublicGamesToolbarProps) => {
   const { t } = useTranslation();
   const collapsed = useScrollCollapse(80);
@@ -157,28 +141,8 @@ const PublicGamesToolbar = ({
                   fullWidth
                 />
               </Grid>
-              <Grid size={{ xs: 12 }}>
-                <AutocompleteMultiSelect<FilterOption>
-                  label={t("games.listToolbar.collectionLabel")}
-                  options={collectionOptions}
-                  value={collectionOptions.filter((p) => collectionIds.includes(p.id))}
-                  onChange={(newValue) => onCollectionIdsChange(newValue.map((p) => p.id))}
-                  getOptionLabel={(option) => option.name}
-                  isOptionEqualToValue={(option, val) => option.id === val.id}
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <AutocompleteMultiSelect<FilterOption>
-                  label={t("games.listToolbar.seriesLabel")}
-                  options={franchiseOptions}
-                  value={franchiseOptions.filter((p) => franchiseIds.includes(p.id))}
-                  onChange={(newValue) => onFranchiseIdsChange(newValue.map((p) => p.id))}
-                  getOptionLabel={(option) => option.name}
-                  isOptionEqualToValue={(option, val) => option.id === val.id}
-                  fullWidth
-                />
-              </Grid>
+
+
               <Grid size={{ xs: 12 }}>
                 <AutocompleteMultiSelect<{ id: string; name: string }>
                   label={t("games.listToolbar.formatLabel")}
@@ -201,17 +165,7 @@ const PublicGamesToolbar = ({
                   fullWidth
                 />
               </Grid>
-              <Grid size={{ xs: 12 }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={steelbookOnly}
-                      onChange={(e) => onSteelbookOnlyChange(e.target.checked)}
-                    />
-                  }
-                  label={t("games.listToolbar.steelbookOnlyLabel")}
-                />
-              </Grid>
+
             </Grid>
           ) : (
             <Grid container spacing={2} sx={{ mt: 0.5 }}>

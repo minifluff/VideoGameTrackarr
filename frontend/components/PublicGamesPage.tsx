@@ -6,7 +6,7 @@ import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import type { GameSortOption } from "../api/types";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
-import { usePublicCollections, usePublicFranchises, usePublicGames, usePublicPlatforms, usePublicTags } from "../hooks/usePublic";
+import { usePublicGames, usePublicPlatforms, usePublicTags } from "../hooks/usePublic";
 import { useSessionState } from "../hooks/useSessionState";
 import GameCard from "./GameCard";
 import PublicGamesToolbar from "./PublicGamesToolbar";
@@ -21,27 +21,20 @@ const PublicGamesPage = () => {
   const [sort, setSort] = useSessionState<GameSortOption>("public.games.sort", "name_asc");
   const [platformIds, setPlatformIds] = useSessionState<number[]>("public.games.platformIds", []);
   const [tagIds, setTagIds] = useSessionState<number[]>("public.games.tagIds", []);
-  const [collectionIds, setCollectionIds] = useSessionState<number[]>("public.games.collectionIds", []);
-  const [franchiseIds, setFranchiseIds] = useSessionState<number[]>("public.games.franchiseIds", []);
   const [formats, setFormats] = useSessionState<string[]>("public.games.formats", []);
   const [playStatuses, setPlayStatuses] = useSessionState<string[]>("public.games.playStatuses", []);
-  const [steelbookOnly, setSteelbookOnly] = useSessionState<boolean>("public.games.steelbookOnly", false);
   const debouncedSearch = useDebouncedValue(search.trim(), 500);
   const { data: games, isLoading } = usePublicGames(token, {
     search: debouncedSearch || undefined,
     sort,
     platformIds,
     tagIds,
-    collectionIds,
-    franchiseIds,
     formats,
     playStatuses,
-    steelbookOnly,
   });
   const { data: platforms = [] } = usePublicPlatforms(token);
   const { data: tags = [] } = usePublicTags(token);
-  const { data: collections = [] } = usePublicCollections(token);
-  const { data: franchises = [] } = usePublicFranchises(token);
+
 
   return (
     <>
@@ -59,18 +52,12 @@ const PublicGamesPage = () => {
         tagOptions={tags}
         tagIds={tagIds}
         onTagIdsChange={setTagIds}
-        collectionOptions={collections}
-        collectionIds={collectionIds}
-        onCollectionIdsChange={setCollectionIds}
-        franchiseOptions={franchises}
-        franchiseIds={franchiseIds}
-        onFranchiseIdsChange={setFranchiseIds}
+
         formats={formats}
         onFormatsChange={setFormats}
         playStatuses={playStatuses}
         onPlayStatusesChange={setPlayStatuses}
-        steelbookOnly={steelbookOnly}
-        onSteelbookOnlyChange={setSteelbookOnly}
+
       />
       {isLoading ? (
         <Paper sx={{ p: 3, textAlign: "center" }}>{t("common.loading")}</Paper>
