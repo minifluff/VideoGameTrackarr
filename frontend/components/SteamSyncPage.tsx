@@ -24,6 +24,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
+import TableSortLabel from "@mui/material/TableSortLabel";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -176,14 +177,52 @@ const SteamSyncPage = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [hideSynced, setHideSynced] = useSessionState("steamSync.hideSynced", false);
+  const [sortBy, setSortBy] = useSessionState<"name" | "steamStatus" | "steamPlaytime" | "vgtPlaytime" | "vgtStatus">("steamSync.sortBy", "name");
+  const [sortDirection, setSortDirection] = useSessionState<"asc" | "desc">("steamSync.sortDirection", "asc");
 
   const isImporting = jobs?.find((job) => job.id === STEAM_IMPORT_JOB_ID)?.run.status === "running";
 
+  const rowSortValue = (row: SyncRow, key: "name" | "steamStatus" | "steamPlaytime" | "vgtPlaytime" | "vgtStatus"): string | number => {
+    switch (key) {
+      case "name":
+        return rowName(row).toLowerCase();
+      case "steamStatus":
+        return row.source === "owned" ? 0 : 1;
+      case "steamPlaytime":
+        return row.source === "owned" ? (row.entry as SteamEntry).steamPlaytimeMinutes : -1;
+      case "vgtPlaytime":
+        return row.source === "owned" && (row.entry as SteamEntry).vgtPlaytimeMinutes !== null
+          ? ((row.entry as SteamEntry).vgtPlaytimeMinutes as number)
+          : -1;
+      case "vgtStatus":
+        return row.entry.status;
+    }
+  };
+
+  const handleSort = (column: "name" | "steamStatus" | "steamPlaytime" | "vgtPlaytime" | "vgtStatus") => {
+    if (sortBy === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(column);
+      setSortDirection("asc");
+    }
+  };
+
   const trees = useMemo(() => {
     const combined = buildTrees(ownedEntries ?? [], wishlistEntries ?? []);
-    combined.sort((a, b) => rowName(a.row).localeCompare(rowName(b.row)));
+    const dir = sortDirection === "asc" ? 1 : -1;
+    const compare = (a: SyncRow, b: SyncRow) => {
+      const va = rowSortValue(a, sortBy);
+      const vb = rowSortValue(b, sortBy);
+      if (typeof va === "number" && typeof vb === "number") return (va - vb) * dir;
+      return String(va).localeCompare(String(vb)) * dir;
+    };
+    combined.sort((a, b) => compare(a.row, b.row));
+    for (const tree of combined) {
+      tree.children.sort(compare);
+    }
     return combined;
-  }, [ownedEntries, wishlistEntries]);
+  }, [ownedEntries, wishlistEntries, sortBy, sortDirection]);
 
   // What the table pages over. With "Hide synced" on, done rows drop out — except a done
   // parent whose DLC still has something to sync, which stays so those children are reachable.
@@ -717,11 +756,51 @@ const SteamSyncPage = () => {
                   </TableCell>
                   <TableCell padding="checkbox" />
                   <TableCell />
-                  <TableCell>{t("insights.steamSync.columnName")}</TableCell>
-                  <TableCell>{t("insights.steamSync.columnSteamStatus")}</TableCell>
-                  <TableCell align="right">{t("insights.steamSync.columnSteamPlaytime")}</TableCell>
-                  <TableCell align="right">{t("insights.steamSync.columnVgtPlaytime")}</TableCell>
-                  <TableCell>{t("insights.steamSync.columnVgtStatus")}</TableCell>
+                  <TableCell sortDirection={sortBy === "name" ? sortDirection : false}>
+                    <TableSortLabel
+                      active={sortBy === "name"}
+                      direction={sortBy === "name" ? sortDirection : "asc"}
+                      onClick={() => handleSort("name")}
+                    >
+                      {t("insights.steamSync.columnName")}
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sortDirection={sortBy === "steamStatus" ? sortDirection : false}>
+                    <TableSortLabel
+                      active={sortBy === "steamStatus"}
+                      direction={sortBy === "steamStatus" ? sortDirection : "asc"}
+                      onClick={() => handleSort("steamStatus")}
+                    >
+                      {t("insights.steamSync.columnSteamStatus")}
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell align="right" sortDirection={sortBy === "steamPlaytime" ? sortDirection : false}>
+                    <TableSortLabel
+                      active={sortBy === "steamPlaytime"}
+                      direction={sortBy === "steamPlaytime" ? sortDirection : "asc"}
+                      onClick={() => handleSort("steamPlaytime")}
+                    >
+                      {t("insights.steamSync.columnSteamPlaytime")}
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell align="right" sortDirection={sortBy === "vgtPlaytime" ? sortDirection : false}>
+                    <TableSortLabel
+                      active={sortBy === "vgtPlaytime"}
+                      direction={sortBy === "vgtPlaytime" ? sortDirection : "asc"}
+                      onClick={() => handleSort("vgtPlaytime")}
+                    >
+                      {t("insights.steamSync.columnVgtPlaytime")}
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sortDirection={sortBy === "vgtStatus" ? sortDirection : false}>
+                    <TableSortLabel
+                      active={sortBy === "vgtStatus"}
+                      direction={sortBy === "vgtStatus" ? sortDirection : "asc"}
+                      onClick={() => handleSort("vgtStatus")}
+                    >
+                      {t("insights.steamSync.columnVgtStatus")}
+                    </TableSortLabel>
+                  </TableCell>
                   <TableCell align="right">{t("insights.steamSync.columnActions")}</TableCell>
                 </TableRow>
               </TableHead>
