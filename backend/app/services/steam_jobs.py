@@ -18,7 +18,9 @@ JOB_STEAM_IMPORT = "steam_import"
 # Same reasoning as resync_jobs.py's _PACE_DELAY_SECONDS: neither SteamClient nor
 # IGDBClient self-throttles across many sequential calls, and this loop can make up to two
 # IGDB requests per unmatched Steam game (external_games lookup, then a full game import).
-_PACE_DELAY_SECONDS = 0.5
+_PACE_DELAY_SECONDS = 0.2
+# IGDB's free tier allows 4 requests/second — cap concurrent IGDB matching there.
+_IGDB_MATCH_CONCURRENCY = 4
 
 
 class SteamNotConfiguredError(Exception):
@@ -86,6 +88,8 @@ async def _import(db: Session, report_progress: Callable[[int, int], None]) -> d
         succeeded = 0
         failures: list[dict[str, Any]] = []
         owned_app_ids: set[int] = set()
+        # Phase 1: fast local upserts of every Steam entry (no IGDB calls yet).
+        unmatched_app_ids: list[int] = []
         for index, steam_game in enumerate(owned_games):
             if index > 0:
                 await asyncio.sleep(_PACE_DELAY_SECONDS)
@@ -93,20 +97,36 @@ async def _import(db: Session, report_progress: Callable[[int, int], None]) -> d
                 entry = steam_repository.upsert_entry(
                     db, steam_game.app_id, steam_game.name, steam_game.playtime_minutes, steam_game.last_played_at
                 )
-                db.commit()
                 owned_app_ids.add(steam_game.app_id)
-
                 if entry.game_id is None and not entry.dismissed:
-                    game_id = await _match_to_igdb(db, igdb_client, steam_game.app_id)
-                    if game_id is not None:
-                        steam_repository.set_game_id(db, entry, game_id)
-                        db.commit()
-
+                    unmatched_app_ids.append(steam_game.app_id)
                 succeeded += 1
-            except Exception as exc:  # noqa: BLE001 - one bad match/game must not abort the batch
+            except Exception as exc:  # noqa: BLE001 - one bad upsert must not abort the batch
                 db.rollback()
                 failures.append({"gameId": steam_game.app_id, "gameName": steam_game.name, "error": str(exc)})
             report_progress(index + 1, len(owned_games))
+        db.commit()
+
+        # Phase 2: IGDB-match the unmatched entries concurrently (capped at IGDB's
+        # 4 req/s free-tier limit). This is the slow part — parallelizing it is the
+        # main speedup for large libraries.
+        if unmatched_app_ids:
+            semaphore = asyncio.Semaphore(_IGDB_MATCH_CONCURRENCY)
+
+            async def _match_one(app_id: int) -> None:
+                async with semaphore:
+                    try:
+                        game_id = await _match_to_igdb(db, igdb_client, app_id)
+                        if game_id is not None:
+                            entry = steam_repository.get_entry(db, app_id)
+                            if entry is not None:
+                                steam_repository.set_game_id(db, entry, game_id)
+                                db.commit()
+                    except Exception as exc:  # noqa: BLE001 - one bad match must not abort the batch
+                        db.rollback()
+                        failures.append({"gameId": app_id, "gameName": f"Steam App {app_id}", "error": str(exc)})
+
+            await asyncio.gather(*(_match_one(app_id) for app_id in unmatched_app_ids))
 
         result: dict[str, Any] = {
             "total": len(owned_games),
@@ -172,6 +192,8 @@ async def _import_wishlist(
 
     succeeded = 0
     failures: list[dict[str, Any]] = []
+    # Phase 1: fast local upserts.
+    unmatched_app_ids: list[int] = []
     for index, item in enumerate(wishlist_items):
         if index > 0:
             await asyncio.sleep(_PACE_DELAY_SECONDS)
@@ -182,19 +204,33 @@ async def _import_wishlist(
             # the placeholder on every re-run.
             steam_name = existing.steam_name if existing else f"Steam App {item.app_id}"
             entry = steam_wishlist_repository.upsert_entry(db, item.app_id, steam_name, item.added_at)
-            db.commit()
-
             if entry.game_id is None and not entry.dismissed:
-                game_id = await _match_to_igdb(db, igdb_client, item.app_id)
-                if game_id is not None:
-                    steam_wishlist_repository.set_game_id(db, entry, game_id)
-                    db.commit()
-
+                unmatched_app_ids.append(item.app_id)
             succeeded += 1
-        except Exception as exc:  # noqa: BLE001 - one bad match/game must not abort the batch
+        except Exception as exc:  # noqa: BLE001 - one bad upsert must not abort the batch
             db.rollback()
             failures.append({"gameId": item.app_id, "error": str(exc)})
         report_progress(index + 1, len(wishlist_items))
+    db.commit()
+
+    # Phase 2: concurrent IGDB matching (same 4 req/s cap as the owned loop).
+    if unmatched_app_ids:
+        semaphore = asyncio.Semaphore(_IGDB_MATCH_CONCURRENCY)
+
+        async def _match_one(app_id: int) -> None:
+            async with semaphore:
+                try:
+                    game_id = await _match_to_igdb(db, igdb_client, app_id)
+                    if game_id is not None:
+                        entry = steam_wishlist_repository.get_entry(db, app_id)
+                        if entry is not None:
+                            steam_wishlist_repository.set_game_id(db, entry, game_id)
+                            db.commit()
+                except Exception as exc:  # noqa: BLE001 - one bad match must not abort the batch
+                    db.rollback()
+                    failures.append({"gameId": app_id, "error": str(exc)})
+
+        await asyncio.gather(*(_match_one(app_id) for app_id in unmatched_app_ids))
 
     return {
         "total": len(wishlist_items),
