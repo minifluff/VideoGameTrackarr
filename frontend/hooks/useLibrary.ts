@@ -13,7 +13,7 @@ import {
   replaceRom,
   updateLibraryItem,
   updateRomLabel,
-  uploadBios,,
+  uploadBios,
   moveLibraryItem,
   splitLibraryItem,} from "../api/library";
 import type { LibraryItemInput } from "../api/types";
