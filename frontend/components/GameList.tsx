@@ -98,7 +98,6 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
 
   const gameListFilters = useMemo(
     () => ({
-      ...forcedFilters,
       search: isSearchActive ? debouncedKeyword : undefined,
       platformIds: platformIds.length > 0 ? platformIds : undefined,
       platformExclude,
@@ -119,6 +118,8 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
       matchAll,
       steelbookOnly,
       sort,
+      // forcedFilters last so they override the component's own filter state
+      ...forcedFilters,
     }),
     [
       isSearchActive,
