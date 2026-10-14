@@ -143,6 +143,7 @@ export interface Tag {
   name: string;
   color: string | null;
   textColor: string | null;
+  gameCount: number;
 }
 
 // Powers the Games page's bulk "Manage Tags" dialog — every tag in the library, paired with
