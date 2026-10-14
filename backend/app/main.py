@@ -15,6 +15,7 @@ from starlette.types import Scope
 
 from app.api.routes import (
     accessories,
+    appearance,
     auth,
     catalog_resync,
     collections,
@@ -166,6 +167,7 @@ async def igdb_credentials_handler(request: Request, exc: IGDBCredentialsError) 
 
 app.include_router(health.router)
 app.include_router(auth.router)
+app.include_router(appearance.router)
 app.include_router(platforms.router)
 app.include_router(regions.router)
 app.include_router(games.router)
