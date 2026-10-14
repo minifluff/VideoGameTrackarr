@@ -85,6 +85,7 @@ async def _import(db: Session, report_progress: Callable[[int, int], None]) -> d
 
         succeeded = 0
         failures: list[dict[str, Any]] = []
+        owned_app_ids: set[int] = set()
         for index, steam_game in enumerate(owned_games):
             if index > 0:
                 await asyncio.sleep(_PACE_DELAY_SECONDS)
@@ -93,6 +94,7 @@ async def _import(db: Session, report_progress: Callable[[int, int], None]) -> d
                     db, steam_game.app_id, steam_game.name, steam_game.playtime_minutes, steam_game.last_played_at
                 )
                 db.commit()
+                owned_app_ids.add(steam_game.app_id)
 
                 if entry.game_id is None and not entry.dismissed:
                     game_id = await _match_to_igdb(db, igdb_client, steam_game.app_id)
@@ -118,7 +120,7 @@ async def _import(db: Session, report_progress: Callable[[int, int], None]) -> d
         # already committed above.
         try:
             result["wishlist"] = await _import_wishlist(
-                db, steam_client, igdb_client, user.steam_id_64, report_progress
+                db, steam_client, igdb_client, user.steam_id_64, report_progress, owned_app_ids
             )
         except Exception as exc:  # noqa: BLE001 - see comment above
             result["wishlist"] = {"total": 0, "succeeded": 0, "failed": 0, "failures": [], "error": str(exc)}
@@ -135,8 +137,22 @@ async def _import_wishlist(
     igdb_client: IGDBClient,
     steam_id_64: str,
     report_progress: Callable[[int, int], None],
+    owned_app_ids: set[int],
 ) -> dict[str, Any]:
     wishlist_items = await steam_client.get_wishlist(steam_id_64)
+
+    # A game bought since the last import disappears from Steam's wishlist but stays in
+    # ours — drop any wishlist entry whose app id now shows up in the owned list so the
+    # Steam Sync table doesn't show a stale wishlist row alongside the new owned row.
+    stale_entries = [
+        entry
+        for entry in steam_wishlist_repository.list_all_entries(db)
+        if entry.steam_app_id in owned_app_ids
+    ]
+    for stale in stale_entries:
+        db.delete(stale)
+    if stale_entries:
+        db.commit()
 
     succeeded = 0
     failures: list[dict[str, Any]] = []

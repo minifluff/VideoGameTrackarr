@@ -6,7 +6,13 @@ from sqlalchemy.orm import Session
 
 from app.models.library import LibraryItem, LibraryStatus, MediaFormat
 from app.models.steam import SteamLibraryEntry
-from app.repositories import game_repository, library_item_repository, platform_repository, steam_repository
+from app.repositories import (
+    game_repository,
+    library_item_repository,
+    platform_repository,
+    steam_repository,
+    steam_wishlist_repository,
+)
 from app.services import library_service, progress_service
 from app.services.exceptions import ConflictError, NotFoundError
 
@@ -137,6 +143,17 @@ def _sync_one(db: Session, entry: SteamLibraryEntry) -> None:
         sync_platform_id = steam_platform.id
     else:
         sync_platform_id = steam_item.platform_id
+
+    # The game may have been wishlisted (and even wishlist-synced) before it was bought —
+    # now that it's owned, the wishlist library item and any stale wishlist Steam entry
+    # for this app go away so the game doesn't live in both lists.
+    for wishlist_item in library_item_repository.list_library_items(
+        db, entry.game_id, status=LibraryStatus.WISHLIST
+    ):
+        library_service.delete_library_item(db, wishlist_item.id)
+    stale_wishlist_entry = steam_wishlist_repository.get_entry(db, entry.steam_app_id)
+    if stale_wishlist_entry is not None:
+        db.delete(stale_wishlist_entry)
 
     # A straight set to Steam's numbers, not a merge — Sync is now an explicit, confirmed
     # action (the confirmation popup shows the current-vs-new delta before this ever runs),
