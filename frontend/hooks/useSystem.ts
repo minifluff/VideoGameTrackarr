@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { resetDatabase } from "../api/system";
+import { clearPlaytime, resetDatabase } from "../api/system";
 
 export const useResetDatabase = () => {
   const queryClient = useQueryClient();
@@ -7,6 +7,17 @@ export const useResetDatabase = () => {
     mutationFn: (confirmation: string) => resetDatabase(confirmation),
     onSuccess: () => {
       // Everything the UI knew about the library is gone — refetch it all.
+      queryClient.invalidateQueries();
+    },
+  });
+};
+
+export const useClearPlaytime = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (confirmation: string) => clearPlaytime(confirmation),
+    onSuccess: () => {
+      // Progress data changed — refetch queries that display it.
       queryClient.invalidateQueries();
     },
   });
