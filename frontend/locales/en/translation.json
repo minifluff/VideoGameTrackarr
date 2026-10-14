@@ -69,7 +69,9 @@
     "platforms": "Platforms",
     "removeGames": "Remove Games",
     "playniteSync": "Playnite Sync",
-    "unlinkedGames": "Unlinked Games"
+    "unlinkedGames": "Unlinked Games",
+    "playing": "Playing",
+    "wishlist": "Wishlist"
   },
   "breadcrumbs": {
     "edit": "Edit",
