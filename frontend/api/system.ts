@@ -11,3 +11,15 @@ export const resetDatabase = async (confirmation: string): Promise<ResetDatabase
   });
   return data;
 };
+
+export interface ClearPlaytimeResult {
+  progressDeleted: number;
+  sessionsDeleted: number;
+}
+
+export const clearPlaytime = async (confirmation: string): Promise<ClearPlaytimeResult> => {
+  const { data } = await apiClient.post<ClearPlaytimeResult>("/api/system/clear-playtime", {
+    confirmation,
+  });
+  return data;
+};
