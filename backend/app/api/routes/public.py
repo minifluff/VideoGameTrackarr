@@ -15,6 +15,7 @@ from app.schemas.public import (
     public_game_from_orm,
 )
 from app.services import accessory_service, auth_service, device_service, game_service
+from app.services.exceptions import NotFoundError
 
 # No auth dependency — this is the app's one deliberately unauthenticated router, gated
 # instead by the unlisted per-user token in the path. See auth_service.get_user_by_share_token.
@@ -29,6 +30,8 @@ def list_public_games(
 ) -> list[PublicGameSummaryResponse]:
     auth_service.get_user_by_share_token(db, token)
     games = game_service.search_local_games(db, **vars(params))
+    # Hidden games never appear on public pages.
+    games = [g for g in games if not g.game.hide_from_public]
     # Single query for all owned platforms across the returned games (avoids N+1).
     game_ids = [g.game.id for g in games]
     platforms_by_game: dict[int, set[str]] = {}
@@ -103,6 +106,8 @@ def list_public_franchises(
 def get_public_game(token: str, game_id: int, db: Session = Depends(get_db)) -> PublicGameDetailResponse:
     auth_service.get_user_by_share_token(db, token)
     status = game_service.get_public_game_detail(db, game_id)
+    if status.game.hide_from_public:
+        raise NotFoundError(f"Game {game_id} not found")
     # Owned platforms for this game.
     from sqlalchemy import select
 
