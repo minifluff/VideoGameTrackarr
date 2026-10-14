@@ -2,7 +2,10 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from app.models.catalog import Platform
+from sqlalchemy import delete, update
+
+from app.models.catalog import GamePlatform, Platform
+from app.models.library import GameProgress, LibraryItem, PlaySession
 from app.repositories import platform_repository
 from app.repositories.game_repository import GameWithStatus
 from app.services.exceptions import ConflictError, NotFoundError
@@ -57,6 +60,47 @@ def delete_platform(db: Session, platform_id: int) -> None:
     platform = _require_platform(db, platform_id)
     platform_repository.delete_platform(db, platform)
     db.commit()
+
+
+def mass_move_games(db: Session, source_platform_id: int, target_platform_id: int) -> int:
+    """Move all library items from one platform to another.
+
+    Updates LibraryItem, GameProgress, PlaySession, and GamePlatform rows.
+    Returns the number of library items moved.
+    """
+    source = _require_platform(db, source_platform_id)
+    target = _require_platform(db, target_platform_id)
+    if source.id == target.id:
+        raise ConflictError("Source and target platforms must be different")
+
+    # Count items being moved for the response
+    moved_count = db.query(LibraryItem).filter(LibraryItem.platform_id == source.id).count()
+
+    # Move library items
+    db.execute(
+        update(LibraryItem).where(LibraryItem.platform_id == source.id).values(platform_id=target.id)
+    )
+    # Move progress records
+    db.execute(
+        update(GameProgress).where(GameProgress.platform_id == source.id).values(platform_id=target.id)
+    )
+    # Move play sessions
+    db.execute(
+        update(PlaySession).where(PlaySession.platform_id == source.id).values(platform_id=target.id)
+    )
+    # Move IGDB release-platform links (avoid duplicates if target already has the link)
+    existing_target_links = {
+        gp.game_id
+        for gp in db.query(GamePlatform).filter(GamePlatform.platform_id == target.id).all()
+    }
+    source_links = db.query(GamePlatform).filter(GamePlatform.platform_id == source.id).all()
+    for link in source_links:
+        if link.game_id in existing_target_links:
+            db.delete(link)
+        else:
+            link.platform_id = target.id
+    db.commit()
+    return moved_count
 
 
 def _require_platform(db: Session, platform_id: int) -> Platform:
