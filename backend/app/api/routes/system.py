@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
+from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db
+from app.models.library import GameProgress, PlaySession
 from app.models.system import User
 from app.services import database_reset_service
-from sqlalchemy import delete
-from app.models.library import GameProgress, PlaySession
 
 router = APIRouter(tags=["system"], dependencies=[Depends(get_current_user)])
 
