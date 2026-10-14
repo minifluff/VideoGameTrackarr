@@ -470,7 +470,9 @@
       "customColor": "Pick a custom color",
       "appTitle": "App title",
       "appTitleHelp": "Shown in the title bar and the browser tab.",
-      "reset": "Reset to defaults"
+      "reset": "Reset to defaults",
+      "appIcon": "App icon",
+      "appIconHelp": "Shown as the browser tab icon. Syncs across devices."
     },
     "removeGames": {
       "title": "Remove Games",
