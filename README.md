@@ -26,6 +26,7 @@ My code is free to use and is currently built off Version 1.30.0. Just let me kn
 - Removed Events from Dashboard
 - Added Linked cover art (local nas or web).
 - Change search to allow any order of words.
+- Added Navigation Menu hides on scroll on phones
 - Many more Fixes and changes
 
 ## In-progress features (separate branches)
