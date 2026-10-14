@@ -574,7 +574,7 @@ const GameListToolbar = ({
           <ConfirmDialog
             open={confirmRemoveOpen}
             title={t("games.listToolbar.confirmRemoveTitle")}
-            message={t("games.listToolbar.confirmRemoveMessage", { count: selectedCount })}
+            description={t("games.listToolbar.confirmRemoveMessage", { count: selectedCount })}
             confirmLabel={t("common.remove")}
             onClose={() => setConfirmRemoveOpen(false)}
             onConfirm={() => {
