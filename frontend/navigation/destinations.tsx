@@ -53,6 +53,8 @@ export function getNavDestinations(t: TFunction): NavDestination[] {
       label: t("nav.games"),
       icon: <GamesIcon />,
       subItems: [
+        { to: "/games/playing", label: t("nav.playing"), icon: <SportsEsportsIcon /> },
+        { to: "/games/wishlist", label: t("nav.wishlist"), icon: <LabelIcon /> },
         { to: "/games/add", label: t("nav.addGame"), icon: <AddIcon /> },
         { to: "/games/collections", label: t("nav.collections"), icon: <CollectionsIcon /> },
         { to: "/games/series", label: t("nav.series"), icon: <AccountTreeIcon /> },
