@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user, get_db
 from app.models.library import LibraryStatus
 from app.repositories import itad_repository, platprices_repository
+from pydantic import BaseModel
 from app.schemas.library import (
     LibraryItemCreateRequest,
     LibraryItemResponse,
@@ -55,3 +56,35 @@ def update_library_item(
 @router.delete("/api/library/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_library_item(item_id: int, db: Session = Depends(get_db)) -> None:
     library_service.delete_library_item(db, item_id)
+
+
+class MoveLibraryItemRequest(BaseModel):
+    target_game_id: int
+
+
+class SplitLibraryItemRequest(BaseModel):
+    new_game_name: str
+
+
+@router.post("/api/library/{item_id}/move", response_model=LibraryItemResponse)
+def move_library_item(
+    item_id: int, body: MoveLibraryItemRequest, db: Session = Depends(get_db)
+) -> LibraryItemResponse:
+    """Move a library item to a different game."""
+    item = library_service.move_library_item(db, item_id, body.target_game_id)
+    itad_cache = itad_repository.get_cache(db, item.game_id)
+    platprices_cache = platprices_repository.get_cache(db, item.game_id)
+    return library_item_from_orm(item, itad_cache, platprices_cache)
+
+
+@router.post("/api/library/{item_id}/split", response_model=LibraryItemResponse)
+def split_library_item(
+    item_id: int, body: SplitLibraryItemRequest, db: Session = Depends(get_db)
+) -> LibraryItemResponse:
+    """Split a library item into its own new game listing."""
+    _new_game, item = library_service.split_library_item_to_new_game(
+        db, item_id, body.new_game_name
+    )
+    itad_cache = itad_repository.get_cache(db, item.game_id)
+    platprices_cache = platprices_repository.get_cache(db, item.game_id)
+    return library_item_from_orm(item, itad_cache, platprices_cache)
