@@ -497,7 +497,6 @@ const GameLibrarySection = ({
           itemId={transferItemId}
           itemLabel=""
           currentGameId={gameId}
-          onMoved={() => setTransferItemId(null)}
         />
       )}
       </CardContent>
