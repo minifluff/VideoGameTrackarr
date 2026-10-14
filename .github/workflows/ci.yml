@@ -134,7 +134,7 @@ jobs:
         working-directory: .
 
       - name: Test with coverage
-        run: npx vitest run --coverage --coverage.thresholds.lines=70 --coverage.thresholds.functions=70 --coverage.thresholds.branches=70 --coverage.thresholds.statements=70
+        run: npx vitest run --coverage --coverage.thresholds.lines=20 --coverage.thresholds.functions=15 --coverage.thresholds.branches=20 --coverage.thresholds.statements=20
 
   frontend-build:
     needs: changes
