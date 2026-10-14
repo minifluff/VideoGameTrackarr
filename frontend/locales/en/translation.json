@@ -1553,5 +1553,21 @@
       "accessoriesHeading": "Accessories",
       "emptyState": "No hardware found."
     }
+  },
+  "library": {
+    "moveItemTitle": "Move library item",
+    "moveItemDescription": "Move '{item}' to a different game or split it into its own listing.",
+    "moveToGameTab": "Move to game",
+    "splitToNewGameTab": "New game",
+    "targetGameLabel": "Target game",
+    "targetGamePlaceholder": "Search for a game...",
+    "newGameNameLabel": "New game name",
+    "newGameNamePlaceholder": "Enter a name for the new game...",
+    "moveButton": "Move",
+    "splitButton": "Create and move",
+    "moveItemSuccess": "Item moved successfully.",
+    "moveItemError": "Failed to move item.",
+    "splitItemSuccess": "New game created and item moved.",
+    "splitItemError": "Failed to create new game."
   }
 }
