@@ -19,7 +19,6 @@ import UpdateAvailableChip from "./components/UpdateAvailableChip";
 import { useLogout } from "./hooks/useAuth";
 import { useScrollResetOnNavigate } from "./hooks/useScrollResetOnNavigate";
 import BottomNavBar, { BOTTOM_NAV_HEIGHT } from "./navigation/BottomNavBar";
-import Breadcrumbs, { BREADCRUMBS_HEIGHT } from "./navigation/Breadcrumbs";
 import NavDrawer, { NAV_DRAWER_WIDTH } from "./navigation/NavDrawer";
 import NavRail, { NAV_RAIL_WIDTH } from "./navigation/NavRail";
 import { useColorMode } from "./theme/ColorModeProvider";
@@ -119,8 +118,6 @@ const AppShell = () => {
         </Toolbar>
       </AppBar>
 
-      <Breadcrumbs top={appBarHeight} left={sideNavWidth} />
-
       {isCompact ? null : isExpanded ? <NavDrawer /> : <NavRail />}
 
       <Box
@@ -135,7 +132,6 @@ const AppShell = () => {
         }}
       >
         <Toolbar />
-        <Box sx={{ height: BREADCRUMBS_HEIGHT }} />
         <Outlet />
       </Box>
 
