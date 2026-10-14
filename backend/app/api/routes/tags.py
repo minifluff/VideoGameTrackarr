@@ -17,7 +17,9 @@ router = APIRouter(tags=["tags"], dependencies=[Depends(get_current_user)])
 
 @router.get("/api/tags", response_model=list[TagResponse])
 def list_tags(db: Session = Depends(get_db)) -> list[TagResponse]:
-    return [tag_from_orm(tag) for tag in tag_service.list_tags(db)]
+    tags = tag_service.list_tags(db)
+    game_counts = tag_service.get_tag_game_counts(db)
+    return [tag_from_orm(tag, game_counts.get(tag.id, 0)) for tag in tags]
 
 
 # Powers the Games page's bulk "Manage Tags" dialog — every tag in the library paired with
