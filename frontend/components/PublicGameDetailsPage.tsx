@@ -108,7 +108,7 @@ const PublicGameDetailsPage = () => {
             <Typography variant="h6" gutterBottom>
               {t("public.games.collectionTitle")}
             </Typography>
-            {game.ownedCopies.length > 0 ? (
+            {(game.ownedCopies ?? []).length > 0 ? (
               <TableContainer>
                 <Table size="small">
                   <TableHead>
@@ -119,7 +119,7 @@ const PublicGameDetailsPage = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {game.ownedCopies.map((copy, index) => (
+                    {(game.ownedCopies ?? []).map((copy, index) => (
                       <TableRow key={index}>
                         <TableCell>{copy.platform ?? "—"}</TableCell>
                         <TableCell>{copy.edition ?? "—"}</TableCell>
