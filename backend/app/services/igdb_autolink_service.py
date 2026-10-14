@@ -35,7 +35,11 @@ def _normalize_name(name: str) -> str:
     lowered = ascii_name.lower().strip()
 
     # Remove common edition suffixes in parentheses/brackets
-    lowered = re.sub(r"\s*[\(\[].*?(edition|goty|remaster|remake|deluxe|ultimate|complete|definitive|enhanced|directors? cut)[\]\)]", "", lowered)
+    pattern = (
+        r"\\s*[\\(\\[].*?(edition|goty|remaster|remake|deluxe|ultimate|"
+        r"complete|definitive|enhanced|directors? cut)[\\]\\)]"
+    )
+    lowered = re.sub(pattern, "", lowered)
     # Remove trailing year in parentheses
     lowered = re.sub(r"\s*\(\d{4}\)\s*$", "", lowered)
 
@@ -107,7 +111,7 @@ async def autolink_games(
                 continue
             try:
                 await game_service.link_game_to_igdb(db, igdb_client, game.id, match["id"])
-            except ConflictError as conflict:
+            except ConflictError:
                 # IGDB game already in library — merge the duplicate instead of failing.
                 # Re-fetch game (link may have partially modified it before the conflict).
                 db.rollback()
