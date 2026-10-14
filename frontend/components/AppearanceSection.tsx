@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
@@ -10,6 +10,8 @@ import {
   DEFAULT_APP_ICON,
   DEFAULT_APP_TITLE,
   DEFAULT_CARD_SIZE,
+  DEFAULT_ICON_SRC,
+  isCustomIconDataUrl,
   useAppearance,
 } from "../theme/AppearanceProvider";
 import { SEED_COLOR_HEX } from "../theme/m3Colors";
@@ -43,6 +45,28 @@ const AppearanceSection = () => {
     resetAppearance,
   } = useAppearance();
   const [titleDraft, setTitleDraft] = useState(appTitle);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleIconUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      return;
+    }
+    // Limit to 500KB to avoid bloating localStorage/server
+    if (file.size > 500 * 1024) {
+      alert(t("settings.appearance.iconTooLarge"));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setAppIcon(dataUrl);
+    };
+    reader.readAsDataURL(file);
+    // Reset input so same file can be selected again
+    event.target.value = "";
+  };
 
   const handleTitleBlur = () => {
     if (titleDraft !== appTitle) {
@@ -157,37 +181,83 @@ const AppearanceSection = () => {
         {t("settings.appearance.appIcon")}
       </Typography>
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 1 }}>
-        {APP_ICON_CHOICES.map((icon) => (
+        {APP_ICON_CHOICES.map((icon) => {
+          const isSelected = appIcon === icon;
+          const isDefault = icon === "default";
+          return (
+            <Box
+              key={icon}
+              role="button"
+              tabIndex={0}
+              aria-label={isDefault ? t("settings.appearance.defaultIcon") : icon}
+              onClick={() => setAppIcon(icon)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") setAppIcon(icon);
+              }}
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: 2,
+                fontSize: 28,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                backgroundColor: (theme) =>
+                  theme.palette.mode === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+                border: (theme) =>
+                  isSelected
+                    ? `2px solid ${theme.palette.primary.main}`
+                    : "2px solid transparent",
+              }}
+            >
+              {isDefault ? (
+                <Box component="img" src={DEFAULT_ICON_SRC} alt="" sx={{ width: 32, height: 32 }} />
+              ) : (
+                icon
+              )}
+            </Box>
+          );
+        })}
+        {/* Custom uploaded icon preview */}
+        {isCustomIconDataUrl(appIcon) && (
           <Box
-            key={icon}
             role="button"
             tabIndex={0}
-            aria-label={icon}
-            onClick={() => setAppIcon(icon)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") setAppIcon(icon);
-            }}
+            aria-label={t("settings.appearance.customIcon")}
             sx={{
               width: 44,
               height: 44,
               borderRadius: 2,
-              fontSize: 28,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              cursor: "pointer",
+              cursor: "default",
               backgroundColor: (theme) =>
                 theme.palette.mode === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
-              border: (theme) =>
-                appIcon === icon
-                  ? `2px solid ${theme.palette.primary.main}`
-                  : "2px solid transparent",
+              border: (theme) => `2px solid ${theme.palette.primary.main}`,
             }}
           >
-            {icon}
+            <Box component="img" src={appIcon} alt="" sx={{ width: 32, height: 32 }} />
           </Box>
-        ))}
+        )}
       </Box>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: "none" }}
+        onChange={handleIconUpload}
+        aria-label={t("settings.appearance.uploadIcon")}
+      />
+      <Button
+        variant="outlined"
+        size="small"
+        onClick={() => fileInputRef.current?.click()}
+        sx={{ mb: 1 }}
+      >
+        {t("settings.appearance.uploadIcon")}
+      </Button>
       <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
         {t("settings.appearance.appIconHelp")}
       </Typography>
