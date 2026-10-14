@@ -37,6 +37,7 @@ import { TOAST_OPTIONS } from "../utils/toastOptions";
 import ConfirmDialog from "./ConfirmDialog";
 import EnhancedTable, { type HeadCell } from "./EnhancedTable";
 import LibraryItemDialog, { type LibraryItemFormValues, type RomChanges } from "./LibraryItemDialog";
+import MoveLibraryItemDialog from "./MoveLibraryItemDialog";
 import { showUndoToast } from "./UndoToast";
 
 // Shared across the Owned and Wishlist tables below so their Platform/Format & Storefront/
@@ -489,6 +490,16 @@ const GameLibrarySection = ({
             if (item) void handleMoveClick(item.id, item.status, true);
           }}
         />
+      {transferItemId !== null && (
+        <MoveLibraryItemDialog
+          open={transferItemId !== null}
+          onClose={() => setTransferItemId(null)}
+          itemId={transferItemId}
+          itemLabel=""
+          currentGameId={gameId}
+          onMoved={() => setTransferItemId(null)}
+        />
+      )}
       </CardContent>
     </>
   );
