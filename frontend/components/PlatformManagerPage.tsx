@@ -2,14 +2,16 @@ import { useState } from "react";
 import { isAxiosError } from "axios";
 import StorageIcon from "@mui/icons-material/Storage";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import type { PlatformResponse } from "../api/types";
-import { useCreatePlatform, useDeletePlatform, usePlatforms, useUpdatePlatform } from "../hooks/usePlatforms";
+import { useCreatePlatform, useDeletePlatform, useMassMoveGames, usePlatforms, useUpdatePlatform } from "../hooks/usePlatforms";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import ConfirmDialog from "./ConfirmDialog";
 import EnhancedTable, { type HeadCell } from "./EnhancedTable";
+import MassMovePlatformDialog from "./MassMovePlatformDialog";
 import PlatformDialog from "./PlatformDialog";
 import SettingsSubNav from "./SettingsSubNav";
 
@@ -23,6 +25,8 @@ const PlatformManagerPage = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogPlatform, setDialogPlatform] = useState<PlatformResponse | null>(null);
   const [selectedPendingDelete, setSelectedPendingDelete] = useState<number[]>([]);
+  const [massMoveOpen, setMassMoveOpen] = useState(false);
+  const massMove = useMassMoveGames();
 
   const headCells: HeadCell[] = [
     { id: "name", numeric: false, disablePadding: false, label: t("settings.platformManager.nameColumn"), disableHeader: false },
@@ -72,6 +76,20 @@ const PlatformManagerPage = () => {
     }
   };
 
+  const handleMassMove = async (sourceId: number, targetId: number) => {
+    try {
+      const result = await massMove.mutateAsync({ sourceId, targetId });
+      toast.success(
+        t("settings.platformManager.massMoveSuccess", { count: result.moved_count }),
+        TOAST_OPTIONS
+      );
+      setMassMoveOpen(false);
+    } catch (error) {
+      console.error("Error moving games between platforms:", error);
+      toast.error(t("settings.platformManager.massMoveError"), TOAST_OPTIONS);
+    }
+  };
+
   const handleDeleteClick = (selectedIds: number[]) => setSelectedPendingDelete(selectedIds);
 
   const handleDelete = async () => {
@@ -108,6 +126,9 @@ const PlatformManagerPage = () => {
         <Typography variant="body2" color="text.secondary">
           {t("settings.platformManager.description")}
         </Typography>
+        <Button variant="outlined" sx={{ mt: 2 }} onClick={() => setMassMoveOpen(true)}>
+          {t("settings.platformManager.massMoveButton")}
+        </Button>
       </Box>
 
       <EnhancedTable
@@ -130,6 +151,14 @@ const PlatformManagerPage = () => {
         onClose={() => setDialogOpen(false)}
         onSubmit={handleDialogSubmit}
         submitLabel={dialogPlatform ? t("common.save") : t("common.add")}
+      />
+
+      <MassMovePlatformDialog
+        open={massMoveOpen}
+        platforms={platforms ?? []}
+        onClose={() => setMassMoveOpen(false)}
+        onConfirm={handleMassMove}
+        isPending={massMove.isPending}
       />
 
       <ConfirmDialog
