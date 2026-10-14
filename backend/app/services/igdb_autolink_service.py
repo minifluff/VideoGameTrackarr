@@ -20,6 +20,35 @@ def list_unlinked_games(db: Session) -> list[Game]:
     )
 
 
+def _normalize_name(name: str) -> str:
+    """Normalize a game name for fuzzy matching: lowercase, remove punctuation,
+    articles, edition suffixes, and extra whitespace."""
+    import re
+    import unicodedata
+
+    # Unicode normalize (é -> e, etc.)
+    nfkd = unicodedata.normalize("NFKD", name)
+    ascii_name = "".join(c for c in nfkd if not unicodedata.combining(c))
+
+    lowered = ascii_name.lower().strip()
+
+    # Remove common edition suffixes in parentheses/brackets
+    lowered = re.sub(r"\s*[\(\[].*?(edition|goty|remaster|remake|deluxe|ultimate|complete|definitive|enhanced|directors? cut)[\]\)]", "", lowered)
+    # Remove trailing year in parentheses
+    lowered = re.sub(r"\s*\(\d{4}\)\s*$", "", lowered)
+
+    # Remove punctuation
+    lowered = re.sub(r"[^a-z0-9\s]", "", lowered)
+
+    # Remove leading articles
+    lowered = re.sub(r"^(the|a|an)\s+", "", lowered)
+
+    # Collapse whitespace
+    lowered = re.sub(r"\s+", " ", lowered).strip()
+
+    return lowered
+
+
 def _find_exact_match(game_name: str, results: list[dict]) -> dict | None:
     """Returns the IGDB result whose name exactly matches (case-insensitive),
     or None if no match."""
@@ -27,6 +56,19 @@ def _find_exact_match(game_name: str, results: list[dict]) -> dict | None:
     for result in results:
         name = str(result.get("name", "")).strip().lower()
         if name == target:
+            return result
+    return None
+
+
+def _find_normalized_match(game_name: str, results: list[dict]) -> dict | None:
+    """Fallback: returns the IGDB result whose normalized name matches the
+    normalized game name, or None if no match."""
+    target = _normalize_name(game_name)
+    if not target:
+        return None
+    for result in results:
+        name = _normalize_name(str(result.get("name", "")))
+        if name == target and name:
             return result
     return None
 
@@ -54,6 +96,10 @@ async def autolink_games(
         try:
             results = await igdb_client.search_games(game.name, limit=10)
             match = _find_exact_match(game.name, results)
+            if match is None:
+                # Fallback to normalized matching for names with
+                # punctuation/edition differences
+                match = _find_normalized_match(game.name, results)
             if match is None:
                 no_match.append(game.name)
                 continue
