@@ -74,9 +74,19 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
 
   const trimmedKeyword = searchKeyword.trim();
   const debouncedKeyword = useDebouncedValue(trimmedKeyword, 500);
-  const isSearchActive = debouncedKeyword.length >= MIN_SEARCH_LENGTH;
+  const [forceSearch, setForceSearch] = useState(false);
+  const isSearchActive = forceSearch || debouncedKeyword.length >= MIN_SEARCH_LENGTH;
+  const activeKeyword = forceSearch ? trimmedKeyword : debouncedKeyword;
   const isPendingDebounce =
-    trimmedKeyword.length >= MIN_SEARCH_LENGTH && trimmedKeyword !== debouncedKeyword;
+    !forceSearch &&
+    trimmedKeyword.length >= MIN_SEARCH_LENGTH &&
+    trimmedKeyword !== debouncedKeyword;
+
+  // Clear forceSearch when the user types something new
+  const handleSearchKeywordChange = (value: string) => {
+    setForceSearch(false);
+    setSearchKeyword(value);
+  };
 
   const { data: platforms = [], isSuccess: platformsLoaded } = usePlatforms();
   const { data: tags = [], isSuccess: tagsLoaded } = useTags();
@@ -98,7 +108,7 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
 
   const gameListFilters = useMemo(
     () => ({
-      search: isSearchActive ? debouncedKeyword : undefined,
+      search: isSearchActive && activeKeyword.length > 0 ? activeKeyword : undefined,
       platformIds: platformIds.length > 0 ? platformIds : undefined,
       platformExclude,
       tagIds: tagIds.length > 0 ? tagIds : undefined,
@@ -276,7 +286,8 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
         </Collapse>
         <GameListToolbar
           searchKeyword={searchKeyword}
-          onSearchKeywordChange={setSearchKeyword}
+          onSearchKeywordChange={handleSearchKeywordChange}
+          onSearchSubmit={() => setForceSearch(true)}
           ownershipStatuses={ownershipStatuses}
           onOwnershipStatusesChange={setOwnershipStatuses}
           ownershipExclude={ownershipExclude}

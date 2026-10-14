@@ -197,6 +197,7 @@ const FilterFieldOptions = ({
 interface GameListToolbarProps {
   searchKeyword: string;
   onSearchKeywordChange: (value: string) => void;
+  onSearchSubmit?: () => void;
   ownershipStatuses: OwnershipStatus[];
   onOwnershipStatusesChange: (value: OwnershipStatus[]) => void;
   ownershipExclude: boolean;
@@ -303,6 +304,7 @@ interface GameListToolbarProps {
 const GameListToolbar = ({
   searchKeyword,
   onSearchKeywordChange,
+  onSearchSubmit,
   ownershipStatuses,
   onOwnershipStatusesChange,
   ownershipExclude,
@@ -552,6 +554,12 @@ const GameListToolbar = ({
             variant="outlined"
             value={searchKeyword}
             onChange={(event) => onSearchKeywordChange(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && onSearchSubmit) {
+                event.preventDefault();
+                onSearchSubmit();
+              }
+            }}
             placeholder={t("games.listToolbar.searchPlaceholder")}
             slotProps={{
               input: {
