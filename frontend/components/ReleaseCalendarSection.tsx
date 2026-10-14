@@ -56,6 +56,7 @@ const ReleaseCalendarSection = ({ scope, title }: ReleaseCalendarSectionProps) =
   }
 
   return (
+    <>
     <CardCarousel
       items={releases}
       getItemKey={(item) =>
@@ -155,6 +156,7 @@ const ReleaseCalendarSection = ({ scope, title }: ReleaseCalendarSectionProps) =
         {t("insights.dashboard.publicCollectionButton")}
       </Button>
     )}
+    </>
   );
 };
 
