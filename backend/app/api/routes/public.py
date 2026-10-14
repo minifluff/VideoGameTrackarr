@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_db
 from app.api.routes.game_filters import GameFilterParams
 from app.models.library import LibraryStatus
-from app.repositories.game_repository import GameSortOption
 from app.schemas.public import (
     PublicAccessorySummaryResponse,
     PublicDeviceSummaryResponse,
