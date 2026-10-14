@@ -6,7 +6,7 @@ For the full documentation, features, screenshots, and installation instructions
 
 My code is free to use and is currently built off Version 1.30.0. Just let me know if you need assistance. 
 
-## Customizations in this fork
+## Customizations in this fork (most customizeations are only under english pages)
 
 - Playnite library sync (via network share and JSON exporter plugin)
 - Steam sync "Sync all" button
@@ -28,6 +28,7 @@ My code is free to use and is currently built off Version 1.30.0. Just let me kn
 - Change search to allow any order of words.
 - Added Navigation Menu hides on scroll on phones
 - Changed Steam sync to import to platform Steam instead of PC(Microsoft Windows)
+- Added Public Games Collection button to Dashboard and updated public search
 - Many more Fixes and changes
 
 ## In-progress features (separate branches)
