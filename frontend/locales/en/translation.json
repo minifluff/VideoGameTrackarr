@@ -721,7 +721,9 @@
       "addGame": "Add Game",
       "collections": "Collections",
       "series": "Series",
-      "platforms": "Platforms"
+      "platforms": "Platforms",
+      "playing": "Playing",
+      "wishlist": "Wishlist"
     },
     "add": {
       "pageTitle": "Add Game",
