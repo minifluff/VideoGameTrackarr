@@ -35,6 +35,14 @@ def get_tag_coverage_for_games(db: Session, game_ids: list[int]) -> list[tuple[T
     return list(coverage.values())
 
 
+def get_tag_game_counts(db: Session) -> dict[int, int]:
+    """Map of tag_id -> number of games with that tag."""
+    from sqlalchemy import func
+
+    stmt = select(GameTag.tag_id, func.count(GameTag.game_id)).group_by(GameTag.tag_id)
+    return dict(db.execute(stmt).all())
+
+
 def get_tag(db: Session, tag_id: int) -> Tag | None:
     return db.scalars(select(Tag).where(Tag.id == tag_id)).first()
 
