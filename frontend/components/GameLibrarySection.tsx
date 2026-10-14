@@ -34,7 +34,7 @@ import {
   useUpdateRomLabel,
 } from "../hooks/useLibrary";
 import { useUndoableAction } from "../hooks/useUndoableAction";
-import { useGame, useUpdateGameVisibility } from "../hooks/useGames";
+import { useUpdateGameVisibility } from "../hooks/useGames";
 import { formatCurrency } from "../utils/currency";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import ConfirmDialog from "./ConfirmDialog";
@@ -68,6 +68,7 @@ interface GameLibrarySectionProps {
   platforms: PlatformResponse[] | undefined;
   regions: RegionResponse[] | undefined;
   gameCategory?: GameCategory | null;
+  hideFromPublic?: boolean;
 }
 
 const GameLibrarySection = ({
@@ -76,12 +77,12 @@ const GameLibrarySection = ({
   platforms,
   regions,
   gameCategory,
+  hideFromPublic = false,
 }: GameLibrarySectionProps) => {
   const { t } = useTranslation();
   const addLibraryItem = useAddLibraryItem(gameId);
   const updateLibraryItem = useUpdateLibraryItem(gameId);
   const deleteLibraryItem = useDeleteLibraryItem(gameId);
-  const { data: game } = useGame(String(gameId));
   const updateVisibility = useUpdateGameVisibility(gameId);
   const addRom = useAddRom(gameId);
   const replaceRom = useReplaceRom(gameId);
@@ -421,7 +422,7 @@ const GameLibrarySection = ({
             <FormControlLabel
               control={
                 <Checkbox
-                  checked={game?.hideFromPublic ?? false}
+                  checked={hideFromPublic}
                   onChange={(e) => updateVisibility.mutate(e.target.checked)}
                   size="small"
                 />
