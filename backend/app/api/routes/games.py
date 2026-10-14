@@ -7,6 +7,7 @@ from app.api.deps import get_current_user, get_db, get_igdb_client, get_session_
 from app.api.routes.game_filters import GameFilterParams
 from app.repositories import steam_repository
 from app.repositories.game_repository import GameWithStatus
+from app.schemas.base import CamelModel
 from app.schemas.bulk_import import BulkImportRequest, BulkImportStatusResponse
 from app.schemas.game import (
     GameDetailResponse,
@@ -118,6 +119,18 @@ def delete_game(game_id: int, db: Session = Depends(get_db)) -> None:
 @router.post("/{game_id}/claim", response_model=GameDetailResponse)
 def claim_discovered_game(game_id: int, db: Session = Depends(get_db)) -> GameDetailResponse:
     game = game_service.claim_discovered_game(db, game_id)
+    return _game_detail_response(db, game)
+
+
+class GameVisibilityUpdateRequest(CamelModel):
+    hide_from_public: bool
+
+
+@router.patch("/{game_id}/visibility", response_model=GameDetailResponse)
+def update_game_visibility(
+    game_id: int, body: GameVisibilityUpdateRequest, db: Session = Depends(get_db)
+) -> GameDetailResponse:
+    game = game_service.set_game_visibility(db, game_id, body.hide_from_public)
     return _game_detail_response(db, game)
 
 
