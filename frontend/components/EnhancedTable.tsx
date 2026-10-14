@@ -172,6 +172,7 @@ interface EnhancedTableToolbarProps {
   onAddClick?: (tableName: string) => void;
   onDeleteClick?: (selected: number[], tableName: string) => void;
   selected: number[];
+  headerAction?: ReactNode;
 }
 
 const EnhancedTableToolbar = ({
@@ -181,6 +182,7 @@ const EnhancedTableToolbar = ({
   onAddClick,
   onDeleteClick,
   selected,
+  headerAction,
 }: EnhancedTableToolbarProps) => {
   const { t } = useTranslation();
   const handleAddClick = () => {
@@ -220,6 +222,7 @@ const EnhancedTableToolbar = ({
         </>
       )}
 
+      {headerAction}
       {numSelected > 0 ? (
         <Tooltip title={t("common.delete")}>
           <IconButton onClick={handleDeleteClick} aria-label={`${t("common.delete")} ${tableName}`}>
@@ -248,6 +251,7 @@ interface EnhancedTableProps {
   onTransferClick?: (rowId: number) => void;
   onEditClick?: (rowId: number, tableName: string) => void;
   moveDirection: "up" | "down";
+  headerAction?: ReactNode;
 }
 
 const EnhancedTable = ({
@@ -261,6 +265,7 @@ const EnhancedTable = ({
   onTransferClick,
   onEditClick,
   moveDirection,
+  headerAction,
 }: EnhancedTableProps) => {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -362,6 +367,7 @@ const EnhancedTable = ({
           onAddClick={onAddClick}
           onDeleteClick={onDeleteClick}
           selected={selected}
+          headerAction={headerAction}
         />
         {isMobile ? (
           <Stack spacing={1.5} sx={{ p: 1.5, pt: 0 }}>
