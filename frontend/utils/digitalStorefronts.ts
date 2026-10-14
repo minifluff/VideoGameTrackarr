@@ -49,13 +49,15 @@ export interface StorefrontResolution {
 
 export function resolveStorefront(
   platform: PlatformResponse | undefined,
-  isDigital: boolean
+  _isDigital: boolean
 ): StorefrontResolution {
+  // Storefront field is always visible regardless of format — the user may want to
+  // record where they bought a physical copy too (e.g. "GameStop", "Amazon").
   const slug = platform?.slug;
-  const showEditableStorefront = isDigital && slug != null && PC_FAMILY_PLATFORM_SLUGS.has(slug);
-  const fixedStorefront = isDigital
-    ? FIXED_DIGITAL_STOREFRONTS.find((entry) => slug != null && entry.slugs.has(slug))?.storefront
-    : undefined;
+  const showEditableStorefront = slug != null && PC_FAMILY_PLATFORM_SLUGS.has(slug);
+  const fixedStorefront = FIXED_DIGITAL_STOREFRONTS.find(
+    (entry) => slug != null && entry.slugs.has(slug)
+  )?.storefront;
   const digitalStorefrontOptions = Object.entries(DIGITAL_STOREFRONT_PLATFORM_SLUGS)
     .filter(([, slugs]) => slug != null && slugs.has(slug))
     .map(([storefront]) => storefront)
