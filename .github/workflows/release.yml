@@ -81,7 +81,14 @@ jobs:
           # Keep a rolling "latest" release so the :latest image always has
           # auto-generated notes describing what changed.
           gh release delete latest --yes --cleanup-tag 2>/dev/null || true
-          sleep 5
+          # Wait for GitHub to fully process the deletion before recreating
+          for i in 1 2 3 4 5 6; do
+            if ! gh release view latest >/dev/null 2>&1; then
+              break
+            fi
+            echo "Waiting for latest release deletion to complete (attempt $i)..."
+            sleep 10
+          done
           gh release create latest \
             --title "Latest (master)" \
             --generate-notes \
