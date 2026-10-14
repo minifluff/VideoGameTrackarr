@@ -7,14 +7,48 @@ import type {
   PublicGameSummary,
 } from "./types";
 
+export interface PublicGameFilters {
+  search?: string;
+  sort?: GameSortOption;
+  platformIds?: number[];
+  platformExclude?: boolean;
+  tagIds?: number[];
+  tagExclude?: boolean;
+  collectionIds?: number[];
+  collectionExclude?: boolean;
+  franchiseIds?: number[];
+  franchiseExclude?: boolean;
+  formats?: string[];
+  formatExclude?: boolean;
+  playStatuses?: string[];
+  playStatusExclude?: boolean;
+  steelbookOnly?: boolean;
+}
+
 export async function listPublicGames(
   token: string,
-  search?: string,
-  sort?: GameSortOption,
-  platformIds?: number[],
+  filters: PublicGameFilters = {},
 ): Promise<PublicGameSummary[]> {
+  const params: Record<string, unknown> = {
+    search: filters.search || undefined,
+    sort: filters.sort,
+    platformId: filters.platformIds?.length ? filters.platformIds : undefined,
+    platformExclude: filters.platformExclude || undefined,
+    tagId: filters.tagIds?.length ? filters.tagIds : undefined,
+    tagExclude: filters.tagExclude || undefined,
+    collectionId: filters.collectionIds?.length ? filters.collectionIds : undefined,
+    collectionExclude: filters.collectionExclude || undefined,
+    franchiseId: filters.franchiseIds?.length ? filters.franchiseIds : undefined,
+    franchiseExclude: filters.franchiseExclude || undefined,
+    format: filters.formats?.length ? filters.formats : undefined,
+    formatExclude: filters.formatExclude || undefined,
+    playStatus: filters.playStatuses?.length ? filters.playStatuses : undefined,
+    playStatusExclude: filters.playStatusExclude || undefined,
+    steelbookOnly: filters.steelbookOnly || undefined,
+  };
   const response = await publicClient.get<PublicGameSummary[]>(`/api/public/${token}/games`, {
-    params: { search: search || undefined, sort, platformId: platformIds?.length ? platformIds : undefined },
+    params,
+    paramsSerializer: { indexes: null },
   });
   return response.data;
 }
@@ -35,6 +69,21 @@ export async function listPublicAccessories(token: string, search?: string): Pro
   const response = await publicClient.get<PublicAccessorySummary[]>(`/api/public/${token}/accessories`, {
     params: { search: search || undefined },
   });
+  return response.data;
+}
+
+export async function listPublicTags(token: string): Promise<{ id: number; name: string }[]> {
+  const response = await publicClient.get<{ id: number; name: string }[]>(`/api/public/${token}/tags`);
+  return response.data;
+}
+
+export async function listPublicCollections(token: string): Promise<{ id: number; name: string }[]> {
+  const response = await publicClient.get<{ id: number; name: string }[]>(`/api/public/${token}/collections`);
+  return response.data;
+}
+
+export async function listPublicFranchises(token: string): Promise<{ id: number; name: string }[]> {
+  const response = await publicClient.get<{ id: number; name: string }[]>(`/api/public/${token}/franchises`);
   return response.data;
 }
 
