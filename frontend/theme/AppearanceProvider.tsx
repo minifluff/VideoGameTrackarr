@@ -3,11 +3,12 @@ import { SEED_COLOR_HEX } from "./m3Colors";
 import { getAppearance, updateAppearance } from "../api/appearance";
 
 export const DEFAULT_APP_TITLE = "VideoGameTrackarr";
-export const DEFAULT_APP_ICON = "🎮";
+export const DEFAULT_APP_ICON = "default";
+export const DEFAULT_ICON_SRC = "/icon-master.svg";
 export const DEFAULT_CARD_SIZE = 1.0;
 
 export const APP_ICON_CHOICES = [
-  "🎮", "🏆", "⭐", "🎯", "👾", "🕹️",
+  "default", "🎮", "🏆", "⭐", "🎯", "👾", "🕹️",
   "🎲", "🎪", "🚀", "💎", "🔥", "⚡",
 ] as const;
 
@@ -56,9 +57,21 @@ function readStoredTitle(): string {
 
 function readStoredIcon(): string {
   const stored = localStorage.getItem(ICON_STORAGE_KEY);
-  return stored && (APP_ICON_CHOICES as readonly string[]).includes(stored)
-    ? stored
-    : DEFAULT_APP_ICON;
+  if (!stored) return DEFAULT_APP_ICON;
+  // Accept preset choices, "default", or data URLs (custom uploads)
+  if ((APP_ICON_CHOICES as readonly string[]).includes(stored)) return stored;
+  if (stored.startsWith("data:image/")) return stored;
+  return DEFAULT_APP_ICON;
+}
+
+export function isCustomIconDataUrl(icon: string): boolean {
+  return icon.startsWith("data:image/");
+}
+
+export function resolveIconSrc(icon: string): string {
+  if (icon === "default") return DEFAULT_ICON_SRC;
+  if (isCustomIconDataUrl(icon)) return icon;
+  return DEFAULT_ICON_SRC; // emoji icons use favicon only, title bar shows SVG fallback
 }
 
 function readStoredCardSize(): number {
@@ -72,18 +85,25 @@ function clampCardSize(size: number): number {
 }
 
 function updateFavicon(icon: string) {
-  // Render emoji as SVG favicon
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">${icon}</text></svg>`;
-  const url = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  // Remove existing favicon links
+  document.querySelectorAll("link[rel='icon']").forEach((el) => el.remove());
 
-  let link = document.querySelector<HTMLLinkElement>("link[rel='icon'][type='image/svg+xml']");
-  if (!link) {
-    link = document.createElement("link");
-    link.rel = "icon";
+  const link = document.createElement("link");
+  link.rel = "icon";
+
+  if (icon === "default") {
     link.type = "image/svg+xml";
-    document.head.appendChild(link);
+    link.href = DEFAULT_ICON_SRC;
+  } else if (isCustomIconDataUrl(icon)) {
+    // Custom uploaded image — use directly
+    link.href = icon;
+  } else {
+    // Emoji — render as SVG favicon
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">${icon}</text></svg>`;
+    link.type = "image/svg+xml";
+    link.href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
   }
-  link.href = url;
+  document.head.appendChild(link);
 }
 
 export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
@@ -105,7 +125,10 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
           setAppTitleState(settings.appTitle);
           localStorage.setItem(TITLE_STORAGE_KEY, settings.appTitle);
         }
-        if ((APP_ICON_CHOICES as readonly string[]).includes(settings.appIcon)) {
+        if (
+          (APP_ICON_CHOICES as readonly string[]).includes(settings.appIcon) ||
+          settings.appIcon.startsWith("data:image/")
+        ) {
           setAppIconState(settings.appIcon);
           localStorage.setItem(ICON_STORAGE_KEY, settings.appIcon);
         }
@@ -149,7 +172,9 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const setAppIcon = (icon: string) => {
-    if (!(APP_ICON_CHOICES as readonly string[]).includes(icon)) return;
+    const isValid =
+      (APP_ICON_CHOICES as readonly string[]).includes(icon) || isCustomIconDataUrl(icon);
+    if (!isValid) return;
     setAppIconState(icon);
     localStorage.setItem(ICON_STORAGE_KEY, icon);
     persist({ appIcon: icon });
