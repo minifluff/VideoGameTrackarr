@@ -9,7 +9,7 @@ import InsightsSubNav from "./InsightsSubNav";
 
 const UnlinkedGamesPage = () => {
   const { t } = useTranslation();
-  const [hideWithCoverArt, setHideWithCoverArt] = useState(false);
+  const [hideWithCoverArt, setHideWithCoverArt] = useState(true);
 
   return (
     <GameList
