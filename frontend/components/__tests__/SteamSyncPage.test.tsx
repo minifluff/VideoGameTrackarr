@@ -20,6 +20,8 @@ vi.mock("../../hooks/useIntegrations", () => ({
   useSyncSteamWishlistEntries: () => idleMutation(),
   useIgnoreSteamEntry: () => idleMutation(),
   useIgnoreSteamWishlistEntry: () => idleMutation(),
+  useUnignoreSteamEntry: () => idleMutation(),
+  useUnignoreSteamWishlistEntry: () => idleMutation(),
   useUnlinkSteamEntry: () => idleMutation(),
   useUnlinkSteamWishlistEntry: () => idleMutation(),
 }));
