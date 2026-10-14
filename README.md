@@ -25,6 +25,7 @@ My code is free to use and is currently built off Version 1.30.0. Just let me kn
 - Added dates to Games Calender section
 - Removed Events from Dashboard
 - Added Linked cover art (local nas or web).
+- Change search to allow any order of words.
 - Many Fixes
 
 ## In-progress features (separate branches)
