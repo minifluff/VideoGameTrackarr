@@ -2,9 +2,16 @@ import { useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
+import Slider from "@mui/material/Slider";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
-import { APP_ICON_CHOICES, DEFAULT_APP_ICON, DEFAULT_APP_TITLE, useAppearance } from "../theme/AppearanceProvider";
+import {
+  APP_ICON_CHOICES,
+  DEFAULT_APP_ICON,
+  DEFAULT_APP_TITLE,
+  DEFAULT_CARD_SIZE,
+  useAppearance,
+} from "../theme/AppearanceProvider";
 import { SEED_COLOR_HEX } from "../theme/m3Colors";
 
 const PRESET_COLORS = [
@@ -24,8 +31,17 @@ const PRESET_COLORS = [
 
 const AppearanceSection = () => {
   const { t } = useTranslation();
-  const { accentColor, setAccentColor, appTitle, setAppTitle, appIcon, setAppIcon, resetAppearance } =
-    useAppearance();
+  const {
+    accentColor,
+    setAccentColor,
+    appTitle,
+    setAppTitle,
+    appIcon,
+    setAppIcon,
+    cardSize,
+    setCardSize,
+    resetAppearance,
+  } = useAppearance();
   const [titleDraft, setTitleDraft] = useState(appTitle);
 
   const handleTitleBlur = () => {
@@ -44,7 +60,8 @@ const AppearanceSection = () => {
   const isCustomized =
     accentColor !== SEED_COLOR_HEX ||
     appTitle !== DEFAULT_APP_TITLE ||
-    appIcon !== DEFAULT_APP_ICON;
+    appIcon !== DEFAULT_APP_ICON ||
+    cardSize !== DEFAULT_CARD_SIZE;
 
   return (
     <Box>
@@ -173,6 +190,30 @@ const AppearanceSection = () => {
       </Box>
       <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
         {t("settings.appearance.appIconHelp")}
+      </Typography>
+
+      <Typography variant="subtitle2" gutterBottom>
+        {t("settings.appearance.cardSize")}
+      </Typography>
+      <Box sx={{ maxWidth: 400, mb: 1, px: 1 }}>
+        <Slider
+          value={cardSize}
+          onChange={(_event, value) => setCardSize(value as number)}
+          min={0.5}
+          max={2.0}
+          step={0.1}
+          marks={[
+            { value: 0.5, label: t("settings.appearance.cardSizeSmall") },
+            { value: 1.0, label: t("settings.appearance.cardSizeMedium") },
+            { value: 2.0, label: t("settings.appearance.cardSizeLarge") },
+          ]}
+          valueLabelDisplay="auto"
+          valueLabelFormat={(value) => `${Math.round(value * 100)}%`}
+          aria-label={t("settings.appearance.cardSize")}
+        />
+      </Box>
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
+        {t("settings.appearance.cardSizeHelp")}
       </Typography>
 
       {isCustomized && (
