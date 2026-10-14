@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CheckIcon from "@mui/icons-material/Check";
 import FavoriteIcon from "@mui/icons-material/Favorite";
@@ -38,7 +37,6 @@ import { TOAST_OPTIONS } from "../utils/toastOptions";
 import ConfirmDialog from "./ConfirmDialog";
 import EnhancedTable, { type HeadCell } from "./EnhancedTable";
 import LibraryItemDialog, { type LibraryItemFormValues, type RomChanges } from "./LibraryItemDialog";
-import MoveLibraryItemDialog from "./MoveLibraryItemDialog";
 import { showUndoToast } from "./UndoToast";
 
 // Shared across the Owned and Wishlist tables below so their Platform/Format & Storefront/
@@ -419,7 +417,6 @@ const GameLibrarySection = ({
           onMoveClick={(rowId) => handleMoveClick(rowId, "owned")}
           moveDirection="down"
           onEditClick={handleEditClick}
-          onTransferClick={handleTransferClick}
         />
         <EnhancedTable
           rows={wishlisted}
@@ -431,7 +428,6 @@ const GameLibrarySection = ({
           onMoveClick={(rowId) => handleMoveClick(rowId, "wishlist")}
           moveDirection="up"
           onEditClick={handleEditClick}
-          onTransferClick={handleTransferClick}
         />
 
         <LibraryItemDialog
@@ -469,19 +465,7 @@ const GameLibrarySection = ({
           onSubmit={(values, romChange) => void handleDialogSubmit(values, romChange)}
           submitLabel={dialogItem ? t("games.library.updateLabel") : t("common.add")}
         />
-      {transferItemId !== null && (
-        <MoveLibraryItemDialog
-          open={transferItemId !== null}
-          onClose={() => setTransferItemId(null)}
-          itemId={transferItemId}
-          itemLabel=""
-          currentGameId={gameId}
-          onMoved={() => {
-            setTransferItemId(null);
-            queryClient.invalidateQueries({ queryKey: ["library"] });
-          }}
-        />
-      )}
+
         <ConfirmDialog
           open={moveConfirmItem != null}
           title={t("games.library.moveWithRomTitle")}
