@@ -4,7 +4,7 @@ import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
-import { DEFAULT_APP_TITLE, useAppearance } from "../theme/AppearanceProvider";
+import { APP_ICON_CHOICES, DEFAULT_APP_ICON, DEFAULT_APP_TITLE, useAppearance } from "../theme/AppearanceProvider";
 import { SEED_COLOR_HEX } from "../theme/m3Colors";
 
 const PRESET_COLORS = [
@@ -24,7 +24,8 @@ const PRESET_COLORS = [
 
 const AppearanceSection = () => {
   const { t } = useTranslation();
-  const { accentColor, setAccentColor, appTitle, setAppTitle, resetAppearance } = useAppearance();
+  const { accentColor, setAccentColor, appTitle, setAppTitle, appIcon, setAppIcon, resetAppearance } =
+    useAppearance();
   const [titleDraft, setTitleDraft] = useState(appTitle);
 
   const handleTitleBlur = () => {
@@ -40,7 +41,10 @@ const AppearanceSection = () => {
     }
   };
 
-  const isCustomized = accentColor !== SEED_COLOR_HEX || appTitle !== DEFAULT_APP_TITLE;
+  const isCustomized =
+    accentColor !== SEED_COLOR_HEX ||
+    appTitle !== DEFAULT_APP_TITLE ||
+    appIcon !== DEFAULT_APP_ICON;
 
   return (
     <Box>
@@ -131,6 +135,45 @@ const AppearanceSection = () => {
         sx={{ maxWidth: 400, mb: 2 }}
         helperText={t("settings.appearance.appTitleHelp")}
       />
+
+      <Typography variant="subtitle2" gutterBottom>
+        {t("settings.appearance.appIcon")}
+      </Typography>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 1 }}>
+        {APP_ICON_CHOICES.map((icon) => (
+          <Box
+            key={icon}
+            role="button"
+            tabIndex={0}
+            aria-label={icon}
+            onClick={() => setAppIcon(icon)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") setAppIcon(icon);
+            }}
+            sx={{
+              width: 44,
+              height: 44,
+              borderRadius: 2,
+              fontSize: 28,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+              border: (theme) =>
+                appIcon === icon
+                  ? `2px solid ${theme.palette.primary.main}`
+                  : "2px solid transparent",
+            }}
+          >
+            {icon}
+          </Box>
+        ))}
+      </Box>
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
+        {t("settings.appearance.appIconHelp")}
+      </Typography>
 
       {isCustomized && (
         <Box>
