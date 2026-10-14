@@ -22,10 +22,12 @@ COVER_CACHE_TTL_SECONDS = 24 * 60 * 60
 # importing that model, since this client only speaks IGDB's wire format and leaves
 # interpreting it to the service layer.
 #
-# Independently ownable/playable releases — what search should surface, and the only things
-# someone should be able to add directly: main_game(0), bundle(3), standalone_expansion(4),
-# remake(8), remaster(9), expanded_game(10), port(11).
-_BROWSABLE_GAME_TYPES = (0, 3, 4, 8, 9, 10, 11)
+# All IGDB game categories (0-14) — search surfaces everything so auto-link and manual
+# search can find DLCs, expansions, mods, episodes, etc. in addition to standalone releases.
+# main_game(0), dlc_addon(1), expansion(2), bundle(3), standalone_expansion(4), mod(5),
+# episode(6), season(7), remake(8), remaster(9), expanded_game(10), port(11), fork(12),
+# pack(13), update(14).
+_BROWSABLE_GAME_TYPES = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
 # Content that only makes sense bolted onto an existing copy, never independently playable:
 # dlc_addon(1), expansion(2), pack(13). The only categories get_addons_by_parent_igdb_id
 # should ever cascade-import alongside a game — everything else a parent_game backlink
