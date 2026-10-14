@@ -106,7 +106,17 @@ export function createM3Theme(mode: ColorMode, contrast: ContrastLevel, seedHex?
         styleOverrides: { root: { borderRadius: 0 } },
       },
       MuiDialog: {
-        styleOverrides: { paper: { borderRadius: m3ShapeScale.extraLarge } },
+        styleOverrides: {
+          paper: {
+            borderRadius: m3ShapeScale.extraLarge,
+            // On mobile the fixed bottom nav (64px) can cover a tall dialog's Save
+            // button — lift dialogs above it. env(safe-area-inset-bottom) covers
+            // phones with a home indicator bar.
+            "@media (max-width: 600px)": {
+              marginBottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
+            },
+          },
+        },
       },
       MuiButton: {
         styleOverrides: {
