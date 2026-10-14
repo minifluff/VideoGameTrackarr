@@ -4,6 +4,7 @@ export interface AppearanceSettings {
   accentColor: string;
   appTitle: string;
   appIcon: string;
+  cardSize: number;
 }
 
 export async function getAppearance(): Promise<AppearanceSettings> {
