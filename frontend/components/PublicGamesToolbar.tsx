@@ -171,7 +171,6 @@ const PublicGamesToolbar = ({
               </Grid>
 
             </Grid>
-            </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)} variant="contained">
