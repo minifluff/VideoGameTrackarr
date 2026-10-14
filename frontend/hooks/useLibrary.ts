@@ -13,8 +13,9 @@ import {
   replaceRom,
   updateLibraryItem,
   updateRomLabel,
-  uploadBios,
-} from "../api/library";
+  uploadBios,,
+  moveLibraryItem,
+  splitLibraryItem,} from "../api/library";
 import type { LibraryItemInput } from "../api/types";
 
 export function useLibraryItems(gameId: number) {
@@ -170,3 +171,27 @@ export function useDeleteSaveState(romId: number) {
     onSuccess: () => invalidate(romId),
   });
 }
+
+export const useMoveLibraryItem = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ itemId, targetGameId }: { itemId: number; targetGameId: number }) =>
+      moveLibraryItem(itemId, targetGameId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["library"] });
+      queryClient.invalidateQueries({ queryKey: ["games"] });
+    },
+  });
+};
+
+export const useSplitLibraryItem = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ itemId, newGameName }: { itemId: number; newGameName: string }) =>
+      splitLibraryItem(itemId, newGameName),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["library"] });
+      queryClient.invalidateQueries({ queryKey: ["games"] });
+    },
+  });
+};
