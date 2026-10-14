@@ -89,7 +89,6 @@ const GameLibrarySection = ({
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [transferItemId, setTransferItemId] = useState<number | null>(null);
-  const queryClient = useQueryClient();
   const [dialogItem, setDialogItem] = useState<LibraryItem | null>(null);
   const [dialogStatus, setDialogStatus] = useState<LibraryStatus>("owned");
 
@@ -417,6 +416,7 @@ const GameLibrarySection = ({
           onMoveClick={(rowId) => handleMoveClick(rowId, "owned")}
           moveDirection="down"
           onEditClick={handleEditClick}
+          onTransferClick={handleTransferClick}
         />
         <EnhancedTable
           rows={wishlisted}
@@ -428,6 +428,7 @@ const GameLibrarySection = ({
           onMoveClick={(rowId) => handleMoveClick(rowId, "wishlist")}
           moveDirection="up"
           onEditClick={handleEditClick}
+          onTransferClick={handleTransferClick}
         />
 
         <LibraryItemDialog
@@ -465,7 +466,19 @@ const GameLibrarySection = ({
           onSubmit={(values, romChange) => void handleDialogSubmit(values, romChange)}
           submitLabel={dialogItem ? t("games.library.updateLabel") : t("common.add")}
         />
-
+      {transferItemId !== null && (
+        <MoveLibraryItemDialog
+          open={transferItemId !== null}
+          onClose={() => setTransferItemId(null)}
+          itemId={transferItemId}
+          itemLabel=""
+          currentGameId={gameId}
+          onMoved={() => {
+            setTransferItemId(null);
+            queryClient.invalidateQueries({ queryKey: ["library"] });
+          }}
+        />
+      )}
         <ConfirmDialog
           open={moveConfirmItem != null}
           title={t("games.library.moveWithRomTitle")}
