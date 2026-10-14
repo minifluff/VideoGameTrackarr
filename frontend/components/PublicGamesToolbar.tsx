@@ -26,6 +26,18 @@ interface FilterOption {
   name: string;
 }
 
+export type OwnershipStatus = "owned" | "wishlisted";
+
+interface OwnershipOption {
+  value: OwnershipStatus;
+  labelKey: string;
+}
+
+const OWNERSHIP_OPTIONS: OwnershipOption[] = [
+  { value: "owned", labelKey: "games.listToolbar.filterOwned" },
+  { value: "wishlisted", labelKey: "games.listToolbar.filterWishlist" },
+];
+
 interface PublicGamesToolbarProps {
   search: string;
   onSearchChange: (value: string) => void;
@@ -42,6 +54,8 @@ interface PublicGamesToolbarProps {
   onFormatsChange: (value: string[]) => void;
   playStatuses: string[];
   onPlayStatusesChange: (value: string[]) => void;
+  ownershipStatuses: OwnershipStatus[];
+  onOwnershipStatusesChange: (value: OwnershipStatus[]) => void;
 }
 
 const FORMAT_OPTIONS = ["physical", "digital", "iso", "rom", "abandonware", "other"];
@@ -64,6 +78,8 @@ const PublicGamesToolbar = ({
   onFormatsChange,
   playStatuses,
   onPlayStatusesChange,
+  ownershipStatuses,
+  onOwnershipStatusesChange,
 }: PublicGamesToolbarProps) => {
   const { t } = useTranslation();
   const collapsed = useScrollCollapse(80);
@@ -112,14 +128,13 @@ const PublicGamesToolbar = ({
         <DialogContent>
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
               <Grid size={{ xs: 12 }}>
-                <AutocompleteSelect<GameSortOptionItem>
-                  label={t("games.listToolbar.sortByLabel")}
-                  options={GAME_SORT_OPTIONS}
-                  value={selectedSortOption}
-                  onChange={(newValue) => onSortChange(newValue?.value ?? "name_asc")}
+                <AutocompleteMultiSelect<OwnershipOption>
+                  label={t("games.listToolbar.ownershipLabel")}
+                  options={OWNERSHIP_OPTIONS}
+                  value={OWNERSHIP_OPTIONS.filter((o) => ownershipStatuses.includes(o.value))}
+                  onChange={(newValue) => onOwnershipStatusesChange(newValue.map((o) => o.value))}
                   getOptionLabel={(option) => t(option.labelKey)}
                   isOptionEqualToValue={(option, val) => option.value === val.value}
-                  disableClearable
                   fullWidth
                 />
               </Grid>
@@ -169,7 +184,18 @@ const PublicGamesToolbar = ({
                   fullWidth
                 />
               </Grid>
-
+              <Grid size={{ xs: 12 }}>
+                <AutocompleteSelect<GameSortOptionItem>
+                  label={t("games.listToolbar.sortByLabel")}
+                  options={GAME_SORT_OPTIONS}
+                  value={selectedSortOption}
+                  onChange={(newValue) => onSortChange(newValue?.value ?? "name_asc")}
+                  getOptionLabel={(option) => t(option.labelKey)}
+                  isOptionEqualToValue={(option, val) => option.value === val.value}
+                  disableClearable
+                  fullWidth
+                />
+              </Grid>
             </Grid>
         </DialogContent>
         <DialogActions>

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
@@ -9,7 +10,7 @@ import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { usePublicGames, usePublicPlatforms, usePublicTags } from "../hooks/usePublic";
 import { useSessionState } from "../hooks/useSessionState";
 import GameCard from "./GameCard";
-import PublicGamesToolbar from "./PublicGamesToolbar";
+import PublicGamesToolbar, { type OwnershipStatus } from "./PublicGamesToolbar";
 import VirtualGameGrid from "./VirtualGameGrid";
 
 const PublicGamesPage = () => {
@@ -23,8 +24,9 @@ const PublicGamesPage = () => {
   const [tagIds, setTagIds] = useSessionState<number[]>("public.games.tagIds", []);
   const [formats, setFormats] = useSessionState<string[]>("public.games.formats", []);
   const [playStatuses, setPlayStatuses] = useSessionState<string[]>("public.games.playStatuses", []);
+  const [ownershipStatuses, setOwnershipStatuses] = useSessionState<OwnershipStatus[]>("public.games.ownershipStatuses", []);
   const debouncedSearch = useDebouncedValue(search.trim(), 500);
-  const { data: games, isLoading } = usePublicGames(token, {
+  const { data: allGames, isLoading } = usePublicGames(token, {
     search: debouncedSearch || undefined,
     sort,
     platformIds,
@@ -34,6 +36,15 @@ const PublicGamesPage = () => {
   });
   const { data: platforms = [] } = usePublicPlatforms(token);
   const { data: tags = [] } = usePublicTags(token);
+
+  // Ownership filter is applied client-side (owned/wishlisted arrive on every public game).
+  const games = useMemo(() => {
+    if (!allGames || ownershipStatuses.length === 0) return allGames;
+    return allGames.filter((game) => {
+      const has = (status: OwnershipStatus) => (status === "owned" ? game.owned : game.wishlisted);
+      return ownershipStatuses.some(has);
+    });
+  }, [allGames, ownershipStatuses]);
 
 
   return (
@@ -57,6 +68,8 @@ const PublicGamesPage = () => {
         onFormatsChange={setFormats}
         playStatuses={playStatuses}
         onPlayStatusesChange={setPlayStatuses}
+        ownershipStatuses={ownershipStatuses}
+        onOwnershipStatusesChange={setOwnershipStatuses}
 
       />
       {isLoading ? (
