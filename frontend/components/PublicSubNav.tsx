@@ -1,7 +1,9 @@
 import { Link, useLocation, useParams } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
+import Collapse from "@mui/material/Collapse";
 import { useTranslation } from "react-i18next";
+import { useScrollCollapse } from "../hooks/useScrollCollapse";
 
 // Mirrors GamesSubNav.tsx's chip-row pattern — just 2 destinations here, so no need for
 // the full responsive nav rail/drawer/bottom-bar the authenticated app uses.
@@ -9,6 +11,7 @@ const PublicSubNav = () => {
   const { token } = useParams<{ token: string }>();
   const location = useLocation();
   const { t } = useTranslation();
+  const collapsed = useScrollCollapse(80);
 
   const items = [
     { to: `/public/${token}/games`, labelKey: "public.nav.games" },
@@ -16,7 +19,8 @@ const PublicSubNav = () => {
   ] as const;
 
   return (
-    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 3 }}>
+    <Collapse in={!collapsed} timeout={200}>
+      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 3 }}>
       {items.map((item) => {
         // Prefix match too, so Games stays selected on a game's own page.
         const isSelected =
@@ -33,7 +37,8 @@ const PublicSubNav = () => {
           />
         );
       })}
-    </Box>
+      </Box>
+    </Collapse>
   );
 };
 
