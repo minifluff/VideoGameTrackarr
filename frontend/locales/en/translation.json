@@ -668,7 +668,8 @@
       "gamesRemovedToast_one": "{{count}} game removed from your library",
       "gamesRemovedToast_other": "{{count}} games removed from your library",
       "gamesHiddenToast": "{{count}} game(s) hidden from public",
-      "gamesHiddenErrorToast": "Failed to hide games from public"
+      "gamesHiddenErrorToast": "Failed to hide games from public",
+      "gamesUnhiddenToast": "{{count}} game(s) unhidden"
     },
     "listToolbar": {
       "exitSelectionModeAriaLabel": "Exit selection mode",
@@ -716,7 +717,8 @@
       "sortDateAddedDesc": "Date added (newest first)",
       "hideFromPublicButton": "Hide",
       "confirmRemoveTitle": "Remove Games?",
-      "confirmRemoveMessage": "Are you sure you want to remove {{count}} game(s)? This can be undone."
+      "confirmRemoveMessage": "Are you sure you want to remove {{count}} game(s)? This can be undone.",
+      "unhideButton": "Unhide"
     },
     "card": {
       "playStatusBacklog": "Backlog",
