@@ -16,7 +16,7 @@ import { usePlatforms } from "../hooks/usePlatforms";
 import { useStorefronts } from "../hooks/useStorefronts";
 import { toast } from "react-toastify";
 import { useTags } from "../hooks/useTags";
-import { updateGameVisibility } from "../api/games";
+import { bulkUpdateGameVisibility } from "../api/games";
 import { useUndoableAction } from "../hooks/useUndoableAction";
 import { gameIdentifier } from "../utils/identifiers";
 import { matchesOwnership } from "../utils/ownershipFilter";
@@ -243,14 +243,21 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
     );
   };
 
-  const handleBulkHideFromPublic = async () => {
-    const gamesToHide = visibleGames.filter((game) => selectedIds.has(game.id));
-    if (gamesToHide.length === 0) {
+  const handleBulkVisibility = async (hide: boolean) => {
+    const gamesToUpdate = visibleGames.filter((game) => selectedIds.has(game.id));
+    if (gamesToUpdate.length === 0) {
       return;
     }
     try {
-      await Promise.all(gamesToHide.map((game) => updateGameVisibility(game.id, true)));
-      toast.success(t("games.list.gamesHiddenToast", { count: gamesToHide.length }));
+      const result = await bulkUpdateGameVisibility(
+        gamesToUpdate.map((g) => g.id),
+        hide
+      );
+      toast.success(
+        t(hide ? "games.list.gamesHiddenToast" : "games.list.gamesUnhiddenToast", {
+          count: result.updated,
+        })
+      );
     } catch {
       toast.error(t("games.list.gamesHiddenErrorToast"));
     }
@@ -322,7 +329,8 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
           onToggleSelectAll={handleToggleSelectAll}
           onManageTagsClick={() => setManageTagsOpen(true)}
           onBulkDelete={handleBulkDelete}
-          onBulkHideFromPublic={handleBulkHideFromPublic}
+          onBulkHide={() => handleBulkVisibility(true)}
+          onBulkUnhide={() => handleBulkVisibility(false)}
           platformOptions={platforms}
           platformIds={platformIds}
           onPlatformIdsChange={setPlatformIds}
