@@ -54,6 +54,7 @@ const game: PublicGameDetail = {
   nintendoStoreUrl: null,
   epicGamesStoreUrl: null,
   gogStoreUrl: null,
+  ownedCopies: [],
 };
 
 function renderPage(path = "/public/tok/games/42") {
