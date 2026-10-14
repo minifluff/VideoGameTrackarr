@@ -387,7 +387,14 @@
       "confirmLabel": "Type \"confirm\" to proceed",
       "resetting": "Resetting...",
       "resetSuccess": "Database reset: {{games}} games and {{items}} library items deleted.",
-      "resetError": "Could not reset the database. Please try again."
+      "resetError": "Could not reset the database. Please try again.",
+      "clearPlaytimeButton": "Clear playtime progress",
+      "clearPlaytimeDialogTitle": "Clear all playtime progress?",
+      "clearPlaytimeDialogDescription": "This will delete all playtime tracking data — playtime minutes, play statuses, and play sessions — for every game. Your library, games, and other data will not be affected.",
+      "clearPlaytimeDialogWarning": "This cannot be undone. All playtime history will be permanently deleted.",
+      "clearPlaytimeSuccess": "Cleared {{progress}} progress entries and {{sessions}} play sessions.",
+      "clearPlaytimeError": "Failed to clear playtime progress.",
+      "clearing": "Clearing…"
     },
     "integrations": {
       "igdbHeading": "IGDB Credentials",
