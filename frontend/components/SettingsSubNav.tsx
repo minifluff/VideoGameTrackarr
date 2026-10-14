@@ -2,7 +2,9 @@ import { Link, useLocation } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
+import Collapse from "@mui/material/Collapse";
 import { useTranslation } from "react-i18next";
+import { useScrollCollapse } from "../hooks/useScrollCollapse";
 
 const SUB_NAV_ITEMS = [
   { to: "/settings", labelKey: "settings.subNav.overview" },
@@ -24,10 +26,12 @@ const SUB_NAV_ITEMS = [
 // every breakpoint, since NavDrawer's nested sub-items are desktop-only.
 const SettingsSubNav = () => {
   const { t } = useTranslation();
+  const collapsed = useScrollCollapse(80);
   const location = useLocation();
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mb: 3 }}>
+    <Collapse in={!collapsed} timeout={200}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mb: 3 }}>
       {SUB_NAV_ITEMS.map((item) => {
         const isSelected = location.pathname === item.to;
         return (
@@ -46,7 +50,8 @@ const SettingsSubNav = () => {
           </Box>
         );
       })}
-    </Box>
+      </Box>
+    </Collapse>
   );
 };
 
