@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import PublicSubNav from "./components/PublicSubNav";
 import { useScrollResetOnNavigate } from "./hooks/useScrollResetOnNavigate";
 import { useColorMode } from "./theme/ColorModeProvider";
+import { useAppearance } from "./theme/AppearanceProvider";
 
 // Deliberately minimal, not a stripped-down AppShell — no logout/user menu (there's no
 // login on this surface), no side nav rail/drawer (just 2 destinations, handled by
@@ -16,15 +17,28 @@ import { useColorMode } from "./theme/ColorModeProvider";
 const PublicShell = () => {
   const { t } = useTranslation();
   const { mode, toggleColorMode } = useColorMode();
+  const { appTitle, appIcon } = useAppearance();
   useScrollResetOnNavigate();
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       <AppBar position="fixed">
         <Toolbar>
-          <Box component="img" src="/icon-master.svg" alt="" sx={{ height: 44, width: 44, mr: 1.5 }} />
+          <Box
+            sx={{
+              height: 44,
+              width: 44,
+              mr: 1.5,
+              fontSize: 36,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {appIcon}
+          </Box>
           <Typography variant="h6" component="div" noWrap sx={{ minWidth: 0, flexGrow: 1 }}>
-            VideoGameTrackarr
+            {appTitle}
           </Typography>
           <FormControlLabel
             control={<Switch checked={mode === "dark"} onChange={toggleColorMode} />}
