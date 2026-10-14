@@ -9,7 +9,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.catalog import Game
+from app.repositories import game_repository
 from app.services import game_service
+from app.services.exceptions import ConflictError
 from app.services.igdb_client import IGDBClient
 
 
@@ -103,7 +105,22 @@ async def autolink_games(
             if match is None:
                 no_match.append(game.name)
                 continue
-            await game_service.link_game_to_igdb(db, igdb_client, game.id, match["id"])
+            try:
+                await game_service.link_game_to_igdb(db, igdb_client, game.id, match["id"])
+            except ConflictError as conflict:
+                # IGDB game already in library — merge the duplicate instead of failing.
+                # Re-fetch game (link may have partially modified it before the conflict).
+                db.rollback()
+                game = db.get(Game, game_id)
+                if game is None or game.igdb_id is not None:
+                    continue
+                # Verify the IGDB target still exists
+                target = game_repository.get_game_by_igdb_id(db, match["id"])
+                if target is None:
+                    # Target was deleted between check and merge — try direct link again
+                    await game_service.link_game_to_igdb(db, igdb_client, game.id, match["id"])
+                else:
+                    game_service.merge_duplicate_game(db, game.id, match["id"])
             linked.append(game.name)
         except Exception as exc:  # noqa: BLE001 - one bad game must not abort the batch
             db.rollback()
