@@ -36,6 +36,26 @@ const NavDrawer = () => {
           // it'd be invisible rather than just scrolled past.
           top: APP_BAR_HEIGHT,
           height: `calc(100% - ${APP_BAR_HEIGHT}px)`,
+          // Thin, subtle scrollbar that fades in only on hover — the menu is long enough
+          // to scroll now, but the bar shouldn't dominate the drawer.
+          scrollbarWidth: "thin",
+          scrollbarColor: "transparent transparent",
+          "&:hover": {
+            scrollbarColor: "rgba(128, 128, 128, 0.4) transparent",
+          },
+          "&::-webkit-scrollbar": {
+            width: 6,
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "transparent",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: "transparent",
+            borderRadius: 3,
+          },
+          "&:hover::-webkit-scrollbar-thumb": {
+            background: "rgba(128, 128, 128, 0.4)",
+          },
         },
       }}
     >
