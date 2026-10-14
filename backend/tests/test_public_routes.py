@@ -160,6 +160,7 @@ PUBLIC_GAME_DETAIL_KEYS = {
     "nintendoStoreUrl",
     "epicGamesStoreUrl",
     "gogStoreUrl",
+    "ownedCopies",
 }
 
 
@@ -172,7 +173,8 @@ def test_public_game_detail_returns_about_data_only(auth_client, client, db_sess
 
     assert response.status_code == 200
     body = response.json()
-    # Exact key set: nothing private (tags, progress, notes, library copies, sale state) leaks.
+    # Exact key set: nothing private (tags, progress, notes, sale state) leaks.
+    # ownedCopies (platform/edition/format) is intentionally public at the owner's request.
     assert set(body.keys()) == PUBLIC_GAME_DETAIL_KEYS
     assert body["name"] == "Test Game"
     assert body["summary"] == "A test summary."
