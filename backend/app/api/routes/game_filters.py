@@ -44,4 +44,5 @@ class GameFilterParams:
     # there's no multi-value list and no "Exclude" toggle worth offering for a single flag.
     steelbook_only: bool = Query(default=False, alias="steelbookOnly")
     unlinked_only: bool = Query(default=False, alias="unlinkedOnly")
+    hide_with_cover_art: bool = Query(default=False, alias="hideWithCoverArt")
     sort: GameSortOption = Query(default=GameSortOption.NAME_ASC)
