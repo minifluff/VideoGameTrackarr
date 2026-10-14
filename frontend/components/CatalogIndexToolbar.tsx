@@ -19,6 +19,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import Collapse from "@mui/material/Collapse";
 import { useTranslation } from "react-i18next";
+import { useScrollCollapse } from "../hooks/useScrollCollapse";
 import type { CatalogSortOption } from "../api/types";
 import AutocompleteSelect from "./AutocompleteSelect";
 

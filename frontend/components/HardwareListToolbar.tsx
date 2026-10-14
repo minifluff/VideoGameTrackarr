@@ -2,6 +2,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Collapse from "@mui/material/Collapse";
 import { useTranslation } from "react-i18next";
+import { useScrollCollapse } from "../hooks/useScrollCollapse";
 import type { NamedLookup } from "../api/types";
 import AutocompleteMultiSelect from "./AutocompleteMultiSelect";
 import AutocompleteSelect from "./AutocompleteSelect";
