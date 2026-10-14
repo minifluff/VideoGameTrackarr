@@ -292,7 +292,9 @@ def test_sync_steam_entries_adds_a_steam_entry_even_when_already_owned_digitally
     gog_item = next(item for item in library_items if item.digital_storefront == "GOG")
     steam_item = next(item for item in library_items if item.digital_storefront == "Steam")
     assert gog_item.platform_id == seed_pc_platform.id
-    assert steam_item.platform_id == seed_pc_platform.id
+    # New Steam entries target the dedicated "Steam" platform, not PC.
+    steam_platform = db_session.query(Platform).filter(Platform.name == "Steam").one()
+    assert steam_item.platform_id == steam_platform.id
 
 
 def test_sync_steam_entries_follows_a_steam_entry_repointed_to_another_platform(auth_client, db_session):
