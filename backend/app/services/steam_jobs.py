@@ -154,6 +154,22 @@ async def _import_wishlist(
     if stale_entries:
         db.commit()
 
+    # A game removed from the Steam wishlist itself should disappear from ours too.
+    # Safety: Steam's wishlist endpoint can't distinguish "private" from "genuinely
+    # empty", so this only runs when we actually got wishlist data back — an empty
+    # response is skipped rather than risking wiping the table on a private profile.
+    if wishlist_items:
+        fresh_app_ids = {item.app_id for item in wishlist_items}
+        removed_entries = [
+            entry
+            for entry in steam_wishlist_repository.list_all_entries(db)
+            if entry.steam_app_id not in fresh_app_ids
+        ]
+        for removed in removed_entries:
+            db.delete(removed)
+        if removed_entries:
+            db.commit()
+
     succeeded = 0
     failures: list[dict[str, Any]] = []
     for index, item in enumerate(wishlist_items):
