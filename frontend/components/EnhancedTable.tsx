@@ -9,6 +9,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import IconButton from "@mui/material/IconButton";
 import MoveDownIcon from "@mui/icons-material/MoveDown";
 import MoveUpIcon from "@mui/icons-material/MoveUp";
+import DriveFileMoveIcon from "@mui/icons-material/DriveFileMove";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
@@ -244,6 +245,7 @@ interface EnhancedTableProps {
   onAddClick?: (tableName: string) => void;
   onDeleteClick?: (selected: number[], tableName: string) => void;
   onMoveClick?: (rowId: number, tableName: string) => void;
+  onTransferClick?: (rowId: number) => void;
   onEditClick?: (rowId: number, tableName: string) => void;
   moveDirection: "up" | "down";
 }
@@ -256,6 +258,7 @@ const EnhancedTable = ({
   onAddClick,
   onDeleteClick,
   onMoveClick,
+  onTransferClick,
   onEditClick,
   moveDirection,
 }: EnhancedTableProps) => {
@@ -418,6 +421,18 @@ const EnhancedTable = ({
                             </IconButton>
                           </Tooltip>
                         ) : null}
+                        {onTransferClick && (
+                          <Tooltip title={t("common.transfer")}>
+                            <IconButton
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                onTransferClick(row.id);
+                              }}
+                            >
+                              <DriveFileMoveIcon />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                         <Tooltip title={t("common.edit")}>
                           <IconButton onClick={(event) => handleEdit(event, row.id)}>
                             <EditIcon />
@@ -515,6 +530,18 @@ const EnhancedTable = ({
                                   )}
                                 </IconButton>
                               ) : null}
+                              {onTransferClick && (
+                                <IconButton
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    onTransferClick(row.id);
+                                  }}
+                                >
+                                  <Tooltip title={t("common.transfer")}>
+                                    <DriveFileMoveIcon />
+                                  </Tooltip>
+                                </IconButton>
+                              )}
                               <IconButton onClick={(event) => handleEdit(event, row.id)}>
                                 <Tooltip title={t("common.edit")}>
                                   <EditIcon />

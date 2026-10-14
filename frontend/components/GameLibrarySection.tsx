@@ -88,6 +88,7 @@ const GameLibrarySection = ({
   const [moveConfirmItem, setMoveConfirmItem] = useState<LibraryItem | null>(null);
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [transferItemId, setTransferItemId] = useState<number | null>(null);
   const [dialogItem, setDialogItem] = useState<LibraryItem | null>(null);
   const [dialogStatus, setDialogStatus] = useState<LibraryStatus>("owned");
 
@@ -276,6 +277,10 @@ const GameLibrarySection = ({
     setDialogOpen(true);
   };
 
+  const handleTransferClick = (rowId: number) => {
+    setTransferItemId(rowId);
+  };
+
   const handleDeleteClick = (selectedIds: number[], status: LibraryStatus) => {
     const itemsToRemove = (libraryItems ?? []).filter((item) => selectedIds.includes(item.id));
     if (itemsToRemove.length === 0) return;
@@ -411,6 +416,7 @@ const GameLibrarySection = ({
           onMoveClick={(rowId) => handleMoveClick(rowId, "owned")}
           moveDirection="down"
           onEditClick={handleEditClick}
+          onTransferClick={handleTransferClick}
         />
         <EnhancedTable
           rows={wishlisted}
@@ -422,6 +428,7 @@ const GameLibrarySection = ({
           onMoveClick={(rowId) => handleMoveClick(rowId, "wishlist")}
           moveDirection="up"
           onEditClick={handleEditClick}
+          onTransferClick={handleTransferClick}
         />
 
         <LibraryItemDialog
