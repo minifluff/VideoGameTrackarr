@@ -75,7 +75,7 @@ const ReleaseCalendarSection = ({ scope, title }: ReleaseCalendarSectionProps) =
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{ display: "block", textAlign: "center", mt: 0.5 }}
+                sx={{ display: "block", textAlign: "center", mt: 0.5, fontWeight: "bold" }}
               >
                 {formatReleaseDate(item.releaseDate)}
               </Typography>
@@ -103,7 +103,7 @@ const ReleaseCalendarSection = ({ scope, title }: ReleaseCalendarSectionProps) =
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{ display: "block", textAlign: "center", mt: 0.5 }}
+                sx={{ display: "block", textAlign: "center", mt: 0.5, fontWeight: "bold" }}
               >
                 {formatReleaseDate(item.releaseDate)}
               </Typography>
@@ -131,7 +131,7 @@ const ReleaseCalendarSection = ({ scope, title }: ReleaseCalendarSectionProps) =
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{ display: "block", textAlign: "center", mt: 0.5 }}
+                sx={{ display: "block", textAlign: "center", mt: 0.5, fontWeight: "bold" }}
               >
                 {formatReleaseDate(item.releaseDate)}
               </Typography>
