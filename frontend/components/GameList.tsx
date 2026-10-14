@@ -33,16 +33,20 @@ const MIN_SEARCH_LENGTH = 3;
 interface GameListProps {
   sessionPrefix?: string;
   forcedFilters?: Partial<GameListFilters>;
+  initialOwnershipStatuses?: OwnershipStatus[];
   header?: React.ReactNode;
   subNav?: React.ReactNode;
 }
 
-const GameList = ({ sessionPrefix = "games", forcedFilters, header, subNav }: GameListProps) => {
+const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStatuses, header, subNav }: GameListProps) => {
   const { t } = useTranslation();
   const collapsed = useScrollCollapse();
   const sp = sessionPrefix;
   const [searchKeyword, setSearchKeyword] = useSessionState(`${sp}.searchKeyword`, "");
-  const [ownershipStatuses, setOwnershipStatuses] = useSessionState<OwnershipStatus[]>(`${sp}.ownershipStatuses`, []);
+  const [ownershipStatuses, setOwnershipStatuses] = useSessionState<OwnershipStatus[]>(
+    `${sp}.ownershipStatuses`,
+    initialOwnershipStatuses ?? []
+  );
   const [ownershipExclude, setOwnershipExclude] = useSessionState(`${sp}.ownershipExclude`, false);
   const [platformIds, setPlatformIds] = useSessionState<number[]>(`${sp}.platformIds`, []);
   const [platformExclude, setPlatformExclude] = useSessionState(`${sp}.platformExclude`, false);
