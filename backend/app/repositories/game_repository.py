@@ -225,7 +225,11 @@ def _apply_optional_game_filters(
     can offer the exact same filters against a differently-scoped base query, with zero
     duplicated clause-building logic to drift out of sync."""
     if search:
-        stmt = stmt.where(Game.name.ilike(f"%{search}%"))
+        # Split into words and require each word to appear (in any order) — so
+        # "Wild Breath" finds "Breath of the Wild", not just exact substrings.
+        for word in search.split():
+            if word:
+                stmt = stmt.where(Game.name.ilike(f"%{word}%"))
     if platform_ids:
         # The platform of the user's *owned/wishlisted copy* (library_items), not
         # game_platforms — IGDB's full list of platforms a game was ever released on.
