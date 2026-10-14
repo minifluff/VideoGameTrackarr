@@ -1175,7 +1175,8 @@
     "unlinkedGames": {
       "description": "Games in your library that aren't linked to IGDB yet.",
       "emptyState": "All games are linked to IGDB.",
-      "columnName": "Name"
+      "columnName": "Name",
+      "hideWithCoverArt": "Hide games with cover art"
     }
   },
   "catalog": {
