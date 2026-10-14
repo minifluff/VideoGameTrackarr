@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
+from app.api.routes.game_filters import GameFilterParams
 from app.models.library import LibraryStatus
 from app.repositories.game_repository import GameSortOption
 from app.schemas.public import (
@@ -24,13 +25,11 @@ router = APIRouter(prefix="/api/public/{token}", tags=["public"])
 @router.get("/games", response_model=list[PublicGameSummaryResponse])
 def list_public_games(
     token: str,
-    search: str | None = Query(default=None),
-    platform_ids: list[int] | None = Query(default=None, alias="platformId"),
-    sort: GameSortOption = Query(default=GameSortOption.NAME_ASC),
+    params: GameFilterParams = Depends(),
     db: Session = Depends(get_db),
 ) -> list[PublicGameSummaryResponse]:
     auth_service.get_user_by_share_token(db, token)
-    games = game_service.search_local_games(db, search=search, platform_ids=platform_ids, sort=sort)
+    games = game_service.search_local_games(db, **vars(params))
     # Single query for all owned platforms across the returned games (avoids N+1).
     game_ids = [g.game.id for g in games]
     platforms_by_game: dict[int, set[str]] = {}
@@ -66,6 +65,39 @@ def list_public_platforms(
     from app.repositories import platform_repository
     auth_service.get_user_by_share_token(db, token)
     return [{"id": p.id, "name": p.name} for p in platform_repository.list_platforms(db)]
+
+
+@router.get("/tags", response_model=list[dict])
+def list_public_tags(
+    token: str,
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    """Tags used on games, for the public page filter."""
+    from app.repositories import tag_repository
+    auth_service.get_user_by_share_token(db, token)
+    return [{"id": t.id, "name": t.name} for t in tag_repository.list_tags(db)]
+
+
+@router.get("/collections", response_model=list[dict])
+def list_public_collections(
+    token: str,
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    """Collections, for the public page filter."""
+    from app.repositories import collection_repository
+    auth_service.get_user_by_share_token(db, token)
+    return [{"id": col.id, "name": col.name} for col in collection_repository.list_collections(db)]
+
+
+@router.get("/franchises", response_model=list[dict])
+def list_public_franchises(
+    token: str,
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    """Franchises (series), for the public page filter."""
+    from app.repositories import franchise_repository
+    auth_service.get_user_by_share_token(db, token)
+    return [{"id": f.id, "name": f.name} for f in franchise_repository.list_franchises(db)]
 
 
 @router.get("/games/{game_id}", response_model=PublicGameDetailResponse)
