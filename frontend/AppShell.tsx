@@ -23,7 +23,7 @@ import Breadcrumbs, { BREADCRUMBS_HEIGHT } from "./navigation/Breadcrumbs";
 import NavDrawer, { NAV_DRAWER_WIDTH } from "./navigation/NavDrawer";
 import NavRail, { NAV_RAIL_WIDTH } from "./navigation/NavRail";
 import { useColorMode } from "./theme/ColorModeProvider";
-import { useAppearance } from "./theme/AppearanceProvider";
+import { isCustomIconDataUrl, resolveIconSrc, useAppearance } from "./theme/AppearanceProvider";
 
 // M3's three responsive navigation patterns: Navigation Bar (compact/mobile, bottom),
 // Navigation Rail (medium/tablet, icons-only side rail), Navigation Drawer
@@ -32,7 +32,7 @@ import { useAppearance } from "./theme/AppearanceProvider";
 const AppShell = () => {
   const { t } = useTranslation();
   const { mode, toggleColorMode } = useColorMode();
-  const { appTitle } = useAppearance();
+  const { appTitle, appIcon } = useAppearance();
   const theme = useTheme();
   const isCompact = useMediaQuery(theme.breakpoints.down("sm"));
   const isExpanded = useMediaQuery(theme.breakpoints.up("lg"));
@@ -78,12 +78,28 @@ const AppShell = () => {
       </Link>
       <AppBar position="fixed" sx={{ zIndex: (t) => t.zIndex.drawer + 1 }}>
         <Toolbar>
-          <Box
-            component="img"
-            src="/icon-master.svg"
-            alt=""
-            sx={{ height: 44, width: 44, mr: 1.5 }}
-          />
+          {appIcon === "default" || isCustomIconDataUrl(appIcon) ? (
+            <Box
+              component="img"
+              src={resolveIconSrc(appIcon)}
+              alt=""
+              sx={{ height: 44, width: 44, mr: 1.5 }}
+            />
+          ) : (
+            <Box
+              sx={{
+                height: 44,
+                width: 44,
+                mr: 1.5,
+                fontSize: 36,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {appIcon}
+            </Box>
+          )}
           <Typography variant="h6" component="div" noWrap sx={{ minWidth: 0, flexGrow: 1 }}>
             {appTitle}
           </Typography>
