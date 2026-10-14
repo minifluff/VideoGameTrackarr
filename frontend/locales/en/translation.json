@@ -714,7 +714,7 @@
       "noSearchMatches": "No matches found.",
       "sortDateAddedAsc": "Date added (oldest first)",
       "sortDateAddedDesc": "Date added (newest first)",
-      "hideFromPublicButton": "Hide from Public",
+      "hideFromPublicButton": "Hide",
       "confirmRemoveTitle": "Remove Games?",
       "confirmRemoveMessage": "Are you sure you want to remove {{count}} game(s)? This can be undone."
     },
@@ -908,7 +908,7 @@
       "moveWithRomDescription_other": "This copy has {{count}} ROMs attached ({{name}}). Wishlist copies can't hold ROMs, so they will be deleted.",
       "moveWithRomAndSavesDescription_one": "This copy has a ROM attached ({{name}}), along with its save states and/or in-game save. Wishlist copies can't hold a ROM, so the ROM and all of its saves will be deleted.",
       "moveWithRomAndSavesDescription_other": "This copy has {{count}} ROMs attached ({{name}}), with save states and/or in-game saves. Wishlist copies can't hold ROMs, so the ROMs and all of their saves will be deleted.",
-      "hideFromPublicLabel": "Hide from Public"
+      "hideFromPublicLabel": "Hide"
     },
     "stats": {
       "playStatusNotStarted": "Not started",
