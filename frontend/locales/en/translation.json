@@ -472,7 +472,12 @@
       "appTitleHelp": "Shown in the title bar and the browser tab.",
       "reset": "Reset to defaults",
       "appIcon": "App icon",
-      "appIconHelp": "Shown as the browser tab icon. Syncs across devices."
+      "appIconHelp": "Shown as the browser tab icon. Syncs across devices.",
+      "cardSize": "Game card size",
+      "cardSizeHelp": "Smaller cards fit more games on screen. Syncs across devices.",
+      "cardSizeSmall": "Small",
+      "cardSizeMedium": "Medium",
+      "cardSizeLarge": "Large"
     },
     "removeGames": {
       "title": "Remove Games",
