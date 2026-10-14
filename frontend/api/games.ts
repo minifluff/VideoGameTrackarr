@@ -182,6 +182,13 @@ export async function claimDiscoveredGame(gameId: number): Promise<GameDetail> {
   return response.data;
 }
 
+export async function updateGameVisibility(gameId: number, hideFromPublic: boolean): Promise<GameDetail> {
+  const response = await apiClient.patch<GameDetail>(`/api/games/${gameId}/visibility`, {
+    hideFromPublic,
+  });
+  return response.data;
+}
+
 export async function linkGameToIgdb(gameId: number, igdbId: number): Promise<GameDetail> {
   const response = await apiClient.post<GameDetail>(`/api/games/${gameId}/link-igdb`, { igdbId });
   return response.data;
