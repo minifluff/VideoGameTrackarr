@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user, get_db
 from app.models.system import User
 from app.services import database_reset_service
+from sqlalchemy import delete
+from app.models.library import GameProgress, PlaySession
 
 router = APIRouter(tags=["system"], dependencies=[Depends(get_current_user)])
 
@@ -16,6 +18,33 @@ class ResetDatabaseRequest(BaseModel):
 class ResetDatabaseResponse(BaseModel):
     games_deleted: int
     library_items_deleted: int
+
+
+class ClearPlaytimeResponse(BaseModel):
+    progress_deleted: int
+    sessions_deleted: int
+
+
+@router.post("/api/system/clear-playtime", response_model=ClearPlaytimeResponse)
+def clear_playtime(
+    payload: ResetDatabaseRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ClearPlaytimeResponse:
+    """Delete all playtime progress (GameProgress + PlaySession) without touching
+    the library itself. The confirmation field must be exactly "confirm"."""
+    if payload.confirmation != "confirm":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Type "confirm" to clear playtime.',
+        )
+    sessions_deleted = db.execute(delete(PlaySession)).rowcount
+    progress_deleted = db.execute(delete(GameProgress)).rowcount
+    db.commit()
+    return ClearPlaytimeResponse(
+        progress_deleted=progress_deleted,
+        sessions_deleted=sessions_deleted,
+    )
 
 
 @router.post("/api/system/reset-database", response_model=ResetDatabaseResponse)
