@@ -40,8 +40,8 @@ const MoveLibraryItemDialog = ({
   const moveMutation = useMoveLibraryItem();
   const splitMutation = useSplitLibraryItem();
   const { data: searchResults } = useGames(
-    { search },
-    { enabled: open && tab === "move" && search.length >= 2 }
+    { search: search.length >= 2 ? search : undefined },
+    { enabled: open && tab === "move" }
   );
 
   const handleMove = () => {
@@ -91,9 +91,9 @@ const MoveLibraryItemDialog = ({
         </Tabs>
         {tab === "move" ? (
           <Autocomplete
-            options={((searchResults as any)?.items ?? []).filter((g: any) => g.id !== currentGameId)}
-            getOptionLabel={(option: any) => option.name}
-            value={((searchResults as any)?.items ?? []).find((g: any) => g.id === selectedGameId) ?? null}
+            options={(searchResults ?? []).filter((g) => g.id !== currentGameId)}
+            getOptionLabel={(option) => option.name}
+            value={(searchResults ?? []).find((g) => g.id === selectedGameId) ?? null}
             onChange={(_, value) => setSelectedGameId(value?.id ?? null)}
             inputValue={search}
             onInputChange={(_, value) => setSearch(value)}
