@@ -1016,7 +1016,8 @@
       "eventsHeading": "Ongoing/Upcoming Events",
       "welcomeMessage": "Welcome to VideoGameTrackarr",
       "pageTitle": "Dashboard",
-      "addGameButton": "Add game"
+      "addGameButton": "Add game",
+      "publicCollectionButton": "Public Game Collection"
     },
     "page": {
       "gamesHeading": "Games",
