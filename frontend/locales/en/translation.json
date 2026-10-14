@@ -1568,7 +1568,12 @@
       "sortTabLabel": "Sort",
       "noFiltersAvailable": "No filters are available yet.",
       "loadError": "Couldn't load this game. Please try again.",
-      "ownedOn": "Owned on"
+      "ownedOn": "Owned on",
+      "collectionTitle": "Collection",
+      "collectionPlatform": "Platform",
+      "collectionEdition": "Edition",
+      "collectionFormat": "Format",
+      "collectionEmpty": "Not in collection"
     },
     "hardware": {
       "title": "Hardware",
@@ -1592,6 +1597,14 @@
     "moveItemSuccess": "Item moved successfully.",
     "moveItemError": "Failed to move item.",
     "splitItemSuccess": "New game created and item moved.",
-    "splitItemError": "Failed to create new game."
+    "splitItemError": "Failed to create new game.",
+    "format": {
+      "physical": "Physical",
+      "digital": "Digital",
+      "iso": "ISO",
+      "rom": "ROM",
+      "abandonware": "Abandonware",
+      "other": "Other"
+    }
   }
 }
