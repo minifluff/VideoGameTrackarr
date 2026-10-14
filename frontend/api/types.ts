@@ -169,9 +169,17 @@ export interface PublicGameSummary {
   ownedPlatforms: string[];
 }
 
-// GET /api/public/{token}/games/{id}: just the About section's data (no tags, library
-// copies, progress or notes). rating and the hierarchical parent fields are always null.
-export type PublicGameDetail = PublicGameSummary & GameAboutData;
+export interface PublicOwnedCopy {
+  platform: string | null;
+  edition: string | null;
+  format: string | null;
+}
+
+// GET /api/public/{token}/games/{id}: just the About section's data (no tags, progress
+// or notes). rating and the hierarchical parent fields are always null. Includes the
+// owned copies list (platform/edition/format) at the owner's request.
+export type PublicGameDetail = PublicGameSummary &
+  GameAboutData & { ownedCopies: PublicOwnedCopy[] };
 
 export interface PublicDeviceSummary {
   id: number;
