@@ -89,7 +89,7 @@ async def _import(db: Session, report_progress: Callable[[int, int], None]) -> d
         failures: list[dict[str, Any]] = []
         owned_app_ids: set[int] = set()
         # Phase 1: fast local upserts of every Steam entry (no IGDB calls yet).
-        unmatched_app_ids: list[int] = []
+        unmatched: list[tuple[int, str]] = []
         for index, steam_game in enumerate(owned_games):
             if index > 0:
                 await asyncio.sleep(_PACE_DELAY_SECONDS)
@@ -99,7 +99,7 @@ async def _import(db: Session, report_progress: Callable[[int, int], None]) -> d
                 )
                 owned_app_ids.add(steam_game.app_id)
                 if entry.game_id is None and not entry.dismissed:
-                    unmatched_app_ids.append(steam_game.app_id)
+                    unmatched.append((steam_game.app_id, steam_game.name))
                 succeeded += 1
             except Exception as exc:  # noqa: BLE001 - one bad upsert must not abort the batch
                 db.rollback()
@@ -110,10 +110,10 @@ async def _import(db: Session, report_progress: Callable[[int, int], None]) -> d
         # Phase 2: IGDB-match the unmatched entries concurrently (capped at IGDB's
         # 4 req/s free-tier limit). This is the slow part — parallelizing it is the
         # main speedup for large libraries.
-        if unmatched_app_ids:
+        if unmatched:
             semaphore = asyncio.Semaphore(_IGDB_MATCH_CONCURRENCY)
 
-            async def _match_one(app_id: int) -> None:
+            async def _match_one(app_id: int, game_name: str) -> None:
                 async with semaphore:
                     try:
                         game_id = await _match_to_igdb(db, igdb_client, app_id)
@@ -124,9 +124,9 @@ async def _import(db: Session, report_progress: Callable[[int, int], None]) -> d
                                 db.commit()
                     except Exception as exc:  # noqa: BLE001 - one bad match must not abort the batch
                         db.rollback()
-                        failures.append({"gameId": app_id, "gameName": f"Steam App {app_id}", "error": str(exc)})
+                        failures.append({"gameId": app_id, "gameName": game_name, "error": str(exc)})
 
-            await asyncio.gather(*(_match_one(app_id) for app_id in unmatched_app_ids))
+            await asyncio.gather(*(_match_one(app_id, name) for app_id, name in unmatched))
 
         result: dict[str, Any] = {
             "total": len(owned_games),
