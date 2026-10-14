@@ -56,3 +56,11 @@ def update_platform(
 @router.delete("/{platform_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_platform(platform_id: int, db: Session = Depends(get_db)) -> None:
     platform_service.delete_platform(db, platform_id)
+
+
+@router.post("/{source_id}/move-to/{target_id}")
+def mass_move_games(
+    source_id: int, target_id: int, db: Session = Depends(get_db)
+) -> dict[str, int]:
+    moved = platform_service.mass_move_games(db, source_id, target_id)
+    return {"moved_count": moved}
