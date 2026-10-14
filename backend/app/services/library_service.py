@@ -51,6 +51,46 @@ def delete_library_item(db: Session, item_id: int) -> None:
     rom_service.delete_files(orphaned_files)
 
 
+
+
+def move_library_item(db: Session, item_id: int, target_game_id: int) -> LibraryItem:
+    """Move a library item to a different game."""
+    item = _require_library_item(db, item_id)
+    _require_game(db, target_game_id)
+    if item.game_id == target_game_id:
+        raise ValueError("Item is already in the target game")
+    item.game_id = target_game_id
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+def split_library_item_to_new_game(db: Session, item_id: int, new_game_name: str) -> tuple[Any, LibraryItem]:
+    """Create a new manual game and move the library item to it.
+    
+    Returns (new_game, moved_item).
+    """
+    from app.models.catalog import Game
+    
+    item = _require_library_item(db, item_id)
+    if not new_game_name.strip():
+        raise ValueError("New game name is required")
+    
+    # Create a minimal new game entry
+    new_game = Game(
+        name=new_game_name.strip(),
+        slug=new_game_name.strip().lower().replace(" ", "-")[:255],
+    )
+    db.add(new_game)
+    db.flush()  # Get the ID
+    
+    # Move the item to the new game
+    item.game_id = new_game.id
+    db.commit()
+    db.refresh(item)
+    db.refresh(new_game)
+    return new_game, item
+
 def _require_game(db: Session, game_id: int) -> None:
     if game_repository.get_game(db, game_id) is None:
         raise NotFoundError(f"Game {game_id} not found")
