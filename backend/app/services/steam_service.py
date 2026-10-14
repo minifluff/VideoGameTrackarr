@@ -119,25 +119,22 @@ def _find_steam_library_item(db: Session, game_id: int) -> LibraryItem | None:
 def _sync_one(db: Session, entry: SteamLibraryEntry) -> None:
     steam_item = _find_steam_library_item(db, entry.game_id)
     if steam_item is None or steam_item.platform_id is None:
-        # Steam itself runs on Windows, Mac, and Linux, but most users are on Windows, so a
-        # brand-new entry defaults to PC (Microsoft Windows) — the user can repoint its
+        # Steam entries sync to a dedicated "Steam" platform — the user can repoint its
         # platform afterward like any other library item, and _find_steam_library_item above
         # will keep recognizing it as "the Steam copy" wherever they move it. Also covers the
         # edge case of a manually-created Steam entry with no platform set yet (platform_id
         # is an optional field on every library item) — progress has to land somewhere.
-        pc_platform = platform_repository.get_or_create_by_igdb(
-            db, igdb_id=PC_IGDB_PLATFORM_ID, name="PC (Microsoft Windows)", slug="win", abbreviation="PC"
-        )
+        steam_platform = platform_repository.get_or_create_by_name(db, "Steam")
         if steam_item is None:
             library_service.add_library_item(
                 db,
                 entry.game_id,
-                platform_id=pc_platform.id,
+                platform_id=steam_platform.id,
                 status=LibraryStatus.OWNED,
                 format=MediaFormat.DIGITAL,
                 digital_storefront="Steam",
             )
-        sync_platform_id = pc_platform.id
+        sync_platform_id = steam_platform.id
     else:
         sync_platform_id = steam_item.platform_id
 
