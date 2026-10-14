@@ -9,6 +9,8 @@ import CardContent from "@mui/material/CardContent";
 import CardHeader from "@mui/material/CardHeader";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
+import Checkbox from "@mui/material/Checkbox";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import Tooltip from "@mui/material/Tooltip";
 import { isAxiosError } from "axios";
 import { useTranslation } from "react-i18next";
@@ -32,6 +34,7 @@ import {
   useUpdateRomLabel,
 } from "../hooks/useLibrary";
 import { useUndoableAction } from "../hooks/useUndoableAction";
+import { useGame, useUpdateGameVisibility } from "../hooks/useGames";
 import { formatCurrency } from "../utils/currency";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import ConfirmDialog from "./ConfirmDialog";
@@ -78,6 +81,8 @@ const GameLibrarySection = ({
   const addLibraryItem = useAddLibraryItem(gameId);
   const updateLibraryItem = useUpdateLibraryItem(gameId);
   const deleteLibraryItem = useDeleteLibraryItem(gameId);
+  const { data: game } = useGame(String(gameId));
+  const updateVisibility = useUpdateGameVisibility(gameId);
   const addRom = useAddRom(gameId);
   const replaceRom = useReplaceRom(gameId);
   const updateRomLabel = useUpdateRomLabel(gameId);
@@ -412,6 +417,19 @@ const GameLibrarySection = ({
           headCells={headCells}
           tableName={t("games.library.collectionTableName")}
           tableIcon={<CheckCircleIcon color="secondary" />}
+          headerAction={
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={game?.hideFromPublic ?? false}
+                  onChange={(e) => updateVisibility.mutate(e.target.checked)}
+                  size="small"
+                />
+              }
+              label={t("games.library.hideFromPublicLabel")}
+              sx={{ mr: 1 }}
+            />
+          }
           onAddClick={() => handleAddClick("owned")}
           onDeleteClick={(ids) => handleDeleteClick(ids, "owned")}
           onMoveClick={(rowId) => handleMoveClick(rowId, "owned")}
