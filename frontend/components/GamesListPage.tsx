@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
 import Box from "@mui/material/Box";
-import Checkbox from "@mui/material/Checkbox";
+import Collapse from "@mui/material/Collapse";
 import FormControl from "@mui/material/FormControl";
 import InputAdornment from "@mui/material/InputAdornment";
 import InputLabel from "@mui/material/InputLabel";
@@ -36,7 +36,6 @@ const GamesListPage = () => {
   const [search, setSearch] = useState("");
   const [sortColumn, setSortColumn] = useState<SortColumn>("gameName");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [platformFilter, setPlatformFilter] = useState<string>("all");
@@ -142,29 +141,6 @@ const GamesListPage = () => {
     }
   };
 
-  const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.checked) {
-      setSelectedIds(new Set(filteredAndSorted.map((item) => item.id)));
-    } else {
-      setSelectedIds(new Set());
-    }
-  };
-
-  const handleSelectOne = (id: number) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
-
-  const allSelected = filteredAndSorted.length > 0 && filteredAndSorted.every((item) => selectedIds.has(item.id));
-  const someSelected = filteredAndSorted.some((item) => selectedIds.has(item.id));
-
 
 
   const columns: { key: SortColumn; label: string }[] = [
@@ -188,15 +164,17 @@ const GamesListPage = () => {
           boxShadow: hideSearchBar ? "none" : "0 4px 8px -4px rgba(0, 0, 0, 0.2)",
         }}
       >
-        <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
+        <Collapse in={!hideSearchBar}>
           <GamesSubNav />
-        </Box>
-        <Typography variant="h4" component="h1" gutterBottom sx={{ display: hideSearchBar ? "none" : "block", mt: 2 }}>
-          {t("games.listPage.title")}
-        </Typography>
-        <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
+        </Collapse>
+        <Collapse in={!hideSearchBar}>
+          <Typography variant="h4" component="h1" gutterBottom sx={{ mt: 2 }}>
+            {t("games.listPage.title")}
+          </Typography>
+        </Collapse>
+        <Collapse in={!hideSearchBar}>
           <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
-            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", flexDirection: { xs: "column", sm: "row" } }}>
               <TextField
                 label={t("games.listPage.searchLabel")}
                 value={search}
@@ -260,17 +238,11 @@ const GamesListPage = () => {
               {t("games.listPage.selectedCount", { count: selectedIds.size })}
             </Typography>
           )}
-          <TableContainer component={Paper} sx={{ mt: 2 }}>
-          <Table stickyHeader>
+          <TableContainer component={Paper} sx={{ mt: 2, overflowX: "auto" }}>
+          <Table stickyHeader sx={{ minWidth: 600 }}>
             <TableHead>
               <TableRow>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    checked={allSelected}
-                    indeterminate={!allSelected && someSelected}
-                    onChange={handleSelectAll}
-                  />
-                </TableCell>
+
                 {columns.map((col) => (
                   <TableCell key={col.key}>
                     <TableSortLabel
@@ -291,15 +263,9 @@ const GamesListPage = () => {
                   key={item.id}
                   hover
                   sx={{ cursor: "pointer" }}
-                  onClick={() => navigate(`/games/${item.gameUuid}`)}
-                  selected={selectedIds.has(item.id)}
+                  onClick={() => navigate(`/game/${item.gameUuid}`)}
                 >
-                  <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
-                    <Checkbox
-                      checked={selectedIds.has(item.id)}
-                      onChange={() => handleSelectOne(item.id)}
-                    />
-                  </TableCell>
+
                   <TableCell>{item.gameName}</TableCell>
                   <TableCell>{item.platformName ?? "—"}</TableCell>
                   <TableCell>{item.edition ?? "—"}</TableCell>
