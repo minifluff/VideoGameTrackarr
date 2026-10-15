@@ -1578,7 +1578,8 @@
   "public": {
     "nav": {
       "games": "Games",
-      "hardware": "Hardware"
+      "hardware": "Hardware",
+      "list": "List"
     },
     "games": {
       "title": "Games",
@@ -1601,6 +1602,9 @@
       "devicesHeading": "Devices",
       "accessoriesHeading": "Accessories",
       "emptyState": "No hardware found."
+    },
+    "gamesList": {
+      "title": "Games List"
     }
   },
   "library": {
