@@ -44,6 +44,14 @@ const GamesListPage = () => {
 
   // Hide search bar on scroll down, reappear on scroll up.
   const hideSearchBar = useScrollDirection(80);
+  // Subnav only visible at the very top of the page
+  const [isAtTop, setIsAtTop] = useState(true);
+  useEffect(() => {
+    const onScroll = () => setIsAtTop(window.scrollY < 10);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const {
     data: rawItems,
@@ -164,7 +172,7 @@ const GamesListPage = () => {
           boxShadow: hideSearchBar ? "none" : "0 4px 8px -4px rgba(0, 0, 0, 0.2)",
         }}
       >
-        <Collapse in={!hideSearchBar}>
+        <Collapse in={isAtTop}>
           <GamesSubNav />
         </Collapse>
         <Collapse in={!hideSearchBar}>
@@ -190,7 +198,8 @@ const GamesListPage = () => {
                   },
                 }}
               />
-              <FormControl sx={{ minWidth: 150 }}>
+              <Box sx={{ display: "flex", gap: 2, flex: { xs: "1 1 100%", sm: "0 1 auto" } }}>
+              <FormControl sx={{ minWidth: 140, flex: 1 }}>
                 <InputLabel>{t("games.listPage.platformColumn")}</InputLabel>
                 <Select
                   value={platformFilter}
@@ -203,7 +212,7 @@ const GamesListPage = () => {
                   ))}
                 </Select>
               </FormControl>
-              <FormControl sx={{ minWidth: 150 }}>
+              <FormControl sx={{ minWidth: 140, flex: 1 }}>
                 <InputLabel>{t("games.listPage.formatColumn")}</InputLabel>
                 <Select
                   value={formatFilter}
@@ -216,6 +225,7 @@ const GamesListPage = () => {
                   ))}
                 </Select>
               </FormControl>
+              </Box>
             </Box>
           </Paper>
         </Collapse>
