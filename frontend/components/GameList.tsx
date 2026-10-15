@@ -275,11 +275,13 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
           top: (theme) => theme.mixins.toolbar.minHeight,
           zIndex: 1,
           bgcolor: "background.default",
-          pt: 1,
-          pb: 2.5,
+          // When the search bar is hidden, collapse the container completely —
+          // otherwise an empty padded strip with a shadow remains.
+          pt: hideSearchBar ? 0 : 1,
+          pb: hideSearchBar ? 0 : 2.5,
           // Once scrolled content locks under this sticky header, the bottom edge needs to
           // read as an intentional floating panel rather than content abruptly disappearing.
-          boxShadow: "0 4px 8px -4px rgba(0, 0, 0, 0.2)",
+          boxShadow: hideSearchBar ? "none" : "0 4px 8px -4px rgba(0, 0, 0, 0.2)",
         }}
       >
         <Collapse in={!hideHeader}>
