@@ -233,9 +233,9 @@ const PlatformManagerPage = () => {
                   />
                 </TableCell>
                 <TableCell>{sortLabel("name", t("settings.platformManager.nameColumn"))}</TableCell>
-                <TableCell>{sortLabel("abbreviation", t("settings.platformManager.abbreviationColumn"))}</TableCell>
-                <TableCell align="right">{sortLabel("igdbId", t("settings.platformManager.igdbIdColumn"))}</TableCell>
                 <TableCell>{sortLabel("slug", t("settings.platformManager.slugColumn"))}</TableCell>
+                <TableCell align="right">{sortLabel("igdbId", t("settings.platformManager.igdbIdColumn"))}</TableCell>
+                <TableCell>{sortLabel("abbreviation", t("settings.platformManager.abbreviationColumn"))}</TableCell>
                 <TableCell align="right">{sortLabel("gameCount", t("settings.platformManager.gamesColumn"))}</TableCell>
                 <TableCell align="right">{t("common.actions")}</TableCell>
               </TableRow>
@@ -255,9 +255,9 @@ const PlatformManagerPage = () => {
                       <Checkbox checked={isSelected} />
                     </TableCell>
                     <TableCell>{platform.name}</TableCell>
-                    <TableCell>{platform.abbreviation ?? "—"}</TableCell>
-                    <TableCell align="right">{platform.igdbId ?? "—"}</TableCell>
                     <TableCell>{platform.slug ?? "—"}</TableCell>
+                    <TableCell align="right">{platform.igdbId ?? "—"}</TableCell>
+                    <TableCell>{platform.abbreviation ?? "—"}</TableCell>
                     <TableCell align="right">{platform.gameCount}</TableCell>
                     <TableCell align="right">
                       <Tooltip title={t("common.edit")}>
