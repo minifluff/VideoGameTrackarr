@@ -95,7 +95,7 @@ const PublicGamesToolbar = ({
 
   return (
     <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
-      <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2, mb: 3 }}>
+      <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
       <Stack direction="row" spacing={1}>
       <TextField
         label={t("public.games.searchLabel")}
