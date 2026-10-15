@@ -113,8 +113,13 @@ export function getNavDestinations(t: TFunction): NavDestination[] {
           label: t("nav.salesIgnored"),
           icon: <BlockIcon />,
         },
+        {
+          to: "/settings/about",
+          label: t("nav.about"),
+          icon: <InfoIcon />,
+          separatorBefore: true,
+        },
       ],
     },
-    { to: "/about", label: t("nav.about"), icon: <InfoIcon /> },
   ];
 }
