@@ -208,7 +208,7 @@ def _list_export_files(tree: Any, subpath: str) -> list[str]:
 
     try:
         names = [
-            entry.get_file_name()
+            entry.file_name
             for entry in directory.query_directory("*", FileInformationClass.FILE_NAMES_INFORMATION)
         ]
     except Exception as exc:
