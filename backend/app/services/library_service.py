@@ -20,42 +20,54 @@ def list_tracked_items(db: Session) -> list[LibraryItem]:
 def list_all_library_items(db: Session) -> list[dict]:
     """All library items with game name, release date, platform name, tags, and date added.
     Returns dicts for the Games List page table (one row per owned copy)."""
+    from sqlalchemy.orm import joinedload
+
     from app.models.catalog import Game, Platform, Tag
     from app.models.library import GameTag, LibraryItem
 
+    # Eager-load platform to avoid N+1 queries
     items = (
-        db.query(LibraryItem, Game)
+        db.query(LibraryItem)
+        .options(joinedload(LibraryItem.platform))
         .join(Game, LibraryItem.game_id == Game.id)
         .order_by(Game.name.asc())
         .all()
     )
+    if not items:
+        return []
+
+    # Bulk-fetch all tags for all games in two queries (no N+1)
+    game_ids = list({item.game_id for item in items})
+    tag_rows = (
+        db.query(GameTag.game_id, Tag.name)
+        .join(Tag, GameTag.tag_id == Tag.id)
+        .filter(GameTag.game_id.in_(game_ids))
+        .all()
+    )
+    tags_by_game: dict[int, list[str]] = {}
+    for game_id, tag_name in tag_rows:
+        tags_by_game.setdefault(game_id, []).append(tag_name)
+
+    # Bulk-fetch game data
+    games = db.query(Game).filter(Game.id.in_(game_ids)).all()
+    game_by_id = {g.id: g for g in games}
+
     result = []
-    for item, game in items:
-        # Get platform name
-        platform_name = None
-        if item.platform_id:
-            platform = db.query(Platform).filter(Platform.id == item.platform_id).first()
-            if platform:
-                platform_name = platform.name
-        # Get tag names via GameTag association table
-        tag_rows = (
-            db.query(Tag.name)
-            .join(GameTag, GameTag.tag_id == Tag.id)
-            .filter(GameTag.game_id == game.id)
-            .all()
-        )
-        tag_names = [row[0] for row in tag_rows]
+    for item in items:
+        game = game_by_id.get(item.game_id)
+        if not game:
+            continue
         result.append({
             "id": item.id,
             "game_id": game.id,
             "game_name": game.name,
             "game_uuid": game.uuid,
-            "platform_name": platform_name,
+            "platform_name": item.platform.name if item.platform else None,
             "edition": item.edition,
             "format": item.format.value if item.format else None,
             "first_release_date": game.first_release_date,
             "date_added": item.created_at,
-            "tag_names": tag_names,
+            "tag_names": tags_by_game.get(game.id, []),
         })
     return result
 
