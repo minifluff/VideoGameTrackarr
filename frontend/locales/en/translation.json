@@ -25,7 +25,8 @@
     "scrollNext": "Scroll next",
     "transfer": "Move to another game",
     "collapse": "Collapse",
-    "expand": "Expand"
+    "expand": "Expand",
+    "all": "All"
   },
   "errors": {
     "pageNotFoundTitle": "Page not found",
