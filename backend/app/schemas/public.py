@@ -19,6 +19,15 @@ from app.schemas.platform import PlatformResponse
 from app.services.hardware_reference_image_service import resolve_image_url
 
 
+class PublicOwnedCopyResponse(CamelModel):
+    """One owned library copy: platform, edition and digital/physical format, so the
+    public game page can show what's owned. Requested by the owner (Oct 2026)."""
+
+    platform: str | None
+    edition: str | None
+    format: str | None
+
+
 class PublicGameSummaryResponse(CamelModel):
     id: int
     name: str
@@ -30,6 +39,7 @@ class PublicGameSummaryResponse(CamelModel):
     owned_platforms: list[str]
     owned_formats: list[str] = []
     owned_editions: list[str] = []
+    owned_copies: list[PublicOwnedCopyResponse] = []
 
 
 def public_game_from_orm(
@@ -37,6 +47,7 @@ def public_game_from_orm(
     owned_platforms: list[str] | None = None,
     owned_formats: list[str] | None = None,
     owned_editions: list[str] | None = None,
+    owned_copies: list[PublicOwnedCopyResponse] | None = None,
 ) -> PublicGameSummaryResponse:
     game = status.game
     return PublicGameSummaryResponse(
@@ -50,16 +61,8 @@ def public_game_from_orm(
         owned_platforms=owned_platforms or [],
         owned_formats=owned_formats or [],
         owned_editions=owned_editions or [],
+        owned_copies=owned_copies or [],
     )
-
-
-class PublicOwnedCopyResponse(CamelModel):
-    """One owned library copy: platform, edition and digital/physical format, so the
-    public game page can show what's owned. Requested by the owner (Oct 2026)."""
-
-    platform: str | None
-    edition: str | None
-    format: str | None
 
 
 class PublicGameDetailResponse(PublicGameSummaryResponse):
