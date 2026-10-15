@@ -182,9 +182,17 @@ def _upload_file(tree: Any, remote_path: str, local_path: Path, report_progress:
         remote.close()
 
 
+def _sort_key(name: str) -> tuple[int, str]:
+    """Orders backup files oldest-first. Timestamped scheduled exports sort by their
+    timestamp; manual exports without a timestamp are treated as oldest."""
+    m = re.match(r"^videogametrackarr-backup-(\d{8})-(\d{6})\.(json|zip)$", name, re.IGNORECASE)
+    if m:
+        return (1, m.group(1) + m.group(2))
+    return (0, "")
+
+
 def _list_export_files(tree: Any, subpath: str) -> list[str]:
-    """Lists backup files in the share folder, oldest first (by server modification time,
-    so manual exports without timestamps in the name are ordered correctly too)."""
+    """Lists backup files in the share folder, oldest first."""
     from smbprotocol.file_info import FileInformationClass
     from smbprotocol.open import (
         CreateDisposition,
@@ -210,18 +218,18 @@ def _list_export_files(tree: Any, subpath: str) -> list[str]:
         raise ExportBackupError(f"Could not list the export folder: {exc}") from exc
 
     try:
-        entries = [
-            (entry.file_name, entry.last_write_time)
-            for entry in directory.query_directory("*", FileInformationClass.FILE_DIRECTORY_INFORMATION)
+        names = [
+            entry.file_name
+            for entry in directory.query_directory("*", FileInformationClass.FILE_NAMES_INFORMATION)
         ]
     except Exception as exc:
         raise ExportBackupError(f"Could not list the export folder: {exc}") from exc
     finally:
         directory.close()
 
-    matched = [(name, mtime) for name, mtime in entries if EXPORT_FILENAME_RE.match(name)]
-    matched.sort(key=lambda item: item[1])
-    return [name for name, _ in matched]
+    matched = [n for n in names if EXPORT_FILENAME_RE.match(n)]
+    matched.sort(key=_sort_key)
+    return matched
 
 
 def _delete_file(tree: Any, remote_path: str) -> None:
