@@ -1,165 +1,208 @@
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
-
-from app.api.deps import get_db
-from app.api.routes.game_filters import GameFilterParams
-from app.models.library import LibraryStatus
-from app.schemas.public import (
-    PublicAccessorySummaryResponse,
-    PublicDeviceSummaryResponse,
-    PublicGameDetailResponse,
-    PublicGameSummaryResponse,
-    PublicOwnedCopyResponse,
-    public_accessory_from_orm,
-    public_device_from_orm,
-    public_game_detail_from_orm,
-    public_game_from_orm,
+from app.models.catalog import GameCategory
+from app.repositories.accessory_repository import AccessoryWithStatus
+from app.repositories.device_repository import DeviceWithStatus
+from app.repositories.game_repository import GameWithStatus, is_top_level_browsable
+from app.schemas.base import CamelModel
+from app.schemas.catalog import (
+    CatalogRefResponse,
+    GameCompanyResponse,
+    GameVideoResponse,
+    ReleaseDateResponse,
+    collection_ref_from_orm,
+    franchise_ref_from_orm,
+    game_company_from_orm,
+    game_video_from_orm,
+    genre_ref_from_orm,
+    release_date_from_orm,
 )
-from app.services import accessory_service, auth_service, device_service, game_service
-from app.services.exceptions import NotFoundError
-
-# No auth dependency — this is the app's one deliberately unauthenticated router, gated
-# instead by the unlisted per-user token in the path. See auth_service.get_user_by_share_token.
-router = APIRouter(prefix="/api/public/{token}", tags=["public"])
+from app.schemas.platform import PlatformResponse
+from app.services.hardware_reference_image_service import resolve_image_url
 
 
-@router.get("/games", response_model=list[PublicGameSummaryResponse])
-def list_public_games(
-    token: str,
-    params: GameFilterParams = Depends(),
-    db: Session = Depends(get_db),
-) -> list[PublicGameSummaryResponse]:
-    auth_service.get_user_by_share_token(db, token)
-    games = game_service.search_local_games(db, **vars(params))
-    # Hidden games never appear on public pages.
-    games = [g for g in games if not g.game.hide_from_public]
-    # Single query for all owned platforms and formats across the returned games (avoids N+1).
-    game_ids = [g.game.id for g in games]
-    platforms_by_game: dict[int, set[str]] = {}
-    formats_by_game: dict[int, set[str]] = {}
-    editions_by_game: dict[int, set[str]] = {}
-    if game_ids:
-        from sqlalchemy import select
-
-        from app.models.catalog import Platform
-        from app.models.library import LibraryItem
-        rows = db.execute(
-            select(LibraryItem.game_id, Platform.name, LibraryItem.format, LibraryItem.edition)
-            .join(Platform, LibraryItem.platform_id == Platform.id)
-            .where(
-                LibraryItem.game_id.in_(game_ids),
-                LibraryItem.status == LibraryStatus.OWNED,
-            )
-        ).all()
-        for game_id, platform_name, format_val, edition_val in rows:
-            platforms_by_game.setdefault(game_id, set()).add(platform_name)
-            if format_val:
-                fmt = format_val.value if hasattr(format_val, "value") else str(format_val)
-                formats_by_game.setdefault(game_id, set()).add(fmt)
-            if edition_val:
-                editions_by_game.setdefault(game_id, set()).add(edition_val)
-    return [
-        public_game_from_orm(
-            g,
-            owned_platforms=sorted(platforms_by_game.get(g.game.id, set())),
-            owned_formats=sorted(formats_by_game.get(g.game.id, set())),
-            owned_editions=sorted(editions_by_game.get(g.game.id, set())),
-        )
-        for g in games
-    ]
+class PublicGameSummaryResponse(CamelModel):
+    id: int
+    name: str
+    cover_url: str | None
+    category: GameCategory | None
+    first_release_date: int | None
+    owned: bool
+    wishlisted: bool
+    owned_platforms: list[str]
+    owned_formats: list[str] = []
+    owned_editions: list[str] = []
 
 
-@router.get("/platforms", response_model=list[dict])
-def list_public_platforms(
-    token: str,
-    db: Session = Depends(get_db),
-) -> list[dict]:
-    """Platforms the user owns games on, for the public page filter."""
-    from app.repositories import platform_repository
-    auth_service.get_user_by_share_token(db, token)
-    return [{"id": p.id, "name": p.name} for p in platform_repository.list_platforms(db)]
-
-
-@router.get("/tags", response_model=list[dict])
-def list_public_tags(
-    token: str,
-    db: Session = Depends(get_db),
-) -> list[dict]:
-    """Tags used on games, for the public page filter."""
-    from app.repositories import tag_repository
-    auth_service.get_user_by_share_token(db, token)
-    return [{"id": t.id, "name": t.name} for t in tag_repository.list_tags(db)]
-
-
-@router.get("/collections", response_model=list[dict])
-def list_public_collections(
-    token: str,
-    db: Session = Depends(get_db),
-) -> list[dict]:
-    """Collections, for the public page filter."""
-    from app.repositories import collection_repository
-    auth_service.get_user_by_share_token(db, token)
-    return [{"id": col.id, "name": col.name} for col in collection_repository.list_collections(db)]
-
-
-@router.get("/franchises", response_model=list[dict])
-def list_public_franchises(
-    token: str,
-    db: Session = Depends(get_db),
-) -> list[dict]:
-    """Franchises (series), for the public page filter."""
-    from app.repositories import franchise_repository
-    auth_service.get_user_by_share_token(db, token)
-    return [{"id": f.id, "name": f.name} for f in franchise_repository.list_franchises(db)]
-
-
-@router.get("/games/{game_id}", response_model=PublicGameDetailResponse)
-def get_public_game(token: str, game_id: int, db: Session = Depends(get_db)) -> PublicGameDetailResponse:
-    auth_service.get_user_by_share_token(db, token)
-    status = game_service.get_public_game_detail(db, game_id)
-    if status.game.hide_from_public:
-        raise NotFoundError(f"Game {game_id} not found")
-    # Owned platforms for this game.
-    from sqlalchemy import select
-
-    from app.models.catalog import Platform
-    from app.models.library import LibraryItem
-
-    rows = db.execute(
-        select(Platform.name, LibraryItem.edition, LibraryItem.format)
-        .join(LibraryItem, LibraryItem.platform_id == Platform.id)
-        .where(
-            LibraryItem.game_id == status.game.id,
-            LibraryItem.status == LibraryStatus.OWNED,
-        )
-    ).all()
-    owned_platforms = sorted({row[0] for row in rows})
-    owned_copies = [
-        PublicOwnedCopyResponse(
-            platform=row[0],
-            edition=row[1],
-            format=row[2].value if row[2] is not None else None,
-        )
-        for row in rows
-    ]
-    return public_game_detail_from_orm(
-        status, owned_platforms=owned_platforms, owned_copies=owned_copies
+def public_game_from_orm(
+    status: GameWithStatus,
+    owned_platforms: list[str] | None = None,
+    owned_formats: list[str] | None = None,
+    owned_editions: list[str] | None = None,
+) -> PublicGameSummaryResponse:
+    game = status.game
+    return PublicGameSummaryResponse(
+        id=game.id,
+        name=game.name,
+        cover_url=game.cover_url,
+        category=game.category,
+        first_release_date=game.first_release_date,
+        owned=status.owned,
+        wishlisted=status.wishlisted,
+        owned_platforms=owned_platforms or [],
+        owned_formats=owned_formats or [],
+        owned_editions=owned_editions or [],
     )
 
 
-@router.get("/devices", response_model=list[PublicDeviceSummaryResponse])
-def list_public_devices(
-    token: str, search: str | None = Query(default=None), db: Session = Depends(get_db)
-) -> list[PublicDeviceSummaryResponse]:
-    auth_service.get_user_by_share_token(db, token)
-    devices = device_service.list_devices(db, search=search)
-    return [public_device_from_orm(device) for device in devices]
+class PublicOwnedCopyResponse(CamelModel):
+    """One owned library copy: platform, edition and digital/physical format, so the
+    public game page can show what's owned. Requested by the owner (Oct 2026)."""
+
+    platform: str | None
+    edition: str | None
+    format: str | None
 
 
-@router.get("/accessories", response_model=list[PublicAccessorySummaryResponse])
-def list_public_accessories(
-    token: str, search: str | None = Query(default=None), db: Session = Depends(get_db)
-) -> list[PublicAccessorySummaryResponse]:
-    auth_service.get_user_by_share_token(db, token)
-    accessories = accessory_service.list_accessories(db, search=search)
-    return [public_accessory_from_orm(accessory) for accessory in accessories]
+class PublicGameDetailResponse(PublicGameSummaryResponse):
+    """Just the About section's data: catalog facts from IGDB plus owned/wishlisted. None of
+    the owner's own data (tags, progress/rating, notes, sale tracking) except the owned
+    copies list (platform/edition/format) the owner asked to show on public pages.
+    Field names match GameDetailResponse so the frontend's GameAboutSection reads either."""
+
+    igdb_id: int | None
+    igdb_url: str | None
+    summary: str | None
+    storyline: str | None
+    edition: str | None
+    # Always null: the About section's rating chip is the owner's own rating (progress data).
+    rating: float | None
+    # Always null: only top-level games are public, so there's never a hierarchical parent.
+    parent_game_id: int | None
+    parent_game_name: str | None
+    parent_game_slug: str | None
+    parent_game_uuid: str | None
+    display_parent_game_id: int | None
+    display_parent_game_name: str | None
+    display_parent_game_slug: str | None
+    display_parent_game_uuid: str | None
+    external_parent_name: str | None
+    external_parent_igdb_url: str | None
+    genres: list[CatalogRefResponse]
+    companies: list[GameCompanyResponse]
+    franchises: list[CatalogRefResponse]
+    collections: list[CatalogRefResponse]
+    platforms: list[PlatformResponse]
+    screenshot_urls: list[str]
+    artwork_urls: list[str]
+    videos: list[GameVideoResponse]
+    release_dates: list[ReleaseDateResponse]
+    steam_store_url: str | None
+    xbox_store_url: str | None
+    owned_copies: list[PublicOwnedCopyResponse]
+    playstation_store_url: str | None
+    nintendo_store_url: str | None
+    epic_games_store_url: str | None
+    gog_store_url: str | None
+
+
+def public_game_detail_from_orm(
+    status: GameWithStatus,
+    owned_platforms: list[str] | None = None,
+    owned_copies: list[PublicOwnedCopyResponse] | None = None,
+) -> PublicGameDetailResponse:
+    game = status.game
+    # Only link a display parent that's public itself, so the page never links to a 404.
+    display_parent = game.display_parent_game
+    if display_parent is not None and not is_top_level_browsable(display_parent):
+        display_parent = None
+    return PublicGameDetailResponse(
+        **public_game_from_orm(status, owned_platforms=owned_platforms).model_dump(),
+        igdb_id=game.igdb_id,
+        igdb_url=game.igdb_url,
+        summary=game.summary,
+        storyline=game.storyline,
+        edition=game.edition,
+        rating=None,
+        parent_game_id=None,
+        parent_game_name=None,
+        parent_game_slug=None,
+        parent_game_uuid=None,
+        display_parent_game_id=display_parent.id if display_parent else None,
+        display_parent_game_name=display_parent.name if display_parent else None,
+        display_parent_game_slug=display_parent.slug if display_parent else None,
+        display_parent_game_uuid=display_parent.uuid if display_parent else None,
+        external_parent_name=game.external_parent_name,
+        external_parent_igdb_url=game.external_parent_igdb_url,
+        genres=[genre_ref_from_orm(gg.genre) for gg in game.genres],
+        companies=[game_company_from_orm(gc) for gc in game.companies],
+        franchises=[franchise_ref_from_orm(gf.franchise) for gf in game.franchises],
+        collections=[collection_ref_from_orm(gcol.collection) for gcol in game.collections],
+        platforms=[PlatformResponse.model_validate(gp.platform) for gp in game.platforms],
+        screenshot_urls=[s.url for s in game.screenshots],
+        artwork_urls=[a.url for a in game.artworks],
+        videos=[game_video_from_orm(v) for v in game.videos],
+        release_dates=[release_date_from_orm(rd) for rd in game.release_dates],
+        steam_store_url=game.steam_store_url,
+        xbox_store_url=game.xbox_store_url,
+        playstation_store_url=game.playstation_store_url,
+        nintendo_store_url=game.nintendo_store_url,
+        epic_games_store_url=game.epic_games_store_url,
+        gog_store_url=game.gog_store_url,
+        owned_copies=owned_copies or [],
+    )
+
+
+class PublicDeviceSummaryResponse(CamelModel):
+    id: int
+    official_name: str
+    manufacturer_name: str
+    hardware_platform_name: str | None
+    image_url: str | None
+    owned: bool
+    wishlisted: bool
+    owned_quantity: int
+
+
+def public_device_from_orm(item: DeviceWithStatus) -> PublicDeviceSummaryResponse:
+    device = item.device
+    return PublicDeviceSummaryResponse(
+        id=device.id,
+        official_name=device.official_name,
+        manufacturer_name=device.manufacturer.name,
+        hardware_platform_name=device.hardware_platform.name if device.hardware_platform else None,
+        image_url=(
+            resolve_image_url(device.hardware_reference_entry.official_name)
+            if device.hardware_reference_entry
+            else None
+        ),
+        owned=item.owned,
+        wishlisted=item.wishlisted,
+        owned_quantity=item.owned_quantity,
+    )
+
+
+class PublicAccessorySummaryResponse(CamelModel):
+    id: int
+    official_name: str
+    manufacturer_name: str
+    image_url: str | None
+    owned: bool
+    wishlisted: bool
+    owned_quantity: int
+
+
+def public_accessory_from_orm(item: AccessoryWithStatus) -> PublicAccessorySummaryResponse:
+    accessory = item.accessory
+    return PublicAccessorySummaryResponse(
+        id=accessory.id,
+        official_name=accessory.official_name,
+        manufacturer_name=accessory.manufacturer.name,
+        image_url=accessory.image_url
+        or (
+            resolve_image_url(accessory.hardware_reference_entry.official_name)
+            if accessory.hardware_reference_entry
+            else None
+        ),
+        owned=item.owned,
+        wishlisted=item.wishlisted,
+        owned_quantity=item.owned_quantity,
+    )
