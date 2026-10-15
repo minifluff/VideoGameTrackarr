@@ -89,13 +89,20 @@ const GamesListPage = () => {
       result = result.filter((item) => item.format === formatFilter);
     }
     if (debouncedSearch) {
-      result = result.filter(
-        (item) =>
-          item.gameName.toLowerCase().includes(debouncedSearch) ||
-          (item.platformName?.toLowerCase().includes(debouncedSearch) ?? false) ||
-          (item.edition?.toLowerCase().includes(debouncedSearch) ?? false) ||
-          (item.notes?.toLowerCase().includes(debouncedSearch) ?? false)
-      );
+      const words = debouncedSearch.split(/\s+/).filter(Boolean);
+      result = result.filter((item) => {
+        const haystack = [
+          item.gameName,
+          item.platformName ?? "",
+          item.edition ?? "",
+          item.format ?? "",
+          item.notes ?? "",
+        ]
+          .join(" ")
+          .toLowerCase();
+        // Every word must appear somewhere (any order)
+        return words.every((word) => haystack.includes(word));
+      });
     }
     const sorted = [...result].sort((a, b) => {
       let aVal: string | null;
