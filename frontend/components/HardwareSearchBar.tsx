@@ -160,7 +160,7 @@ const HardwareSearchBar = ({
               ))}
             </Box>
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12 }}>
                 <LookupFilter
                   label={t("hardware.listToolbar.manufacturerLabel")}
                   options={manufacturers ?? []}
@@ -169,7 +169,7 @@ const HardwareSearchBar = ({
                   placeholder={allPlaceholder}
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12 }}>
                 <LookupFilter
                   label={t("hardware.deviceList.typeLabel")}
                   options={deviceTypes ?? []}
@@ -178,7 +178,7 @@ const HardwareSearchBar = ({
                   placeholder={allPlaceholder}
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12 }}>
                 <LookupFilter
                   label={t("hardware.accessoryList.typeLabel")}
                   options={accessoryTypes ?? []}
@@ -187,7 +187,7 @@ const HardwareSearchBar = ({
                   placeholder={allPlaceholder}
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12 }}>
                 <LookupFilter
                   label={t("hardware.listToolbar.platformLabel")}
                   options={hardwarePlatforms ?? []}
@@ -196,7 +196,7 @@ const HardwareSearchBar = ({
                   placeholder={allPlaceholder}
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12 }}>
                 <AutocompleteSelect<SortOption>
                   label={t("hardware.listToolbar.sortByLabel")}
                   options={sortOptions}
