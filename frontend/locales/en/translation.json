@@ -1181,7 +1181,7 @@
     "saleTracked": {
       "heading": "Sale - Tracked",
       "description": "Every wishlisted game or addon you've opted into sale tracking, with its platform, format, storefront, and target price (if set). Remove one here to stop tracking it — its saved target price is kept in case you re-enable tracking later.",
-      "emptyState": "Nothing here yet. Check \"Track for sales\" on a wishlist item's Edit dialog to add it.",
+      "emptyState": "Nothing here yet. Add games to your wishlist and run the ITAD price refresh job to see them here.",
       "columnName": "Name",
       "columnPlatform": "Platform",
       "columnFormat": "Format",
