@@ -1002,7 +1002,8 @@
       "dateAddedColumn": "Date added",
       "tagsColumn": "Tags",
       "emptyState": "No games found",
-      "selectedCount": "{{count}} selected"
+      "selectedCount": "{{count}} selected",
+      "notesColumn": "Notes"
     }
   },
   "events": {
