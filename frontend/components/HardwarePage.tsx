@@ -54,16 +54,15 @@ const HardwarePage = () => {
           <HardwareSubNav />
         </Collapse>
 
+        <Collapse in={!hideHeader}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2, mb: 3, flexWrap: "wrap", mt: 2 }}>
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="h4" component="h1" gutterBottom>
               {t("hardware.page.title")}
             </Typography>
-            <Collapse in={!hideHeader}>
-              <Typography variant="body2" color="text.secondary">
-                {t("hardware.page.subtitle")}
-              </Typography>
-            </Collapse>
+            <Typography variant="body2" color="text.secondary">
+              {t("hardware.page.subtitle")}
+            </Typography>
           </Box>
           <Stack direction="row" spacing={1.5} sx={{ flexShrink: 0, flexWrap: "wrap", rowGap: 1 }}>
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate("/hardware/device/add")}>
@@ -74,6 +73,7 @@ const HardwarePage = () => {
             </Button>
           </Stack>
         </Box>
+        </Collapse>
 
         <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
           <HardwareSearchBar
