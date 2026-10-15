@@ -135,7 +135,7 @@ const PublicGamesListPage = () => {
           pb: hideSearchBar ? 0 : 1,
         }}
       >
-        <Typography variant="h4" component="h1" gutterBottom sx={{ mt: 2 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
           {t("public.gamesList.title")}
         </Typography>
         <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
