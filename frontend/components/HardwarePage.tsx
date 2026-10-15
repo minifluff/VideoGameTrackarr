@@ -7,7 +7,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
-import { useScrollCollapse } from "../hooks/useScrollCollapse";
+import { useScrollCollapse, useScrollDirection } from "../hooks/useScrollCollapse";
 import AccessoryList from "./AccessoryList";
 import DeviceList from "./DeviceList";
 import HardwareSearchBar from "./HardwareSearchBar";
@@ -29,6 +29,8 @@ const HardwarePage = () => {
   const debouncedKeyword = useDebouncedValue(searchKeyword.trim(), 500);
   // Sub-nav and title: hidden once scrolled, only return when back at the very top.
   const hideHeader = useScrollCollapse(10);
+  // Search bar: hides on scroll down, reappears on scroll up.
+  const hideSearchBar = useScrollDirection(80);
 
   return (
     <>
@@ -38,6 +40,7 @@ const HardwarePage = () => {
           top: (theme) => theme.mixins.toolbar.minHeight,
           zIndex: 1,
           bgcolor: "background.default",
+          pt: 2,
           pb: 2.5,
           // Once scrolled content locks under this sticky header, the bottom edge needs to
           // read as an intentional floating panel — otherwise half-covered floating labels
@@ -71,7 +74,8 @@ const HardwarePage = () => {
         </Box>
         </Collapse>
 
-        <HardwareSearchBar
+        <Collapse in={!hideSearchBar}>
+          <HardwareSearchBar
           searchKeyword={searchKeyword}
           onSearchKeywordChange={setSearchKeyword}
           status={status}
