@@ -25,7 +25,22 @@ def list_storefronts(db: Session = Depends(get_db)) -> list[str]:
 @router.get("/api/library/items", response_model=list[LibraryListItemResponse])
 def list_all_library_items(db: Session = Depends(get_db)) -> list[LibraryListItemResponse]:
     """Flat list of all library items for the Games List page table."""
-    return [LibraryListItemResponse(**item) for item in library_service.list_all_library_items(db)]
+    try:
+        items = library_service.list_all_library_items(db)
+        result = []
+        for item in items:
+            try:
+                result.append(LibraryListItemResponse(**item))
+            except Exception as e:
+                # Log which item failed and why, but don't break the whole list
+                print(f"Skipping library item {item.get('id')}: {e}")
+                continue
+        return result
+    except Exception as e:
+        print(f"list_all_library_items failed: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 
 @router.get("/api/games/{game_id}/library", response_model=list[LibraryItemResponse])
