@@ -18,59 +18,30 @@ def list_tracked_items(db: Session) -> list[LibraryItem]:
 
 
 def list_all_library_items(db: Session) -> list[dict]:
-    """All library items with game name, release date, platform name, tags, and date added.
+    """All library items with game name, platform name, edition, and format.
     Returns dicts for the Games List page table (one row per owned copy)."""
     from sqlalchemy.orm import joinedload
 
     from app.models.catalog import Game
-    from app.models.library import GameTag, LibraryItem, Tag
+    from app.models.library import LibraryItem
 
-    # Eager-load platform to avoid N+1 queries
-    items = (
-        db.query(LibraryItem)
+    # Eager-load platform to avoid N+1 queries; join game for name ordering
+    rows = (
+        db.query(LibraryItem, Game)
         .options(joinedload(LibraryItem.platform))
         .join(Game, LibraryItem.game_id == Game.id)
         .order_by(Game.name.asc())
         .all()
     )
-    if not items:
-        return []
-
-    # Bulk-fetch all tags for all games in two queries (no N+1)
-    game_ids = list({item.game_id for item in items})
-    tag_rows = (
-        db.query(GameTag.game_id, Tag.name)
-        .join(Tag, GameTag.tag_id == Tag.id)
-        .filter(GameTag.game_id.in_(game_ids))
-        .all()
-    )
-    tags_by_game: dict[int, list[str]] = {}
-    for game_id, tag_name in tag_rows:
-        tags_by_game.setdefault(game_id, []).append(tag_name)
-
-    # Bulk-fetch game data
-    games = db.query(Game).filter(Game.id.in_(game_ids)).all()
-    game_by_id = {g.id: g for g in games}
 
     result = []
-    for item in items:
+    for item, game in rows:
         try:
-            game = game_by_id.get(item.game_id)
-            if not game:
-                continue
-            # Defensive: any single bad field skips just that row, not the whole list
-            platform_name = None
-            try:
-                if item.platform:
-                    platform_name = item.platform.name
-            except Exception:
-                pass
-            format_value = None
-            try:
-                if item.format:
-                    format_value = item.format.value if hasattr(item.format, "value") else str(item.format)
-            except Exception:
-                pass
+            platform_name = item.platform.name if item.platform else None
+            if item.format:
+                format_value = item.format.value if hasattr(item.format, "value") else str(item.format)
+            else:
+                format_value = None
             result.append({
                 "id": item.id,
                 "game_id": game.id,
@@ -79,12 +50,11 @@ def list_all_library_items(db: Session) -> list[dict]:
                 "platform_name": platform_name,
                 "edition": item.edition,
                 "format": format_value,
-                "first_release_date": game.first_release_date,
-                "date_added": item.created_at,
-                "tag_names": tags_by_game.get(game.id, []),
+                "first_release_date": None,
+                "date_added": None,
+                "tag_names": [],
             })
         except Exception:
-            # Skip rows that fail for any reason — don't break the whole list
             continue
     return result
 
