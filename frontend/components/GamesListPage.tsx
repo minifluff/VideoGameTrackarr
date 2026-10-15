@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
 import Box from "@mui/material/Box";
 import Checkbox from "@mui/material/Checkbox";
-import Chip from "@mui/material/Chip";
 import InputAdornment from "@mui/material/InputAdornment";
 import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
@@ -124,14 +123,7 @@ const GamesListPage = () => {
   const allSelected = filteredAndSorted.length > 0 && filteredAndSorted.every((item) => selectedIds.has(item.id));
   const someSelected = filteredAndSorted.some((item) => selectedIds.has(item.id));
 
-  const formatDate = (timestamp: number | null): string => {
-    if (!timestamp) return "—";
-    return new Date(timestamp * 1000).toLocaleDateString();
-  };
 
-  const formatDateAdded = (isoString: string): string => {
-    return new Date(isoString).toLocaleDateString();
-  };
 
   const columns: { key: SortColumn; label: string }[] = [
     { key: "gameName", label: t("games.listPage.nameColumn") },
@@ -237,15 +229,6 @@ const GamesListPage = () => {
                   <TableCell>{item.platformName ?? "—"}</TableCell>
                   <TableCell>{item.edition ?? "—"}</TableCell>
                   <TableCell>{item.format ?? "—"}</TableCell>
-                  <TableCell>{formatDate(item.firstReleaseDate)}</TableCell>
-                  <TableCell>{formatDateAdded(item.dateAdded)}</TableCell>
-                  <TableCell>
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                      {item.tagNames.map((tag) => (
-                        <Chip key={tag} label={tag} size="small" variant="outlined" />
-                      ))}
-                    </Box>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
