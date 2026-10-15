@@ -408,7 +408,8 @@
       "massMoveError": "Failed to move games. Please try again.",
       "gamesColumn": "Games",
       "igdbIdColumn": "IGDB ID",
-      "slugColumn": "Slug"
+      "slugColumn": "Slug",
+      "slugHint": "Leave blank to auto-generate from the name"
     },
     "share": {
       "heading": "Share",
