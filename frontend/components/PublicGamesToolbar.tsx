@@ -11,6 +11,7 @@ import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import Box from "@mui/material/Box";
+import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
@@ -94,7 +95,8 @@ const PublicGamesToolbar = ({
 
   return (
     <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
-      <Stack direction="row" spacing={1} sx={{ mb: 3 }}>
+      <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2, mb: 3 }}>
+      <Stack direction="row" spacing={1}>
       <TextField
         label={t("public.games.searchLabel")}
         value={search}
@@ -206,6 +208,7 @@ const PublicGamesToolbar = ({
         </DialogActions>
       </Dialog>
       </Stack>
+      </Paper>
     </Box>
   );
 };
