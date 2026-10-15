@@ -22,10 +22,18 @@ import { useTranslation } from "react-i18next";
 import { usePublicGames } from "../hooks/usePublic";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useScrollDirection } from "../hooks/useScrollCollapse";
-import type { PublicGameSummary } from "../api/types";
 
 type SortColumn = "name" | "platforms" | "formats" | "editions";
 type SortDirection = "asc" | "desc";
+
+interface ListRow {
+  key: string;
+  gameId: number;
+  name: string;
+  platform: string | null;
+  format: string | null;
+  edition: string | null;
+}
 
 const PublicGamesListPage = () => {
   const { token } = useParams<{ token: string }>();
@@ -46,34 +54,68 @@ const PublicGamesListPage = () => {
     search: debouncedSearch || undefined,
   });
 
+  // One row per owned copy, so each platform gets its own line with its own
+  // format and edition. Games with no owned copies get a single empty row.
+  const rows = useMemo<ListRow[]>(() => {
+    const result: ListRow[] = [];
+    games.forEach((game) => {
+      const copies = game.ownedCopies ?? [];
+      if (copies.length === 0) {
+        result.push({
+          key: `${game.id}-none`,
+          gameId: game.id,
+          name: game.name,
+          platform: null,
+          format: null,
+          edition: null,
+        });
+      } else {
+        copies.forEach((copy, i) => {
+          result.push({
+            key: `${game.id}-${copy.platform ?? "?"}-${copy.format ?? "?"}-${copy.edition ?? "?"}-${i}`,
+            gameId: game.id,
+            name: game.name,
+            platform: copy.platform,
+            format: copy.format,
+            edition: copy.edition,
+          });
+        });
+      }
+    });
+    return result;
+  }, [games]);
+
   const platforms = useMemo(() => {
     const set = new Set<string>();
-    games.forEach((game) => {
-      game.ownedPlatforms.forEach((p) => set.add(p));
+    rows.forEach((row) => {
+      if (row.platform) set.add(row.platform);
     });
     return Array.from(set).sort();
-  }, [games]);
+  }, [rows]);
 
   const formats = useMemo(() => {
     const set = new Set<string>();
-    games.forEach((game) => {
-      (game.ownedFormats ?? []).forEach((f) => set.add(f));
+    rows.forEach((row) => {
+      if (row.format) set.add(row.format);
     });
     return Array.from(set).sort();
-  }, [games]);
+  }, [rows]);
 
   const filteredAndSorted = useMemo(() => {
-    let result = games;
+    let result = rows;
     if (platformFilter !== "all") {
-      result = result.filter((game) => game.ownedPlatforms.includes(platformFilter));
+      result = result.filter((row) => row.platform === platformFilter);
     }
     if (formatFilter !== "all") {
-      result = result.filter((game) => (game.ownedFormats ?? []).includes(formatFilter));
+      result = result.filter((row) => row.format === formatFilter);
     }
     if (debouncedSearch) {
       const words = debouncedSearch.split(/\s+/).filter(Boolean);
-      result = result.filter((game) => {
-        const haystack = [game.name, ...game.ownedPlatforms, ...(game.ownedFormats ?? []), ...(game.ownedEditions ?? [])].join(" ").toLowerCase();
+      result = result.filter((row) => {
+        const haystack = [row.name, row.platform, row.format, row.edition]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
         return words.every((word) => haystack.includes(word));
       });
     }
@@ -84,19 +126,19 @@ const PublicGamesListPage = () => {
         aVal = a.name;
         bVal = b.name;
       } else if (sortColumn === "platforms") {
-        aVal = a.ownedPlatforms.join(", ");
-        bVal = b.ownedPlatforms.join(", ");
+        aVal = a.platform ?? "";
+        bVal = b.platform ?? "";
       } else if (sortColumn === "formats") {
-        aVal = (a.ownedFormats ?? []).join(", ");
-        bVal = (b.ownedFormats ?? []).join(", ");
+        aVal = a.format ?? "";
+        bVal = b.format ?? "";
       } else {
-        aVal = (a.ownedEditions ?? []).join(", ");
-        bVal = (b.ownedEditions ?? []).join(", ");
+        aVal = a.edition ?? "";
+        bVal = b.edition ?? "";
       }
       const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
       return sortDirection === "asc" ? cmp : -cmp;
     });
-  }, [games, debouncedSearch, sortColumn, sortDirection, platformFilter, formatFilter]);
+  }, [rows, debouncedSearch, sortColumn, sortDirection, platformFilter, formatFilter]);
 
   useEffect(() => {
     setPage(0);
@@ -213,17 +255,17 @@ const PublicGamesListPage = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedGames.map((game: PublicGameSummary) => (
+                {paginatedGames.map((row: ListRow) => (
                   <TableRow
-                    key={game.id}
+                    key={row.key}
                     hover
                     sx={{ cursor: "pointer" }}
-                    onClick={() => navigate(`/public/${token}/games/${game.id}`)}
+                    onClick={() => navigate(`/public/${token}/games/${row.gameId}`)}
                   >
-                    <TableCell>{game.name}</TableCell>
-                    <TableCell>{game.ownedPlatforms.join(", ") || "—"}</TableCell>
-                    <TableCell>{(game.ownedFormats ?? []).join(", ") || "—"}</TableCell>
-                    <TableCell>{(game.ownedEditions ?? []).join(", ") || "—"}</TableCell>
+                    <TableCell>{row.name}</TableCell>
+                    <TableCell>{row.platform || "—"}</TableCell>
+                    <TableCell>{row.format || "—"}</TableCell>
+                    <TableCell>{row.edition || "—"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
