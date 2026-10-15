@@ -1,8 +1,23 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { isAxiosError } from "axios";
-import StorageIcon from "@mui/icons-material/Storage";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import AddIcon from "@mui/icons-material/Add";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
+import IconButton from "@mui/material/IconButton";
+import Paper from "@mui/material/Paper";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TablePagination from "@mui/material/TablePagination";
+import TableRow from "@mui/material/TableRow";
+import TableSortLabel from "@mui/material/TableSortLabel";
+import Toolbar from "@mui/material/Toolbar";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
@@ -10,12 +25,11 @@ import type { PlatformResponse } from "../api/types";
 import { useCreatePlatform, useDeletePlatform, useMassMoveGames, usePlatforms, useUpdatePlatform } from "../hooks/usePlatforms";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import ConfirmDialog from "./ConfirmDialog";
-import EnhancedTable, { type HeadCell } from "./EnhancedTable";
 import MassMovePlatformDialog from "./MassMovePlatformDialog";
 import PlatformDialog from "./PlatformDialog";
 import SettingsSubNav from "./SettingsSubNav";
 
-const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
+type SortKey = "name" | "abbreviation" | "gameCount";
 
 const PlatformManagerPage = () => {
   const { t } = useTranslation();
@@ -30,29 +44,74 @@ const PlatformManagerPage = () => {
   const [massMoveOpen, setMassMoveOpen] = useState(false);
   const massMove = useMassMoveGames();
 
-  const headCells: HeadCell[] = [
-    { id: "name", numeric: false, disablePadding: false, label: t("settings.platformManager.nameColumn"), disableHeader: false },
-    { id: "abbreviation", numeric: false, disablePadding: false, label: t("settings.platformManager.abbreviationColumn"), disableHeader: false },
-    { id: "gameCount", numeric: true, disablePadding: false, label: t("settings.platformManager.gameCountColumn"), disableHeader: false },
-    { id: "actions", numeric: false, disablePadding: true, label: t("common.actions"), disableHeader: true },
-  ];
+  const [selected, setSelected] = useState<number[]>([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [sortBy, setSortBy] = useState<SortKey>("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
-  const toTableRow = (platform: PlatformResponse) => ({
-    id: platform.id,
-    name: platform.name,
-    abbreviation: platform.abbreviation ?? "—",
-    gameCount: platform.gameCount,
-  });
+  const handleSort = (key: SortKey) => {
+    if (sortBy === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(key);
+      setSortDir("asc");
+    }
+    setPage(0);
+  };
 
-  const rows = (platforms ?? []).map(toTableRow);
+  const sorted = useMemo(() => {
+    const list = [...(platforms ?? [])];
+    const dir = sortDir === "asc" ? 1 : -1;
+    return list.sort((a, b) => {
+      let va: string | number;
+      let vb: string | number;
+      if (sortBy === "name") {
+        va = a.name.toLowerCase();
+        vb = b.name.toLowerCase();
+      } else if (sortBy === "abbreviation") {
+        va = (a.abbreviation ?? "").toLowerCase();
+        vb = (b.abbreviation ?? "").toLowerCase();
+      } else {
+        va = a.gameCount;
+        vb = b.gameCount;
+      }
+      if (va < vb) return -dir;
+      if (va > vb) return dir;
+      return 0;
+    });
+  }, [platforms, sortBy, sortDir]);
+
+  const paged = useMemo(() => {
+    const start = page * rowsPerPage;
+    return sorted.slice(start, start + rowsPerPage);
+  }, [sorted, page, rowsPerPage]);
+
+  const selectedSet = useMemo(() => new Set(selected), [selected]);
+  const allOnPageSelected = paged.length > 0 && paged.every((p) => selectedSet.has(p.id));
+
+  const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      setSelected((prev) => [...new Set([...prev, ...paged.map((p) => p.id)])]);
+    } else {
+      const pageIds = new Set(paged.map((p) => p.id));
+      setSelected((prev) => prev.filter((id) => !pageIds.has(id)));
+    }
+  };
+
+  const handleSelectOne = (id: number) => {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+    );
+  };
 
   const handleAddClick = () => {
     setDialogPlatform(null);
     setDialogOpen(true);
   };
 
-  const handleEditClick = (rowId: number) => {
-    const platform = platforms?.find((candidate) => candidate.id === rowId);
+  const handleEditClick = (platformId: number) => {
+    const platform = platforms?.find((candidate) => candidate.id === platformId);
     if (!platform) return;
     setDialogPlatform(platform);
     setDialogOpen(true);
@@ -92,12 +151,17 @@ const PlatformManagerPage = () => {
     }
   };
 
-  const handleDeleteClick = (selectedIds: number[]) => setSelectedPendingDelete(selectedIds);
+  const handleDeleteSelected = () => {
+    if (selected.length > 0) {
+      setSelectedPendingDelete(selected);
+    }
+  };
 
   const handleDelete = async () => {
     if (selectedPendingDelete.length === 0) return;
     try {
       await Promise.all(selectedPendingDelete.map((id) => deletePlatform.mutateAsync(id)));
+      setSelected((prev) => prev.filter((id) => !selectedPendingDelete.includes(id)));
     } catch (error) {
       console.error("Error deleting platform(s):", error);
       toast.error(t("settings.platformManager.deleteError"), TOAST_OPTIONS);
@@ -109,14 +173,16 @@ const PlatformManagerPage = () => {
   const deleteCount = selectedPendingDelete.length;
   const singlePlatform =
     deleteCount === 1 ? platforms?.find((platform) => platform.id === selectedPendingDelete[0]) : undefined;
-  const confirmTitle =
-    deleteCount <= 1
-      ? t("settings.platformManager.deleteConfirmTitle", { name: singlePlatform?.name ?? "" })
-      : t("settings.platformManager.deleteConfirmTitle_bulk", { count: deleteCount });
-  const confirmDescription =
-    deleteCount <= 1
-      ? t("settings.platformManager.deleteConfirmDescription", { name: singlePlatform?.name ?? "" })
-      : t("settings.platformManager.deleteConfirmDescription_bulk", { count: deleteCount });
+
+  const sortLabel = (key: SortKey, label: string) => (
+    <TableSortLabel
+      active={sortBy === key}
+      direction={sortBy === key ? sortDir : "asc"}
+      onClick={() => handleSort(key)}
+    >
+      {label}
+    </TableSortLabel>
+  );
 
   return (
     <>
@@ -133,18 +199,99 @@ const PlatformManagerPage = () => {
         </Button>
       </Box>
 
-      <EnhancedTable
-        rows={rows}
-        headCells={headCells}
-        tableName={t("nav.platformManager")}
-        tableIcon={<StorageIcon color="secondary" />}
-        onAddClick={handleAddClick}
-        onEditClick={handleEditClick}
-        onDeleteClick={handleDeleteClick}
-        moveDirection="down"
-        defaultRowsPerPage={10}
-        rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
-      />
+      <Paper sx={{ width: "100%", mb: 2, borderRadius: 2 }}>
+        <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+          <Typography variant="h6">{t("nav.platformManager")}</Typography>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            {selected.length > 0 && (
+              <Tooltip title={t("common.delete")}>
+                <IconButton onClick={handleDeleteSelected} color="error">
+                  <DeleteIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+            <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddClick}>
+              {t("common.add")}
+            </Button>
+          </Box>
+        </Toolbar>
+        <TableContainer>
+          <Table size="small" aria-label={t("nav.platformManager")}>
+            <TableHead>
+              <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    checked={allOnPageSelected}
+                    indeterminate={selected.length > 0 && !allOnPageSelected}
+                    onChange={handleSelectAll}
+                  />
+                </TableCell>
+                <TableCell>{sortLabel("name", t("settings.platformManager.nameColumn"))}</TableCell>
+                <TableCell>{sortLabel("abbreviation", t("settings.platformManager.abbreviationColumn"))}</TableCell>
+                <TableCell align="right">{sortLabel("gameCount", t("settings.platformManager.gamesColumn"))}</TableCell>
+                <TableCell align="right">{t("common.actions")}</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {paged.map((platform) => {
+                const isSelected = selectedSet.has(platform.id);
+                return (
+                  <TableRow
+                    key={platform.id}
+                    hover
+                    selected={isSelected}
+                    sx={{ cursor: "pointer" }}
+                    onClick={() => handleSelectOne(platform.id)}
+                  >
+                    <TableCell padding="checkbox">
+                      <Checkbox checked={isSelected} />
+                    </TableCell>
+                    <TableCell>{platform.name}</TableCell>
+                    <TableCell>{platform.abbreviation ?? "—"}</TableCell>
+                    <TableCell align="right">{platform.gameCount}</TableCell>
+                    <TableCell align="right">
+                      <Tooltip title={t("common.edit")}>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditClick(platform.id);
+                          }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title={t("common.delete")}>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedPendingDelete([platform.id]);
+                          }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <TablePagination
+          component="div"
+          count={sorted.length}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={(_, p) => setPage(p)}
+          onRowsPerPageChange={(e) => {
+            setRowsPerPage(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
+          rowsPerPageOptions={[10, 25, 50]}
+        />
+      </Paper>
 
       <PlatformDialog
         open={dialogOpen}
@@ -167,8 +314,16 @@ const PlatformManagerPage = () => {
 
       <ConfirmDialog
         open={selectedPendingDelete.length > 0}
-        title={confirmTitle}
-        description={confirmDescription}
+        title={
+          deleteCount <= 1
+            ? t("settings.platformManager.deleteConfirmTitle", { name: singlePlatform?.name ?? "" })
+            : t("settings.platformManager.deleteConfirmTitle_bulk", { count: deleteCount })
+        }
+        description={
+          deleteCount <= 1
+            ? t("settings.platformManager.deleteConfirmDescription", { name: singlePlatform?.name ?? "" })
+            : t("settings.platformManager.deleteConfirmDescription_bulk", { count: deleteCount })
+        }
         confirmLabel={t("common.delete")}
         confirmColor="error"
         onClose={() => setSelectedPendingDelete([])}

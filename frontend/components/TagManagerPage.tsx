@@ -13,6 +13,8 @@ import EnhancedTable, { type HeadCell } from "./EnhancedTable";
 import SettingsSubNav from "./SettingsSubNav";
 import TagDialog from "./TagDialog";
 
+const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
+
 const TagManagerPage = () => {
   const { t } = useTranslation();
   const { data: tags } = useTags();
@@ -116,6 +118,8 @@ const TagManagerPage = () => {
         onEditClick={handleEditClick}
         onDeleteClick={handleDeleteClick}
         moveDirection="down"
+        defaultRowsPerPage={10}
+        rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
       />
 
       <TagDialog
