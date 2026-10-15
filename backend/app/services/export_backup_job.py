@@ -24,8 +24,10 @@ from app.services.job_registry import JobDefinition
 JOB_EXPORT_BACKUP = "export_backup"
 
 EXPORT_FILENAME_PREFIX = "videogametrackarr-backup-"
-# videgametrackarr-backup-YYYYMMDD-HHMMSS.(json|zip) — the timestamp sorts chronologically.
-EXPORT_FILENAME_RE = re.compile(r"^videogametrackarr-backup-\d{8}-\d{6}\.(json|zip)$")
+# Scheduled exports are named videogametrackarr-backup-YYYYMMDD-HHMMSS.(json|zip).
+# Manual exports (videogametrackarr-backup.json, videogametrackarr-full-backup.zip) are
+# also pruned — anything looking like one of our backup files counts.
+EXPORT_FILENAME_RE = re.compile(r"^videogametrackarr-(full-)?backup.*\.(json|zip)$", re.IGNORECASE)
 
 
 class ExportBackupError(Exception):
@@ -181,7 +183,8 @@ def _upload_file(tree: Any, remote_path: str, local_path: Path, report_progress:
 
 
 def _list_export_files(tree: Any, subpath: str) -> list[str]:
-    """Lists this job's export files in the share folder, oldest first."""
+    """Lists backup files in the share folder, oldest first (by server modification time,
+    so manual exports without timestamps in the name are ordered correctly too)."""
     from smbprotocol.file_info import FileInformationClass
     from smbprotocol.open import (
         CreateDisposition,
@@ -207,17 +210,18 @@ def _list_export_files(tree: Any, subpath: str) -> list[str]:
         raise ExportBackupError(f"Could not list the export folder: {exc}") from exc
 
     try:
-        names = [
-            entry.file_name
-            for entry in directory.query_directory("*", FileInformationClass.FILE_NAMES_INFORMATION)
+        entries = [
+            (entry.file_name, entry.last_write_time)
+            for entry in directory.query_directory("*", FileInformationClass.FILE_DIRECTORY_INFORMATION)
         ]
     except Exception as exc:
         raise ExportBackupError(f"Could not list the export folder: {exc}") from exc
     finally:
         directory.close()
 
-    # Timestamps in the filename sort chronologically, so a plain sort is oldest-first.
-    return sorted(n for n in names if EXPORT_FILENAME_RE.match(n))
+    matched = [(name, mtime) for name, mtime in entries if EXPORT_FILENAME_RE.match(name)]
+    matched.sort(key=lambda item: item[1])
+    return [name for name, _ in matched]
 
 
 def _delete_file(tree: Any, remote_path: str) -> None:
