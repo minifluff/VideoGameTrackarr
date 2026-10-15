@@ -33,27 +33,37 @@ def list_public_games(
     games = game_service.search_local_games(db, **vars(params))
     # Hidden games never appear on public pages.
     games = [g for g in games if not g.game.hide_from_public]
-    # Single query for all owned platforms across the returned games (avoids N+1).
+    # Single query for all owned platforms and formats across the returned games (avoids N+1).
     game_ids = [g.game.id for g in games]
     platforms_by_game: dict[int, set[str]] = {}
+    formats_by_game: dict[int, set[str]] = {}
+    editions_by_game: dict[int, set[str]] = {}
     if game_ids:
         from sqlalchemy import select
 
         from app.models.catalog import Platform
         from app.models.library import LibraryItem
         rows = db.execute(
-            select(LibraryItem.game_id, Platform.name)
+            select(LibraryItem.game_id, Platform.name, LibraryItem.format, LibraryItem.edition)
             .join(Platform, LibraryItem.platform_id == Platform.id)
             .where(
                 LibraryItem.game_id.in_(game_ids),
                 LibraryItem.status == LibraryStatus.OWNED,
             )
         ).all()
-        for game_id, platform_name in rows:
+        for game_id, platform_name, format_val, edition_val in rows:
             platforms_by_game.setdefault(game_id, set()).add(platform_name)
+            if format_val:
+                fmt = format_val.value if hasattr(format_val, "value") else str(format_val)
+                formats_by_game.setdefault(game_id, set()).add(fmt)
+            if edition_val:
+                editions_by_game.setdefault(game_id, set()).add(edition_val)
     return [
         public_game_from_orm(
-            g, owned_platforms=sorted(platforms_by_game.get(g.game.id, set()))
+            g,
+            owned_platforms=sorted(platforms_by_game.get(g.game.id, set())),
+            owned_formats=sorted(formats_by_game.get(g.game.id, set())),
+            owned_editions=sorted(editions_by_game.get(g.game.id, set())),
         )
         for g in games
     ]
