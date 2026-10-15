@@ -93,7 +93,7 @@ class LibraryListItemResponse(CamelModel):
     game_uuid: str
     platform_name: str | None
     edition: str | None
-    format: MediaFormat | None
+    format: str | None
     first_release_date: int | None
     date_added: datetime
     tag_names: list[str]
