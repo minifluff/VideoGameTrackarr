@@ -56,7 +56,7 @@ def list_on_sale_items(db: Session) -> list[PlatPricesOnSaleItem]:
             is_target_hit=item.target_price is not None and cache.current_price_amount <= item.target_price,
         )
         for item, cache in rows
-        if is_library_item_platprices_eligible(item)
+        if is_library_item_platprices_eligible(item) and cache.current_cut
     ]
     items.sort(key=lambda entry: (not entry.is_target_hit, -(entry.cache.current_cut or 0)))
     return items

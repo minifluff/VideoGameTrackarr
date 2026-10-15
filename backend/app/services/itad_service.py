@@ -78,7 +78,7 @@ def list_on_sale_items(db: Session) -> list[OnSaleItem]:
         if not is_library_item_itad_eligible(item):
             continue
         deal = storefront_matching.find_deal(cache, item.digital_storefront)
-        if deal is None:
+        if deal is None or not deal.cut:
             continue
         matched = MatchedItadDeal(
             current_price_amount=deal.price_amount,
