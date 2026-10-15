@@ -23,11 +23,21 @@ const PublicHardwarePage = () => {
 
   return (
     <>
+      <Box
+        sx={{
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
+          bgcolor: "background.default",
+          pt: hideSearchBar ? 0 : 0.5,
+          pb: hideSearchBar ? 0 : 1,
+        }}
+      >
       <Typography variant="h4" component="h1" gutterBottom>
         {t("public.hardware.title")}
       </Typography>
       <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
-        <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2, mb: 3 }}>
+        <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
         <TextField
           label={t("public.hardware.searchLabel")}
           value={search}
@@ -45,6 +55,7 @@ const PublicHardwarePage = () => {
           }}
         />
         </Paper>
+      </Box>
       </Box>
       <Stack spacing={3}>
         <Box>
