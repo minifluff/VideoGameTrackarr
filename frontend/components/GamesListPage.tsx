@@ -175,7 +175,7 @@ const GamesListPage = () => {
         <Collapse in={isAtTop}>
           <GamesSubNav />
         </Collapse>
-        <Collapse in={!hideSearchBar}>
+        <Collapse in={isAtTop}>
           <Typography variant="h4" component="h1" gutterBottom sx={{ mt: 2 }}>
             {t("games.listPage.title")}
           </Typography>
