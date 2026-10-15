@@ -51,21 +51,18 @@ class OnSaleItem:
 
 
 def list_on_sale_items(db: Session) -> list[OnSaleItem]:
-    """Every wishlisted, track_for_sales-opted-in, ITAD-eligible row whose own tracked
-    storefront (see storefront_matching.find_deal) currently has a discount — visibility
-    isn't gated on having a target_price set; a target just flags a row as "hit" and sorts it
-    first. Rows with tracking off, no ITAD match, not currently discounted on their own
-    storefront, or not ITAD-eligible (see is_library_item_itad_eligible) are simply excluded
-    (a silent no-op, not an error) — gating on track_for_sales here too (not just the refresh
-    job's candidate list) means turning tracking off hides a stale cached discount
-    immediately, rather than leaving it visible until the cache happens to go stale."""
+    """Every wishlisted, ITAD-eligible row whose own storefront (see
+    storefront_matching.find_deal) currently has a discount — visibility isn't gated on
+    having a target_price set; a target just flags a row as "hit" and sorts it first.
+    Rows with no ITAD match, not currently discounted on their own storefront, or not
+    ITAD-eligible (see is_library_item_itad_eligible) are simply excluded (a silent
+    no-op, not an error)."""
     stmt = (
         select(LibraryItem, ItadPriceCache)
         .join(ItadPriceCache, ItadPriceCache.game_id == LibraryItem.game_id)
         .options(joinedload(LibraryItem.game), joinedload(LibraryItem.platform))
         .where(
             LibraryItem.status == LibraryStatus.WISHLIST,
-            LibraryItem.track_for_sales.is_(True),
             # Coarse pre-filter only ("something's on sale somewhere") — the precise
             # per-storefront match happens below in Python via storefront_matching.find_deal.
             ItadPriceCache.current_price_amount.is_not(None),
