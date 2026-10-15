@@ -405,7 +405,8 @@
       "massMoveButton": "Move Games",
       "massMoveConfirm": "This will move {count} games from {source} to {target}.",
       "massMoveSuccess": "Moved {count} games.",
-      "massMoveError": "Failed to move games. Please try again."
+      "massMoveError": "Failed to move games. Please try again.",
+      "gamesColumn": "Games"
     },
     "share": {
       "heading": "Share",
