@@ -233,11 +233,6 @@ const GamesListPage = () => {
         <Paper sx={{ p: 3, textAlign: "center", mt: 2 }}>{t("games.listPage.emptyState")}</Paper>
       ) : (
         <>
-          {selectedIds.size > 0 && (
-            <Typography variant="body2" sx={{ mt: 2 }}>
-              {t("games.listPage.selectedCount", { count: selectedIds.size })}
-            </Typography>
-          )}
           <TableContainer component={Paper} sx={{ mt: 2, overflowX: "auto" }}>
           <Table stickyHeader sx={{ minWidth: 600 }}>
             <TableHead>
