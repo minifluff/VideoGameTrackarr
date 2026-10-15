@@ -44,7 +44,15 @@ interface PendingRequest {
 let isRefreshing = false;
 let pendingRequests: PendingRequest[] = [];
 
+function isPublicRoute(): boolean {
+  return window.location.pathname.startsWith("/public/");
+}
+
 function redirectToLogin(): void {
+  // Never redirect away from public share pages — they're deliberately unauthenticated.
+  if (isPublicRoute()) {
+    return;
+  }
   tokenStorage.clear();
   if (window.location.pathname !== "/login") {
     window.location.assign("/login");
