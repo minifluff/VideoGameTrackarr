@@ -87,6 +87,7 @@ const HardwarePage = () => {
           platformIds={platformIds}
           onPlatformIdsChange={setPlatformIds}
         />
+        </Collapse>
       </Box>
 
       <Stack
