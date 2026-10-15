@@ -1,37 +1,32 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import { useTranslation } from "react-i18next";
 import { useAccessoryList } from "../hooks/useAccessories";
-import { useAccessoryTypes, useHardwarePlatforms, useManufacturers } from "../hooks/useHardwareLookups";
 import { hardwareIdentifier } from "../utils/identifiers";
 import HardwareCard from "./HardwareCard";
-import HardwareListToolbar, { type HardwareSort, type HardwareStatusFilter } from "./HardwareListToolbar";
+import type { HardwareSort, HardwareStatusFilter } from "./HardwareListToolbar";
 import VirtualGameGrid from "./VirtualGameGrid";
 
 interface AccessoryListProps {
   searchKeyword: string;
   status: HardwareStatusFilter;
+  sort: HardwareSort;
+  manufacturerIds: number[];
+  accessoryTypeIds: number[];
+  platformIds: number[];
 }
 
-const AccessoryList = ({ searchKeyword, status }: AccessoryListProps) => {
+const AccessoryList = ({ searchKeyword, status, sort, manufacturerIds, accessoryTypeIds, platformIds }: AccessoryListProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [sort, setSort] = useState<HardwareSort>("name");
-  const [manufacturerIds, setManufacturerIds] = useState<number[]>([]);
-  const [accessoryTypeIds, setAccessoryTypeIds] = useState<number[]>([]);
-  const [hardwarePlatformIds, setHardwarePlatformIds] = useState<number[]>([]);
-
-  const { data: manufacturers } = useManufacturers();
-  const { data: accessoryTypes } = useAccessoryTypes();
-  const { data: hardwarePlatforms } = useHardwarePlatforms();
 
   const { data: accessories, isLoading } = useAccessoryList({
     search: searchKeyword || undefined,
     manufacturerIds: manufacturerIds.length > 0 ? manufacturerIds : undefined,
     accessoryTypeIds: accessoryTypeIds.length > 0 ? accessoryTypeIds : undefined,
-    hardwarePlatformIds: hardwarePlatformIds.length > 0 ? hardwarePlatformIds : undefined,
+    hardwarePlatformIds: platformIds.length > 0 ? platformIds : undefined,
     status: status === "all" ? undefined : status,
   });
 
@@ -48,20 +43,6 @@ const AccessoryList = ({ searchKeyword, status }: AccessoryListProps) => {
 
   return (
     <Stack spacing={2}>
-      <HardwareListToolbar
-        sort={sort}
-        onSortChange={setSort}
-        manufacturerOptions={manufacturers ?? []}
-        manufacturerIds={manufacturerIds}
-        onManufacturerIdsChange={setManufacturerIds}
-        typeLabel={t("hardware.accessoryList.typeLabel")}
-        typeOptions={accessoryTypes ?? []}
-        typeIds={accessoryTypeIds}
-        onTypeIdsChange={setAccessoryTypeIds}
-        platformOptions={hardwarePlatforms ?? []}
-        platformIds={hardwarePlatformIds}
-        onPlatformIdsChange={setHardwarePlatformIds}
-      />
       {isLoading ? (
         <Paper sx={{ p: 3, textAlign: "center" }}>{t("common.loading")}</Paper>
       ) : sortedAccessories.length === 0 ? (

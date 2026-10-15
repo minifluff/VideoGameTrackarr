@@ -10,7 +10,7 @@ import AccessoryList from "./AccessoryList";
 import DeviceList from "./DeviceList";
 import HardwareSearchBar from "./HardwareSearchBar";
 import HardwareSubNav from "./HardwareSubNav";
-import type { HardwareStatusFilter } from "./HardwareListToolbar";
+import type { HardwareSort, HardwareStatusFilter } from "./HardwareListToolbar";
 import { useSessionState } from "../hooks/useSessionState";
 
 const HardwarePage = () => {
@@ -18,6 +18,11 @@ const HardwarePage = () => {
   const navigate = useNavigate();
   const [searchKeyword, setSearchKeyword] = useSessionState("hardware.searchKeyword", "");
   const [status, setStatus] = useSessionState<HardwareStatusFilter>("hardware.status", "all");
+  const [sort, setSort] = useSessionState<HardwareSort>("hardware.sort", "name");
+  const [manufacturerIds, setManufacturerIds] = useSessionState<number[]>("hardware.manufacturerIds", []);
+  const [deviceTypeIds, setDeviceTypeIds] = useSessionState<number[]>("hardware.deviceTypeIds", []);
+  const [accessoryTypeIds, setAccessoryTypeIds] = useSessionState<number[]>("hardware.accessoryTypeIds", []);
+  const [platformIds, setPlatformIds] = useSessionState<number[]>("hardware.platformIds", []);
 
   const debouncedKeyword = useDebouncedValue(searchKeyword.trim(), 500);
 
@@ -63,6 +68,16 @@ const HardwarePage = () => {
           onSearchKeywordChange={setSearchKeyword}
           status={status}
           onStatusChange={setStatus}
+          sort={sort}
+          onSortChange={setSort}
+          manufacturerIds={manufacturerIds}
+          onManufacturerIdsChange={setManufacturerIds}
+          deviceTypeIds={deviceTypeIds}
+          onDeviceTypeIdsChange={setDeviceTypeIds}
+          accessoryTypeIds={accessoryTypeIds}
+          onAccessoryTypeIdsChange={setAccessoryTypeIds}
+          platformIds={platformIds}
+          onPlatformIdsChange={setPlatformIds}
         />
       </Box>
 
@@ -82,14 +97,28 @@ const HardwarePage = () => {
           <Typography variant="h5" component="h2" gutterBottom>
             {t("hardware.page.devicesHeading")}
           </Typography>
-          <DeviceList searchKeyword={debouncedKeyword} status={status} />
+          <DeviceList
+            searchKeyword={debouncedKeyword}
+            status={status}
+            sort={sort}
+            manufacturerIds={manufacturerIds}
+            deviceTypeIds={deviceTypeIds}
+            platformIds={platformIds}
+          />
         </Box>
 
         <Box>
           <Typography variant="h5" component="h2" gutterBottom>
             {t("hardware.page.accessoriesHeading")}
           </Typography>
-          <AccessoryList searchKeyword={debouncedKeyword} status={status} />
+          <AccessoryList
+            searchKeyword={debouncedKeyword}
+            status={status}
+            sort={sort}
+            manufacturerIds={manufacturerIds}
+            accessoryTypeIds={accessoryTypeIds}
+            platformIds={platformIds}
+          />
         </Box>
       </Stack>
     </>
