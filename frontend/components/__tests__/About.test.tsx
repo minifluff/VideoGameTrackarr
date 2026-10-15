@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import About from "../About";
 
@@ -34,7 +35,11 @@ vi.mock("../../hooks/useLibrary", () => ({
 
 describe("About emulator credits", () => {
   it("credits EmulatorJS and lists every core with its license, flagging non-commercial ones", () => {
-    render(<About />);
+    render(
+      <MemoryRouter>
+        <About />
+      </MemoryRouter>
+    );
 
     expect(screen.getByText(/EmulatorJS/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "fceumm" })).toHaveAttribute(
