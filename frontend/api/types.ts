@@ -169,6 +169,7 @@ export interface PublicGameSummary {
   ownedPlatforms: string[];
   ownedFormats: string[];
   ownedEditions: string[];
+  ownedCopies?: PublicOwnedCopy[];
 }
 
 export interface PublicOwnedCopy {
