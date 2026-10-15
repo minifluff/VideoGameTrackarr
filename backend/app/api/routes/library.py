@@ -22,30 +22,10 @@ def list_storefronts(db: Session = Depends(get_db)) -> list[str]:
     return library_service.list_distinct_storefronts(db)
 
 
-@router.get("/api/library/items")
-def list_all_library_items(db: Session = Depends(get_db)):
+@router.get("/api/library/items", response_model=list[LibraryListItemResponse])
+def list_all_library_items(db: Session = Depends(get_db)) -> list[LibraryListItemResponse]:
     """Flat list of all library items for the Games List page table."""
-    import traceback
-    try:
-        items = library_service.list_all_library_items(db)
-        result = []
-        errors = []
-        for item in items:
-            try:
-                result.append(LibraryListItemResponse(**item).model_dump(by_alias=True))
-            except Exception as e:
-                errors.append(f"Item {item.get('id')}: {e}")
-                continue
-        # Return errors in a header for debugging
-        return {"items": result, "errors": errors}
-    except Exception as e:
-        tb = traceback.format_exc()
-        # Return the full traceback so we can see what's failing
-        from fastapi.responses import JSONResponse
-        return JSONResponse(
-            status_code=500,
-            content={"error": str(e), "traceback": tb}
-        )
+    return [LibraryListItemResponse(**item) for item in library_service.list_all_library_items(db)]
 
 
 @router.get("/api/games/{game_id}/library", response_model=list[LibraryItemResponse])
