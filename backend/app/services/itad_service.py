@@ -15,7 +15,7 @@ from app.services.exceptions import NotFoundError
 # a wishlist row for any other platform, or a non-digital format, can't actually be bought
 # through a deal ITAD reports, so it must never be flagged "on sale" even if the same game
 # happens to be discounted on a platform this particular row isn't tracking.
-ITAD_ELIGIBLE_PLATFORM_SLUGS = {"win", "linux", "mac", "android"}
+ITAD_ELIGIBLE_PLATFORM_SLUGS = {"win", "linux", "mac", "android", "steam"}
 
 
 def is_library_item_itad_eligible(item: LibraryItem) -> bool:
