@@ -52,10 +52,19 @@ const PublicGamesPage = () => {
 
   return (
     <>
+      <Box
+        sx={{
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
+          bgcolor: "background.default",
+          pt: hideSearchBar ? 0 : 0.5,
+          pb: hideSearchBar ? 0 : 1,
+        }}
+      >
       <Typography variant="h4" component="h1" gutterBottom>
         {t("public.games.title")}
       </Typography>
-      <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
         <PublicGamesToolbar
         search={search}
         onSearchChange={setSearch}
