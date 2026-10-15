@@ -97,6 +97,7 @@ class LibraryListItemResponse(CamelModel):
     first_release_date: int | None
     date_added: datetime | None
     tag_names: list[str]
+    notes: str | None
 
 
 def library_item_from_orm(
