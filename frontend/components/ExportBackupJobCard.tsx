@@ -231,7 +231,7 @@ const ExportBackupJobCard = ({ job }: { job: JobSummary }) => {
               setTouched(true);
             }}
             helperText={t("settings.jobs.exportBackup.retentionHelper")}
-            slotProps={{ input: { min: 1 } }}
+            slotProps={{ htmlInput: { min: 1 } }}
             sx={{ maxWidth: 200 }}
           />
         </Stack>
