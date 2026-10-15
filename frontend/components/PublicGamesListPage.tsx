@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
 import Box from "@mui/material/Box";
-import Collapse from "@mui/material/Collapse";
 import FormControl from "@mui/material/FormControl";
 import InputAdornment from "@mui/material/InputAdornment";
 import InputLabel from "@mui/material/InputLabel";
@@ -42,13 +41,6 @@ const PublicGamesListPage = () => {
   const debouncedSearch = useDebouncedValue(search.trim().toLowerCase(), 300);
 
   const hideSearchBar = useScrollDirection(80);
-  const [isAtTop, setIsAtTop] = useState(true);
-  useEffect(() => {
-    const onScroll = () => setIsAtTop(window.scrollY < 10);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   const { data: games = [], isLoading } = usePublicGames(token, {
     search: debouncedSearch || undefined,
@@ -143,12 +135,10 @@ const PublicGamesListPage = () => {
           pb: hideSearchBar ? 0 : 1,
         }}
       >
-        <Collapse in={isAtTop}>
-          <Typography variant="h4" component="h1" gutterBottom sx={{ mt: 2 }}>
-            {t("public.gamesList.title")}
-          </Typography>
-        </Collapse>
-        <Collapse in={!hideSearchBar}>
+        <Typography variant="h4" component="h1" gutterBottom sx={{ mt: 2 }}>
+          {t("public.gamesList.title")}
+        </Typography>
+        <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
           <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
             <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
               <TextField
@@ -196,7 +186,7 @@ const PublicGamesListPage = () => {
               </Box>
             </Box>
           </Paper>
-        </Collapse>
+        </Box>
       </Box>
 
       {isLoading ? (
