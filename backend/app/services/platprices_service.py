@@ -33,15 +33,17 @@ class PlatPricesOnSaleItem:
 
 
 def list_on_sale_items(db: Session) -> list[PlatPricesOnSaleItem]:
-    """Same shape as itad_service.list_on_sale_items — every wishlisted,
-    PlatPrices-eligible row with a current discount, target-hit rows first then discount
-    % descending."""
+    """Same shape as itad_service.list_on_sale_items — every wishlisted, track_for_sales-opted
+    -in, PlatPrices-eligible row with a current discount, target-hit rows first then discount
+    % descending. Gating on track_for_sales here too (not just the refresh job's candidate
+    list) means turning tracking off hides a stale cached discount immediately."""
     stmt = (
         select(LibraryItem, PlatPricesCache)
         .join(PlatPricesCache, PlatPricesCache.game_id == LibraryItem.game_id)
         .options(joinedload(LibraryItem.game), joinedload(LibraryItem.platform))
         .where(
             LibraryItem.status == LibraryStatus.WISHLIST,
+            LibraryItem.track_for_sales.is_(True),
             PlatPricesCache.current_price_amount.is_not(None),
         )
     )
