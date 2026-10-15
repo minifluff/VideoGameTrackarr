@@ -2,10 +2,12 @@ import { useNavigate } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Collapse from "@mui/material/Collapse";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { useScrollCollapse } from "../hooks/useScrollCollapse";
 import AccessoryList from "./AccessoryList";
 import DeviceList from "./DeviceList";
 import HardwareSearchBar from "./HardwareSearchBar";
@@ -25,6 +27,8 @@ const HardwarePage = () => {
   const [platformIds, setPlatformIds] = useSessionState<number[]>("hardware.platformIds", []);
 
   const debouncedKeyword = useDebouncedValue(searchKeyword.trim(), 500);
+  // Sub-nav and title: hidden once scrolled, only return when back at the very top.
+  const hideHeader = useScrollCollapse(10);
 
   return (
     <>
@@ -42,9 +46,12 @@ const HardwarePage = () => {
           boxShadow: "0 4px 8px -4px rgba(0, 0, 0, 0.2)",
         }}
       >
-        <HardwareSubNav />
+        <Collapse in={!hideHeader}>
+          <HardwareSubNav />
+        </Collapse>
 
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2, mb: 3, flexWrap: "wrap" }}>
+        <Collapse in={!hideHeader}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2, mb: 3, flexWrap: "wrap", mt: 2 }}>
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="h4" component="h1" gutterBottom>
               {t("hardware.page.title")}
@@ -62,6 +69,7 @@ const HardwarePage = () => {
             </Button>
           </Stack>
         </Box>
+        </Collapse>
 
         <HardwareSearchBar
           searchKeyword={searchKeyword}
