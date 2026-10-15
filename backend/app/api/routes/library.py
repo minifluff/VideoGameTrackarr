@@ -9,6 +9,7 @@ from app.schemas.library import (
     LibraryItemCreateRequest,
     LibraryItemResponse,
     LibraryItemUpdateRequest,
+    LibraryListItemResponse,
     library_item_from_orm,
 )
 from app.services import library_service
@@ -19,6 +20,12 @@ router = APIRouter(tags=["library"], dependencies=[Depends(get_current_user)])
 @router.get("/api/storefronts", response_model=list[str])
 def list_storefronts(db: Session = Depends(get_db)) -> list[str]:
     return library_service.list_distinct_storefronts(db)
+
+
+@router.get("/api/library/items", response_model=list[LibraryListItemResponse])
+def list_all_library_items(db: Session = Depends(get_db)) -> list[LibraryListItemResponse]:
+    """Flat list of all library items for the Games List page table."""
+    return [LibraryListItemResponse(**item) for item in library_service.list_all_library_items(db)]
 
 
 @router.get("/api/games/{game_id}/library", response_model=list[LibraryItemResponse])
