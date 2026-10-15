@@ -41,7 +41,7 @@ const HardwarePage = () => {
           zIndex: 1,
           bgcolor: "background.default",
           // When the search bar is hidden, collapse the container completely.
-          pb: hideSearchBar ? 0 : 2.5,
+          pb: hideSearchBar ? 0 : 1,
           // Once scrolled content locks under this sticky header, the bottom edge needs to
           // read as an intentional floating panel — otherwise half-covered floating labels
           // (Manufacturer/Device type/etc.) look like clipped/broken text rather than
@@ -74,7 +74,7 @@ const HardwarePage = () => {
         </Box>
         </Collapse>
 
-        <Collapse in={!hideSearchBar}>
+        <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
           <HardwareSearchBar
           searchKeyword={searchKeyword}
           onSearchKeywordChange={setSearchKeyword}
@@ -91,7 +91,7 @@ const HardwarePage = () => {
           platformIds={platformIds}
           onPlatformIdsChange={setPlatformIds}
         />
-        </Collapse>
+        </Box>
       </Box>
 
       <Stack
