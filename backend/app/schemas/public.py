@@ -28,9 +28,16 @@ class PublicGameSummaryResponse(CamelModel):
     owned: bool
     wishlisted: bool
     owned_platforms: list[str]
+    owned_formats: list[str] = []
+    owned_editions: list[str] = []
 
 
-def public_game_from_orm(status: GameWithStatus, owned_platforms: list[str] | None = None) -> PublicGameSummaryResponse:
+def public_game_from_orm(
+    status: GameWithStatus,
+    owned_platforms: list[str] | None = None,
+    owned_formats: list[str] | None = None,
+    owned_editions: list[str] | None = None,
+) -> PublicGameSummaryResponse:
     game = status.game
     return PublicGameSummaryResponse(
         id=game.id,
@@ -41,6 +48,8 @@ def public_game_from_orm(status: GameWithStatus, owned_platforms: list[str] | No
         owned=status.owned,
         wishlisted=status.wishlisted,
         owned_platforms=owned_platforms or [],
+        owned_formats=owned_formats or [],
+        owned_editions=owned_editions or [],
     )
 
 
