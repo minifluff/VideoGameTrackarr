@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
 import Box from "@mui/material/Box";
+import Paper from "@mui/material/Paper";
 import InputAdornment from "@mui/material/InputAdornment";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
@@ -26,12 +27,13 @@ const PublicHardwarePage = () => {
         {t("public.hardware.title")}
       </Typography>
       <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
+        <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2, mb: 3 }}>
         <TextField
           label={t("public.hardware.searchLabel")}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           fullWidth
-          sx={{ mb: 3, maxWidth: 480 }}
+          sx={{ maxWidth: 480 }}
           slotProps={{
             input: {
               startAdornment: (
@@ -42,6 +44,7 @@ const PublicHardwarePage = () => {
             },
           }}
         />
+        </Paper>
       </Box>
       <Stack spacing={3}>
         <Box>
