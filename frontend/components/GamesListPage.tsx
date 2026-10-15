@@ -137,22 +137,23 @@ const GamesListPage = () => {
           {t("games.listPage.title")}
         </Typography>
         <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
-          <TextField
-            label={t("games.listPage.searchLabel")}
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            fullWidth
-            sx={{ maxWidth: 480 }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
+          <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
+            <TextField
+              label={t("games.listPage.searchLabel")}
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              fullWidth
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          </Paper>
         </Box>
       </Box>
 
