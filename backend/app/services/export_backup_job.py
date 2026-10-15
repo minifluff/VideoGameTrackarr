@@ -182,6 +182,7 @@ def _upload_file(tree: Any, remote_path: str, local_path: Path, report_progress:
 
 def _list_export_files(tree: Any, subpath: str) -> list[str]:
     """Lists this job's export files in the share folder, oldest first."""
+    from smbprotocol.file_info import FileInformationClass
     from smbprotocol.open import (
         CreateDisposition,
         CreateOptions,
@@ -206,7 +207,10 @@ def _list_export_files(tree: Any, subpath: str) -> list[str]:
         raise ExportBackupError(f"Could not list the export folder: {exc}") from exc
 
     try:
-        names = [entry.get_file_name() for entry in directory.query_directory("*")]
+        names = [
+            entry.get_file_name()
+            for entry in directory.query_directory("*", FileInformationClass.FILE_NAMES_INFORMATION)
+        ]
     except Exception as exc:
         raise ExportBackupError(f"Could not list the export folder: {exc}") from exc
     finally:
