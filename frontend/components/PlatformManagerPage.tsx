@@ -140,6 +140,8 @@ const PlatformManagerPage = () => {
         onEditClick={handleEditClick}
         onDeleteClick={handleDeleteClick}
         moveDirection="down"
+        defaultRowsPerPage={10}
+        rowsPerPageOptions={[10, 25, 50]}
       />
 
       <PlatformDialog

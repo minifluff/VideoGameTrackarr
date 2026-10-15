@@ -252,6 +252,8 @@ interface EnhancedTableProps {
   onEditClick?: (rowId: number, tableName: string) => void;
   moveDirection: "up" | "down";
   headerAction?: ReactNode;
+  defaultRowsPerPage?: number;
+  rowsPerPageOptions?: number[];
 }
 
 const EnhancedTable = ({
@@ -266,6 +268,8 @@ const EnhancedTable = ({
   onEditClick,
   moveDirection,
   headerAction,
+  defaultRowsPerPage = 5,
+  rowsPerPageOptions = [5, 10, 25],
 }: EnhancedTableProps) => {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -274,7 +278,7 @@ const EnhancedTable = ({
   const [orderBy, setOrderBy] = useState("id");
   const [selected, setSelected] = useState<number[]>([]);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage);
 
   useEffect(() => {
     setSelected([]);
@@ -586,7 +590,7 @@ const EnhancedTable = ({
           </TableContainer>
         )}
         <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
+          rowsPerPageOptions={rowsPerPageOptions}
           component="div"
           count={rows.length}
           rowsPerPage={rowsPerPage}
