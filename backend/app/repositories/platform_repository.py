@@ -214,18 +214,33 @@ def list_addons_for_platform(
     return [_row_to_game_with_status(row) for row in db.execute(stmt)]
 
 
-def create_platform(db: Session, name: str, abbreviation: str | None) -> Platform:
-    platform = Platform(name=name, slug=_slugify(name), abbreviation=abbreviation)
+def create_platform(
+    db: Session, name: str, abbreviation: str | None, slug: str | None = None, igdb_id: int | None = None
+) -> Platform:
+    platform = Platform(
+        name=name,
+        slug=slug.strip() if slug and slug.strip() else _slugify(name),
+        abbreviation=abbreviation,
+        igdb_id=igdb_id,
+    )
     db.add(platform)
     db.flush()
     return platform
 
 
-def update_platform(db: Session, platform: Platform, name: str, abbreviation: str | None) -> Platform:
+def update_platform(
+    db: Session,
+    platform: Platform,
+    name: str,
+    abbreviation: str | None,
+    slug: str | None = None,
+    igdb_id: int | None = None,
+) -> Platform:
     platform.name = name
     platform.abbreviation = abbreviation
-    # Regenerate the slug when the name changes so the platform page URL stays in sync.
-    platform.slug = _slugify(name)
+    # Use the provided slug, or regenerate from the name if blank.
+    platform.slug = slug.strip() if slug and slug.strip() else _slugify(name)
+    platform.igdb_id = igdb_id
     db.flush()
     return platform
 
