@@ -44,8 +44,8 @@ const HardwarePage = () => {
       >
         <HardwareSubNav />
 
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2, mb: 3 }}>
-          <Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2, mb: 3, flexWrap: "wrap" }}>
+          <Box sx={{ minWidth: 0 }}>
             <Typography variant="h4" component="h1" gutterBottom>
               {t("hardware.page.title")}
             </Typography>
@@ -53,7 +53,7 @@ const HardwarePage = () => {
               {t("hardware.page.subtitle")}
             </Typography>
           </Box>
-          <Stack direction="row" spacing={1.5} sx={{ flexShrink: 0 }}>
+          <Stack direction="row" spacing={1.5} sx={{ flexShrink: 0, flexWrap: "wrap", rowGap: 1 }}>
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate("/hardware/device/add")}>
               {t("hardware.page.addDeviceButton")}
             </Button>

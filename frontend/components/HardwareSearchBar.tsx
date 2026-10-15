@@ -145,7 +145,13 @@ const HardwareSearchBar = ({
             </IconButton>
           </Tooltip>
         </Stack>
-        <Dialog open={filtersOpen} onClose={() => setFiltersOpen(false)} fullWidth maxWidth="md">
+        <Dialog
+          open={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          fullWidth
+          maxWidth="xs"
+          PaperProps={{ sx: { m: 2, width: "calc(100% - 32px)" } }}
+        >
           <DialogTitle>{t("hardware.searchBar.filtersButtonLabel")}</DialogTitle>
           <DialogContent>
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
