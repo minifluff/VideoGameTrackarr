@@ -21,12 +21,11 @@ def list_all_library_items(db: Session) -> list[dict]:
     """All library items with game name, release date, platform name, tags, and date added.
     Returns dicts for the Games List page table (one row per owned copy)."""
     from app.models.catalog import Game, Platform, Tag
-    from app.models.library import LibraryItem
+    from app.models.library import GameTag, LibraryItem
 
     items = (
         db.query(LibraryItem, Game)
         .join(Game, LibraryItem.game_id == Game.id)
-        .outerjoin(Platform, LibraryItem.platform_id == Platform.id)
         .order_by(Game.name.asc())
         .all()
     )
@@ -38,8 +37,14 @@ def list_all_library_items(db: Session) -> list[dict]:
             platform = db.query(Platform).filter(Platform.id == item.platform_id).first()
             if platform:
                 platform_name = platform.name
-        # Get tag names
-        tag_names = [t.name for t in game.tags] if hasattr(game, "tags") else []
+        # Get tag names via GameTag association table
+        tag_rows = (
+            db.query(Tag.name)
+            .join(GameTag, GameTag.tag_id == Tag.id)
+            .filter(GameTag.game_id == game.id)
+            .all()
+        )
+        tag_names = [row[0] for row in tag_rows]
         result.append({
             "id": item.id,
             "game_id": game.id,
