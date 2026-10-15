@@ -17,6 +17,44 @@ def list_tracked_items(db: Session) -> list[LibraryItem]:
     return library_item_repository.list_tracked_items(db)
 
 
+def list_all_library_items(db: Session) -> list[dict]:
+    """All library items with game name, release date, platform name, tags, and date added.
+    Returns dicts for the Games List page table (one row per owned copy)."""
+    from app.models.catalog import Game, Platform, Tag
+    from app.models.library import LibraryItem
+
+    items = (
+        db.query(LibraryItem, Game)
+        .join(Game, LibraryItem.game_id == Game.id)
+        .outerjoin(Platform, LibraryItem.platform_id == Platform.id)
+        .order_by(Game.name.asc())
+        .all()
+    )
+    result = []
+    for item, game in items:
+        # Get platform name
+        platform_name = None
+        if item.platform_id:
+            platform = db.query(Platform).filter(Platform.id == item.platform_id).first()
+            if platform:
+                platform_name = platform.name
+        # Get tag names
+        tag_names = [t.name for t in game.tags] if hasattr(game, "tags") else []
+        result.append({
+            "id": item.id,
+            "game_id": game.id,
+            "game_name": game.name,
+            "game_uuid": game.uuid,
+            "platform_name": platform_name,
+            "edition": item.edition,
+            "format": item.format,
+            "first_release_date": game.first_release_date,
+            "date_added": item.created_at,
+            "tag_names": tag_names,
+        })
+    return result
+
+
 def list_distinct_storefronts(db: Session) -> list[str]:
     return library_item_repository.list_distinct_storefronts(db)
 
