@@ -40,7 +40,7 @@ const HardwarePage = () => {
           top: (theme) => theme.mixins.toolbar.minHeight,
           zIndex: 1,
           bgcolor: "background.default",
-          pt: 2,
+          pt: 1,
           pb: 2.5,
           // Once scrolled content locks under this sticky header, the bottom edge needs to
           // read as an intentional floating panel — otherwise half-covered floating labels

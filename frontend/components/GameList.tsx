@@ -28,7 +28,7 @@ import GamesSubNav from "./GamesSubNav";
 import ManageTagsDialog from "./ManageTagsDialog";
 import VirtualGameGrid from "./VirtualGameGrid";
 import { usePruneStaleIds, useSessionState } from "../hooks/useSessionState";
-import { useScrollCollapse } from "../hooks/useScrollCollapse";
+import { useScrollCollapse, useScrollDirection } from "../hooks/useScrollCollapse";
 
 const MIN_SEARCH_LENGTH = 3;
 
@@ -45,6 +45,8 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
   const collapsed = useScrollCollapse();
   // Tabs and title: hidden once scrolled, only return when back at the very top
   const hideHeader = useScrollCollapse(10);
+  // Search toolbar: hides on scroll down, reappears on scroll up.
+  const hideSearchBar = useScrollDirection(80);
   const sp = sessionPrefix;
   const [searchKeyword, setSearchKeyword] = useSessionState(`${sp}.searchKeyword`, "");
   const [ownershipStatuses, setOwnershipStatuses] = useSessionState<OwnershipStatus[]>(
@@ -273,6 +275,7 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
           top: (theme) => theme.mixins.toolbar.minHeight,
           zIndex: 1,
           bgcolor: "background.default",
+          pt: 1,
           pb: 2.5,
           // Once scrolled content locks under this sticky header, the bottom edge needs to
           // read as an intentional floating panel rather than content abruptly disappearing.
@@ -312,69 +315,71 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
         </Box>
         )}
         </Collapse>
-        <GameListToolbar
-          searchKeyword={searchKeyword}
-          onSearchKeywordChange={handleSearchKeywordChange}
-          onSearchSubmit={() => setForceSearch(true)}
-          ownershipStatuses={ownershipStatuses}
-          onOwnershipStatusesChange={setOwnershipStatuses}
-          ownershipExclude={ownershipExclude}
-          onOwnershipExcludeChange={setOwnershipExclude}
-          selectionMode={selectionMode}
-          selectedCount={selectedIds.size}
-          visibleCount={visibleGames.length}
-          onEnterSelectionMode={handleEnterSelectionMode}
-          onExitSelectionMode={handleExitSelectionMode}
-          allVisibleSelected={allVisibleSelected}
-          onToggleSelectAll={handleToggleSelectAll}
-          onManageTagsClick={() => setManageTagsOpen(true)}
-          onBulkDelete={handleBulkDelete}
-          onBulkHide={() => handleBulkVisibility(true)}
-          onBulkUnhide={() => handleBulkVisibility(false)}
-          platformOptions={platforms}
-          platformIds={platformIds}
-          onPlatformIdsChange={setPlatformIds}
-          platformExclude={platformExclude}
-          onPlatformExcludeChange={setPlatformExclude}
-          tagOptions={tags}
-          tagIds={tagIds}
-          onTagIdsChange={setTagIds}
-          tagExclude={tagExclude}
-          onTagExcludeChange={setTagExclude}
-          collectionOptions={collections}
-          collectionIds={collectionIds}
-          onCollectionIdsChange={setCollectionIds}
-          collectionExclude={collectionExclude}
-          onCollectionExcludeChange={setCollectionExclude}
-          franchiseOptions={franchises}
-          franchiseIds={franchiseIds}
-          onFranchiseIdsChange={setFranchiseIds}
-          franchiseExclude={franchiseExclude}
-          onFranchiseExcludeChange={setFranchiseExclude}
-          gameTypes={gameTypes}
-          onGameTypesChange={setGameTypes}
-          gameTypeExclude={gameTypeExclude}
-          onGameTypeExcludeChange={setGameTypeExclude}
-          formats={formats}
-          onFormatsChange={setFormats}
-          formatExclude={formatExclude}
-          onFormatExcludeChange={setFormatExclude}
-          storefrontOptions={storefrontOptions}
-          storefronts={storefronts}
-          onStorefrontsChange={setStorefronts}
-          storefrontExclude={storefrontExclude}
-          onStorefrontExcludeChange={setStorefrontExclude}
-          steelbookOnly={steelbookOnly}
-          onSteelbookOnlyChange={setSteelbookOnly}
-          sort={sort}
-          onSortChange={setSort}
-          playStatuses={playStatuses}
-          onPlayStatusesChange={setPlayStatuses}
-          playStatusExclude={playStatusExclude}
-          onPlayStatusExcludeChange={setPlayStatusExclude}
-          matchAll={matchAll}
-          onMatchAllChange={setMatchAll}
-        />
+        <Collapse in={!hideSearchBar}>
+            <GameListToolbar
+            searchKeyword={searchKeyword}
+            onSearchKeywordChange={handleSearchKeywordChange}
+            onSearchSubmit={() => setForceSearch(true)}
+            ownershipStatuses={ownershipStatuses}
+            onOwnershipStatusesChange={setOwnershipStatuses}
+            ownershipExclude={ownershipExclude}
+            onOwnershipExcludeChange={setOwnershipExclude}
+            selectionMode={selectionMode}
+            selectedCount={selectedIds.size}
+            visibleCount={visibleGames.length}
+            onEnterSelectionMode={handleEnterSelectionMode}
+            onExitSelectionMode={handleExitSelectionMode}
+            allVisibleSelected={allVisibleSelected}
+            onToggleSelectAll={handleToggleSelectAll}
+            onManageTagsClick={() => setManageTagsOpen(true)}
+            onBulkDelete={handleBulkDelete}
+            onBulkHide={() => handleBulkVisibility(true)}
+            onBulkUnhide={() => handleBulkVisibility(false)}
+            platformOptions={platforms}
+            platformIds={platformIds}
+            onPlatformIdsChange={setPlatformIds}
+            platformExclude={platformExclude}
+            onPlatformExcludeChange={setPlatformExclude}
+            tagOptions={tags}
+            tagIds={tagIds}
+            onTagIdsChange={setTagIds}
+            tagExclude={tagExclude}
+            onTagExcludeChange={setTagExclude}
+            collectionOptions={collections}
+            collectionIds={collectionIds}
+            onCollectionIdsChange={setCollectionIds}
+            collectionExclude={collectionExclude}
+            onCollectionExcludeChange={setCollectionExclude}
+            franchiseOptions={franchises}
+            franchiseIds={franchiseIds}
+            onFranchiseIdsChange={setFranchiseIds}
+            franchiseExclude={franchiseExclude}
+            onFranchiseExcludeChange={setFranchiseExclude}
+            gameTypes={gameTypes}
+            onGameTypesChange={setGameTypes}
+            gameTypeExclude={gameTypeExclude}
+            onGameTypeExcludeChange={setGameTypeExclude}
+            formats={formats}
+            onFormatsChange={setFormats}
+            formatExclude={formatExclude}
+            onFormatExcludeChange={setFormatExclude}
+            storefrontOptions={storefrontOptions}
+            storefronts={storefronts}
+            onStorefrontsChange={setStorefronts}
+            storefrontExclude={storefrontExclude}
+            onStorefrontExcludeChange={setStorefrontExclude}
+            steelbookOnly={steelbookOnly}
+            onSteelbookOnlyChange={setSteelbookOnly}
+            sort={sort}
+            onSortChange={setSort}
+            playStatuses={playStatuses}
+            onPlayStatusesChange={setPlayStatuses}
+            playStatusExclude={playStatusExclude}
+            onPlayStatusExcludeChange={setPlayStatusExclude}
+            matchAll={matchAll}
+            onMatchAllChange={setMatchAll}
+            />
+        </Collapse>
       </Box>
       {/* Contains z-index in here to its own stacking context — otherwise MUI's
           shrunk-label z-index (1, same as the sticky header above) ties with the sticky
