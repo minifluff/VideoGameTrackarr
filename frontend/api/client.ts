@@ -60,6 +60,12 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Public routes are deliberately unauthenticated (gated by share token) — never
+    // redirect to login for them. A 401 here means a bad/expired share token.
+    if (originalRequest.url?.startsWith("/api/public/")) {
+      return Promise.reject(error);
+    }
+
     // A 401 from the auth endpoints themselves means bad credentials or an already-dead
     // refresh token — refreshing again would just loop.
     if (originalRequest.url?.startsWith("/api/auth/")) {
