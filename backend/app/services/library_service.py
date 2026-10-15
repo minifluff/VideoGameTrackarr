@@ -52,7 +52,7 @@ def list_all_library_items(db: Session) -> list[dict]:
             "game_uuid": game.uuid,
             "platform_name": platform_name,
             "edition": item.edition,
-            "format": item.format,
+            "format": item.format.value if item.format else None,
             "first_release_date": game.first_release_date,
             "date_added": item.created_at,
             "tag_names": tag_names,
