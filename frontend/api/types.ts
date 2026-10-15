@@ -167,6 +167,8 @@ export interface PublicGameSummary {
   owned: boolean;
   wishlisted: boolean;
   ownedPlatforms: string[];
+  ownedFormats: string[];
+  ownedEditions: string[];
 }
 
 export interface PublicOwnedCopy {
