@@ -150,7 +150,7 @@ const HardwareSearchBar = ({
           onClose={() => setFiltersOpen(false)}
           fullWidth
           maxWidth="xs"
-          PaperProps={{ sx: { m: 2, width: "calc(100% - 32px)" } }}
+          slotProps={{ paper: { sx: { m: 2, width: "calc(100% - 32px)" } } }}
         >
           <DialogTitle>{t("hardware.searchBar.filtersButtonLabel")}</DialogTitle>
           <DialogContent>
