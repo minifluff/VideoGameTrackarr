@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
 import Box from "@mui/material/Box";
@@ -8,6 +8,7 @@ import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
+import TablePagination from "@mui/material/TablePagination";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
@@ -30,6 +31,8 @@ const GamesListPage = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [sortColumn, setSortColumn] = useState<SortColumn>("gameName");
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const debouncedSearch = useDebouncedValue(search.trim().toLowerCase(), 300);
@@ -233,7 +236,7 @@ const GamesListPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredAndSorted.map((item: LibraryListItem) => (
+              {paginatedItems.map((item: LibraryListItem) => (
                 <TableRow
                   key={item.id}
                   hover
@@ -256,6 +259,18 @@ const GamesListPage = () => {
             </TableBody>
           </Table>
         </TableContainer>
+        <TablePagination
+          component="div"
+          count={filteredAndSorted.length}
+          page={page}
+          onPageChange={(_, newPage) => setPage(newPage)}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={(e) => {
+            setRowsPerPage(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
+          rowsPerPageOptions={[25, 50, 100, 250]}
+        />
         </>
       )}
     </>
