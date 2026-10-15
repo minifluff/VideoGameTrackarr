@@ -294,7 +294,7 @@ const router = createBrowserRouter([
             element: <SalesIgnoredListPage />,
             handle: { crumbs: salesIgnoredCrumbs },
           },
-          { path: "/about", element: <About />, handle: { crumbs: aboutCrumbs } },
+          { path: "/settings/about", element: <About />, handle: { crumbs: aboutCrumbs } },
           { path: "*", element: <NotFoundRouteElement />, handle: { crumbs: notFoundCrumbs } },
         ],
       },
