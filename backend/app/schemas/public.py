@@ -117,8 +117,12 @@ def public_game_detail_from_orm(
     display_parent = game.display_parent_game
     if display_parent is not None and not is_top_level_browsable(display_parent):
         display_parent = None
+    summary_data = public_game_from_orm(status, owned_platforms=owned_platforms).model_dump()
+    # The detail response sets owned_copies explicitly below; drop the summary default
+    # so it isn't passed twice.
+    summary_data.pop("owned_copies", None)
     return PublicGameDetailResponse(
-        **public_game_from_orm(status, owned_platforms=owned_platforms).model_dump(),
+        **summary_data,
         igdb_id=game.igdb_id,
         igdb_url=game.igdb_url,
         summary=game.summary,
