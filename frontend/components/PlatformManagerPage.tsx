@@ -15,6 +15,8 @@ import MassMovePlatformDialog from "./MassMovePlatformDialog";
 import PlatformDialog from "./PlatformDialog";
 import SettingsSubNav from "./SettingsSubNav";
 
+const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
+
 const PlatformManagerPage = () => {
   const { t } = useTranslation();
   const { data: platforms } = usePlatforms();
@@ -141,7 +143,7 @@ const PlatformManagerPage = () => {
         onDeleteClick={handleDeleteClick}
         moveDirection="down"
         defaultRowsPerPage={10}
-        rowsPerPageOptions={[10, 25, 50]}
+        rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
       />
 
       <PlatformDialog
