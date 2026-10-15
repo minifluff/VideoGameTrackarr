@@ -12,6 +12,7 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ConfirmDialog from "./ConfirmDialog";
 import Badge from "@mui/material/Badge";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Checkbox from "@mui/material/Checkbox";
@@ -37,9 +38,8 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import Collapse from "@mui/material/Collapse";
 import { useTranslation } from "react-i18next";
-import { useScrollCollapse } from "../hooks/useScrollCollapse";
+import { useScrollDirection } from "../hooks/useScrollCollapse";
 import type { MatchAllField, MatchAllFilters } from "../api/games";
 import type {
   CatalogRefSummary,
@@ -377,7 +377,8 @@ const GameListToolbar = ({
   onIncludeAddonsChange,
 }: GameListToolbarProps) => {
   const { t } = useTranslation();
-  const collapsed = useScrollCollapse(80);
+  // Hide on scroll down, reappear on scroll up.
+  const hideSearchBar = useScrollDirection(80);
   const allPlaceholder = t("games.listToolbar.allOption");
   const selectedTags = tagOptions.filter((tag) => tagIds.includes(tag.id));
   const selectedPlatforms = platformOptions.filter((platform) => platformIds.includes(platform.id));
@@ -588,7 +589,7 @@ const GameListToolbar = ({
   }
 
   return (
-    <Collapse in={!collapsed} timeout={200}>
+    <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
       <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
       <Stack spacing={1.5}>
         <Stack direction="row" spacing={1}>
@@ -936,7 +937,7 @@ const GameListToolbar = ({
         </Dialog>
       </Stack>
       </Paper>
-    </Collapse>
+    </Box>
   );
 };
 

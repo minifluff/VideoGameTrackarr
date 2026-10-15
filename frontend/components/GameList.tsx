@@ -28,7 +28,7 @@ import GamesSubNav from "./GamesSubNav";
 import ManageTagsDialog from "./ManageTagsDialog";
 import VirtualGameGrid from "./VirtualGameGrid";
 import { usePruneStaleIds, useSessionState } from "../hooks/useSessionState";
-import { useScrollCollapse, useScrollDirection } from "../hooks/useScrollCollapse";
+import { useScrollCollapse } from "../hooks/useScrollCollapse";
 
 const MIN_SEARCH_LENGTH = 3;
 
@@ -45,8 +45,7 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
   const collapsed = useScrollCollapse();
   // Tabs and title: hidden once scrolled, only return when back at the very top
   const hideHeader = useScrollCollapse(10);
-  // Search toolbar: hides on scroll down, reappears on scroll up.
-  const hideSearchBar = useScrollDirection(80);
+
   const sp = sessionPrefix;
   const [searchKeyword, setSearchKeyword] = useSessionState(`${sp}.searchKeyword`, "");
   const [ownershipStatuses, setOwnershipStatuses] = useSessionState<OwnershipStatus[]>(
@@ -275,13 +274,11 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
           top: (theme) => theme.mixins.toolbar.minHeight,
           zIndex: 1,
           bgcolor: "background.default",
-          // When the search bar is hidden, collapse the container completely —
-          // otherwise an empty padded strip with a shadow remains.
-          pt: hideSearchBar ? 0 : 0.5,
-          pb: hideSearchBar ? 0 : 1,
+          pt: 0.5,
+          pb: 1,
           // Once scrolled content locks under this sticky header, the bottom edge needs to
           // read as an intentional floating panel rather than content abruptly disappearing.
-          boxShadow: hideSearchBar ? "none" : "0 4px 8px -4px rgba(0, 0, 0, 0.2)",
+          boxShadow: "0 4px 8px -4px rgba(0, 0, 0, 0.2)",
         }}
       >
         <Collapse in={!hideHeader}>
@@ -317,8 +314,7 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
         </Box>
         )}
         </Collapse>
-        <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
-            <GameListToolbar
+        <GameListToolbar
             searchKeyword={searchKeyword}
             onSearchKeywordChange={handleSearchKeywordChange}
             onSearchSubmit={() => setForceSearch(true)}
@@ -381,7 +377,6 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
             matchAll={matchAll}
             onMatchAllChange={setMatchAll}
             />
-        </Box>
       </Box>
       {/* Contains z-index in here to its own stacking context — otherwise MUI's
           shrunk-label z-index (1, same as the sticky header above) ties with the sticky
