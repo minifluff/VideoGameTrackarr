@@ -154,8 +154,8 @@ const GamesListPage = () => {
   const columns: { key: SortColumn; label: string }[] = [
     { key: "gameName", label: t("games.listPage.nameColumn") },
     { key: "platformName", label: t("games.listPage.platformColumn") },
-    { key: "edition", label: t("games.listPage.editionColumn") },
     { key: "format", label: t("games.listPage.formatColumn") },
+    { key: "edition", label: t("games.listPage.editionColumn") },
     { key: "notes", label: t("games.listPage.notesColumn") },
   ];
 
@@ -273,8 +273,8 @@ const GamesListPage = () => {
 
                   <TableCell>{item.gameName}</TableCell>
                   <TableCell>{item.platformName ?? "—"}</TableCell>
-                  <TableCell>{item.edition ?? "—"}</TableCell>
                   <TableCell>{item.format ?? "—"}</TableCell>
+                  <TableCell>{item.edition ?? "—"}</TableCell>
                   <TableCell>{item.notes ?? "—"}</TableCell>
                 </TableRow>
               ))}
