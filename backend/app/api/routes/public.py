@@ -55,7 +55,12 @@ def list_public_games(
         ).all()
         for game_id, platform_name, format_val, edition_val in rows:
             platforms_by_game.setdefault(game_id, set()).add(platform_name)
-            fmt = format_val.value if format_val and hasattr(format_val, "value") else (str(format_val) if format_val else None)
+            if format_val and hasattr(format_val, "value"):
+                fmt = format_val.value
+            elif format_val:
+                fmt = str(format_val)
+            else:
+                fmt = None
             if fmt:
                 formats_by_game.setdefault(game_id, set()).add(fmt)
             if edition_val:
