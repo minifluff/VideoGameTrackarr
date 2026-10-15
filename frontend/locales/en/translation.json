@@ -73,7 +73,8 @@
     "playniteSync": "Playnite Sync",
     "unlinkedGames": "Unlinked Games",
     "playing": "Playing",
-    "wishlist": "Wishlist"
+    "wishlist": "Wishlist",
+    "gamesList": "List"
   },
   "breadcrumbs": {
     "edit": "Edit",
@@ -988,6 +989,18 @@
     },
     "platformPage": {
       "kindLabel": "Platform"
+    },
+    "listPage": {
+      "title": "Games List",
+      "searchLabel": "Search games",
+      "nameColumn": "Name",
+      "platformColumn": "Platform",
+      "editionColumn": "Edition",
+      "formatColumn": "Format",
+      "releaseDateColumn": "Date released",
+      "dateAddedColumn": "Date added",
+      "tagsColumn": "Tags",
+      "emptyState": "No games found"
     }
   },
   "events": {
