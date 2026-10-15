@@ -26,6 +26,7 @@ import {
   useUpdateJobSchedule,
 } from "../hooks/useJobs";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
+import ExportBackupJobCard from "./ExportBackupJobCard";
 
 // Registering a future job means adding one entry here — job ids on their own aren't good
 // UI copy, so a small static display-name lookup is the one manual step the "reusable
