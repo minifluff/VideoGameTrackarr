@@ -22,7 +22,7 @@ def list_all_library_items(db: Session) -> list[dict]:
     Returns dicts for the Games List page table (one row per owned copy)."""
     from sqlalchemy.orm import joinedload
 
-    from app.models.catalog import Game, Platform
+    from app.models.catalog import Game
     from app.models.library import GameTag, LibraryItem, Tag
 
     # Eager-load platform to avoid N+1 queries
