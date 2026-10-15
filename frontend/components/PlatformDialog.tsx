@@ -13,17 +13,26 @@ import TextField from "@mui/material/TextField";
 
 const formSchema = z.object({
   name: z.string().trim().min(1),
+  slug: z.string().trim().max(255),
+  igdbId: z.string().trim(),
   abbreviation: z.string().trim().max(50),
 });
 
 export type PlatformFormValues = z.infer<typeof formSchema>;
 
+export interface PlatformDialogValues {
+  name: string;
+  slug: string | null;
+  igdbId: number | null;
+  abbreviation: string | null;
+}
+
 interface PlatformDialogProps {
   open: boolean;
   title: string;
-  defaultValues?: { name: string; abbreviation: string | null };
+  defaultValues?: { name: string; slug: string | null; igdbId: number | null; abbreviation: string | null };
   onClose: () => void;
-  onSubmit: (values: { name: string; abbreviation: string | null }) => void;
+  onSubmit: (values: PlatformDialogValues) => void;
   submitLabel: string;
 }
 
@@ -32,6 +41,8 @@ const PlatformDialog = ({ open, title, defaultValues, onClose, onSubmit, submitL
 
   const defaults: PlatformFormValues = {
     name: defaultValues?.name ?? "",
+    slug: defaultValues?.slug ?? "",
+    igdbId: defaultValues?.igdbId != null ? String(defaultValues.igdbId) : "",
     abbreviation: defaultValues?.abbreviation ?? "",
   };
 
@@ -53,9 +64,13 @@ const PlatformDialog = ({ open, title, defaultValues, onClose, onSubmit, submitL
   }, [open]);
 
   const handleFormSubmit = (values: PlatformFormValues) => {
+    const slug = values.slug.trim();
+    const igdbRaw = values.igdbId.trim();
     const abbreviation = values.abbreviation.trim();
     onSubmit({
       name: values.name.trim(),
+      slug: slug.length > 0 ? slug : null,
+      igdbId: igdbRaw.length > 0 ? parseInt(igdbRaw, 10) : null,
       abbreviation: abbreviation.length > 0 ? abbreviation : null,
     });
   };
@@ -76,6 +91,36 @@ const PlatformDialog = ({ open, title, defaultValues, onClose, onSubmit, submitL
                 required
                 error={Boolean(errors.name)}
                 helperText={errors.name?.message ?? t("common.required")}
+              />
+            )}
+          />
+        </FormControl>
+        <FormControl fullWidth sx={{ margin: "0 0 20px 0" }}>
+          <Controller
+            name="slug"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label={t("settings.platformManager.slugColumn")}
+                error={Boolean(errors.slug)}
+                helperText={errors.slug?.message ?? t("settings.platformManager.slugHint")}
+              />
+            )}
+          />
+        </FormControl>
+        <FormControl fullWidth sx={{ margin: "0 0 20px 0" }}>
+          <Controller
+            name="igdbId"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label={t("settings.platformManager.igdbIdColumn")}
+                type="number"
+                error={Boolean(errors.igdbId)}
+                helperText={errors.igdbId?.message}
+                slotProps={{ htmlInput: { min: 1, step: 1 } }}
               />
             )}
           />

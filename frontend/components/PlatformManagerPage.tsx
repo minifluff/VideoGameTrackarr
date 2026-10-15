@@ -123,7 +123,12 @@ const PlatformManagerPage = () => {
     setDialogOpen(true);
   };
 
-  const handleDialogSubmit = async (values: { name: string; abbreviation: string | null }) => {
+  const handleDialogSubmit = async (values: {
+    name: string;
+    slug: string | null;
+    igdbId: number | null;
+    abbreviation: string | null;
+  }) => {
     try {
       if (dialogPlatform) {
         await updatePlatform.mutateAsync({ platformId: dialogPlatform.id, ...values });
@@ -307,7 +312,14 @@ const PlatformManagerPage = () => {
         open={dialogOpen}
         title={dialogPlatform ? t("settings.platformManager.editDialogTitle") : t("settings.platformManager.addDialogTitle")}
         defaultValues={
-          dialogPlatform ? { name: dialogPlatform.name, abbreviation: dialogPlatform.abbreviation } : undefined
+          dialogPlatform
+            ? {
+                name: dialogPlatform.name,
+                slug: dialogPlatform.slug,
+                igdbId: dialogPlatform.igdbId,
+                abbreviation: dialogPlatform.abbreviation,
+              }
+            : undefined
         }
         onClose={() => setDialogOpen(false)}
         onSubmit={handleDialogSubmit}
