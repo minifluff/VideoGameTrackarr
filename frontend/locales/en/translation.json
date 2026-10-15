@@ -1001,7 +1001,8 @@
       "releaseDateColumn": "Date released",
       "dateAddedColumn": "Date added",
       "tagsColumn": "Tags",
-      "emptyState": "No games found"
+      "emptyState": "No games found",
+      "selectedCount": "{{count}} selected"
     }
   },
   "events": {
