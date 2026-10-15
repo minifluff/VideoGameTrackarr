@@ -38,13 +38,15 @@ const GamesListPage = () => {
   const hideSearchBar = useScrollDirection(80);
 
   const {
-    data: items = [],
+    data: rawItems,
     isLoading,
     error,
   } = useQuery({
     queryKey: ["library", "all-items"],
     queryFn: listAllLibraryItems,
   });
+  // Defensive: ensure items is always an array (API might return unexpected shape)
+  const items = Array.isArray(rawItems) ? rawItems : [];
 
   const filteredAndSorted = useMemo(() => {
     let result = items;
