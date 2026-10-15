@@ -218,10 +218,11 @@ def _list_export_files(tree: Any, subpath: str) -> list[str]:
         raise ExportBackupError(f"Could not list the export folder: {exc}") from exc
 
     try:
-        names = [
-            entry.file_name
-            for entry in directory.query_directory("*", FileInformationClass.FILE_NAMES_INFORMATION)
-        ]
+        names = []
+        for entry in directory.query_directory("*", FileInformationClass.FILE_NAMES_INFORMATION):
+            # file_name is a BytesField holding the UTF-16-LE encoded name.
+            raw = entry["file_name"].get_value()
+            names.append(raw.decode("utf-16-le") if isinstance(raw, bytes) else str(raw))
     except Exception as exc:
         raise ExportBackupError(f"Could not list the export folder: {exc}") from exc
     finally:
