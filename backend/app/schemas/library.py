@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from sqlalchemy.orm import object_session
 
@@ -82,6 +82,21 @@ class LibraryItemResponse(CamelModel):
     sale_shop_name: str | None
     sale_cut: int | None
     roms: list[RomFileSummary] = []
+
+
+class LibraryListItemResponse(CamelModel):
+    """Flat library item for the Games List page table — one row per owned copy."""
+
+    id: int
+    game_id: int
+    game_name: str
+    game_uuid: str
+    platform_name: str | None
+    edition: str | None
+    format: MediaFormat | None
+    first_release_date: int | None
+    date_added: datetime
+    tag_names: list[str]
 
 
 def library_item_from_orm(
