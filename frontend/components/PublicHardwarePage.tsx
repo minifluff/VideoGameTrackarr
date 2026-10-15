@@ -8,6 +8,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { useScrollDirection } from "../hooks/useScrollCollapse";
 import PublicAccessoryList from "./PublicAccessoryList";
 import PublicDeviceList from "./PublicDeviceList";
 
@@ -16,28 +17,32 @@ const PublicHardwarePage = () => {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search.trim(), 500);
+  // Hide on scroll down, reappear on scroll up.
+  const hideSearchBar = useScrollDirection(80);
 
   return (
     <>
       <Typography variant="h4" component="h1" gutterBottom>
         {t("public.hardware.title")}
       </Typography>
-      <TextField
-        label={t("public.hardware.searchLabel")}
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-        fullWidth
-        sx={{ mb: 3, maxWidth: 480 }}
-        slotProps={{
-          input: {
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          },
-        }}
-      />
+      <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
+        <TextField
+          label={t("public.hardware.searchLabel")}
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          fullWidth
+          sx={{ mb: 3, maxWidth: 480 }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+      </Box>
       <Stack spacing={3}>
         <Box>
           <Typography variant="h5" component="h2" gutterBottom>

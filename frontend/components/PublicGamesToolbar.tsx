@@ -10,12 +10,12 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
+import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
-import Collapse from "@mui/material/Collapse";
 import { useTranslation } from "react-i18next";
-import { useScrollCollapse } from "../hooks/useScrollCollapse";
+import { useScrollDirection } from "../hooks/useScrollCollapse";
 import type { GameSortOption } from "../api/types";
 import { GAME_SORT_OPTIONS, type GameSortOptionItem } from "../utils/gameSortOptions";
 import AutocompleteMultiSelect from "./AutocompleteMultiSelect";
@@ -82,7 +82,8 @@ const PublicGamesToolbar = ({
   onOwnershipStatusesChange,
 }: PublicGamesToolbarProps) => {
   const { t } = useTranslation();
-  const collapsed = useScrollCollapse(80);
+  // Hide on scroll down, reappear on scroll up.
+  const hideSearchBar = useScrollDirection(80);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const selectedSortOption =
@@ -92,7 +93,7 @@ const PublicGamesToolbar = ({
   const playStatusOptions = PLAY_STATUS_OPTIONS.map((s) => ({ id: s, name: t(`games.listToolbar.playStatus${s.charAt(0).toUpperCase() + s.slice(1)}`, s) }));
 
   return (
-    <Collapse in={!collapsed} timeout={200}>
+    <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
       <Stack direction="row" spacing={1} sx={{ mb: 3 }}>
       <TextField
         label={t("public.games.searchLabel")}
@@ -205,7 +206,7 @@ const PublicGamesToolbar = ({
         </DialogActions>
       </Dialog>
       </Stack>
-    </Collapse>
+    </Box>
   );
 };
 
