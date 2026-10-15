@@ -22,7 +22,7 @@ import type { LibraryListItem } from "../api/types";
 import { useScrollDirection } from "../hooks/useScrollCollapse";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 
-type SortColumn = "gameName" | "platformName" | "edition" | "format" | "firstReleaseDate" | "dateAdded";
+type SortColumn = "gameName" | "platformName" | "edition" | "format";
 type SortDirection = "asc" | "desc";
 
 const GamesListPage = () => {
@@ -79,14 +79,7 @@ const GamesListPage = () => {
           aVal = a.format;
           bVal = b.format;
           break;
-        case "firstReleaseDate":
-          aVal = a.firstReleaseDate;
-          bVal = b.firstReleaseDate;
-          break;
-        case "dateAdded":
-          aVal = a.dateAdded;
-          bVal = b.dateAdded;
-          break;
+
       }
       if (aVal == null && bVal == null) return 0;
       if (aVal == null) return 1;
@@ -136,8 +129,7 @@ const GamesListPage = () => {
     { key: "platformName", label: t("games.listPage.platformColumn") },
     { key: "edition", label: t("games.listPage.editionColumn") },
     { key: "format", label: t("games.listPage.formatColumn") },
-    { key: "firstReleaseDate", label: t("games.listPage.releaseDateColumn") },
-    { key: "dateAdded", label: t("games.listPage.dateAddedColumn") },
+
   ];
 
   return (
@@ -237,7 +229,7 @@ const GamesListPage = () => {
                     </TableSortLabel>
                   </TableCell>
                 ))}
-                <TableCell>{t("games.listPage.tagsColumn")}</TableCell>
+
               </TableRow>
             </TableHead>
             <TableBody>
