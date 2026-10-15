@@ -95,7 +95,7 @@ class LibraryListItemResponse(CamelModel):
     edition: str | None
     format: str | None
     first_release_date: int | None
-    date_added: datetime
+    date_added: datetime | None
     tag_names: list[str]
 
 
