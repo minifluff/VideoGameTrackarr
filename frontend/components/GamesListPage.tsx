@@ -185,7 +185,7 @@ const GamesListPage = () => {
           <Typography color="error" gutterBottom>
             Failed to load games: {error instanceof Error ? error.message : "Unknown error"}
           </Typography>
-          {(error as any)?.response?.data && (
+          {(error as { response?: { data?: unknown } })?.response?.data && (
             <Typography
               component="pre"
               sx={{
@@ -200,7 +200,7 @@ const GamesListPage = () => {
                 overflow: "auto",
               }}
             >
-              {JSON.stringify((error as any).response.data, null, 2)}
+              {JSON.stringify((error as { response?: { data?: unknown } }).response?.data, null, 2)}
             </Typography>
           )}
         </Paper>
