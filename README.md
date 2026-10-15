@@ -35,6 +35,7 @@ My code is free to use and is currently built off Version 1.30.0. Just let me kn
 - Added Test Game list page
 - Submenus collapse
 - Added Scheduled JSON backup to Network share
+- Fixed Isthereanydeal sale tracking and removed requirement to manual enter games to track
 - Many more Fixes and changes
 
 ## In-progress features (separate branches)
