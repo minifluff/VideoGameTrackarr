@@ -23,9 +23,13 @@ const PublicSubNav = () => {
     <Collapse in={!collapsed} timeout={200}>
       <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 3 }}>
       {items.map((item) => {
-        // Prefix match too, so Games stays selected on a game's own page.
+        // Exact match for List; Games also stays selected on a game's own detail page
+        // (/public/:token/games/:gameId) but not on the List page.
         const isSelected =
-          location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
+          location.pathname === item.to ||
+          (item.to.endsWith("/games") &&
+            location.pathname.startsWith(`${item.to}/`) &&
+            !location.pathname.startsWith(`${item.to}/list`));
         return (
           <Chip
             key={item.to}
