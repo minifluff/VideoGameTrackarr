@@ -21,11 +21,15 @@ export function useUpdatePlatform() {
       platformId,
       name,
       abbreviation,
+      slug,
+      igdbId,
     }: {
       platformId: number;
       name: string;
       abbreviation?: string | null;
-    }) => updatePlatform(platformId, name, abbreviation),
+      slug?: string | null;
+      igdbId?: number | null;
+    }) => updatePlatform(platformId, name, abbreviation, slug, igdbId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["platforms"] });
       // A rename changes the platform's name embedded in cached game data — drop the
