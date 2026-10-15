@@ -32,24 +32,33 @@ def list_platform_addons(db: Session, slug: str, **filters: Any) -> list[GameWit
     return platform_repository.list_addons_for_platform(db, platform.id, **filters)
 
 
-def create_platform(db: Session, name: str, abbreviation: str | None) -> Platform:
+def create_platform(
+    db: Session, name: str, abbreviation: str | None, slug: str | None = None, igdb_id: int | None = None
+) -> Platform:
     existing = platform_repository.get_by_name(db, name)
     if existing is not None:
         raise ConflictError(f"A platform named {name!r} already exists")
 
-    platform = platform_repository.create_platform(db, name, abbreviation)
+    platform = platform_repository.create_platform(db, name, abbreviation, slug, igdb_id)
     db.commit()
     db.refresh(platform)
     return platform
 
 
-def update_platform(db: Session, platform_id: int, name: str, abbreviation: str | None) -> Platform:
+def update_platform(
+    db: Session,
+    platform_id: int,
+    name: str,
+    abbreviation: str | None,
+    slug: str | None = None,
+    igdb_id: int | None = None,
+) -> Platform:
     platform = _require_platform(db, platform_id)
     existing = platform_repository.get_by_name(db, name)
     if existing is not None and existing.id != platform_id:
         raise ConflictError(f"A platform named {name!r} already exists")
 
-    platform = platform_repository.update_platform(db, platform, name, abbreviation)
+    platform = platform_repository.update_platform(db, platform, name, abbreviation, slug, igdb_id)
     db.commit()
     db.refresh(platform)
     return platform
