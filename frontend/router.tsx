@@ -19,6 +19,7 @@ import EventDetails from "./components/EventDetails";
 import EventsPage from "./components/EventsPage";
 import GameDetails from "./components/GameDetails";
 import GameList from "./components/GameList";
+import GamesListPage from "./components/GamesListPage";
 import PlayingGamesPage from "./components/PlayingGamesPage";
 import WishlistGamesPage from "./components/WishlistGamesPage";
 import HardwarePage from "./components/HardwarePage";
@@ -140,6 +141,7 @@ const router = createBrowserRouter([
             handle: { crumbs: eventDetailCrumbs },
           },
           { path: "/games", element: <GameList />, handle: { crumbs: gamesCrumbs } },
+          { path: "/games/list", element: <GamesListPage />, handle: { crumbs: gamesCrumbs } },
           { path: "/games/playing", element: <PlayingGamesPage />, handle: { crumbs: gamesCrumbs } },
           { path: "/games/wishlist", element: <WishlistGamesPage />, handle: { crumbs: gamesCrumbs } },
           { path: "/games/add", element: <AddGame />, handle: { crumbs: addGameCrumbs } },
