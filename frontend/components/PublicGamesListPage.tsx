@@ -3,7 +3,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
 import Box from "@mui/material/Box";
 import Collapse from "@mui/material/Collapse";
+import FormControl from "@mui/material/FormControl";
 import InputAdornment from "@mui/material/InputAdornment";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
 import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -22,7 +26,7 @@ import { useScrollDirection } from "../hooks/useScrollCollapse";
 import PublicSubNav from "./PublicSubNav";
 import type { PublicGameSummary } from "../api/types";
 
-type SortColumn = "name" | "platforms";
+type SortColumn = "name" | "platforms" | "formats" | "editions";
 type SortDirection = "asc" | "desc";
 
 const PublicGamesListPage = () => {
@@ -34,6 +38,8 @@ const PublicGamesListPage = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [platformFilter, setPlatformFilter] = useState<string>("all");
+  const [formatFilter, setFormatFilter] = useState<string>("all");
   const debouncedSearch = useDebouncedValue(search.trim().toLowerCase(), 300);
 
   const hideSearchBar = useScrollDirection(80);
@@ -49,12 +55,34 @@ const PublicGamesListPage = () => {
     search: debouncedSearch || undefined,
   });
 
+  const platforms = useMemo(() => {
+    const set = new Set<string>();
+    games.forEach((game) => {
+      game.ownedPlatforms.forEach((p) => set.add(p));
+    });
+    return Array.from(set).sort();
+  }, [games]);
+
+  const formats = useMemo(() => {
+    const set = new Set<string>();
+    games.forEach((game) => {
+      (game.ownedFormats ?? []).forEach((f) => set.add(f));
+    });
+    return Array.from(set).sort();
+  }, [games]);
+
   const filteredAndSorted = useMemo(() => {
     let result = games;
+    if (platformFilter !== "all") {
+      result = result.filter((game) => game.ownedPlatforms.includes(platformFilter));
+    }
+    if (formatFilter !== "all") {
+      result = result.filter((game) => (game.ownedFormats ?? []).includes(formatFilter));
+    }
     if (debouncedSearch) {
       const words = debouncedSearch.split(/\s+/).filter(Boolean);
       result = result.filter((game) => {
-        const haystack = [game.name, ...game.ownedPlatforms].join(" ").toLowerCase();
+        const haystack = [game.name, ...game.ownedPlatforms, ...(game.ownedFormats ?? []), ...(game.ownedEditions ?? [])].join(" ").toLowerCase();
         return words.every((word) => haystack.includes(word));
       });
     }
@@ -64,18 +92,24 @@ const PublicGamesListPage = () => {
       if (sortColumn === "name") {
         aVal = a.name;
         bVal = b.name;
-      } else {
+      } else if (sortColumn === "platforms") {
         aVal = a.ownedPlatforms.join(", ");
         bVal = b.ownedPlatforms.join(", ");
+      } else if (sortColumn === "formats") {
+        aVal = (a.ownedFormats ?? []).join(", ");
+        bVal = (b.ownedFormats ?? []).join(", ");
+      } else {
+        aVal = (a.ownedEditions ?? []).join(", ");
+        bVal = (b.ownedEditions ?? []).join(", ");
       }
       const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
       return sortDirection === "asc" ? cmp : -cmp;
     });
-  }, [games, debouncedSearch, sortColumn, sortDirection]);
+  }, [games, debouncedSearch, sortColumn, sortDirection, platformFilter, formatFilter]);
 
   useEffect(() => {
     setPage(0);
-  }, [debouncedSearch]);
+  }, [debouncedSearch, platformFilter, formatFilter]);
 
   const paginatedGames = useMemo(() => {
     const start = page * rowsPerPage;
@@ -94,6 +128,8 @@ const PublicGamesListPage = () => {
   const columns: { key: SortColumn; label: string }[] = [
     { key: "name", label: t("games.listPage.nameColumn") },
     { key: "platforms", label: t("games.listPage.platformColumn") },
+    { key: "formats", label: t("games.listPage.formatColumn") },
+    { key: "editions", label: t("games.listPage.editionColumn") },
   ];
 
   return (
@@ -118,21 +154,51 @@ const PublicGamesListPage = () => {
         </Collapse>
         <Collapse in={!hideSearchBar}>
           <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
-            <TextField
-              label={t("games.listPage.searchLabel")}
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              fullWidth
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
+            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+              <TextField
+                label={t("games.listPage.searchLabel")}
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                sx={{ flexGrow: 1, minWidth: 200 }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+              <Box sx={{ display: "flex", gap: 2, flex: { xs: "1 1 100%", sm: "0 1 auto" } }}>
+                <FormControl sx={{ minWidth: 140, flex: 1 }}>
+                  <InputLabel>{t("games.listPage.platformColumn")}</InputLabel>
+                  <Select
+                    value={platformFilter}
+                    label={t("games.listPage.platformColumn")}
+                    onChange={(e) => setPlatformFilter(e.target.value)}
+                  >
+                    <MenuItem value="all">{t("common.all")}</MenuItem>
+                    {platforms.map((p) => (
+                      <MenuItem key={p} value={p}>{p}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl sx={{ minWidth: 140, flex: 1 }}>
+                  <InputLabel>{t("games.listPage.formatColumn")}</InputLabel>
+                  <Select
+                    value={formatFilter}
+                    label={t("games.listPage.formatColumn")}
+                    onChange={(e) => setFormatFilter(e.target.value)}
+                  >
+                    <MenuItem value="all">{t("common.all")}</MenuItem>
+                    {formats.map((f) => (
+                      <MenuItem key={f} value={f}>{f}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+            </Box>
           </Paper>
         </Collapse>
       </Box>
@@ -170,6 +236,8 @@ const PublicGamesListPage = () => {
                   >
                     <TableCell>{game.name}</TableCell>
                     <TableCell>{game.ownedPlatforms.join(", ") || "—"}</TableCell>
+                    <TableCell>{(game.ownedFormats ?? []).join(", ") || "—"}</TableCell>
+                    <TableCell>{(game.ownedEditions ?? []).join(", ") || "—"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
