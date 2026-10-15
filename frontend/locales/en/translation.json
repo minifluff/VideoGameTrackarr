@@ -1364,7 +1364,8 @@
     },
     "searchBar": {
       "statusAll": "All",
-      "searchPlaceholder": "Enter device or accessory name"
+      "searchPlaceholder": "Enter device or accessory name",
+      "filtersButtonLabel": "Filters & Sort"
     },
     "stats": {
       "ownedConsoles": "Owned consoles",
