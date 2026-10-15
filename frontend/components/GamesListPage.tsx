@@ -245,27 +245,9 @@ const GamesListPage = () => {
 
       {error ? (
         <Paper sx={{ p: 3 }}>
-          <Typography color="error" gutterBottom>
+          <Typography color="error">
             Failed to load games: {error instanceof Error ? error.message : "Unknown error"}
           </Typography>
-          {(error as { response?: { data?: unknown } })?.response?.data && (
-            <Typography
-              component="pre"
-              sx={{
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-                fontSize: "0.75rem",
-                mt: 2,
-                p: 2,
-                bgcolor: "grey.100",
-                borderRadius: 1,
-                maxHeight: 400,
-                overflow: "auto",
-              }}
-            >
-              {JSON.stringify((error as { response?: { data?: unknown } }).response?.data ?? "No details", null, 2)}
-            </Typography>
-          )}
         </Paper>
       ) : isLoading ? (
         <Paper sx={{ p: 3, textAlign: "center", mt: 2 }}>{t("common.loading")}</Paper>
