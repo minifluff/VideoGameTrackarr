@@ -54,21 +54,38 @@ def list_all_library_items(db: Session) -> list[dict]:
 
     result = []
     for item in items:
-        game = game_by_id.get(item.game_id)
-        if not game:
+        try:
+            game = game_by_id.get(item.game_id)
+            if not game:
+                continue
+            # Defensive: any single bad field skips just that row, not the whole list
+            platform_name = None
+            try:
+                if item.platform:
+                    platform_name = item.platform.name
+            except Exception:
+                pass
+            format_value = None
+            try:
+                if item.format:
+                    format_value = item.format.value if hasattr(item.format, "value") else str(item.format)
+            except Exception:
+                pass
+            result.append({
+                "id": item.id,
+                "game_id": game.id,
+                "game_name": game.name or "Unknown",
+                "game_uuid": game.uuid or "",
+                "platform_name": platform_name,
+                "edition": item.edition,
+                "format": format_value,
+                "first_release_date": game.first_release_date,
+                "date_added": item.created_at,
+                "tag_names": tags_by_game.get(game.id, []),
+            })
+        except Exception:
+            # Skip rows that fail for any reason — don't break the whole list
             continue
-        result.append({
-            "id": item.id,
-            "game_id": game.id,
-            "game_name": game.name,
-            "game_uuid": game.uuid,
-            "platform_name": item.platform.name if item.platform else None,
-            "edition": item.edition,
-            "format": item.format.value if item.format else None,
-            "first_release_date": game.first_release_date,
-            "date_added": item.created_at,
-            "tag_names": tags_by_game.get(game.id, []),
-        })
     return result
 
 
