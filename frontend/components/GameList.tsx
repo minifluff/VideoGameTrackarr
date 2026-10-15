@@ -284,6 +284,7 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
         <Collapse in={!hideHeader}>
           {subNav ?? <GamesSubNav />}
         </Collapse>
+        <Collapse in={!hideHeader}>
         {header ?? (
         <Box
           sx={{
@@ -298,11 +299,9 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
             <Typography variant="h4" component="h1" gutterBottom>
               {t("games.list.pageTitle")}
             </Typography>
-            <Collapse in={!hideHeader}>
-              <Typography variant="body2" color="text.secondary">
-                {t("games.list.pageSubtitle")}
-              </Typography>
-            </Collapse>
+            <Typography variant="body2" color="text.secondary">
+              {t("games.list.pageSubtitle")}
+            </Typography>
           </Box>
           <Button
             variant="contained"
@@ -314,6 +313,7 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
           </Button>
         </Box>
         )}
+        </Collapse>
         <GameListToolbar
             searchKeyword={searchKeyword}
             onSearchKeywordChange={handleSearchKeywordChange}
