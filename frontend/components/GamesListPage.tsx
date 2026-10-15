@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
 import Box from "@mui/material/Box";
+import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import InputAdornment from "@mui/material/InputAdornment";
 import Paper from "@mui/material/Paper";
@@ -31,6 +32,7 @@ const GamesListPage = () => {
   const [search, setSearch] = useState("");
   const [sortColumn, setSortColumn] = useState<SortColumn>("gameName");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const debouncedSearch = useDebouncedValue(search.trim().toLowerCase(), 300);
 
   // Hide search bar on scroll down, reappear on scroll up.
@@ -99,6 +101,29 @@ const GamesListPage = () => {
     }
   };
 
+  const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      setSelectedIds(new Set(filteredAndSorted.map((item) => item.id)));
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleSelectOne = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const allSelected = filteredAndSorted.length > 0 && filteredAndSorted.every((item) => selectedIds.has(item.id));
+  const someSelected = filteredAndSorted.some((item) => selectedIds.has(item.id));
+
   const formatDate = (timestamp: number | null): string => {
     if (!timestamp) return "—";
     return new Date(timestamp * 1000).toLocaleDateString();
@@ -162,10 +187,23 @@ const GamesListPage = () => {
       ) : filteredAndSorted.length === 0 ? (
         <Paper sx={{ p: 3, textAlign: "center", mt: 2 }}>{t("games.listPage.emptyState")}</Paper>
       ) : (
-        <TableContainer component={Paper} sx={{ mt: 2 }}>
+        <>
+          {selectedIds.size > 0 && (
+            <Typography variant="body2" sx={{ mt: 2 }}>
+              {t("games.listPage.selectedCount", { count: selectedIds.size })}
+            </Typography>
+          )}
+          <TableContainer component={Paper} sx={{ mt: 2 }}>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    checked={allSelected}
+                    indeterminate={!allSelected && someSelected}
+                    onChange={handleSelectAll}
+                  />
+                </TableCell>
                 {columns.map((col) => (
                   <TableCell key={col.key}>
                     <TableSortLabel
@@ -187,7 +225,14 @@ const GamesListPage = () => {
                   hover
                   sx={{ cursor: "pointer" }}
                   onClick={() => navigate(`/games/${item.gameUuid}`)}
+                  selected={selectedIds.has(item.id)}
                 >
+                  <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={selectedIds.has(item.id)}
+                      onChange={() => handleSelectOne(item.id)}
+                    />
+                  </TableCell>
                   <TableCell>{item.gameName}</TableCell>
                   <TableCell>{item.platformName ?? "—"}</TableCell>
                   <TableCell>{item.edition ?? "—"}</TableCell>
@@ -206,6 +251,7 @@ const GamesListPage = () => {
             </TableBody>
           </Table>
         </TableContainer>
+        </>
       )}
     </>
   );
