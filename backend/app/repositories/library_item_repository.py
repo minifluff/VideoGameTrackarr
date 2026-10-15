@@ -34,14 +34,15 @@ def list_all_library_items(db: Session) -> list[LibraryItem]:
 
 
 def list_tracked_items(db: Session) -> list[LibraryItem]:
-    """Every wishlisted, track_for_sales-opted-in library item across every game/addon, for
-    the Settings -> Sale - Tracked management page — same join/order shape as
-    list_all_library_items above, just scoped down."""
+    """Every wishlisted library item across every game/addon, for the Settings ->
+    Sale - Tracked management page — same join/order shape as list_all_library_items
+    above, just scoped down. All wishlist items are tracked automatically; the
+    track_for_sales flag is no longer a requirement."""
     stmt = (
         select(LibraryItem)
         .options(joinedload(LibraryItem.game), joinedload(LibraryItem.platform))
         .join(Game, Game.id == LibraryItem.game_id)
-        .where(LibraryItem.status == LibraryStatus.WISHLIST, LibraryItem.track_for_sales.is_(True))
+        .where(LibraryItem.status == LibraryStatus.WISHLIST)
         .order_by(Game.name)
     )
     return list(db.scalars(stmt))
