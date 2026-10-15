@@ -20,6 +20,7 @@ const SUB_NAV_ITEMS = [
   { to: "/settings/remove-games", labelKey: "nav.removeGames" },
   { to: "/settings/sale-tracked", labelKey: "nav.saleTracked" },
   { to: "/settings/sales-ignored", labelKey: "nav.salesIgnored" },
+  { to: "/settings/about", labelKey: "nav.about", separatorBefore: true },
 ] as const;
 
 // Mirrors InsightsSubNav.tsx — keeps Tag Manager/Jobs/Integrations/Steam Sync reachable at
