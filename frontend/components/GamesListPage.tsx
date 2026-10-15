@@ -3,13 +3,17 @@ import { useNavigate } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
 import Box from "@mui/material/Box";
 import Checkbox from "@mui/material/Checkbox";
+import FormControl from "@mui/material/FormControl";
 import InputAdornment from "@mui/material/InputAdornment";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
+import Select from "@mui/material/Select";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
-import TablePagination from "@mui/material/TablePagination";
 import TableContainer from "@mui/material/TableContainer";
+import TablePagination from "@mui/material/TablePagination";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
@@ -23,7 +27,7 @@ import type { LibraryListItem } from "../api/types";
 import { useScrollDirection } from "../hooks/useScrollCollapse";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 
-type SortColumn = "gameName" | "platformName" | "edition" | "format";
+type SortColumn = "gameName" | "platformName" | "edition" | "format" | "notes";
 type SortDirection = "asc" | "desc";
 
 const GamesListPage = () => {
@@ -31,10 +35,12 @@ const GamesListPage = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [sortColumn, setSortColumn] = useState<SortColumn>("gameName");
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [platformFilter, setPlatformFilter] = useState<string>("all");
+  const [formatFilter, setFormatFilter] = useState<string>("all");
   const debouncedSearch = useDebouncedValue(search.trim().toLowerCase(), 300);
 
   // Hide search bar on scroll down, reappear on scroll up.
@@ -51,20 +57,42 @@ const GamesListPage = () => {
   // Defensive: ensure items is always an array (API might return unexpected shape)
   const items = Array.isArray(rawItems) ? rawItems : [];
 
+  const platforms = useMemo(() => {
+    const set = new Set<string>();
+    items.forEach((item) => {
+      if (item.platformName) set.add(item.platformName);
+    });
+    return Array.from(set).sort();
+  }, [items]);
+
+  const formats = useMemo(() => {
+    const set = new Set<string>();
+    items.forEach((item) => {
+      if (item.format) set.add(item.format);
+    });
+    return Array.from(set).sort();
+  }, [items]);
+
   const filteredAndSorted = useMemo(() => {
     let result = items;
+    if (platformFilter !== "all") {
+      result = result.filter((item) => item.platformName === platformFilter);
+    }
+    if (formatFilter !== "all") {
+      result = result.filter((item) => item.format === formatFilter);
+    }
     if (debouncedSearch) {
       result = result.filter(
         (item) =>
           item.gameName.toLowerCase().includes(debouncedSearch) ||
           (item.platformName?.toLowerCase().includes(debouncedSearch) ?? false) ||
           (item.edition?.toLowerCase().includes(debouncedSearch) ?? false) ||
-          item.tagNames.some((tag) => tag.toLowerCase().includes(debouncedSearch))
+          (item.notes?.toLowerCase().includes(debouncedSearch) ?? false)
       );
     }
     const sorted = [...result].sort((a, b) => {
-      let aVal: string | number | null;
-      let bVal: string | number | null;
+      let aVal: string | null;
+      let bVal: string | null;
       switch (sortColumn) {
         case "gameName":
           aVal = a.gameName;
@@ -82,7 +110,10 @@ const GamesListPage = () => {
           aVal = a.format;
           bVal = b.format;
           break;
-
+        case "notes":
+          aVal = a.notes;
+          bVal = b.notes;
+          break;
       }
       if (aVal == null && bVal == null) return 0;
       if (aVal == null) return 1;
@@ -91,7 +122,16 @@ const GamesListPage = () => {
       return sortDirection === "asc" ? cmp : -cmp;
     });
     return sorted;
-  }, [items, debouncedSearch, sortColumn, sortDirection]);
+  }, [items, debouncedSearch, sortColumn, sortDirection, platformFilter, formatFilter]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [debouncedSearch, platformFilter, formatFilter]);
+
+  const paginatedItems = useMemo(() => {
+    const start = page * rowsPerPage;
+    return filteredAndSorted.slice(start, start + rowsPerPage);
+  }, [filteredAndSorted, page, rowsPerPage]);
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -132,7 +172,7 @@ const GamesListPage = () => {
     { key: "platformName", label: t("games.listPage.platformColumn") },
     { key: "edition", label: t("games.listPage.editionColumn") },
     { key: "format", label: t("games.listPage.formatColumn") },
-
+    { key: "notes", label: t("games.listPage.notesColumn") },
   ];
 
   return (
@@ -156,21 +196,49 @@ const GamesListPage = () => {
         </Typography>
         <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
           <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
-            <TextField
-              label={t("games.listPage.searchLabel")}
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              fullWidth
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
+            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+              <TextField
+                label={t("games.listPage.searchLabel")}
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                sx={{ flexGrow: 1, minWidth: 200 }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+              <FormControl sx={{ minWidth: 150 }}>
+                <InputLabel>{t("games.listPage.platformColumn")}</InputLabel>
+                <Select
+                  value={platformFilter}
+                  label={t("games.listPage.platformColumn")}
+                  onChange={(e) => setPlatformFilter(e.target.value)}
+                >
+                  <MenuItem value="all">{t("common.all")}</MenuItem>
+                  {platforms.map((p) => (
+                    <MenuItem key={p} value={p}>{p}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl sx={{ minWidth: 150 }}>
+                <InputLabel>{t("games.listPage.formatColumn")}</InputLabel>
+                <Select
+                  value={formatFilter}
+                  label={t("games.listPage.formatColumn")}
+                  onChange={(e) => setFormatFilter(e.target.value)}
+                >
+                  <MenuItem value="all">{t("common.all")}</MenuItem>
+                  {formats.map((f) => (
+                    <MenuItem key={f} value={f}>{f}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
           </Paper>
         </Box>
       </Box>
@@ -195,7 +263,7 @@ const GamesListPage = () => {
                 overflow: "auto",
               }}
             >
-              {JSON.stringify((error as { response?: { data?: unknown } }).response?.data, null, 2)}
+              {JSON.stringify((error as { response?: { data?: unknown } }).response?.data ?? "No details", null, 2)}
             </Typography>
           )}
         </Paper>
@@ -254,6 +322,7 @@ const GamesListPage = () => {
                   <TableCell>{item.platformName ?? "—"}</TableCell>
                   <TableCell>{item.edition ?? "—"}</TableCell>
                   <TableCell>{item.format ?? "—"}</TableCell>
+                  <TableCell>{item.notes ?? "—"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
