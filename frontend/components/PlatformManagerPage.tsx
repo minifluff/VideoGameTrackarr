@@ -29,7 +29,7 @@ import MassMovePlatformDialog from "./MassMovePlatformDialog";
 import PlatformDialog from "./PlatformDialog";
 import SettingsSubNav from "./SettingsSubNav";
 
-type SortKey = "name" | "abbreviation" | "gameCount";
+type SortKey = "name" | "abbreviation" | "gameCount" | "igdbId" | "slug";
 
 const PlatformManagerPage = () => {
   const { t } = useTranslation();
@@ -72,6 +72,12 @@ const PlatformManagerPage = () => {
       } else if (sortBy === "abbreviation") {
         va = (a.abbreviation ?? "").toLowerCase();
         vb = (b.abbreviation ?? "").toLowerCase();
+      } else if (sortBy === "igdbId") {
+        va = a.igdbId ?? -1;
+        vb = b.igdbId ?? -1;
+      } else if (sortBy === "slug") {
+        va = (a.slug ?? "").toLowerCase();
+        vb = (b.slug ?? "").toLowerCase();
       } else {
         va = a.gameCount;
         vb = b.gameCount;
@@ -228,6 +234,8 @@ const PlatformManagerPage = () => {
                 </TableCell>
                 <TableCell>{sortLabel("name", t("settings.platformManager.nameColumn"))}</TableCell>
                 <TableCell>{sortLabel("abbreviation", t("settings.platformManager.abbreviationColumn"))}</TableCell>
+                <TableCell align="right">{sortLabel("igdbId", t("settings.platformManager.igdbIdColumn"))}</TableCell>
+                <TableCell>{sortLabel("slug", t("settings.platformManager.slugColumn"))}</TableCell>
                 <TableCell align="right">{sortLabel("gameCount", t("settings.platformManager.gamesColumn"))}</TableCell>
                 <TableCell align="right">{t("common.actions")}</TableCell>
               </TableRow>
@@ -248,6 +256,8 @@ const PlatformManagerPage = () => {
                     </TableCell>
                     <TableCell>{platform.name}</TableCell>
                     <TableCell>{platform.abbreviation ?? "—"}</TableCell>
+                    <TableCell align="right">{platform.igdbId ?? "—"}</TableCell>
+                    <TableCell>{platform.slug ?? "—"}</TableCell>
                     <TableCell align="right">{platform.gameCount}</TableCell>
                     <TableCell align="right">
                       <Tooltip title={t("common.edit")}>
