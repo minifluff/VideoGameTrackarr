@@ -7,6 +7,7 @@ import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import type { GameSortOption } from "../api/types";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { useScrollDirection } from "../hooks/useScrollCollapse";
 import { usePublicGames, usePublicPlatforms, usePublicTags } from "../hooks/usePublic";
 import { useSessionState } from "../hooks/useSessionState";
 import GameCard from "./GameCard";
@@ -26,6 +27,8 @@ const PublicGamesPage = () => {
   const [playStatuses, setPlayStatuses] = useSessionState<string[]>("public.games.playStatuses", []);
   const [ownershipStatuses, setOwnershipStatuses] = useSessionState<OwnershipStatus[]>("public.games.ownershipStatuses", []);
   const debouncedSearch = useDebouncedValue(search.trim(), 500);
+  // Hide on scroll down, reappear on scroll up — same as the public list page.
+  const hideSearchBar = useScrollDirection(80);
   const { data: allGames, isLoading } = usePublicGames(token, {
     search: debouncedSearch || undefined,
     sort,
@@ -52,7 +55,8 @@ const PublicGamesPage = () => {
       <Typography variant="h4" component="h1" gutterBottom>
         {t("public.games.title")}
       </Typography>
-      <PublicGamesToolbar
+      <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
+        <PublicGamesToolbar
         search={search}
         onSearchChange={setSearch}
         sort={sort}
@@ -72,6 +76,7 @@ const PublicGamesPage = () => {
         onOwnershipStatusesChange={setOwnershipStatuses}
 
       />
+      </Box>
       {isLoading ? (
         <Paper sx={{ p: 3, textAlign: "center" }}>{t("common.loading")}</Paper>
       ) : !games || games.length === 0 ? (
