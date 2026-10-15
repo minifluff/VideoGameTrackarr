@@ -37,7 +37,11 @@ const GamesListPage = () => {
   // Hide search bar on scroll down, reappear on scroll up.
   const hideSearchBar = useScrollDirection(80);
 
-  const { data: items = [], isLoading } = useQuery({
+  const {
+    data: items = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["library", "all-items"],
     queryFn: listAllLibraryItems,
   });
@@ -174,7 +178,13 @@ const GamesListPage = () => {
         </Box>
       </Box>
 
-      {isLoading ? (
+      {error ? (
+        <Paper sx={{ p: 3 }}>
+          <Typography color="error">
+            Failed to load games: {error instanceof Error ? error.message : "Unknown error"}
+          </Typography>
+        </Paper>
+      ) : isLoading ? (
         <Paper sx={{ p: 3, textAlign: "center", mt: 2 }}>{t("common.loading")}</Paper>
       ) : filteredAndSorted.length === 0 ? (
         <Paper sx={{ p: 3, textAlign: "center", mt: 2 }}>{t("games.listPage.emptyState")}</Paper>
