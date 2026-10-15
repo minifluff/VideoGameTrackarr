@@ -17,6 +17,7 @@ import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { listAllLibraryItems } from "../api/library";
+import GamesSubNav from "./GamesSubNav";
 import type { LibraryListItem } from "../api/types";
 import { useScrollDirection } from "../hooks/useScrollCollapse";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
@@ -129,7 +130,10 @@ const GamesListPage = () => {
           boxShadow: hideSearchBar ? "none" : "0 4px 8px -4px rgba(0, 0, 0, 0.2)",
         }}
       >
-        <Typography variant="h4" component="h1" gutterBottom sx={{ display: hideSearchBar ? "none" : "block" }}>
+        <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
+          <GamesSubNav />
+        </Box>
+        <Typography variant="h4" component="h1" gutterBottom sx={{ display: hideSearchBar ? "none" : "block", mt: 2 }}>
           {t("games.listPage.title")}
         </Typography>
         <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
