@@ -31,7 +31,6 @@ const DashboardPage = () => {
   const hasOnSale = Boolean(onSaleItems && onSaleItems.length > 0);
 
   const sections = [
-    hasOnSale && { key: "onSale", node: <OnSaleTeaserSection /> },
     hasGameReleases && {
       key: "games",
       node: (
@@ -41,6 +40,7 @@ const DashboardPage = () => {
         />
       ),
     },
+    hasOnSale && { key: "onSale", node: <OnSaleTeaserSection /> },
     hasHardwareReleases && {
       key: "hardware",
       node: (
