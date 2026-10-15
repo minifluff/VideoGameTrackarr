@@ -41,6 +41,7 @@ const HardwarePage = () => {
           zIndex: 1,
           bgcolor: "background.default",
           // When the search bar is hidden, collapse the container completely.
+          pt: hideSearchBar ? 0 : 0.5,
           pb: hideSearchBar ? 0 : 1,
           // Once scrolled content locks under this sticky header, the bottom edge needs to
           // read as an intentional floating panel — otherwise half-covered floating labels
