@@ -218,7 +218,7 @@ const GamesListPage = () => {
               </FormControl>
             </Box>
           </Paper>
-        </Box>
+        </Collapse>
       </Box>
 
       {error ? (
