@@ -23,7 +23,9 @@
     "viewAll": "View all",
     "scrollPrevious": "Scroll previous",
     "scrollNext": "Scroll next",
-    "transfer": "Move to another game"
+    "transfer": "Move to another game",
+    "collapse": "Collapse",
+    "expand": "Expand"
   },
   "errors": {
     "pageNotFoundTitle": "Page not found",
