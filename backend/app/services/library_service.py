@@ -53,6 +53,7 @@ def list_all_library_items(db: Session) -> list[dict]:
                 "first_release_date": None,
                 "date_added": None,
                 "tag_names": [],
+                "notes": item.notes,
             })
         except Exception:
             continue
