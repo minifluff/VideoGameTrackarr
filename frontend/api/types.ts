@@ -514,6 +514,19 @@ export interface LibraryItem {
   roms: RomFileSummary[];
 }
 
+export interface LibraryListItem {
+  id: number;
+  gameId: number;
+  gameName: string;
+  gameUuid: string;
+  platformName: string | null;
+  edition: string | null;
+  format: string | null;
+  firstReleaseDate: number | null;
+  dateAdded: string;
+  tagNames: string[];
+}
+
 export type RomUnplayableReason = "unsupported_platform" | "unsupported_file_type" | "missing_bios";
 
 // A ROM attached to one owned ROM/Abandonware/ISO copy. playable/core are resolved by the

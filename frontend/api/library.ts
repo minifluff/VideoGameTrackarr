@@ -5,6 +5,7 @@ import type {
   EmulatorSession,
   LibraryItem,
   LibraryItemInput,
+  LibraryListItem,
   LibraryStatus,
   SaveState,
 } from "./types";
@@ -169,4 +170,9 @@ export async function splitLibraryItem(itemId: number, newGameName: string): Pro
     new_game_name: newGameName,
   });
   return data;
+}
+
+export async function listAllLibraryItems(): Promise<LibraryListItem[]> {
+  const response = await apiClient.get<LibraryListItem[]>("/api/library/items");
+  return response.data;
 }
