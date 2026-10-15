@@ -23,15 +23,13 @@ def get_or_create_cache(db: Session, game_id: int) -> ItadPriceCache:
 
 
 def list_distinct_wishlisted_games(db: Session) -> list[Game]:
-    """Every game with at least one WISHLIST LibraryItem — deduplicated, since the same
-    game can be wishlisted via more than one row (different platforms/regions), but price
-    only needs fetching once per game. The track_for_sales opt-in gates sale alerts, not
-    price data: the refresh job populates prices for the whole wishlist so the wishlist
-    page can show them."""
+    """Every game with at least one WISHLIST, track_for_sales-opted-in LibraryItem —
+    deduplicated, since the same game can be wishlisted via more than one row (different
+    platforms/regions), but price only needs fetching once per game."""
     stmt = (
         select(Game)
         .join(LibraryItem, LibraryItem.game_id == Game.id)
-        .where(LibraryItem.status == LibraryStatus.WISHLIST)
+        .where(LibraryItem.status == LibraryStatus.WISHLIST, LibraryItem.track_for_sales.is_(True))
         .distinct()
     )
     return list(db.scalars(stmt))
