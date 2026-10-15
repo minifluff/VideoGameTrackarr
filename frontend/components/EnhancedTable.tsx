@@ -362,7 +362,7 @@ const EnhancedTable = ({
     headCells.length > 0 && headCells.slice(0, -1).every((cell) => typeof cell.width === "number");
 
   return (
-    <Box sx={{ width: "100%" }}>
+    <Box sx={{ width: "100%", scrollbarGutter: "stable" }}>
       <Paper sx={{ width: "100%", mb: 2, overflow: "hidden", borderRadius: 2 }}>
         <EnhancedTableToolbar
           numSelected={selected.length}
