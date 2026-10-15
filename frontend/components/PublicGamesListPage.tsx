@@ -23,7 +23,6 @@ import { useTranslation } from "react-i18next";
 import { usePublicGames } from "../hooks/usePublic";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useScrollDirection } from "../hooks/useScrollCollapse";
-import PublicSubNav from "./PublicSubNav";
 import type { PublicGameSummary } from "../api/types";
 
 type SortColumn = "name" | "platforms" | "formats" | "editions";
@@ -144,9 +143,6 @@ const PublicGamesListPage = () => {
           pb: hideSearchBar ? 0 : 1,
         }}
       >
-        <Collapse in={isAtTop}>
-          <PublicSubNav />
-        </Collapse>
         <Collapse in={isAtTop}>
           <Typography variant="h4" component="h1" gutterBottom sx={{ mt: 2 }}>
             {t("public.gamesList.title")}
