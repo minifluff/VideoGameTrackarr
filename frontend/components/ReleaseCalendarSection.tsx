@@ -57,17 +57,6 @@ const ReleaseCalendarSection = ({ scope, title }: ReleaseCalendarSectionProps) =
 
   return (
     <>
-    {scope === "games" && shareToken && (
-      <Button
-        variant="contained"
-        size="large"
-        fullWidth
-        sx={{ mb: 2, py: 1.5, fontSize: "1.1rem" }}
-        onClick={() => navigate(`/public/${shareToken}/games`)}
-      >
-        {t("insights.dashboard.publicCollectionButton")}
-      </Button>
-    )}
     <CardCarousel
       items={releases}
       getItemKey={(item) =>
@@ -156,6 +145,17 @@ const ReleaseCalendarSection = ({ scope, title }: ReleaseCalendarSectionProps) =
         return null;
       }}
     />
+    {scope === "games" && shareToken && (
+      <Button
+        variant="contained"
+        size="large"
+        fullWidth
+        sx={{ mt: 2, py: 1.5, fontSize: "1.1rem" }}
+        onClick={() => navigate(`/public/${shareToken}/games`)}
+      >
+        {t("insights.dashboard.publicCollectionButton")}
+      </Button>
+    )}
     </>
   );
 };
