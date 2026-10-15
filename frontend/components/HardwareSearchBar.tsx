@@ -145,20 +145,20 @@ const HardwareSearchBar = ({
             </IconButton>
           </Tooltip>
         </Stack>
-        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-          {statusOptions.map((option) => (
-            <Chip
-              key={option.value}
-              label={option.label}
-              color={status === option.value ? "primary" : "default"}
-              variant={status === option.value ? "filled" : "outlined"}
-              onClick={() => onStatusChange(option.value)}
-            />
-          ))}
-        </Box>
         <Dialog open={filtersOpen} onClose={() => setFiltersOpen(false)} fullWidth maxWidth="md">
           <DialogTitle>{t("hardware.searchBar.filtersButtonLabel")}</DialogTitle>
           <DialogContent>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
+              {statusOptions.map((option) => (
+                <Chip
+                  key={option.value}
+                  label={option.label}
+                  color={status === option.value ? "primary" : "default"}
+                  variant={status === option.value ? "filled" : "outlined"}
+                  onClick={() => onStatusChange(option.value)}
+                />
+              ))}
+            </Box>
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <LookupFilter
