@@ -31,8 +31,6 @@ import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
-import Tab from "@mui/material/Tab";
-import Tabs from "@mui/material/Tabs";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import TextField from "@mui/material/TextField";
@@ -294,7 +292,7 @@ interface GameListToolbarProps {
   // Optional like includeAddons below — the Games page never shows a still-undiscovered
   // "what's missing" game at all (see GameList.tsx), so it has no use for this toggle either;
   // same for the Missing Addons page (it's already inherently "what's missing"). Either
-  // page's More tab ends up with just Sort By when neither this nor includeAddons is passed.
+  // Sort and toggles render inline in the filter grid when neither is passed.
   showMissing?: boolean;
   onShowMissingChange?: (value: boolean) => void;
   // Only the Collection/Series detail page passes these — rendered in the More tab right
@@ -417,7 +415,7 @@ const GameListToolbar = ({
   const hasActiveFilters = activeFilterCount > 0;
 
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"filter" | "more">("filter");
+
   // The Remove split button's dropdown (currently just "Tags") — anchored to the whole
   // ButtonGroup (via buttonGroupRef), not just the small arrow segment, so the menu below
   // can match its full width/left/right bounds instead of hugging the arrow alone.
@@ -647,17 +645,48 @@ const GameListToolbar = ({
         </Stack>
         <Dialog open={filtersOpen} onClose={() => setFiltersOpen(false)} fullWidth maxWidth="md">
           <DialogTitle>{t("games.listToolbar.filtersButtonLabel")}</DialogTitle>
-          <Tabs
-            value={activeTab}
-            onChange={(_event, value) => setActiveTab(value)}
-            variant="fullWidth"
-          >
-            <Tab value="filter" label={t("games.listToolbar.filterTabLabel")} />
-            <Tab value="more" label={t("games.listToolbar.moreTabLabel")} />
-          </Tabs>
           <DialogContent>
-            {activeTab === "filter" ? (
               <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <AutocompleteSelect<GameSortOptionItem>
+                    label={t("games.listToolbar.sortByLabel")}
+                    options={GAME_SORT_OPTIONS}
+                    value={selectedSortOption}
+                    onChange={(newValue) => onSortChange(newValue?.value ?? "name_asc")}
+                    getOptionLabel={(option) => t(option.labelKey)}
+                    isOptionEqualToValue={(option, val) => option.value === val.value}
+                    disableClearable
+                    fullWidth
+                  />
+                </Grid>
+                {onShowMissingChange || onIncludeAddonsChange ? (
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Stack spacing={0.5}>
+                      {onShowMissingChange ? (
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={Boolean(showMissing)}
+                              onChange={(event) => onShowMissingChange(event.target.checked)}
+                            />
+                          }
+                          label={t("games.listToolbar.showMissingLabel")}
+                        />
+                      ) : null}
+                      {onIncludeAddonsChange ? (
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={Boolean(includeAddons)}
+                              onChange={(event) => onIncludeAddonsChange(event.target.checked)}
+                            />
+                          }
+                          label={t("catalog.browseGrid.includeAddonsLabel")}
+                        />
+                      ) : null}
+                    </Stack>
+                  </Grid>
+                ) : null}
                 {!hideGameTypesField ? (
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Stack spacing={0.5}>
@@ -879,57 +908,11 @@ const GameListToolbar = ({
                   </Grid>
                 ) : null}
               </Grid>
-            ) : (
-              <Grid container spacing={2} sx={{ mt: 0.5 }}>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <AutocompleteSelect<GameSortOptionItem>
-                    label={t("games.listToolbar.sortByLabel")}
-                    options={GAME_SORT_OPTIONS}
-                    value={selectedSortOption}
-                    onChange={(newValue) => onSortChange(newValue?.value ?? "name_asc")}
-                    getOptionLabel={(option) => t(option.labelKey)}
-                    isOptionEqualToValue={(option, val) => option.value === val.value}
-                    disableClearable
-                    fullWidth
-                  />
-                </Grid>
-                {onShowMissingChange || onIncludeAddonsChange ? (
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Stack spacing={0.5}>
-                      {onShowMissingChange ? (
-                        <FormControlLabel
-                          control={
-                            <Switch
-                              checked={Boolean(showMissing)}
-                              onChange={(event) => onShowMissingChange(event.target.checked)}
-                            />
-                          }
-                          label={t("games.listToolbar.showMissingLabel")}
-                        />
-                      ) : null}
-                      {onIncludeAddonsChange ? (
-                        <FormControlLabel
-                          control={
-                            <Switch
-                              checked={Boolean(includeAddons)}
-                              onChange={(event) => onIncludeAddonsChange(event.target.checked)}
-                            />
-                          }
-                          label={t("catalog.browseGrid.includeAddonsLabel")}
-                        />
-                      ) : null}
-                    </Stack>
-                  </Grid>
-                ) : null}
-              </Grid>
-            )}
           </DialogContent>
           <DialogActions>
-            {activeTab === "filter" ? (
-              <Button onClick={handleClearFilters} disabled={!hasActiveFilters}>
-                {t("games.listToolbar.clearFiltersButton")}
-              </Button>
-            ) : null}
+            <Button onClick={handleClearFilters} disabled={!hasActiveFilters}>
+              {t("games.listToolbar.clearFiltersButton")}
+            </Button>
             <Button onClick={() => setFiltersOpen(false)} variant="contained">
               {t("common.close")}
             </Button>
