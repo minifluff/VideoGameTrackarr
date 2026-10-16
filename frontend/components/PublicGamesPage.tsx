@@ -70,7 +70,7 @@ const PublicGamesPage = () => {
         <Button
           variant={sort === "date_added_desc" ? "contained" : "outlined"}
           color={sort === "date_added_desc" ? "secondary" : "primary"}
-          onClick={() => setSort("date_added_desc")}
+          onClick={() => setSort(sort === "date_added_desc" ? "name_asc" : "date_added_desc")}
           sx={{ flexShrink: 0 }}
         >
           {t("games.list.newestButton")}

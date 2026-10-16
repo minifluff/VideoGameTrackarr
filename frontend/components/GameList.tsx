@@ -315,7 +315,7 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
             <Button
               variant={sort === "date_added_desc" ? "contained" : "outlined"}
               color={sort === "date_added_desc" ? "secondary" : "primary"}
-              onClick={() => setSort("date_added_desc")}
+              onClick={() => setSort(sort === "date_added_desc" ? "name_asc" : "date_added_desc")}
             >
               {t("games.list.newestButton")}
             </Button>
