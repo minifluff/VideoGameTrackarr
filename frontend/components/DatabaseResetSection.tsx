@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
+import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 import TimerOffIcon from "@mui/icons-material/TimerOff";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -122,7 +122,7 @@ const DatabaseResetSection = () => {
       <Button
         variant="outlined"
         color="error"
-        startIcon={<RemoveCircleOutlineIcon />}
+        startIcon={<RemoveCircleIcon />}
         onClick={() => navigate("/settings/remove-games")}
         sx={{ ml: 1 }}
       >
