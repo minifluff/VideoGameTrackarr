@@ -797,7 +797,8 @@
       "addSelectedButton": "Add Selected",
       "bulkImportInProgressMessage": "Games are being added, please come back after some time.",
       "bulkImportCompletedToast": "Bulk import finished — {{succeeded}} added, {{failed}} failed.",
-      "bulkImportFailedToast": "Bulk import failed. Please try again."
+      "bulkImportFailedToast": "Bulk import failed. Please try again.",
+      "steamSyncButton": "Steam Sync"
     },
     "suggestionsDialog": {
       "title": "Is this game already on IGDB?",
