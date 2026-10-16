@@ -16,6 +16,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { Trans, useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import igdbLogo from "../assets/igdb-logo.png";
 import itadLogo from "../assets/isthereanydeal-logo.png";
@@ -28,6 +29,7 @@ import SettingsSubNav from "./SettingsSubNav";
 
 const PlayniteSection = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data: config } = usePlayniteConfig();
   const updateConfig = useUpdatePlayniteConfig();
   const testConnection = useTestPlayniteConnection();
@@ -81,6 +83,10 @@ const PlayniteSection = () => {
       <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
         <Typography variant="subtitle1">{t("settings.integrations.playniteHeading")}</Typography>
         <ConfiguredChip configured={configured} />
+        <Box sx={{ flexGrow: 1 }} />
+        <Button variant="outlined" onClick={() => navigate("/settings/playnite-sync")}>
+          {t("nav.playniteSync")}
+        </Button>
       </Stack>
       <Alert severity="info" sx={{ mb: 2 }}>
         {t("settings.integrations.playniteDescription")}
