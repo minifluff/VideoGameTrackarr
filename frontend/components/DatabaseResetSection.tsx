@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import TimerOffIcon from "@mui/icons-material/TimerOff";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -19,6 +21,7 @@ import { TOAST_OPTIONS } from "../utils/toastOptions";
 
 const DatabaseResetSection = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const resetDatabase = useResetDatabase();
   const clearPlaytime = useClearPlaytime();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -115,6 +118,15 @@ const DatabaseResetSection = () => {
         sx={{ ml: 1 }}
       >
         {t("settings.dangerZone.clearPlaytimeButton")}
+      </Button>
+      <Button
+        variant="outlined"
+        color="error"
+        startIcon={<RemoveCircleOutlineIcon />}
+        onClick={() => navigate("/settings/remove-games")}
+        sx={{ ml: 1 }}
+      >
+        {t("nav.removeGames")}
       </Button>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>

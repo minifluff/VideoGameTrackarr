@@ -16,7 +16,6 @@ const SUB_NAV_ITEMS = [
   // Separate from the rest — this is the one item here that isn't app configuration, it's
   // the Steam library sync workflow, which just happens to live under Settings now.
   { to: "/settings/steam-sync", labelKey: "nav.steamSync", separatorBefore: true },
-  { to: "/settings/remove-games", labelKey: "nav.removeGames" },
   { to: "/settings/sale-tracked", labelKey: "nav.saleTracked" },
   { to: "/settings/sales-ignored", labelKey: "nav.salesIgnored" },
   { to: "/settings/about", labelKey: "nav.about", separatorBefore: true },
