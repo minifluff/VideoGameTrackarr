@@ -705,7 +705,8 @@
       "gamesRemovedToast_other": "{{count}} games removed from your library",
       "gamesHiddenToast": "{{count}} game(s) hidden from public",
       "gamesHiddenErrorToast": "Failed to hide games from public",
-      "gamesUnhiddenToast": "{{count}} game(s) unhidden"
+      "gamesUnhiddenToast": "{{count}} game(s) unhidden",
+      "newestButton": "Newest"
     },
     "listToolbar": {
       "exitSelectionModeAriaLabel": "Exit selection mode",
