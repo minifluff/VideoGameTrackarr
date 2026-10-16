@@ -223,9 +223,18 @@ const AddGame = () => {
       )}
       <GamesSubNav />
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          {t("games.add.pageTitle")}
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Typography variant="h4" component="h1" gutterBottom>
+            {t("games.add.pageTitle")}
+          </Typography>
+          <Button
+            variant="outlined"
+            onClick={() => navigate("/settings/steam-sync")}
+            sx={{ mb: 1 }}
+          >
+            {t("games.add.steamSyncButton")}
+          </Button>
+        </Box>
         <Typography variant="body2" color="text.secondary">
           {t("games.add.pageSubtitle")}
         </Typography>
