@@ -106,6 +106,18 @@ function updateFavicon(icon: string) {
   document.head.appendChild(link);
 }
 
+function updateThemeColor(hex: string) {
+  // Keep the browser chrome (Android address bar, PWA status bar) in sync with
+  // the user's accent color instead of the hardcoded default.
+  let meta = document.querySelector('meta[name="theme-color"]');
+  if (!meta) {
+    meta = document.createElement("meta");
+    meta.setAttribute("name", "theme-color");
+    document.head.appendChild(meta);
+  }
+  meta.setAttribute("content", hex);
+}
+
 export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
   const [accentColor, setAccentColorState] = useState<string>(readStoredAccent);
   const [appTitle, setAppTitleState] = useState<string>(readStoredTitle);
@@ -211,6 +223,10 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     updateFavicon(appIcon);
   }, [appIcon]);
+
+  useEffect(() => {
+    updateThemeColor(accentColor);
+  }, [accentColor]);
 
   return (
     <AppearanceContext.Provider
