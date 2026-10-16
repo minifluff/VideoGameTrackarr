@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
 import Button from "@mui/material/Button";
 import Collapse from "@mui/material/Collapse";
 import Paper from "@mui/material/Paper";
@@ -303,14 +304,22 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
               {t("games.list.pageSubtitle")}
             </Typography>
           </Box>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => navigate("/games/add")}
-            sx={{ flexShrink: 0 }}
-          >
-            {t("games.list.addGameButton")}
-          </Button>
+          <Stack direction="column" spacing={1} sx={{ flexShrink: 0 }}>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => navigate("/games/add")}
+            >
+              {t("games.list.addGameButton")}
+            </Button>
+            <Button
+              variant={sort === "date_added_desc" ? "contained" : "outlined"}
+              color={sort === "date_added_desc" ? "secondary" : "primary"}
+              onClick={() => setSort("date_added_desc")}
+            >
+              {t("games.list.newestButton")}
+            </Button>
+          </Stack>
         </Box>
         )}
         </Collapse>
