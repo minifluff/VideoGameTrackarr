@@ -102,6 +102,7 @@ const DatabaseResetSection = () => {
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         {t("settings.dangerZone.description")}
       </Typography>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
       <Button
         variant="outlined"
         color="error"
@@ -115,7 +116,6 @@ const DatabaseResetSection = () => {
         color="error"
         startIcon={<TimerOffIcon />}
         onClick={openPlaytimeDialog}
-        sx={{ ml: 1 }}
       >
         {t("settings.dangerZone.clearPlaytimeButton")}
       </Button>
@@ -124,10 +124,10 @@ const DatabaseResetSection = () => {
         color="error"
         startIcon={<RemoveCircleIcon />}
         onClick={() => navigate("/settings/remove-games")}
-        sx={{ ml: 1 }}
       >
         {t("nav.removeGames")}
       </Button>
+      </Box>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
         <DialogTitle color="error">{t("settings.dangerZone.dialogTitle")}</DialogTitle>
