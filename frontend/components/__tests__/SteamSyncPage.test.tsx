@@ -144,6 +144,9 @@ describe("SteamSyncPage on pages with nothing to sync, and Hide synced", { timeo
   it("offers Select all from a page that has nothing syncable on it", () => {
     renderPage();
 
+    // Hide synced is on by default — turn it off to see the full page
+    fireEvent.click(hideSyncedSwitch());
+
     expect(headerCheckbox()).toBeDisabled();
     expect(screen.getByText("Nothing to sync on this page.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Select all 5 games" }));
@@ -160,8 +163,8 @@ describe("SteamSyncPage on pages with nothing to sync, and Hide synced", { timeo
     ];
     renderPage();
 
-    fireEvent.click(hideSyncedSwitch());
-
+    // Hide synced is on by default
+    expect(hideSyncedSwitch()).toBeChecked();
     expect(screen.queryByText("Aaa Synced 01")).not.toBeInTheDocument();
     expect(screen.queryByText("Ignored Game")).not.toBeInTheDocument();
     expect(screen.getByText("Game 1")).toBeInTheDocument();
@@ -178,8 +181,7 @@ describe("SteamSyncPage on pages with nothing to sync, and Hide synced", { timeo
     ];
     renderPage();
 
-    fireEvent.click(hideSyncedSwitch());
-
+    // Hide synced is on by default
     expect(screen.getByText("Base Game")).toBeInTheDocument();
     expect(screen.queryByText("Other Synced Game")).not.toBeInTheDocument();
   });
@@ -188,7 +190,8 @@ describe("SteamSyncPage on pages with nothing to sync, and Hide synced", { timeo
     ownedEntries = [entry(6000, "Done Game", "up_to_date")];
     const { unmount } = renderPage();
 
-    fireEvent.click(hideSyncedSwitch());
+    // Hide synced is on by default, so the message shows immediately
+    expect(hideSyncedSwitch()).toBeChecked();
     expect(
       screen.getByText("Everything is synced. Turn off Hide synced to see every entry.")
     ).toBeInTheDocument();
