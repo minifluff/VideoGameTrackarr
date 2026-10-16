@@ -176,7 +176,7 @@ const SteamSyncPage = () => {
   const [unlinkTarget, setUnlinkTarget] = useState<SyncRow | null>(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [hideSynced, setHideSynced] = useSessionState("steamSync.hideSynced", false);
+  const [hideSynced, setHideSynced] = useSessionState("steamSync.hideSynced", true);
   const [sortBy, setSortBy] = useSessionState<"name" | "steamStatus" | "steamPlaytime" | "vgtPlaytime" | "vgtStatus">("steamSync.sortBy", "name");
   const [sortDirection, setSortDirection] = useSessionState<"asc" | "desc">("steamSync.sortDirection", "asc");
 
