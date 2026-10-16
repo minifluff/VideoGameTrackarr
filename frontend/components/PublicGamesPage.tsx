@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
@@ -62,9 +63,19 @@ const PublicGamesPage = () => {
           pb: hideSearchBar ? 0 : 1,
         }}
       >
-      <Typography variant="h4" component="h1" gutterBottom>
-        {t("public.games.title")}
-      </Typography>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          {t("public.games.title")}
+        </Typography>
+        <Button
+          variant={sort === "date_added_desc" ? "contained" : "outlined"}
+          color={sort === "date_added_desc" ? "secondary" : "primary"}
+          onClick={() => setSort("date_added_desc")}
+          sx={{ flexShrink: 0 }}
+        >
+          {t("games.list.newestButton")}
+        </Button>
+      </Box>
         <PublicGamesToolbar
         search={search}
         onSearchChange={setSearch}
