@@ -68,7 +68,7 @@ function renderToolbar(overrides: Partial<ComponentProps<typeof GameListToolbar>
 
 async function openFilters() {
   const user = userEvent.setup();
-  await user.click(screen.getByRole("button", { name: "Filters & More" }));
+  await user.click(screen.getByRole("button", { name: "Filters" }));
   return { user, dialog: await screen.findByRole("dialog") };
 }
 
