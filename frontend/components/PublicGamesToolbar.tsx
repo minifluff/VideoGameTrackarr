@@ -128,7 +128,7 @@ const PublicGamesToolbar = ({
       </Tooltip>
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>{t("public.games.filtersButtonLabel")}</DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ pt: 3 }}>
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
               <Grid size={{ xs: 12 }}>
                 <AutocompleteMultiSelect<OwnershipOption>
