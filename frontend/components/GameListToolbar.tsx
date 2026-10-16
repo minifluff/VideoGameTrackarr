@@ -646,7 +646,7 @@ const GameListToolbar = ({
         <Dialog open={filtersOpen} onClose={() => setFiltersOpen(false)} fullWidth maxWidth="md">
           <DialogTitle>{t("games.listToolbar.filtersButtonLabel")}</DialogTitle>
           <DialogContent sx={{ pt: 3 }}>
-              <Grid container spacing={2} sx={{ mt: 0.5 }}>
+              <Grid container spacing={2} sx={{ mt: 0.5, pt: 0.5 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <AutocompleteSelect<GameSortOptionItem>
                     label={t("games.listToolbar.sortByLabel")}
