@@ -8,7 +8,6 @@ const SUB_NAV_ITEMS = [
   { to: "/games/list", labelKey: "games.subNav.list" },
   { to: "/games/playing", labelKey: "games.subNav.playing" },
   { to: "/games/wishlist", labelKey: "games.subNav.wishlist" },
-  { to: "/games/add", labelKey: "games.subNav.addGame" },
   { to: "/games/collections", labelKey: "games.subNav.collections" },
   { to: "/games/series", labelKey: "games.subNav.series" },
   { to: "/games/platforms", labelKey: "games.subNav.platforms" },
