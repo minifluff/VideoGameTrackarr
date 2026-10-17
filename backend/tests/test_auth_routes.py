@@ -158,3 +158,44 @@ def test_setup_rate_limited_after_five_attempts(client):
     response = client.post("/api/auth/setup", json={"username": "admin", "password": "a-strong-password"})
 
     assert response.status_code == 429
+
+
+def _refresh_token_lifetime_days(token: str) -> float:
+    import jwt
+    from datetime import datetime, timezone
+
+    exp = jwt.decode(token, options={"verify_signature": False})["exp"]
+    return (datetime.fromtimestamp(exp, tz=timezone.utc) - datetime.now(timezone.utc)).total_seconds() / 86400
+
+
+def test_login_remember_me_issues_year_long_refresh_token(client, test_user):
+    response = client.post(
+        "/api/auth/login",
+        json={"username": "admin", "password": "correct-password", "rememberMe": True},
+    )
+
+    assert response.status_code == 200
+    assert _refresh_token_lifetime_days(response.json()["refreshToken"]) > 360
+
+
+def test_login_without_remember_me_uses_default_refresh_lifetime(client, test_user):
+    response = client.post(
+        "/api/auth/login",
+        json={"username": "admin", "password": "correct-password"},
+    )
+
+    assert response.status_code == 200
+    assert _refresh_token_lifetime_days(response.json()["refreshToken"]) <= 30
+
+
+def test_refresh_preserves_remember_me_lifetime(client, test_user):
+    login = client.post(
+        "/api/auth/login",
+        json={"username": "admin", "password": "correct-password", "rememberMe": True},
+    )
+    old_refresh_token = login.json()["refreshToken"]
+
+    response = client.post("/api/auth/refresh", json={"refreshToken": old_refresh_token})
+
+    assert response.status_code == 200
+    assert _refresh_token_lifetime_days(response.json()["refreshToken"]) > 360
