@@ -23,6 +23,9 @@ def test_public_games_with_valid_token(auth_client, client, seed_game):
         "owned",
         "wishlisted",
         "ownedPlatforms",
+        "ownedFormats",
+        "ownedEditions",
+        "ownedCopies",
     }
 
 
@@ -129,6 +132,9 @@ PUBLIC_GAME_DETAIL_KEYS = {
     "owned",
     "wishlisted",
     "ownedPlatforms",
+    "ownedFormats",
+    "ownedEditions",
+    "ownedCopies",
     "igdbId",
     "igdbUrl",
     "summary",
@@ -160,7 +166,6 @@ PUBLIC_GAME_DETAIL_KEYS = {
     "nintendoStoreUrl",
     "epicGamesStoreUrl",
     "gogStoreUrl",
-    "ownedCopies",
 }
 
 

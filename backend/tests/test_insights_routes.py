@@ -437,15 +437,17 @@ def test_on_sale_excludes_a_wishlisted_row_whose_storefront_has_no_current_deal(
 
 
 def test_on_sale_excludes_a_wishlist_row_with_tracking_off(auth_client, db_session, seed_game, seed_pc_platform):
-    """Same shape as the "lists a wishlisted game" test above, but track_for_sales is left
-    at its default False — proves a live cached discount stays hidden until the user opts in,
-    not just that the refresh job skips fetching for it."""
+    """Same shape as the "lists a wishlisted game" test above, but track_for_sales is
+    explicitly off — proves a live cached discount stays hidden until the user opts in,
+    not just that the refresh job skips fetching for it. (Wishlist rows auto-track by
+    default, so the opt-out has to be explicit.)"""
     db_session.add(
         LibraryItem(
             game_id=seed_game.id,
             status=LibraryStatus.WISHLIST,
             format=MediaFormat.DIGITAL,
             platform_id=seed_pc_platform.id,
+            track_for_sales=False,
         )
     )
     db_session.add(

@@ -1,3 +1,6 @@
+from datetime import UTC
+
+
 def test_login_success_returns_tokens(client, test_user):
     response = client.post("/api/auth/login", json={"username": "admin", "password": "correct-password"})
 
@@ -161,11 +164,12 @@ def test_setup_rate_limited_after_five_attempts(client):
 
 
 def _refresh_token_lifetime_days(token: str) -> float:
+    from datetime import datetime
+
     import jwt
-    from datetime import datetime, timezone
 
     exp = jwt.decode(token, options={"verify_signature": False})["exp"]
-    return (datetime.fromtimestamp(exp, tz=timezone.utc) - datetime.now(timezone.utc)).total_seconds() / 86400
+    return (datetime.fromtimestamp(exp, tz=UTC) - datetime.now(UTC)).total_seconds() / 86400
 
 
 def test_login_remember_me_issues_year_long_refresh_token(client, test_user):
