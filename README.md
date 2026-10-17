@@ -39,7 +39,3 @@ My code is free to use and is currently built off Version 1.30.0. Just let me kn
 - Many more Fixes and changes
 - Added persistent login
 - Added simple Andoid app. Downloadable from settings.
-
-## In-progress features (separate branches)
-
-- `feature/remove-games` — Settings page for selecting and deleting library games with confirmation
