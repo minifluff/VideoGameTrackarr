@@ -81,7 +81,8 @@ const AppShell = () => {
             onClick={() => navigate("/")}
             title={t("nav.dashboard")}
             aria-label={t("nav.dashboard")}
-            sx={{ mr: 1, p: 0.5 }}
+            disableRipple
+            sx={{ mr: 1, p: 0.5, "&:hover": { backgroundColor: "transparent" } }}
           >
             {appIcon === "default" || isCustomIconDataUrl(appIcon) ? (
               <Box component="img" src={resolveIconSrc(appIcon)} alt="" sx={{ height: 44, width: 44 }} />
