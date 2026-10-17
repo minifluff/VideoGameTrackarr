@@ -10,6 +10,7 @@ DEFAULT_MEDIA_COVER_ART = True
 DEFAULT_MEDIA_SCREENSHOTS = True
 DEFAULT_MEDIA_ARTWORK = True
 DEFAULT_MEDIA_VIDEOS = True
+DEFAULT_VOLUME = 80
 
 INTERVAL_KEY = "display_mode.slide_interval_seconds"
 SHOW_TITLE_KEY = "display_mode.show_title"
@@ -19,6 +20,7 @@ MEDIA_COVER_ART_KEY = "display_mode.media_cover_art"
 MEDIA_SCREENSHOTS_KEY = "display_mode.media_screenshots"
 MEDIA_ARTWORK_KEY = "display_mode.media_artwork"
 MEDIA_VIDEOS_KEY = "display_mode.media_videos"
+VOLUME_KEY = "display_mode.volume"
 
 
 def _get_value(db: Session, key: str, default: str) -> str:
@@ -41,6 +43,11 @@ def get_settings(db: Session) -> dict[str, int | bool]:
     except ValueError:
         interval = DEFAULT_SLIDE_INTERVAL_SECONDS
     interval = max(3, min(120, interval))
+    try:
+        volume = int(_get_value(db, VOLUME_KEY, str(DEFAULT_VOLUME)))
+    except ValueError:
+        volume = DEFAULT_VOLUME
+    volume = max(0, min(100, volume))
     return {
         "slide_interval_seconds": interval,
         "show_title": _get_value(db, SHOW_TITLE_KEY, "false").lower() == "true",
@@ -50,6 +57,7 @@ def get_settings(db: Session) -> dict[str, int | bool]:
         "media_screenshots": _get_value(db, MEDIA_SCREENSHOTS_KEY, "true").lower() == "true",
         "media_artwork": _get_value(db, MEDIA_ARTWORK_KEY, "true").lower() == "true",
         "media_videos": _get_value(db, MEDIA_VIDEOS_KEY, "true").lower() == "true",
+        "volume": volume,
     }
 
 
@@ -63,6 +71,7 @@ def update_settings(
     media_screenshots: bool | None = None,
     media_artwork: bool | None = None,
     media_videos: bool | None = None,
+    volume: int | None = None,
 ) -> dict[str, int | bool]:
     if slide_interval_seconds is not None:
         _set_value(db, INTERVAL_KEY, str(max(3, min(120, slide_interval_seconds))))
@@ -80,4 +89,6 @@ def update_settings(
         _set_value(db, MEDIA_ARTWORK_KEY, "true" if media_artwork else "false")
     if media_videos is not None:
         _set_value(db, MEDIA_VIDEOS_KEY, "true" if media_videos else "false")
+    if volume is not None:
+        _set_value(db, VOLUME_KEY, str(max(0, min(100, volume))))
     return get_settings(db)
