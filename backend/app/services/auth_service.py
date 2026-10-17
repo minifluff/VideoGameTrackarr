@@ -1,5 +1,5 @@
 import secrets
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
@@ -42,9 +42,9 @@ def create_initial_admin(db: Session, username: str, password: str) -> User:
     return user
 
 
-def issue_tokens(db: Session, user: User) -> tuple[str, str]:
+def issue_tokens(db: Session, user: User, remember_me: bool = False) -> tuple[str, str]:
     access_token = create_access_token(user.id)
-    refresh_token, jti, expires_at = create_refresh_token(user.id)
+    refresh_token, jti, expires_at = create_refresh_token(user.id, remember_me=remember_me)
     db.add(RefreshToken(user_id=user.id, jti=jti, expires_at=expires_at))
     db.commit()
     return access_token, refresh_token
