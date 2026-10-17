@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user, get_db
 from app.models.system import User
 from app.schemas.integrations import (
+    IgnoreResultResponse,
     IntegrationsStatusResponse,
     PlayniteConfigRequest,
     PlayniteConfigResponse,
@@ -52,6 +53,21 @@ def get_steam_entries(db: Session = Depends(get_db)) -> list[SteamEntryResponse]
 @router.post("/api/integrations/steam/sync", response_model=SyncResultResponse)
 def sync_steam_entries(payload: SyncSteamEntriesRequest, db: Session = Depends(get_db)) -> SyncResultResponse:
     return SyncResultResponse.model_validate(steam_service.sync_entries(db, payload.steam_app_ids))
+
+
+# Both bulk Ignore routes sit above every /steam/{steam_app_id}/... route: declared after
+# them, "/steam/wishlist/ignore" would match "/steam/{steam_app_id}/ignore" first and fail
+# with a 422 on "wishlist".
+@router.post("/api/integrations/steam/ignore", response_model=IgnoreResultResponse)
+def ignore_steam_entries(payload: SyncSteamEntriesRequest, db: Session = Depends(get_db)) -> IgnoreResultResponse:
+    return IgnoreResultResponse.model_validate(steam_service.ignore_entries(db, payload.steam_app_ids))
+
+
+@router.post("/api/integrations/steam/wishlist/ignore", response_model=IgnoreResultResponse)
+def ignore_steam_wishlist_entries(
+    payload: SyncSteamEntriesRequest, db: Session = Depends(get_db)
+) -> IgnoreResultResponse:
+    return IgnoreResultResponse.model_validate(steam_wishlist_service.ignore_entries(db, payload.steam_app_ids))
 
 
 @router.post("/api/integrations/steam/{steam_app_id}/ignore", response_model=SteamEntryResponse)
