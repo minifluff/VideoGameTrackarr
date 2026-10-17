@@ -65,10 +65,9 @@ const DashboardPage = () => {
         </Typography>
         <Button
           variant="contained"
-          color="success"
           fullWidth
           size="large"
-          sx={{ mt: 4 }}
+          sx={{ mt: 4, py: 1.5, fontSize: "1.1rem" }}
           onClick={() => navigate("/display-mode")}
         >
           {t("insights.dashboard.displayModeButton")}
@@ -99,10 +98,9 @@ const DashboardPage = () => {
       ))}
       <Button
         variant="contained"
-        color="success"
         fullWidth
         size="large"
-        sx={{ mt: 3 }}
+        sx={{ mt: 3, py: 1.5, fontSize: "1.1rem" }}
         onClick={() => navigate("/display-mode")}
       >
         {t("insights.dashboard.displayModeButton")}
