@@ -1,9 +1,12 @@
 import { apiClient } from "./client";
 
+export type DisplayModeMediaType = "cover_art" | "screenshot" | "artwork" | "video";
+
 export interface DisplayModeSlide {
   id: number;
   name: string;
-  coverUrl: string;
+  mediaType: DisplayModeMediaType;
+  mediaUrl: string;
 }
 
 export interface DisplayModeSettings {
@@ -11,6 +14,10 @@ export interface DisplayModeSettings {
   showTitle: boolean;
   showHidden: boolean;
   showWishlisted: boolean;
+  mediaCoverArt: boolean;
+  mediaScreenshots: boolean;
+  mediaArtwork: boolean;
+  mediaVideos: boolean;
 }
 
 export async function fetchDisplayModeSlides(limit = 200): Promise<DisplayModeSlide[]> {
