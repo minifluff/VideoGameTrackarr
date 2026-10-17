@@ -22,6 +22,7 @@ from app.api.routes import (
     companies,
     dashboard,
     device,
+    displaymode,
     events,
     franchises,
     games,
@@ -168,6 +169,8 @@ async def igdb_credentials_handler(request: Request, exc: IGDBCredentialsError) 
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(appearance.router)
+app.include_router(displaymode.router)
+app.include_router(displaymode.settings_router)
 app.include_router(platforms.router)
 app.include_router(regions.router)
 app.include_router(games.router)
