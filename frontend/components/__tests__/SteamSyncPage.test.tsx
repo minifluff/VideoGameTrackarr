@@ -1,27 +1,35 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { ThemeProvider } from "@mui/material/styles";
 import { MemoryRouter } from "react-router-dom";
+import { toast } from "react-toastify";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SteamEntry } from "../../api/integrations";
+import type { SteamEntry, SteamWishlistEntry } from "../../api/integrations";
 import { createM3Theme } from "../../theme/createM3Theme";
 import SteamSyncPage from "../SteamSyncPage";
 
 vi.mock("react-toastify", () => ({
-  toast: { success: vi.fn(), error: vi.fn(), dismiss: vi.fn() },
+  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), dismiss: vi.fn() },
 }));
 
 let ownedEntries: SteamEntry[] = [];
+let wishlistEntries: SteamWishlistEntry[] = [];
 const syncOwned = vi.fn();
+const ignoreOwnedBulk = vi.fn();
+const ignoreWishlistBulk = vi.fn();
+const unignoreOwned = vi.fn();
+const unignoreWishlist = vi.fn();
 const idleMutation = () => ({ mutateAsync: vi.fn(), isPending: false });
 vi.mock("../../hooks/useIntegrations", () => ({
   useSteamEntries: () => ({ data: ownedEntries }),
-  useSteamWishlistEntries: () => ({ data: [] }),
+  useSteamWishlistEntries: () => ({ data: wishlistEntries }),
   useSyncSteamEntries: () => ({ mutateAsync: syncOwned, isPending: false }),
   useSyncSteamWishlistEntries: () => idleMutation(),
   useIgnoreSteamEntry: () => idleMutation(),
+  useIgnoreSteamEntries: () => ({ mutateAsync: ignoreOwnedBulk, isPending: false }),
   useIgnoreSteamWishlistEntry: () => idleMutation(),
-  useUnignoreSteamEntry: () => idleMutation(),
-  useUnignoreSteamWishlistEntry: () => idleMutation(),
+  useIgnoreSteamWishlistEntries: () => ({ mutateAsync: ignoreWishlistBulk, isPending: false }),
+  useUnignoreSteamEntry: () => ({ mutateAsync: unignoreOwned, isPending: false }),
+  useUnignoreSteamWishlistEntry: () => ({ mutateAsync: unignoreWishlist, isPending: false }),
   useUnlinkSteamEntry: () => idleMutation(),
   useUnlinkSteamWishlistEntry: () => idleMutation(),
 }));
@@ -55,6 +63,24 @@ function makeEntries(syncable: number): SteamEntry[] {
   return [...list, entry(1, "Zzz Unmatched A", "no_match"), entry(2, "Zzz Unmatched B", "no_match")];
 }
 
+function wishlistEntry(
+  steamAppId: number,
+  name: string,
+  status: SteamWishlistEntry["status"]
+): SteamWishlistEntry {
+  return {
+    steamAppId,
+    steamName: name,
+    wishlistAddedAt: null,
+    status,
+    gameId: status === "no_match" ? null : steamAppId,
+    gameName: status === "no_match" ? null : name,
+    gameSlug: null,
+    gameCoverUrl: null,
+    parentGameId: null,
+  };
+}
+
 function renderPage() {
   return render(
     <ThemeProvider theme={createM3Theme("light", "normal")}>
@@ -74,6 +100,7 @@ describe("SteamSyncPage select all", { timeout: 20_000 }, () => {
     vi.clearAllMocks();
     syncOwned.mockResolvedValue({ synced: 30, failed: 0, failures: [] });
     ownedEntries = makeEntries(30);
+    wishlistEntries = [];
   });
 
   it("offers to select every syncable entry once the page is selected, and syncs them all", async () => {
@@ -139,6 +166,7 @@ describe("SteamSyncPage on pages with nothing to sync, and Hide synced", { timeo
     vi.clearAllMocks();
     window.sessionStorage.clear();
     ownedEntries = makeMostlySyncedEntries();
+    wishlistEntries = [];
   });
 
   it("offers Select all from a page that has nothing syncable on it", () => {
@@ -199,5 +227,72 @@ describe("SteamSyncPage on pages with nothing to sync, and Hide synced", { timeo
 
     renderPage();
     expect(hideSyncedSwitch()).toBeChecked();
+  });
+});
+
+describe("SteamSyncPage Ignore selected and Un-ignore", { timeout: 20_000 }, () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.sessionStorage.clear();
+    ownedEntries = [];
+    wishlistEntries = [];
+  });
+
+  it("ignores the selected owned and wishlist entries after confirming", async () => {
+    ownedEntries = [entry(100, "Owned New", "new"), entry(101, "Owned Done", "up_to_date")];
+    wishlistEntries = [wishlistEntry(200, "Wished New", "new")];
+    ignoreOwnedBulk.mockResolvedValue({ ignored: 1, failed: 0, failures: [] });
+    ignoreWishlistBulk.mockResolvedValue({ ignored: 1, failed: 0, failures: [] });
+    renderPage();
+
+    fireEvent.click(headerCheckbox());
+    fireEvent.click(screen.getByRole("button", { name: "Ignore selected" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("Ignore 2 entries?")).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Ignore" }));
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Ignored 2 entries.", expect.anything()));
+    expect(ignoreOwnedBulk).toHaveBeenCalledWith([100]);
+    expect(ignoreWishlistBulk).toHaveBeenCalledWith([200]);
+  });
+
+  it("shows Un-ignore instead of Ignore on ignored rows and calls the right endpoint per source", async () => {
+    ownedEntries = [entry(100, "Owned Ignored", "ignored")];
+    wishlistEntries = [wishlistEntry(200, "Wished Ignored", "ignored"), wishlistEntry(201, "Wished New", "new")];
+    unignoreOwned.mockResolvedValue(entry(100, "Owned Ignored", "new"));
+    unignoreWishlist.mockResolvedValue(wishlistEntry(200, "Wished Ignored", "new"));
+    renderPage();
+
+    // Hide synced is on by default — turn it off to see the ignored rows
+    fireEvent.click(hideSyncedSwitch());
+
+    expect(screen.getAllByRole("button", { name: "Unignore" })).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: "Ignore" })).toHaveLength(1);
+
+    const ownedRow = screen.getByText("Owned Ignored").closest("tr") as HTMLElement;
+    fireEvent.click(within(ownedRow).getByRole("button", { name: "Unignore" }));
+    const wishlistRow = screen.getByText("Wished Ignored").closest("tr") as HTMLElement;
+    fireEvent.click(within(wishlistRow).getByRole("button", { name: "Unignore" }));
+
+    await waitFor(() => expect(unignoreOwned).toHaveBeenCalledWith(100));
+    expect(unignoreWishlist).toHaveBeenCalledWith(200);
+  });
+
+  it("shows a toast when un-ignoring an entry that still has no catalog match", async () => {
+    ownedEntries = [entry(100, "Owned Ignored", "ignored")];
+    unignoreOwned.mockResolvedValue(entry(100, "Owned Ignored", "no_match"));
+    renderPage();
+
+    // Hide synced is on by default — turn it off to see the ignored row
+    fireEvent.click(hideSyncedSwitch());
+
+    fireEvent.click(screen.getByRole("button", { name: "Unignore" }));
+
+    await waitFor(() =>
+      expect(toast.info).toHaveBeenCalledWith(
+        "Un-ignored. Run Import to try matching it to IGDB again.",
+        expect.anything()
+      )
+    );
   });
 });
