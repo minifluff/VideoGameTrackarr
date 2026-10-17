@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.models.app_settings import AppSetting
 
 DEFAULT_SLIDE_INTERVAL_SECONDS = 10
-DEFAULT_SHOW_TITLE = True
+DEFAULT_SHOW_TITLE = False
 DEFAULT_SHOW_HIDDEN = False
 DEFAULT_SHOW_WISHLISTED = False
 
@@ -35,7 +35,7 @@ def get_settings(db: Session) -> dict[str, int | bool]:
     interval = max(3, min(120, interval))
     return {
         "slide_interval_seconds": interval,
-        "show_title": _get_value(db, SHOW_TITLE_KEY, "true").lower() == "true",
+        "show_title": _get_value(db, SHOW_TITLE_KEY, "false").lower() == "true",
         "show_hidden": _get_value(db, SHOW_HIDDEN_KEY, "false").lower() == "true",
         "show_wishlisted": _get_value(db, SHOW_WISHLISTED_KEY, "false").lower() == "true",
     }
