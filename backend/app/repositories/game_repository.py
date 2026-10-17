@@ -1,4 +1,5 @@
 import enum
+import random
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -595,3 +596,21 @@ def delete_game_with_addons(db: Session, game: Game) -> list[str]:
     db.execute(delete(ReleaseDate).where(ReleaseDate.game_id.in_(game_ids)))
     db.execute(delete(Game).where(Game.id.in_(game_ids)))
     return rom_filenames
+
+
+def list_display_mode_slides(db: Session, limit: int = 200) -> list[tuple[int, str, str]]:
+    """Random sample of (game id, name, cover URL) for the Display Mode slideshow:
+    owned games only, excluding hidden ones, and only games that have cover art.
+    Shuffled in Python (DB-agnostic) so each fetch is a fresh random order."""
+    rows = (
+        db.query(Game.id, Game.name, Game.cover_url)
+        .filter(
+            Game.hide_from_public.is_(False),
+            Game.cover_url.isnot(None),
+            _owned_exists(Game.id),
+        )
+        .all()
+    )
+    slides = [(row[0], row[1], row[2]) for row in rows if row[2]]
+    random.shuffle(slides)
+    return slides[:limit]
