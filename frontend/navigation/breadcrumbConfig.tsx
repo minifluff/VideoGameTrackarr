@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { TFunction } from "i18next";
 import type { Params } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAccessoryItem } from "../hooks/useAccessories";
 import { useCollection, useFranchise, usePlatform } from "../hooks/useCatalogBrowse";
@@ -8,6 +9,7 @@ import { useEvent } from "../hooks/useEvents";
 import { useGame } from "../hooks/useGames";
 import { useDeviceItem } from "../hooks/useDevice";
 import { useIgdbGamePreview } from "../hooks/useIgdbSearch";
+import { parsePlatformScope, platformDisplayName } from "../utils/platformScope";
 
 export interface Crumb {
   label: ReactNode;
@@ -48,9 +50,15 @@ const CollectionCrumbLabel = ({ slug }: { slug: string | undefined }) => {
 
 const PlatformCrumbLabel = ({ slug }: { slug: string | undefined }) => {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
   const { data: platform, isError } = usePlatform(slug);
+  if (isError) return <>{t("errors.platformNotFoundTitle")}</>;
   return (
-    <>{isError ? t("errors.platformNotFoundTitle") : (platform?.name ?? t("common.loading"))}</>
+    <>
+      {platform
+        ? platformDisplayName({ name: platform.name, abbreviation: null }, parsePlatformScope(searchParams), t)
+        : t("common.loading")}
+    </>
   );
 };
 
