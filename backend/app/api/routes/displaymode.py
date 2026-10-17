@@ -28,9 +28,16 @@ def get_slides(
     limit: int = Query(default=200, ge=1, le=500),
     db: Session = Depends(get_db),
 ) -> list[DisplayModeSlide]:
-    """Random sample of cover-art slides for Display Mode: owned, non-hidden games
-    with cover art, freshly shuffled on every fetch."""
-    slides = game_repository.list_display_mode_slides(db, limit=limit)
+    """Random sample of cover-art slides for Display Mode, freshly shuffled on every
+    fetch. The display-mode settings decide whether hidden and wishlisted games are
+    included (both excluded by default)."""
+    settings = display_mode_service.get_settings(db)
+    slides = game_repository.list_display_mode_slides(
+        db,
+        limit=limit,
+        include_hidden=settings["show_hidden"],
+        include_wishlisted=settings["show_wishlisted"],
+    )
     return [DisplayModeSlide(id=slide[0], name=slide[1], cover_url=slide[2]) for slide in slides]
 
 
@@ -48,5 +55,7 @@ def update_display_mode_settings(
         db,
         slide_interval_seconds=body.slide_interval_seconds,
         show_title=body.show_title,
+        show_hidden=body.show_hidden,
+        show_wishlisted=body.show_wishlisted,
     )
     return DisplayModeSettingsResponse(**settings)
