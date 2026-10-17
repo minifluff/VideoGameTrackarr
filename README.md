@@ -190,9 +190,8 @@ git tag v1.26.0
 git push origin v1.26.0
 ```
 
-The tag push publishes the Docker image to GHCR and Docker Hub (tagged with the version and
-`latest`) and creates a GitHub Release. Publishing to Docker Hub needs the `DOCKERHUB_USERNAME`
-and `DOCKERHUB_TOKEN` repository secrets.
+The tag push publishes the Docker image to GHCR (tagged with the version and
+`latest`) and creates a GitHub Release.
 
 ### Project layout
 
