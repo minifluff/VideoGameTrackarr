@@ -15,8 +15,7 @@ import SettingsSubNav from "./SettingsSubNav";
 import { useEmulationConfig } from "../hooks/useLibrary";
 import { useVersion } from "../hooks/useVersion";
 
-const REPO_URL = "https://github.com/wwwescape/VideoGameTrackarr";
-const BMC_URL = "https://buymeacoffee.com/wwwescape";
+const REPO_URL = "https://github.com/minifluff/VideoGameTrackarr";
 const EMULATORJS_URL = "https://github.com/EmulatorJS/EmulatorJS";
 const LIBRETRO_URL = "https://www.libretro.com";
 
@@ -91,7 +90,7 @@ const About = () => {
           </Typography>
           <Typography variant="body2">
             {t("about.authorLabel")}{" "}
-            <Link href="https://github.com/wwwescape" target="_blank" rel="noopener noreferrer">
+            <Link href="https://github.com/minifluff" target="_blank" rel="noopener noreferrer">
               {t("about.authorName")}
             </Link>
           </Typography>
@@ -145,17 +144,6 @@ const About = () => {
               </Box>
             </>
           ) : null}
-
-          <Divider sx={{ my: 3 }} />
-
-          <Link href={BMC_URL} target="_blank" rel="noopener noreferrer">
-            <Box
-              component="img"
-              src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
-              alt={t("about.buyMeACoffeeAlt")}
-              sx={{ height: 48 }}
-            />
-          </Link>
         </CardContent>
       </Card>
     </Box>
