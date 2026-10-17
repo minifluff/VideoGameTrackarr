@@ -8,7 +8,7 @@ from app.services.cache import CacheBackend, get_cache
 
 logger = logging.getLogger(__name__)
 
-GITHUB_REPO = "wwwescape/videogametrackarr"
+GITHUB_REPO = "minifluff/VideoGameTrackarr"
 _RELEASES_LATEST_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 _CACHE_KEY = "version:latest_release"
 _CACHE_TTL_SECONDS = 6 * 60 * 60
