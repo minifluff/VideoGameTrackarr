@@ -139,7 +139,7 @@ proxy's upload limit to match. `DATABASE_URL` (SQLite by default), `REDIS_URL`, 
 
 GPL-3.0 — see [LICENSE](LICENSE).
 
-## Customizations in this fork (most customizations are only under english pages)
+## Customizations in this fork (most customizations are only tested under english pages)
 
 - Playnite library sync (via network share and JSON exporter plugin)
 - Steam sync "Sync all" button
