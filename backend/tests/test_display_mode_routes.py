@@ -96,6 +96,7 @@ def test_display_mode_settings_defaults(auth_client):
         "mediaScreenshots": True,
         "mediaArtwork": True,
         "mediaVideos": True,
+        "volume": 80,
     }
 
 
@@ -111,6 +112,7 @@ def test_display_mode_settings_update(auth_client):
             "mediaScreenshots": False,
             "mediaArtwork": False,
             "mediaVideos": False,
+            "volume": 42,
         },
     )
 
@@ -124,6 +126,7 @@ def test_display_mode_settings_update(auth_client):
         "mediaScreenshots": False,
         "mediaArtwork": False,
         "mediaVideos": False,
+        "volume": 42,
     }
 
     # Persisted
@@ -137,6 +140,7 @@ def test_display_mode_settings_update(auth_client):
         "mediaScreenshots": False,
         "mediaArtwork": False,
         "mediaVideos": False,
+        "volume": 42,
     }
 
 
@@ -206,3 +210,13 @@ def test_slides_only_videos_when_others_disabled(auth_client, db_session):
     slides = response.json()
     assert len(slides) == 1
     assert slides[0]["mediaType"] == "video"
+
+
+def test_display_mode_volume_is_clamped(auth_client):
+    response = auth_client.put("/api/settings/display-mode", json={"volume": 150})
+    assert response.status_code == 200
+    assert response.json()["volume"] == 100
+
+    response = auth_client.put("/api/settings/display-mode", json={"volume": -5})
+    # -5 fails the ge=0 validation
+    assert response.status_code == 422
