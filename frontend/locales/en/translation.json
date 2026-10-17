@@ -7,6 +7,7 @@
     "add": "Add",
     "remove": "Remove",
     "close": "Close",
+    "clearSearch": "Clear search",
     "confirm": "Confirm",
     "back": "Back",
     "loading": "Loading...",
@@ -219,6 +220,7 @@
   },
   "displayMode": {
     "noSlides": "No owned games with cover art found. Add some games with covers first.",
+    "noSlidesHint": "Tip: choose which media types appear in Settings → Display Mode.",
     "backToDashboard": "Back to dashboard"
   },
   "settings": {
