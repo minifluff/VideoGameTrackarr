@@ -111,7 +111,8 @@ const VideoSlide = ({
         if (cancelled || !playerHostRef.current) return;
         // The API replaces the host div with its iframe, so centering lives on
         // the wrapper (flex) — the iframe is styled as the wrapper's child.
-        player = new YT.Player(host, {
+        try {
+          player = new YT.Player(host, {
           videoId,
           playerVars: {
             autoplay: 1,
@@ -150,13 +151,23 @@ const VideoSlide = ({
             onError: () => callbacksRef.current.onFailed(),
           },
         });
+        } catch {
+          // The player constructor can throw (e.g. API in a bad state) —
+          // skip the slide instead of crashing the page.
+          if (!cancelled) callbacksRef.current.onFailed();
+        }
       })
       .catch(() => {
         if (!cancelled) callbacksRef.current.onFailed();
       });
     return () => {
       cancelled = true;
-      player?.destroy();
+      try {
+        player?.destroy();
+      } catch {
+        // YouTube's destroy() is known to throw during teardown; the
+        // slideshow must survive it instead of tripping the error boundary.
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [embedUrl]);
