@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
-import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Slider from "@mui/material/Slider";
+import Switch from "@mui/material/Switch";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { fetchDisplayModeSettings, updateDisplayModeSettings } from "../api/displayMode";
@@ -10,7 +10,7 @@ import { fetchDisplayModeSettings, updateDisplayModeSettings } from "../api/disp
 const DisplayModeSection = () => {
   const { t } = useTranslation();
   const [intervalSeconds, setIntervalSeconds] = useState(10);
-  const [showTitle, setShowTitle] = useState(true);
+  const [showTitle, setShowTitle] = useState(false);
   const [showHidden, setShowHidden] = useState(false);
   const [showWishlisted, setShowWishlisted] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -73,7 +73,7 @@ const DisplayModeSection = () => {
       />
       <FormControlLabel
         control={
-          <Checkbox
+          <Switch
             checked={showTitle}
             disabled={!loaded}
             onChange={(event) => {
@@ -87,7 +87,7 @@ const DisplayModeSection = () => {
       />
       <FormControlLabel
         control={
-          <Checkbox
+          <Switch
             checked={showHidden}
             disabled={!loaded}
             onChange={(event) => {
@@ -101,7 +101,7 @@ const DisplayModeSection = () => {
       />
       <FormControlLabel
         control={
-          <Checkbox
+          <Switch
             checked={showWishlisted}
             disabled={!loaded}
             onChange={(event) => {
