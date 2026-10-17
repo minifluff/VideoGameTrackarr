@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
+import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Slider from "@mui/material/Slider";
 import Switch from "@mui/material/Switch";
@@ -13,6 +14,10 @@ const DisplayModeSection = () => {
   const [showTitle, setShowTitle] = useState(false);
   const [showHidden, setShowHidden] = useState(false);
   const [showWishlisted, setShowWishlisted] = useState(false);
+  const [mediaCoverArt, setMediaCoverArt] = useState(true);
+  const [mediaScreenshots, setMediaScreenshots] = useState(true);
+  const [mediaArtwork, setMediaArtwork] = useState(true);
+  const [mediaVideos, setMediaVideos] = useState(true);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -24,6 +29,10 @@ const DisplayModeSection = () => {
         setShowTitle(settings.showTitle);
         setShowHidden(settings.showHidden);
         setShowWishlisted(settings.showWishlisted);
+        setMediaCoverArt(settings.mediaCoverArt);
+        setMediaScreenshots(settings.mediaScreenshots);
+        setMediaArtwork(settings.mediaArtwork);
+        setMediaVideos(settings.mediaVideos);
         setLoaded(true);
       })
       .catch(() => {
@@ -39,6 +48,10 @@ const DisplayModeSection = () => {
     showTitle?: boolean;
     showHidden?: boolean;
     showWishlisted?: boolean;
+    mediaCoverArt?: boolean;
+    mediaScreenshots?: boolean;
+    mediaArtwork?: boolean;
+    mediaVideos?: boolean;
   }) => {
     try {
       const updated = await updateDisplayModeSettings(patch);
@@ -46,10 +59,26 @@ const DisplayModeSection = () => {
       setShowTitle(updated.showTitle);
       setShowHidden(updated.showHidden);
       setShowWishlisted(updated.showWishlisted);
+      setMediaCoverArt(updated.mediaCoverArt);
+      setMediaScreenshots(updated.mediaScreenshots);
+      setMediaArtwork(updated.mediaArtwork);
+      setMediaVideos(updated.mediaVideos);
     } catch {
       // Keep the optimistic local value; the next load re-reads the server value.
     }
   };
+
+  const mediaOptions: {
+    label: string;
+    checked: boolean;
+    set: (value: boolean) => void;
+    key: "mediaCoverArt" | "mediaScreenshots" | "mediaArtwork" | "mediaVideos";
+  }[] = [
+    { label: t("settings.displayMode.mediaCoverArt"), checked: mediaCoverArt, set: setMediaCoverArt, key: "mediaCoverArt" },
+    { label: t("settings.displayMode.mediaScreenshots"), checked: mediaScreenshots, set: setMediaScreenshots, key: "mediaScreenshots" },
+    { label: t("settings.displayMode.mediaArtwork"), checked: mediaArtwork, set: setMediaArtwork, key: "mediaArtwork" },
+    { label: t("settings.displayMode.mediaVideos"), checked: mediaVideos, set: setMediaVideos, key: "mediaVideos" },
+  ];
 
   return (
     <Box>
@@ -113,6 +142,26 @@ const DisplayModeSection = () => {
         label={t("settings.displayMode.showWishlisted")}
         sx={{ display: "block" }}
       />
+      <Typography variant="subtitle2" sx={{ mt: 2, mb: 0.5 }}>
+        {t("settings.displayMode.mediaHeading")}
+      </Typography>
+      {mediaOptions.map((option) => (
+        <FormControlLabel
+          key={option.key}
+          control={
+            <Checkbox
+              checked={option.checked}
+              disabled={!loaded}
+              onChange={(event) => {
+                option.set(event.target.checked);
+                void save({ [option.key]: event.target.checked });
+              }}
+            />
+          }
+          label={option.label}
+          sx={{ display: "block" }}
+        />
+      ))}
     </Box>
   );
 };
