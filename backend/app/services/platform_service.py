@@ -4,16 +4,25 @@ from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from app.models.catalog import GamePlatform, Platform
-from app.models.library import GameProgress, LibraryItem, PlaySession
+from app.models.library import GameProgress, LibraryItem, MediaFormat, PlaySession
 from app.repositories import platform_repository
 from app.repositories.game_repository import GameWithStatus
+from app.repositories.platform_repository import LibraryPlatformCount
 from app.services.exceptions import ConflictError, NotFoundError
 
 
-def get_platform_with_games(db: Session, slug: str) -> tuple[Platform, list[GameWithStatus], list[GameWithStatus]]:
-    platform = platform_repository.get_by_slug(db, slug)
+def list_library_platforms(db: Session) -> list[LibraryPlatformCount]:
+    """Every platform with library copies, with owned/wishlisted counts — split by format
+    and storefront for PC (see platform_repository.STOREFRONT_SPLIT_IGDB_PLATFORM_IDS)."""
+    return platform_repository.list_library_platforms_with_counts(db)
+
+
+def get_platform_with_games(
+    db: Session, slug_or_id: str
+) -> tuple[Platform, list[GameWithStatus], list[GameWithStatus]]:
+    platform = platform_repository.get_by_slug_or_id(db, slug_or_id)
     if platform is None:
-        raise NotFoundError(f"Platform {slug} not found")
+        raise NotFoundError(f"Platform {slug_or_id} not found")
     return (
         platform,
         platform_repository.list_games_for_platform(db, platform.id),
@@ -25,11 +34,19 @@ def list_platforms(db: Session) -> list[tuple[Platform, int]]:
     return platform_repository.list_platforms_with_counts(db)
 
 
-def list_platform_addons(db: Session, slug: str, **filters: Any) -> list[GameWithStatus]:
-    platform = platform_repository.get_by_slug(db, slug)
+def list_platform_addons(
+    db: Session,
+    slug_or_id: str,
+    media_format: MediaFormat | None = None,
+    storefront: str | None = None,
+    **filters: Any,
+) -> list[GameWithStatus]:
+    platform = platform_repository.get_by_slug_or_id(db, slug_or_id)
     if platform is None:
-        raise NotFoundError(f"Platform {slug} not found")
-    return platform_repository.list_addons_for_platform(db, platform.id, **filters)
+        raise NotFoundError(f"Platform {slug_or_id} not found")
+    return platform_repository.list_addons_for_platform(
+        db, platform.id, media_format=media_format, storefront=storefront, **filters
+    )
 
 
 def create_platform(
