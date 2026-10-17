@@ -118,20 +118,11 @@ out in that release's notes.
 
 ## Configuration
 
-Settings live in `.env` (see [.env.example](.env.example) for every option). Only IGDB and a JWT
-secret are required:
-
-```env
-IGDB_CLIENT_ID=your_igdb_client_id
-IGDB_CLIENT_SECRET=your_igdb_client_secret
-JWT_SECRET_KEY=            # generate with: python -c "import secrets; print(secrets.token_hex(32))"
-```
-
 Get IGDB credentials at https://api-docs.igdb.com/#getting-started (free, requires a Twitch
 developer account).
 
-Optional integrations — add a key to `.env`, then run `docker compose up -d` (a plain
-`docker compose restart` doesn't pick up `.env` changes). Each shows a live status in
+Optional integrations — add key, then run `docker compose up -d` (a plain
+`docker compose restart` doesn't pick up changes). Each shows a live status in
 **Settings → Integrations**, along with the store region in use for the price integrations:
 
 | Integration    | Setting              | Get a key                                                         | Notes                                                                                                                                      |
@@ -143,67 +134,6 @@ Optional integrations — add a key to `.env`, then run `docker compose up -d` (
 Other options: `ROM_MAX_UPLOAD_MB` (default `2048`) caps ROM uploads — raise your reverse
 proxy's upload limit to match. `DATABASE_URL` (SQLite by default), `REDIS_URL`, and
 `CORS_ORIGINS` are optional.
-
-## Development
-
-Requires [Git](https://git-scm.com/downloads), [Node.js 22+](https://nodejs.org/en/download/current),
-and [Python 3.12+](https://www.python.org/downloads/).
-
-```bash
-git clone https://github.com/minifluff/VideoGameTrackarr.git
-cd VideoGameTrackarr
-npm install
-cd backend
-python -m venv .venv
-.venv\Scripts\activate          # Windows; use `source .venv/bin/activate` on macOS/Linux
-pip install -r requirements-dev.txt
-alembic upgrade head
-```
-
-Create `.env` in the project root as described in [Configuration](#configuration), then run the
-backend and frontend in two terminals:
-
-```bash
-cd backend && .venv\Scripts\activate && uvicorn app.main:app --reload --port 8000
-```
-
-```bash
-npm start
-```
-
-The frontend runs on `http://localhost:3000` and talks to the backend on `http://localhost:8000`.
-
-### Test
-
-```bash
-npm run lint && npm run typecheck && npm test && npm run build
-cd backend && ruff check . && pytest
-```
-
-A Playwright end-to-end suite (`npm run test:e2e`) covers critical user journeys as a manual
-pre-release check — see [e2e/README.md](e2e/README.md).
-
-### Release a new version
-
-```bash
-git tag v1.26.0
-git push origin v1.26.0
-```
-
-The tag push publishes the Docker image to GHCR (tagged with the version and
-`latest`) and creates a GitHub Release.
-
-### Project layout
-
-```
-frontend/   TypeScript, Vite, MUI, TanStack Query, React Router — own package.json
-backend/    FastAPI, SQLAlchemy, Alembic (SQLite by default) — own requirements.txt
-e2e/        Playwright end-to-end suite (manual pre-release check)
-docs/       Developer guide, diagrams, emulation guide, and deployment examples
-```
-
-See [docs/developer-guide.md](docs/developer-guide.md) for conventions, and
-[CONTRIBUTING.md](CONTRIBUTING.md) if you're sending a PR.
 
 ## License
 
