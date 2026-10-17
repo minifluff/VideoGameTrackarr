@@ -550,7 +550,12 @@
       "seconds": "{{count}}s",
       "showTitle": "Show game title",
       "showHidden": "Show hidden games",
-      "showWishlisted": "Show wishlisted games"
+      "showWishlisted": "Show wishlisted games",
+      "mediaHeading": "Media to show",
+      "mediaCoverArt": "Cover Art",
+      "mediaScreenshots": "Screenshots",
+      "mediaArtwork": "Artwork",
+      "mediaVideos": "Videos"
     },
     "removeGames": {
       "title": "Remove Games",
