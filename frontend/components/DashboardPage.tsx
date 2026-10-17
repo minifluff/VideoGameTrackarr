@@ -64,7 +64,8 @@ const DashboardPage = () => {
           {t("insights.dashboard.welcomeMessage")}
         </Typography>
         <Button
-          variant="outlined"
+          variant="contained"
+          color="success"
           fullWidth
           size="large"
           sx={{ mt: 4 }}
@@ -97,7 +98,8 @@ const DashboardPage = () => {
         </Box>
       ))}
       <Button
-        variant="outlined"
+        variant="contained"
+        color="success"
         fullWidth
         size="large"
         sx={{ mt: 3 }}
