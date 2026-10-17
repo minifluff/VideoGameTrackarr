@@ -50,6 +50,25 @@ const PublicGamesPage = () => {
     });
   }, [allGames, ownershipStatuses]);
 
+  const hasActiveFilters =
+    debouncedSearch !== "" ||
+    sort !== "name_asc" ||
+    platformIds.length > 0 ||
+    tagIds.length > 0 ||
+    formats.length > 0 ||
+    playStatuses.length > 0 ||
+    ownershipStatuses.length > 0;
+
+  const clearAllFilters = () => {
+    setSearch("");
+    setSort("name_asc");
+    setPlatformIds([]);
+    setTagIds([]);
+    setFormats([]);
+    setPlayStatuses([]);
+    setOwnershipStatuses([]);
+  };
+
 
   return (
     <>
@@ -100,7 +119,14 @@ const PublicGamesPage = () => {
       {isLoading ? (
         <Paper sx={{ p: 3, textAlign: "center" }}>{t("common.loading")}</Paper>
       ) : !games || games.length === 0 ? (
-        <Paper sx={{ p: 3, textAlign: "center" }}>{t("public.games.emptyState")}</Paper>
+        <Paper sx={{ p: 3, textAlign: "center" }}>
+          <Typography gutterBottom>{t("public.games.emptyState")}</Typography>
+          {hasActiveFilters && (
+            <Button variant="outlined" onClick={clearAllFilters} sx={{ mt: 1 }}>
+              {t("games.listToolbar.clearFiltersButton")}
+            </Button>
+          )}
+        </Paper>
       ) : (
         <VirtualGameGrid
           items={games}
