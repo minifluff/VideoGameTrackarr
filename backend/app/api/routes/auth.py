@@ -44,7 +44,7 @@ def setup(request: Request, body: SetupRequest, db: Session = Depends(get_db)) -
     already exists (see app/services/auth_service.py), and that rejection surfaces as a 409
     via the app-wide ConflictError handler in app/main.py."""
     user = auth_service.create_initial_admin(db, body.username, body.password)
-    access_token, refresh_token = auth_service.issue_tokens(db, user, remember_me=body.remember_me)
+    access_token, refresh_token = auth_service.issue_tokens(db, user)
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
 
