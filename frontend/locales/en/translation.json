@@ -555,7 +555,8 @@
       "mediaCoverArt": "Cover Art",
       "mediaScreenshots": "Screenshots",
       "mediaArtwork": "Artwork",
-      "mediaVideos": "Videos"
+      "mediaVideos": "Videos",
+      "volume": "Volume"
     },
     "removeGames": {
       "title": "Remove Games",
