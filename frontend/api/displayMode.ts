@@ -9,6 +9,8 @@ export interface DisplayModeSlide {
 export interface DisplayModeSettings {
   slideIntervalSeconds: number;
   showTitle: boolean;
+  showHidden: boolean;
+  showWishlisted: boolean;
 }
 
 export async function fetchDisplayModeSlides(limit = 200): Promise<DisplayModeSlide[]> {
