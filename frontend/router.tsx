@@ -10,6 +10,7 @@ import CollectionsPage from "./components/CollectionsPage";
 import ComparePage from "./components/ComparePage";
 import DashboardPage from "./components/DashboardPage";
 import DeviceDetails from "./components/DeviceDetails";
+import DisplayModePage from "./components/DisplayModePage";
 import DuplicatesPage from "./components/DuplicatesPage";
 import UnlinkedGamesPage from "./components/UnlinkedGamesPage";
 import EditAccessoryPage from "./components/EditAccessoryPage";
@@ -136,6 +137,7 @@ const router = createBrowserRouter([
         element: <AppShell />,
         children: [
           { path: "/", element: <DashboardPage />, handle: { crumbs: dashboardCrumbs } },
+          { path: "/display-mode", element: <DisplayModePage /> },
           { path: "/events", element: <EventsPage />, handle: { crumbs: eventsCrumbs } },
           {
             path: "/events/:identifier",
