@@ -6,15 +6,9 @@
 
 <p align="center">
   A self-hosted web app for tracking your video game collection — what you own, what you want,
-  what you're playing, and how it's going — with Steam sync, wishlist sale alerts, and in-browser
-  play for the games you own.
+  what you're playing
 </p>
 
-<p align="center">
-  <a href="https://github.com/wwwescape/VideoGameTrackarr/releases"><img src="https://img.shields.io/github/v/release/wwwescape/VideoGameTrackarr.svg?style=flat-square" alt="GitHub release" /></a>
-  <a href="https://github.com/wwwescape/VideoGameTrackarr/commits/master"><img src="https://img.shields.io/github/last-commit/wwwescape/VideoGameTrackarr.svg?style=flat-square" alt="GitHub last commit" /></a>
-  <a href="https://github.com/wwwescape/VideoGameTrackarr"><img src="https://img.shields.io/github/languages/code-size/wwwescape/VideoGameTrackarr.svg?color=red&style=flat-square" alt="GitHub code size" /></a>
-</p>
 
 ## Screenshots
 
