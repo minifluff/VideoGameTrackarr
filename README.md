@@ -39,4 +39,4 @@ My code is free to use and is currently built off Version 1.30.0. Just let me kn
 - Many more Fixes and changes
 - Added persistent login
 - Added simple Andoid app. Downloadable from settings.
-- Screensaver mode added. Displays cover art in slideshow
+- Display Mode added. Displays cover art, Screenshot, Artwork and Videos in slideshow
