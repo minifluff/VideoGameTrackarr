@@ -1525,6 +1525,7 @@
     "licenseName": "GPL-3.0",
     "authorLabel": "Author:",
     "authorName": "Matthew Curran",
+    "basedOn": "Based on <1>VideoGameTrackarr</1> by Eric P Pereira.",
     "creditsHeading": "Credits",
     "igdbLogoAlt": "IGDB",
     "igdbCredits": "Game data and cover art are provided by <1>IGDB.com</1>.",
