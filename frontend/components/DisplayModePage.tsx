@@ -93,12 +93,14 @@ const VideoSlide = ({
   onFailed: () => void;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const playerHostRef = useRef<HTMLDivElement>(null);
   const callbacksRef = useRef({ onEnded, onFailed, volume });
   callbacksRef.current = { onEnded, onFailed, volume };
 
   useEffect(() => {
     const videoId = youtubeVideoId(embedUrl);
-    if (!videoId || !containerRef.current) {
+    const host = playerHostRef.current;
+    if (!videoId || !host) {
       onFailed();
       return;
     }
@@ -106,8 +108,10 @@ const VideoSlide = ({
     let cancelled = false;
     loadYouTubeApi()
       .then((YT) => {
-        if (cancelled || !containerRef.current) return;
-        player = new YT.Player(containerRef.current, {
+        if (cancelled || !playerHostRef.current) return;
+        // The API replaces the host div with its iframe, so centering lives on
+        // the wrapper (flex) — the iframe is styled as the wrapper's child.
+        player = new YT.Player(host, {
           videoId,
           playerVars: {
             autoplay: 1,
@@ -165,9 +169,21 @@ const VideoSlide = ({
         // a different aspect ratio instead of being cropped.
         position: "absolute",
         inset: 0,
-        "& iframe": { width: "100%", height: "100%", border: 0 },
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        // pointerEvents none so tapping the video still exits to the dashboard
+        "& > iframe": {
+          border: 0,
+          width: "100%",
+          height: "100%",
+          display: "block",
+          pointerEvents: "none",
+        },
       }}
-    />
+    >
+      <div ref={playerHostRef} style={{ width: "100%", height: "100%" }} />
+    </Box>
   );
 };
 
