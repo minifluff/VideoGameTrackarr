@@ -37,6 +37,8 @@ My code is free to use and is currently built off Version 1.30.0. Just let me kn
 - Added Scheduled JSON backup to Network share
 - Fixed Isthereanydeal sale tracking and removed requirement to manual enter games to track
 - Many more Fixes and changes
+- Added persistent login
+- Added simple Andoid app. Downloadable from settings.
 
 ## In-progress features (separate branches)
 
