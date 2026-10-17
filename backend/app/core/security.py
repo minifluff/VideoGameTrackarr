@@ -20,6 +20,12 @@ class TokenError(Exception):
     """Raised for any invalid, expired, malformed, or wrong-type token."""
 
 
+# Refresh-token lifetime issued when the login form's "Remember me" checkbox is
+# ticked — keeps the device signed in long-term. The default (unticked) lifetime
+# stays at settings.refresh_token_expire_days (default 30 days).
+REMEMBER_ME_REFRESH_DAYS = 365
+
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
@@ -51,14 +57,20 @@ def create_access_token(user_id: int) -> str:
     return jwt.encode(payload, _require_secret(), algorithm=settings.jwt_algorithm)
 
 
-def create_refresh_token(user_id: int) -> tuple[str, str, datetime]:
+def create_refresh_token(user_id: int, remember_me: bool = False) -> tuple[str, str, datetime]:
     """Returns (token, jti, expires_at). The caller is responsible for persisting
     (user_id, jti, expires_at) so the token can be revoked before it naturally expires —
-    see app/models/system.py: RefreshToken."""
+    see app/models/system.py: RefreshToken.
+
+    remember_me=True issues a long-lived refresh token (a year) so the "Remember me"
+    login checkbox keeps the device signed in; the default is the configured short
+    lifetime (default 30 days).
+    """
     settings = get_settings()
     now = datetime.now(UTC)
     jti = str(uuid.uuid4())
-    expires_at = now + timedelta(days=settings.refresh_token_expire_days)
+    lifetime_days = REMEMBER_ME_REFRESH_DAYS if remember_me else settings.refresh_token_expire_days
+    expires_at = now + timedelta(days=lifetime_days)
     payload = {
         "sub": str(user_id),
         "type": TokenType.REFRESH.value,
