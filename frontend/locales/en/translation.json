@@ -545,7 +545,7 @@
     },
     "displayMode": {
       "heading": "Display Mode",
-      "description": "Fullscreen slideshow of random cover art from your library. Hidden and wishlisted games are excluded unless allowed below. Tap anywhere to exit. The screen stays awake while it runs.",
+      "description": "Fullscreen slideshow of random media from your library. Hidden and wishlisted games are excluded unless allowed below. Tap anywhere to exit. The screen stays awake while it runs.",
       "slideInterval": "Change slide every {{seconds}} seconds",
       "seconds": "{{count}}s",
       "showTitle": "Show game title",
