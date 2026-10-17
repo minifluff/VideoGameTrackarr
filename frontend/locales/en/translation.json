@@ -217,6 +217,10 @@
     "syncingChanges_one": "Syncing {{count}} change...",
     "syncingChanges_other": "Syncing {{count}} changes..."
   },
+  "displayMode": {
+    "noSlides": "No owned games with cover art found. Add some games with covers first.",
+    "backToDashboard": "Back to dashboard"
+  },
   "settings": {
     "title": "Settings",
     "subNav": {
@@ -538,6 +542,13 @@
       "customIcon": "Custom icon",
       "defaultIcon": "Default icon",
       "iconTooLarge": "Image must be under 500KB"
+    },
+    "displayMode": {
+      "heading": "Display Mode",
+      "description": "Fullscreen slideshow of random cover art from your owned games. Tap anywhere to exit. The screen stays awake while it runs.",
+      "slideInterval": "Change slide every {{seconds}} seconds",
+      "seconds": "{{count}}s",
+      "showTitle": "Show game title"
     },
     "removeGames": {
       "title": "Remove Games",
@@ -1080,7 +1091,8 @@
       "welcomeMessage": "Welcome to VideoGameTrackarr",
       "pageTitle": "Dashboard",
       "addGameButton": "Add game",
-      "publicCollectionButton": "Public Game Collection"
+      "publicCollectionButton": "Public Game Collection",
+      "displayModeButton": "Display Mode"
     },
     "page": {
       "gamesHeading": "Games",
