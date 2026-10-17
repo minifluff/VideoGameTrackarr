@@ -77,15 +77,33 @@ const AppShell = () => {
       </Link>
       <AppBar position="fixed" sx={{ zIndex: (t) => t.zIndex.drawer + 1 }}>
         <Toolbar>
-          <IconButton
+          <Box
             onClick={() => navigate("/")}
+            role="button"
+            tabIndex={0}
             title={t("nav.dashboard")}
             aria-label={t("nav.dashboard")}
-            disableRipple
-            sx={{ mr: 1, p: 0.5, "&:hover": { backgroundColor: "transparent" } }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                navigate("/");
+              }
+            }}
+            sx={{
+              mr: 1.5,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              "&:focus-visible": { outline: "2px solid white", borderRadius: 1 },
+            }}
           >
             {appIcon === "default" || isCustomIconDataUrl(appIcon) ? (
-              <Box component="img" src={resolveIconSrc(appIcon)} alt="" sx={{ height: 44, width: 44 }} />
+              <Box
+                component="img"
+                src={resolveIconSrc(appIcon)}
+                alt=""
+                sx={{ height: 44, width: 44 }}
+              />
             ) : (
               <Box
                 sx={{
@@ -100,7 +118,7 @@ const AppShell = () => {
                 {appIcon}
               </Box>
             )}
-          </IconButton>
+          </Box>
           <Typography variant="h6" component="div" noWrap sx={{ minWidth: 0, flexGrow: 1 }}>
             {appTitle}
           </Typography>
