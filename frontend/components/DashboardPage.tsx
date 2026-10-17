@@ -54,14 +54,25 @@ const DashboardPage = () => {
 
   if (sections.length === 0) {
     return (
-      <Typography
-        variant="h5"
-        component="h2"
-        color="text.secondary"
-        sx={{ textAlign: "center", mt: 6 }}
-      >
-        {t("insights.dashboard.welcomeMessage")}
-      </Typography>
+      <>
+        <Typography
+          variant="h5"
+          component="h2"
+          color="text.secondary"
+          sx={{ textAlign: "center", mt: 6 }}
+        >
+          {t("insights.dashboard.welcomeMessage")}
+        </Typography>
+        <Button
+          variant="outlined"
+          fullWidth
+          size="large"
+          sx={{ mt: 4 }}
+          onClick={() => navigate("/display-mode")}
+        >
+          {t("insights.dashboard.displayModeButton")}
+        </Button>
+      </>
     );
   }
 
@@ -85,6 +96,15 @@ const DashboardPage = () => {
           {section.node}
         </Box>
       ))}
+      <Button
+        variant="outlined"
+        fullWidth
+        size="large"
+        sx={{ mt: 3 }}
+        onClick={() => navigate("/display-mode")}
+      >
+        {t("insights.dashboard.displayModeButton")}
+      </Button>
     </>
   );
 };
