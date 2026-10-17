@@ -78,5 +78,6 @@ def update_display_mode_settings(
         media_screenshots=body.media_screenshots,
         media_artwork=body.media_artwork,
         media_videos=body.media_videos,
+        volume=body.volume,
     )
     return DisplayModeSettingsResponse(**settings)
