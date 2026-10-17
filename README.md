@@ -70,23 +70,29 @@ The published Docker image bundles the frontend and backend into a single contai
 ```yaml
 services:
   app:
-    image: wwwescape/videogametrackarr:latest
+    image: ghcr.io/minifluff/videogametrackarr:latest
     container_name: videogametrackarr
     ports:
       - "8000:8000"
-    env_file:
-      - .env
+    environment:
+      # Required: free IGDB credentials from https://api-docs.igdb.com/#getting-started
+      - IGDB_CLIENT_ID=
+      - IGDB_CLIENT_SECRET=
+      # Google "make JWT_SECRET_KEY secret key hex 32 for me" and add key here — keep private
+      - JWT_SECRET_KEY= 
+      # Optional integrations (uncomment to use):
+      # - STEAM_API_KEY=
+      # - ITAD_API_KEY=
+      # - ITAD_COUNTRY=CA
+      # - PLATPRICES_API_KEY=
+      # - PLATPRICES_REGION=
+      # - GOOGLE_SEARCH_API_KEY=
+      # - GOOGLE_SEARCH_ENGINE_ID=
     volumes:
-      - db-data:/app/backend/db
-      - uploads-data:/app/backend/uploads
+      - ./db-data:/app/backend/db
+      - ./uploads-data:/app/backend/uploads
     restart: unless-stopped
-
-volumes:
-  db-data:
-  uploads-data:
 ```
-
-Create a `.env` file next to it (see [Configuration](#configuration)), then start it:
 
 ```bash
 docker compose up -d
@@ -144,7 +150,7 @@ Requires [Git](https://git-scm.com/downloads), [Node.js 22+](https://nodejs.org/
 and [Python 3.12+](https://www.python.org/downloads/).
 
 ```bash
-git clone https://github.com/wwwescape/VideoGameTrackarr.git
+git clone https://github.com/minifluff/VideoGameTrackarr.git
 cd VideoGameTrackarr
 npm install
 cd backend
