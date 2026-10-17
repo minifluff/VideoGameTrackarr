@@ -161,16 +161,10 @@ const VideoSlide = ({
     <Box
       ref={containerRef}
       sx={{
-        // "Cover" fit: the 16:9 player fills the whole screen, cropping the
-        // overflow like a fullscreen video instead of letterboxing.
+        // "Fit": the whole 16:9 video is visible, letterboxed on screens with
+        // a different aspect ratio instead of being cropped.
         position: "absolute",
-        top: "50%",
-        left: "50%",
-        width: "100vw",
-        height: "56.25vw",
-        minHeight: "100vh",
-        minWidth: "177.78vh",
-        transform: "translate(-50%, -50%)",
+        inset: 0,
         "& iframe": { width: "100%", height: "100%", border: 0 },
       }}
     />
