@@ -1,4 +1,5 @@
 import logging
+import mimetypes
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -58,6 +59,11 @@ from app.services.exceptions import ConflictError, NotFoundError
 from app.services.igdb_client import IGDBClient, IGDBCredentialsError
 
 FRONTEND_BUILD_DIR = REPO_ROOT / "build"
+
+# Python's mimetypes doesn't know .apk, so FileResponse would serve the Game
+# Library APK as application/octet-stream — Android then saves the download
+# as .bin instead of .apk. Register the proper type once at startup.
+mimetypes.add_type("application/vnd.android.package-archive", ".apk")
 
 
 class UploadsStaticFiles(StaticFiles):
