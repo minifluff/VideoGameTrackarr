@@ -113,6 +113,7 @@ const PublicGamesPage = () => {
         onPlayStatusesChange={setPlayStatuses}
         ownershipStatuses={ownershipStatuses}
         onOwnershipStatusesChange={setOwnershipStatuses}
+        onClearFilters={clearAllFilters}
 
       />
       </Box>

@@ -57,6 +57,7 @@ interface PublicGamesToolbarProps {
   onPlayStatusesChange: (value: string[]) => void;
   ownershipStatuses: OwnershipStatus[];
   onOwnershipStatusesChange: (value: OwnershipStatus[]) => void;
+  onClearFilters: () => void;
 }
 
 const FORMAT_OPTIONS = ["physical", "digital", "iso", "rom", "abandonware", "other"];
@@ -81,6 +82,7 @@ const PublicGamesToolbar = ({
   onPlayStatusesChange,
   ownershipStatuses,
   onOwnershipStatusesChange,
+  onClearFilters,
 }: PublicGamesToolbarProps) => {
   const { t } = useTranslation();
   // Hide on scroll down, reappear on scroll up.
@@ -202,6 +204,9 @@ const PublicGamesToolbar = ({
             </Grid>
         </DialogContent>
         <DialogActions>
+          <Button onClick={onClearFilters} variant="text">
+            {t("games.listToolbar.clearFiltersButton")}
+          </Button>
           <Button onClick={() => setDialogOpen(false)} variant="contained">
             {t("common.close")}
           </Button>

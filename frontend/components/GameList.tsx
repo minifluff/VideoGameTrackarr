@@ -268,6 +268,7 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
   };
 
   const hasActiveFilters =
+    isSearchActive ||
     ownershipStatuses.length > 0 ||
     platformIds.length > 0 ||
     tagIds.length > 0 ||
@@ -279,6 +280,8 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
     steelbookOnly;
 
   const clearAllFilters = () => {
+    setSearchKeyword("");
+    setForceSearch(false);
     setOwnershipStatuses([]);
     setOwnershipExclude(false);
     setPlatformIds([]);
@@ -432,11 +435,11 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
           <Paper sx={{ p: 3, textAlign: "center" }}>{t("games.list.searching")}</Paper>
         ) : visibleGames.length === 0 ? (
           <Paper sx={{ p: 3, textAlign: "center" }}>
-            {isSearchActive ? (
-              <Typography>{t("games.list.noGamesFound")}</Typography>
-            ) : hasActiveFilters ? (
+            {hasActiveFilters ? (
               <>
-                <Typography>{t("games.list.noGamesMatchFilter")}</Typography>
+                <Typography>
+                  {t(isSearchActive ? "games.list.noGamesFound" : "games.list.noGamesMatchFilter")}
+                </Typography>
                 <Button onClick={clearAllFilters} variant="outlined" sx={{ mt: 2 }}>
                   {t("games.listToolbar.clearFiltersButton")}
                 </Button>
