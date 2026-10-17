@@ -15,7 +15,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import OfflineStatusIndicator from "./components/OfflineStatusIndicator";
 import RestoreGuard from "./components/RestoreGuard";
-import UpdateAvailableChip from "./components/UpdateAvailableChip";
+
 import { useLogout } from "./hooks/useAuth";
 import { useScrollResetOnNavigate } from "./hooks/useScrollResetOnNavigate";
 import BottomNavBar, { BOTTOM_NAV_HEIGHT } from "./navigation/BottomNavBar";
@@ -123,7 +123,6 @@ const AppShell = () => {
             {appTitle}
           </Typography>
           <OfflineStatusIndicator />
-          <UpdateAvailableChip />
           <FormControlLabel
             control={<Switch checked={mode === "dark"} onChange={toggleColorMode} />}
             label={t("appShell.darkMode")}
