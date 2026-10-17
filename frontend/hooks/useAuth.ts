@@ -36,7 +36,7 @@ export function useSetupStatus() {
 export function useSetupAdmin() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ username, password, rememberMe }: { username: string; password: string; rememberMe: boolean }) =>
+    mutationFn: ({ username, password }: { username: string; password: string }) =>
       setupAdmin(username, password),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
