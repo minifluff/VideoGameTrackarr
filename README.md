@@ -7,6 +7,7 @@
 <p align="center">
   A self-hosted web app for tracking your video game collection — what you own, what you want,
   what you're playing
+  
   This is my personal customized build of [VideoGameTrackarr](https://github.com/wwwescape/VideoGameTrackarr) — a self-hosted web app for tracking your video game collection.
 </p>
 
