@@ -1,8 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createPlatform, deletePlatform, listPlatforms, massMoveGames, updatePlatform } from "../api/platforms";
+import { createPlatform, deletePlatform, listLibraryPlatforms, listPlatforms, massMoveGames, updatePlatform } from "../api/platforms";
 
 export function usePlatforms() {
   return useQuery({ queryKey: ["platforms"], queryFn: listPlatforms });
+}
+
+// Keyed under ["games", ...] (unlike the plain platform list above): the counts change
+// whenever a library copy is added, moved or removed, and every one of those mutations
+// already invalidates ["games"] (see hooks/useGames.ts).
+export function useLibraryPlatforms() {
+  return useQuery({ queryKey: ["games", "platforms-library"], queryFn: listLibraryPlatforms });
 }
 
 export function useCreatePlatform() {
