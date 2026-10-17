@@ -1,4 +1,4 @@
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from app.schemas.base import CamelModel
 
@@ -41,4 +41,13 @@ class DisplayModeSettingsUpdate(CamelModel):
     media_screenshots: bool | None = None
     media_artwork: bool | None = None
     media_videos: bool | None = None
-    volume: int | None = Field(default=None, ge=0, le=100)
+    volume: int | None = Field(default=None, ge=0)
+
+    @field_validator("volume")
+    @classmethod
+    def clamp_volume(cls, v: int | None) -> int | None:
+        # Volumes above the max are clamped (the slider can't send them, but
+        # the API is lenient); negatives are still rejected by ge=0.
+        if v is not None and v > 100:
+            return 100
+        return v
