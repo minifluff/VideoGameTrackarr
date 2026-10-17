@@ -1,3 +1,4 @@
+import AndroidIcon from "@mui/icons-material/Android";
 import LogoutIcon from "@mui/icons-material/Logout";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -59,9 +60,22 @@ const Settings = () => {
       </Typography>
       <Card sx={{ maxWidth: 640 }}>
         <CardContent>
-          <Typography variant="subtitle1" gutterBottom>
-            {t("settings.account.heading")}
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              {t("settings.account.heading")}
+            </Typography>
+            <Button
+              component="a"
+              href="/game-library.apk"
+              download="game-library.apk"
+              variant="outlined"
+              size="small"
+              startIcon={<AndroidIcon />}
+              sx={{ whiteSpace: "nowrap", flexShrink: 0 }}
+            >
+              {t("settings.account.downloadApp")}
+            </Button>
+          </Box>
           <Typography variant="body2" color="text.secondary">
             <Trans
               i18nKey="settings.account.signedInAs"
