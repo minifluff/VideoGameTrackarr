@@ -94,6 +94,20 @@ const About = () => {
               {t("about.authorName")}
             </Link>
           </Typography>
+          <Typography variant="body2" color="text.secondary">
+            <Trans
+              i18nKey="about.basedOn"
+              components={{
+                1: (
+                  <Link
+                    href="https://github.com/wwwescape/VideoGameTrackarr"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  />
+                ),
+              }}
+            />
+          </Typography>
 
           <Divider sx={{ my: 3 }} />
 
