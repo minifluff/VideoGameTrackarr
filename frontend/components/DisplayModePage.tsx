@@ -39,9 +39,9 @@ interface YTNamespaceLike {
         onStateChange?: (event: YTStateChangeEvent) => void;
         onError?: () => void;
       };
-    },
+    }
   ) => YTPlayerLike;
-  PlayerState: { ENDED: number };
+  PlayerState: { ENDED: number; PLAYING: number; BUFFERING: number };
 }
 
 let ytApiPromise: Promise<YTNamespaceLike> | null = null;
@@ -106,51 +106,61 @@ const VideoSlide = ({
     }
     let player: YTPlayerLike | null = null;
     let cancelled = false;
+    let soundCheckTimer = 0;
     loadYouTubeApi()
       .then((YT) => {
         if (cancelled || !playerHostRef.current) return;
         // The API replaces the host div with its iframe, so centering lives on
         // the wrapper (flex) — the iframe is styled as the wrapper's child.
+        //
+        // Sound strategy: try unmuted at the user's volume. Browsers only
+        // allow unmuted autoplay after the user has interacted with the site;
+        // if it's blocked, the player never leaves the unstarted state, and
+        // only then do we fall back to muted so the video still plays.
+        // Buffering counts as progress — we must NOT mute a video that is
+        // simply slow to load (common on older devices).
+        let everStarted = false;
         try {
           player = new YT.Player(host, {
-          videoId,
-          playerVars: {
-            autoplay: 1,
-            rel: 0,
-            controls: 0,
-            playsinline: 1,
-            iv_load_policy: 3,
-          },
-          events: {
-            onReady: (event) => {
-              // Browsers only allow autoplay with sound after the user has
-              // interacted with the site; try sound first, fall back to muted
-              // so the video still plays instead of stalling.
-              try {
-                event.target.unMute();
-                event.target.setVolume(callbacksRef.current.volume);
-                event.target.playVideo();
-              } catch {
-                // ignored — the stall check below handles it
-              }
-              window.setTimeout(() => {
-                if (cancelled || !player) return;
+            videoId,
+            playerVars: {
+              autoplay: 1,
+              rel: 0,
+              controls: 0,
+              playsinline: 1,
+              iv_load_policy: 3,
+            },
+            events: {
+              onReady: (event) => {
                 try {
-                  if (player.getPlayerState() !== 1) {
+                  event.target.unMute();
+                  event.target.setVolume(callbacksRef.current.volume);
+                  event.target.playVideo();
+                } catch {
+                  // ignored — the sound check below handles a stall
+                }
+                soundCheckTimer = window.setTimeout(() => {
+                  if (cancelled || !player || everStarted) return;
+                  try {
                     player.mute();
                     player.playVideo();
+                  } catch {
+                    // ignored
                   }
-                } catch {
-                  // ignored
+                }, 8000);
+              },
+              onStateChange: (event) => {
+                if (
+                  event.data === YT.PlayerState.PLAYING ||
+                  event.data === YT.PlayerState.BUFFERING
+                ) {
+                  everStarted = true;
                 }
-              }, 2500);
+                if (event.data === YT.PlayerState.ENDED) callbacksRef.current.onEnded();
+              },
+              onError: () => callbacksRef.current.onFailed(),
             },
-            onStateChange: (event) => {
-              if (event.data === YT.PlayerState.ENDED) callbacksRef.current.onEnded();
-            },
-            onError: () => callbacksRef.current.onFailed(),
-          },
-        });
+          });
         } catch {
           // The player constructor can throw (e.g. API in a bad state) —
           // skip the slide instead of crashing the page.
@@ -162,6 +172,7 @@ const VideoSlide = ({
       });
     return () => {
       cancelled = true;
+      window.clearTimeout(soundCheckTimer);
       try {
         player?.destroy();
       } catch {
