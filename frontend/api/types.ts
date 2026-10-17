@@ -24,6 +24,19 @@ export interface PlatformResponse {
   gameCount: number;
 }
 
+// A Games → Platforms card: a platform with copies in your library.
+export interface LibraryPlatform {
+  id: number;
+  name: string;
+  slug: string | null;
+  abbreviation: string | null;
+  // Only set on a PC storefront/format card (see utils/platformScope.ts).
+  format: MediaFormat | null;
+  storefront: string | null;
+  ownedCount: number;
+  wishlistedCount: number;
+}
+
 export interface RegionResponse {
   id: number;
   name: string;
@@ -213,6 +226,8 @@ export interface CatalogRef {
 
 export interface CatalogRefSummary extends CatalogRef {
   gameCount: number;
+  // Up to 4: games you have first, then the earliest released.
+  coverUrls: string[];
 }
 
 export type CompanyRole = "developer" | "publisher" | "porting" | "supporting";
@@ -486,7 +501,7 @@ export interface VersionInfo {
 export type LibraryStatus = "owned" | "wishlist";
 export type MediaFormat = "physical" | "digital" | "iso" | "rom" | "abandonware" | "other";
 export type GameSortOption = "name_asc" | "name_desc" | "release_date_asc" | "release_date_desc" | "date_added_asc" | "date_added_desc";
-export type CatalogSortOption = "name_asc" | "name_desc";
+export type CatalogSortOption = "name_asc" | "name_desc" | "count_desc";
 export type RatingBoard = "esrb" | "pegi" | "cero" | "usk" | "grac" | "classind" | "acb" | "iarc";
 
 export interface LibraryItem {

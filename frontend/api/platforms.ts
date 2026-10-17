@@ -1,9 +1,14 @@
 import { apiClient } from "./client";
 import { buildGameFilterParams, type GameListFilters } from "./games";
-import type { CatalogBrowseResult, GameSummary, PlatformResponse } from "./types";
+import type { CatalogBrowseResult, GameSummary, LibraryPlatform, PlatformResponse } from "./types";
 
 export async function listPlatforms(): Promise<PlatformResponse[]> {
   const response = await apiClient.get<PlatformResponse[]>("/api/platforms");
+  return response.data;
+}
+
+export async function listLibraryPlatforms(): Promise<LibraryPlatform[]> {
+  const response = await apiClient.get<LibraryPlatform[]>("/api/platforms/library");
   return response.data;
 }
 
