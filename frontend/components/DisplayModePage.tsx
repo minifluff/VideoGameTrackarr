@@ -18,6 +18,11 @@ interface WakeLockSentinelLike {
 // Minimal typings for the YouTube IFrame Player API (loaded on demand).
 interface YTPlayerLike {
   destroy: () => void;
+  playVideo: () => void;
+  mute: () => void;
+  unMute: () => void;
+  setVolume: (volume: number) => void;
+  getPlayerState: () => number;
 }
 interface YTStateChangeEvent {
   data: number;
@@ -75,19 +80,21 @@ function youtubeVideoId(embedUrl: string): string | null {
   return match ? match[1] : null;
 }
 
-/** A YouTube slide that plays in full, then calls onEnded. */
+/** A YouTube slide that plays in full with sound, then calls onEnded. */
 const VideoSlide = ({
   embedUrl,
+  volume,
   onEnded,
   onFailed,
 }: {
   embedUrl: string;
+  volume: number;
   onEnded: () => void;
   onFailed: () => void;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const callbacksRef = useRef({ onEnded, onFailed });
-  callbacksRef.current = { onEnded, onFailed };
+  const callbacksRef = useRef({ onEnded, onFailed, volume });
+  callbacksRef.current = { onEnded, onFailed, volume };
 
   useEffect(() => {
     const videoId = youtubeVideoId(embedUrl);
@@ -104,13 +111,35 @@ const VideoSlide = ({
           videoId,
           playerVars: {
             autoplay: 1,
-            mute: 1, // muted autoplay is required by browsers
             rel: 0,
             controls: 0,
             playsinline: 1,
             iv_load_policy: 3,
           },
           events: {
+            onReady: (event) => {
+              // Browsers only allow autoplay with sound after the user has
+              // interacted with the site; try sound first, fall back to muted
+              // so the video still plays instead of stalling.
+              try {
+                event.target.unMute();
+                event.target.setVolume(callbacksRef.current.volume);
+                event.target.playVideo();
+              } catch {
+                // ignored — the stall check below handles it
+              }
+              window.setTimeout(() => {
+                if (cancelled || !player) return;
+                try {
+                  if (player.getPlayerState() !== 1) {
+                    player.mute();
+                    player.playVideo();
+                  }
+                } catch {
+                  // ignored
+                }
+              }, 2500);
+            },
             onStateChange: (event) => {
               if (event.data === YT.PlayerState.ENDED) callbacksRef.current.onEnded();
             },
@@ -132,8 +161,16 @@ const VideoSlide = ({
     <Box
       ref={containerRef}
       sx={{
+        // "Cover" fit: the 16:9 player fills the whole screen, cropping the
+        // overflow like a fullscreen video instead of letterboxing.
         position: "absolute",
-        inset: 0,
+        top: "50%",
+        left: "50%",
+        width: "100vw",
+        height: "56.25vw",
+        minHeight: "100vh",
+        minWidth: "177.78vh",
+        transform: "translate(-50%, -50%)",
         "& iframe": { width: "100%", height: "100%", border: 0 },
       }}
     />
@@ -161,6 +198,7 @@ const DisplayModePage = () => {
   const [index, setIndex] = useState(0);
   const [intervalSeconds, setIntervalSeconds] = useState(10);
   const [showTitle, setShowTitle] = useState(false);
+  const [volume, setVolume] = useState(80);
   const [loading, setLoading] = useState(true);
   const [fading, setFading] = useState(false);
   const fetchingRef = useRef(false);
@@ -257,6 +295,7 @@ const DisplayModePage = () => {
         if (cancelled) return;
         setIntervalSeconds(settings.slideIntervalSeconds);
         setShowTitle(settings.showTitle);
+        setVolume(settings.volume);
         setSlides(shuffle(firstBatch));
       } catch {
         // surfaced via the empty state below
@@ -379,7 +418,13 @@ const DisplayModePage = () => {
       }}
     >
       {isVideo ? (
-        <VideoSlide key={slideKey} embedUrl={slide.mediaUrl} onEnded={advance} onFailed={advance} />
+        <VideoSlide
+          key={slideKey}
+          embedUrl={slide.mediaUrl}
+          volume={volume}
+          onEnded={advance}
+          onFailed={advance}
+        />
       ) : (
         <Box
           component="img"
