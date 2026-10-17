@@ -764,6 +764,7 @@
       "sortByLabel": "Sort By",
       "sortNameAsc": "Name (ASC)",
       "sortNameDesc": "Name (DESC)",
+      "sortMostGames": "Most games",
       "sortReleaseDateAsc": "Release Date (ASC)",
       "sortReleaseDateDesc": "Release Date (DESC)",
       "showMissingLabel": "Show what I am missing?",
@@ -1042,7 +1043,11 @@
       "description": "Platforms with at least one game in your library.",
       "emptyMessage": "No platforms yet — they show up here once you've added a game on one.",
       "searchLabel": "Search platforms",
-      "searchPlaceholder": "Enter platform name"
+      "searchPlaceholder": "Enter platform name",
+      "ownedCount_one": "{{count}} owned",
+      "ownedCount_other": "{{count}} owned",
+      "wishlistedCount_one": "{{count}} wishlisted",
+      "wishlistedCount_other": "{{count}} wishlisted"
     },
     "platformPage": {
       "kindLabel": "Platform"
@@ -1266,6 +1271,7 @@
   "catalog": {
     "browseGrid": {
       "importedOnlyNotice": "Only games you've already imported show up here.",
+      "platformNotice": "Games you own or wishlisted on this platform.",
       "emptyMessage": "No locally-known games in this {{kind}} yet.",
       "includeAddonsLabel": "Include Addons",
       "gamesSectionTitle": "Games",
