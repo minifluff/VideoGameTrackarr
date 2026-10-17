@@ -18,6 +18,7 @@ export interface DisplayModeSettings {
   mediaScreenshots: boolean;
   mediaArtwork: boolean;
   mediaVideos: boolean;
+  volume: number;
 }
 
 export async function fetchDisplayModeSlides(limit = 200): Promise<DisplayModeSlide[]> {
