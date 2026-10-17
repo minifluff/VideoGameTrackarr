@@ -2,13 +2,22 @@ from pydantic import Field
 
 from app.schemas.base import CamelModel
 
+MEDIA_COVER_ART = "cover_art"
+MEDIA_SCREENSHOT = "screenshot"
+MEDIA_ARTWORK = "artwork"
+MEDIA_VIDEO = "video"
+
+MEDIA_TYPES = (MEDIA_COVER_ART, MEDIA_SCREENSHOT, MEDIA_ARTWORK, MEDIA_VIDEO)
+
 
 class DisplayModeSlide(CamelModel):
-    """One cover-art slide for Display Mode: an owned, non-hidden game with cover art."""
+    """One Display Mode slide: a single media item (cover art, screenshot,
+    artwork, or video) from an owned game."""
 
     id: int
     name: str
-    cover_url: str
+    media_type: str
+    media_url: str
 
 
 class DisplayModeSettingsResponse(CamelModel):
@@ -16,6 +25,10 @@ class DisplayModeSettingsResponse(CamelModel):
     show_title: bool
     show_hidden: bool
     show_wishlisted: bool
+    media_cover_art: bool
+    media_screenshots: bool
+    media_artwork: bool
+    media_videos: bool
 
 
 class DisplayModeSettingsUpdate(CamelModel):
@@ -23,3 +36,7 @@ class DisplayModeSettingsUpdate(CamelModel):
     show_title: bool | None = None
     show_hidden: bool | None = None
     show_wishlisted: bool | None = None
+    media_cover_art: bool | None = None
+    media_screenshots: bool | None = None
+    media_artwork: bool | None = None
+    media_videos: bool | None = None
