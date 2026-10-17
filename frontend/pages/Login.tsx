@@ -3,18 +3,22 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
 import CircularProgress from "@mui/material/CircularProgress";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import Paper from "@mui/material/Paper";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { useLogin, useSetupStatus } from "../hooks/useAuth";
+import { tokenStorage } from "../api/tokenStorage";
 import SetupAdmin from "./SetupAdmin";
 
 const LoginForm = () => {
   const { t } = useTranslation();
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(() => tokenStorage.getRememberedUsername() ?? "");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(() => tokenStorage.isRememberMe());
   const navigate = useNavigate();
   const location = useLocation();
   const loginMutation = useLogin();
@@ -22,7 +26,7 @@ const LoginForm = () => {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     try {
-      await loginMutation.mutateAsync({ username, password });
+      await loginMutation.mutateAsync({ username, password, rememberMe });
       const redirectTo = (location.state as { from?: string } | null)?.from ?? "/";
       navigate(redirectTo, { replace: true });
     } catch {
@@ -61,6 +65,16 @@ const LoginForm = () => {
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           required
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={rememberMe}
+              onChange={(event) => setRememberMe(event.target.checked)}
+            />
+          }
+          label={t("auth.login.rememberMe")}
+          sx={{ mt: 1 }}
         />
         <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }} disabled={loginMutation.isPending}>
           {loginMutation.isPending ? t("auth.login.signingIn") : t("auth.login.signIn")}
