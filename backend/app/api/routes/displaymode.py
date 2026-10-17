@@ -7,6 +7,10 @@ from app.schemas.display_mode import (
     DisplayModeSettingsResponse,
     DisplayModeSettingsUpdate,
     DisplayModeSlide,
+    MEDIA_ARTWORK,
+    MEDIA_COVER_ART,
+    MEDIA_SCREENSHOT,
+    MEDIA_VIDEO,
 )
 from app.services import display_mode_service
 
@@ -28,17 +32,30 @@ def get_slides(
     limit: int = Query(default=200, ge=1, le=500),
     db: Session = Depends(get_db),
 ) -> list[DisplayModeSlide]:
-    """Random sample of cover-art slides for Display Mode, freshly shuffled on every
-    fetch. The display-mode settings decide whether hidden and wishlisted games are
-    included (both excluded by default)."""
+    """Random sample of media slides for Display Mode, freshly shuffled on every
+    fetch. The display-mode settings decide which media types are included and
+    whether hidden and wishlisted games are included (both excluded by default)."""
     settings = display_mode_service.get_settings(db)
+    media_types = set()
+    if settings["media_cover_art"]:
+        media_types.add(MEDIA_COVER_ART)
+    if settings["media_screenshots"]:
+        media_types.add(MEDIA_SCREENSHOT)
+    if settings["media_artwork"]:
+        media_types.add(MEDIA_ARTWORK)
+    if settings["media_videos"]:
+        media_types.add(MEDIA_VIDEO)
     slides = game_repository.list_display_mode_slides(
         db,
         limit=limit,
         include_hidden=settings["show_hidden"],
         include_wishlisted=settings["show_wishlisted"],
+        media_types=media_types,
     )
-    return [DisplayModeSlide(id=slide[0], name=slide[1], cover_url=slide[2]) for slide in slides]
+    return [
+        DisplayModeSlide(id=slide[0], name=slide[1], media_type=slide[2], media_url=slide[3])
+        for slide in slides
+    ]
 
 
 @settings_router.get("", response_model=DisplayModeSettingsResponse)
@@ -57,5 +74,9 @@ def update_display_mode_settings(
         show_title=body.show_title,
         show_hidden=body.show_hidden,
         show_wishlisted=body.show_wishlisted,
+        media_cover_art=body.media_cover_art,
+        media_screenshots=body.media_screenshots,
+        media_artwork=body.media_artwork,
+        media_videos=body.media_videos,
     )
     return DisplayModeSettingsResponse(**settings)
