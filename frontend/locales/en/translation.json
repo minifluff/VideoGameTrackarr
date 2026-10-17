@@ -549,8 +549,8 @@
       "slideInterval": "Change slide every {{seconds}} seconds",
       "seconds": "{{count}}s",
       "showTitle": "Show game title",
-      "showHidden": "Allow hidden games",
-      "showWishlisted": "Allow wishlisted games"
+      "showHidden": "Show hidden games",
+      "showWishlisted": "Show wishlisted games"
     },
     "removeGames": {
       "title": "Remove Games",
