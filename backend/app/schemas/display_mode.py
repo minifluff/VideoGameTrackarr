@@ -14,8 +14,12 @@ class DisplayModeSlide(CamelModel):
 class DisplayModeSettingsResponse(CamelModel):
     slide_interval_seconds: int
     show_title: bool
+    show_hidden: bool
+    show_wishlisted: bool
 
 
 class DisplayModeSettingsUpdate(CamelModel):
     slide_interval_seconds: int | None = Field(default=None, ge=3, le=120)
     show_title: bool | None = None
+    show_hidden: bool | None = None
+    show_wishlisted: bool | None = None
