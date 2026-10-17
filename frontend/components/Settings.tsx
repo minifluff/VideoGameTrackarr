@@ -20,6 +20,7 @@ import { STORE_REGION_AUTO, STORE_REGION_OFF, STORE_REGIONS } from "../utils/sto
 import AutocompleteSelect from "./AutocompleteSelect";
 import AppearanceSection from "./AppearanceSection";
 import DataManagementSection from "./DataManagementSection";
+import DisplayModeSection from "./DisplayModeSection";
 import SettingsSubNav from "./SettingsSubNav";
 import ShareSection from "./ShareSection";
 import DatabaseResetSection from "./DatabaseResetSection";
@@ -114,6 +115,13 @@ const Settings = () => {
             {t("settings.appearance.heading")}
           </Typography>
           <AppearanceSection />
+
+          <Divider sx={{ my: 3 }} />
+
+          <Typography variant="subtitle1" gutterBottom>
+            {t("settings.displayMode.heading")}
+          </Typography>
+          <DisplayModeSection />
 
           <Divider sx={{ my: 3 }} />
 
