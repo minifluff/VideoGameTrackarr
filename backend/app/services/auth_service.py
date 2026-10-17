@@ -53,13 +53,20 @@ def issue_tokens(db: Session, user: User, remember_me: bool = False) -> tuple[st
 def rotate_refresh_token(db: Session, refresh_token: str) -> tuple[str, str]:
     """Validates a refresh token, revokes it, and issues a fresh access+refresh pair.
     Rotation means a stolen refresh token can be replayed at most once before the
-    legitimate client's next refresh fails loudly (the record is already revoked)."""
+    legitimate client's next refresh fails loudly (the record is already revoked).
+
+    A "Remember me" session keeps its long lifetime across rotations: the rotated
+    token was issued with ~a year of life while a normal one gets
+    settings.refresh_token_expire_days (default 30 days), so anything with far more
+    than the normal lifetime left is re-issued as remember-me. No schema change needed.
+    """
     record, user = _load_active_refresh_token(db, refresh_token)
 
     record.revoked_at = datetime.now(UTC)
     db.flush()
 
-    return issue_tokens(db, user)
+    remember_me = (record.expires_at - datetime.now(UTC)) > timedelta(days=60)
+    return issue_tokens(db, user, remember_me=remember_me)
 
 
 def revoke_refresh_token(db: Session, refresh_token: str) -> None:
