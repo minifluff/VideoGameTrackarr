@@ -9,7 +9,7 @@
   what you're playing
 </p>
  <p align="center"> 
-  This is my personal customized build of [VideoGameTrackarr](https://github.com/wwwescape/VideoGameTrackarr) — a self-hosted web app for tracking your video game collection.
+  This is my personal customized build of [VideoGameTrackarr](https://github.com/wwwescape/VideoGameTrackarr) — a self-hosted web app for tracking your video game collection. Most of my changes can be seen at the bottom.
 </p>
 <p align="center">
 My code is free to use how you wish. Just let me know if you need assistance. 
