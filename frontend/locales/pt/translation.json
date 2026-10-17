@@ -7,6 +7,7 @@
     "add": "Adicionar",
     "remove": "Remover",
     "close": "Fechar",
+    "clearSearch": "Clear search",
     "confirm": "Confirmar",
     "back": "Voltar",
     "loading": "A carregar...",
@@ -22,7 +23,11 @@
     "actions": "Ações",
     "viewAll": "Ver tudo",
     "scrollPrevious": "Deslocar para trás",
-    "scrollNext": "Deslocar para a frente"
+    "scrollNext": "Deslocar para a frente",
+    "transfer": "Move to another game",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "all": "All"
   },
   "errors": {
     "pageNotFoundTitle": "Página não encontrada",
@@ -60,11 +65,18 @@
     "onSale": "Em Promoção",
     "settings": "Definições",
     "tagManager": "Gestor de etiquetas",
+    "platformManager": "Platform Manager",
     "jobs": "Tarefas",
     "integrations": "Integrações",
     "about": "Sobre",
     "emulation": "Emulação",
-    "platforms": "Plataformas"
+    "platforms": "Plataformas",
+    "removeGames": "Remove Games",
+    "playniteSync": "Playnite Sync",
+    "unlinkedGames": "Unlinked Games",
+    "playing": "Playing",
+    "wishlist": "Wishlist",
+    "gamesList": "List"
   },
   "breadcrumbs": {
     "edit": "Editar",
@@ -206,6 +218,11 @@
     "syncingChanges_one": "A sincronizar {{count}} alteração...",
     "syncingChanges_other": "A sincronizar {{count}} alterações..."
   },
+  "displayMode": {
+    "noSlides": "No owned games with cover art found. Add some games with covers first.",
+    "noSlidesHint": "Tip: choose which media types appear in Settings → Display Mode.",
+    "backToDashboard": "Back to dashboard"
+  },
   "settings": {
     "title": "Definições",
     "subNav": {
@@ -213,7 +230,8 @@
     },
     "account": {
       "heading": "Conta",
-      "signedInAs": "Sessão iniciada como <1>{{username}}</1>."
+      "signedInAs": "Sessão iniciada como <1>{{username}}</1>.",
+      "downloadApp": "Download Android app"
     },
     "display": {
       "heading": "Visualização",
@@ -319,7 +337,35 @@
         "eventsSync": {
           "name": "Sincronizar eventos",
           "description": "Obtém os eventos da indústria de jogos atualmente próximos a partir do IGDB e remove qualquer evento previamente sincronizado que já tenha terminado — alimenta a página Eventos e o resumo do painel."
+        },
+        "exportBackup": {
+          "name": "Scheduled backup export",
+          "description": "Writes the data export to a network folder on a schedule and deletes old exports beyond the number you keep."
         }
+      },
+      "exportBackup": {
+        "configured": "Configured",
+        "notConfiguredLabel": "Not configured",
+        "notConfigured": "Set the network folder first, then run the export.",
+        "destinationHeading": "Destination",
+        "pathLabel": "Network folder location",
+        "pathPlaceholder": "\\\\SERVER\\Share\\Backups",
+        "pathHelper": "Network path to the folder where exports are written (e.g. \\\\SERVER\\Share\\Backups)",
+        "usernameLabel": "Username",
+        "usernameHelper": "SMB username (leave blank for guest access)",
+        "passwordLabel": "Password",
+        "passwordHelper": "SMB password",
+        "passwordSet": "Password is set (leave blank to keep it)",
+        "retentionLabel": "Exports to keep",
+        "retentionHelper": "Oldest exports beyond this number are deleted",
+        "retentionError": "Enter a number of 1 or more.",
+        "includeFilesLabel": "Full backup (include ROMs, saves and BIOS files)",
+        "includeFilesHelper": "When off, exports are JSON-only and much smaller.",
+        "testButton": "Test connection",
+        "testError": "Could not test the connection.",
+        "saved": "Export settings saved.",
+        "saveError": "Could not save export settings.",
+        "resultSummary": "Exported {filename} — deleted {deleted} old export(s)."
       }
     },
     "tagManager": {
@@ -337,7 +383,40 @@
       "addSuccess": "Etiqueta adicionada.",
       "updateSuccess": "Etiqueta atualizada.",
       "saveError": "Erro ao guardar a etiqueta. Tente novamente.",
-      "duplicateNameError": "Já existe uma etiqueta com esse nome."
+      "duplicateNameError": "Já existe uma etiqueta com esse nome.",
+      "gamesColumn": "Games"
+    },
+    "platformManager": {
+      "description": "Add, rename, or delete platforms. Deleting a platform unlinks it from every library copy that uses it — the games themselves are kept. Renaming a platform also updates its page URL.",
+      "deleteConfirmTitle": "Delete \"{{name}}\" permanently?",
+      "deleteConfirmDescription": "This permanently deletes the \"{{name}}\" platform. Library copies on this platform will be kept but unlinked from it. This cannot be undone.",
+      "deleteConfirmTitle_bulk_one": "Delete 1 platform permanently?",
+      "deleteConfirmTitle_bulk_other": "Delete {{count}} platforms permanently?",
+      "deleteConfirmDescription_bulk_one": "This permanently deletes the selected platform. Library copies on this platform will be kept but unlinked from it. This cannot be undone.",
+      "deleteConfirmDescription_bulk_other": "This permanently deletes {{count}} selected platforms. Library copies on these platforms will be kept but unlinked from them. This cannot be undone.",
+      "deleteError": "Error deleting platform. Please try again.",
+      "nameColumn": "Name",
+      "abbreviationColumn": "Abbreviation",
+      "abbreviationHint": "Short name, e.g. PS5 (optional)",
+      "gameCountColumn": "Games",
+      "addDialogTitle": "Add Platform",
+      "editDialogTitle": "Edit Platform",
+      "addSuccess": "Platform added.",
+      "updateSuccess": "Platform updated.",
+      "saveError": "Error saving platform. Please try again.",
+      "duplicateNameError": "A platform with that name already exists.",
+      "massMoveTitle": "Move Games Between Platforms",
+      "massMoveDescription": "Move all games, progress, and play sessions from one platform to another. This cannot be undone.",
+      "massMoveSource": "From Platform",
+      "massMoveTarget": "To Platform",
+      "massMoveButton": "Move Games",
+      "massMoveConfirm": "This will move {count} games from {source} to {target}.",
+      "massMoveSuccess": "Moved {count} games.",
+      "massMoveError": "Failed to move games. Please try again.",
+      "gamesColumn": "Games",
+      "igdbIdColumn": "IGDB ID",
+      "slugColumn": "Slug",
+      "slugHint": "Leave blank to auto-generate from the name"
     },
     "share": {
       "heading": "Partilhar",
@@ -352,6 +431,25 @@
       "regenerateConfirmDescription": "Isto quebra imediatamente ambas as ligações acima — quem estiver a usar as ligações antigas perde o acesso. Novas ligações substituem-nas de imediato.",
       "regenerateSuccess": "Ligações de partilha regeneradas.",
       "regenerateError": "Não foi possível regenerar as ligações. Tente novamente."
+    },
+    "dangerZone": {
+      "heading": "Danger Zone",
+      "description": "Permanently delete every game in your library — all library items, catalog entries, progress, play sessions, notes, tags, and ROM files — and clear the Playnite, Steam, and wishlist sync caches so they can reimport from scratch. Your account, settings, and connection details are kept.",
+      "resetButton": "Reset Database",
+      "dialogTitle": "Reset the database?",
+      "dialogDescription": "This will permanently delete all games and reset the sync tools. There is no undo.",
+      "dialogWarning": "All games, library items, progress, notes, tags, and ROM files will be deleted. Sync caches will be cleared.",
+      "confirmLabel": "Type \"confirm\" to proceed",
+      "resetting": "Resetting...",
+      "resetSuccess": "Database reset: {{games}} games and {{items}} library items deleted.",
+      "resetError": "Could not reset the database. Please try again.",
+      "clearPlaytimeButton": "Clear playtime progress",
+      "clearPlaytimeDialogTitle": "Clear all playtime progress?",
+      "clearPlaytimeDialogDescription": "This will delete all playtime tracking data — playtime minutes, play statuses, and play sessions — for every game. Your library, games, and other data will not be affected.",
+      "clearPlaytimeDialogWarning": "This cannot be undone. All playtime history will be permanently deleted.",
+      "clearPlaytimeSuccess": "Cleared {{progress}} progress entries and {{sessions}} play sessions.",
+      "clearPlaytimeError": "Failed to clear playtime progress.",
+      "clearing": "Clearing…"
     },
     "integrations": {
       "igdbHeading": "Credenciais IGDB",
@@ -375,7 +473,30 @@
       "platpricesLogoAlt": "PlatPrices",
       "platpricesDescription": "A chave da API do PlatPrices é configurada através do ficheiro <1>.env</1> deste servidor (<3>PLATPRICES_API_KEY</3>), não através da aplicação. Peça uma chave em platprices.com/api-request (normalmente emitida em 1-2 dias úteis), adicione-a ao .env e reinicie o VideoGameTrackarr.",
       "platpricesRegionCaveat": "O plano gratuito do PlatPrices permite que sua conta acompanhe 2 regiões da PlayStation Store ao mesmo tempo (alteráveis uma vez a cada 24 horas em platprices.com), além de 1.000 solicitações por mês. Defina PLATPRICES_REGION no .env com o código de duas letras de uma delas (ex.: GB ou IN) e recrie o contêiner com docker compose up -d (uma simples reinicialização não aplica as alterações do .env). A região em uso aparece acima, e os preços obtidos para qualquer outra região são apagados ao iniciar.",
-      "platpricesCredit": "Os dados de preços da PlayStation são fornecidos por <1>PlatPrices</1>."
+      "platpricesCredit": "Os dados de preços da PlayStation são fornecidos por <1>PlatPrices</1>.",
+      "playniteHeading": "Playnite",
+      "playniteDescription": "Connect to your Playnite library over the network (SMB share) to sync games into VideoGameTrackarr.",
+      "playnitePathLabel": "Playnite folder location",
+      "playnitePathPlaceholder": "\\\\server\\share\\Playnite",
+      "playnitePathHelper": "Network path to your Playnite data folder (e.g. \\\\SERVER\\Share\\Playnite)",
+      "playniteUsernameLabel": "Username",
+      "playniteUsernameHelper": "SMB username (leave blank for guest access)",
+      "playnitePasswordLabel": "Password",
+      "playnitePasswordHelper": "SMB password (leave blank for guest access)",
+      "playnitePasswordSet": "Password is set (leave blank to keep it)",
+      "playniteSaved": "Playnite settings saved",
+      "playniteSaveError": "Failed to save Playnite settings",
+      "playniteTestButton": "Test connection",
+      "playniteTestError": "Could not test the connection.",
+      "playniteCacheHeading": "Playnite Sync Cache",
+      "playniteCacheDescription": "Clears the cached Playnite library entries. Your games and settings are kept — the next scan will start fresh.",
+      "playniteClearCacheButton": "Clear cache",
+      "playniteClearCacheDialogTitle": "Clear Playnite cache?",
+      "playniteClearCacheDialogMessage": "This will delete all cached Playnite library entries, including sync links and ignored-entry state. Your VideoGameTrackarr games and integration settings will not be deleted. The next scan will start completely fresh.",
+      "playniteClearCacheConfirm": "Clear cache",
+      "playniteClearingCache": "Clearing…",
+      "playniteClearCacheSuccess": "Cleared {{cleared}} cached entries",
+      "playniteClearCacheError": "Failed to clear the cache"
     },
     "emulation": {
       "description": "Alguns sistemas precisam da BIOS do console para jogar no navegador. Envie-a aqui uma vez e todos os jogos desse sistema poderão usá-la.",
@@ -411,7 +532,95 @@
       "customColor": "Escolher uma cor personalizada",
       "appTitle": "Título do aplicativo",
       "appTitleHelp": "Exibido na barra de título e na aba do navegador.",
-      "reset": "Restaurar padrões"
+      "reset": "Restaurar padrões",
+      "appIcon": "App icon",
+      "appIconHelp": "Shown as the browser tab icon. Syncs across devices.",
+      "cardSize": "Game card size",
+      "cardSizeHelp": "Smaller cards fit more games on screen. Syncs across devices.",
+      "cardSizeSmall": "Small",
+      "cardSizeMedium": "Medium",
+      "cardSizeLarge": "Large",
+      "uploadIcon": "Upload custom icon",
+      "customIcon": "Custom icon",
+      "defaultIcon": "Default icon",
+      "iconTooLarge": "Image must be under 500KB"
+    },
+    "displayMode": {
+      "heading": "Display Mode",
+      "description": "Fullscreen slideshow of random media from your library. Hidden and wishlisted games are excluded unless allowed below. Tap anywhere to exit. The screen stays awake while it runs.",
+      "slideInterval": "Change slide every {{seconds}} seconds",
+      "seconds": "{{count}}s",
+      "showTitle": "Show game title",
+      "showHidden": "Show hidden games",
+      "showWishlisted": "Show wishlisted games",
+      "mediaHeading": "Media to show",
+      "mediaCoverArt": "Cover Art",
+      "mediaScreenshots": "Screenshots",
+      "mediaArtwork": "Artwork",
+      "mediaVideos": "Videos",
+      "volume": "Volume"
+    },
+    "removeGames": {
+      "title": "Remove Games",
+      "description": "Permanently remove games from your library. Select games below and confirm to delete them.",
+      "searchLabel": "Search games",
+      "searchPlaceholder": "Type to filter games...",
+      "deleteSelected": "Delete selected ({{count}})",
+      "deleteButton": "Delete",
+      "columnGame": "Game",
+      "columnActions": "Actions",
+      "noGames": "No games found.",
+      "confirmSingleTitle": "Delete \"{{name}}\"?",
+      "confirmBulkTitle": "Delete {{count}} games?",
+      "confirmDescription": "This permanently removes the selected games from your library. This cannot be undone.",
+      "confirmButton": "Delete"
+    },
+    "playniteSync": {
+      "title": "Playnite Sync",
+      "description": "Sync games from your Playnite library (via the configured network share) into VideoGameTrackarr.",
+      "notConfigured": "Playnite sync is not configured. Set the network folder location in Integrations first.",
+      "goToIntegrations": "Go to Integrations",
+      "searchLabel": "Search",
+      "scanButton": "Scan library",
+      "syncSelectedButton": "Sync selected ({{count}})",
+      "syncAllButton": "Sync all",
+      "hideSyncedLabel": "Hide synced",
+      "hideSyncedTooltip": "Hide games already in your library",
+      "columnName": "Game",
+      "columnPlatform": "Platform",
+      "columnStatus": "Status",
+      "columnActions": "Actions",
+      "statusUpToDate": "Up to date",
+      "statusNew": "New",
+      "statusNoMatch": "No match",
+      "statusIgnored": "Ignored",
+      "ignoreButton": "Ignore",
+      "unignoreButton": "Unignore",
+      "emptyState": "No Playnite games found. Click Scan library to read your Playnite data folder.",
+      "noResults": "No games match your filters.",
+      "confirmTitle": "Sync {{count}} games?",
+      "confirmDescription": "This will add the selected games to your library.",
+      "confirmButton": "Sync",
+      "scanSuccess": "Scanned {{scanned}} games, {{newCount}} new.",
+      "scanError": "Scan failed.",
+      "scanning": "Scanning...",
+      "columnNotes": "Notes",
+      "columnEdition": "Edition",
+      "columnFormat": "Format",
+      "syncingProgress": "Syncing {{done}} of {{total}} games...",
+      "clearCacheButton": "Clear cache",
+      "clearingCache": "Clearing...",
+      "clearCacheSuccess": "Cleared {{cleared}} cached entries",
+      "clearCacheError": "Failed to clear cache"
+    },
+    "igdbAutoLink": {
+      "heading": "IGDB Auto-Link",
+      "description": "Automatically link games in your library to IGDB by matching their names. Only exact name matches are linked — anything ambiguous is left alone for you to link manually.",
+      "unlinkedCount": "{{count}} games not linked to IGDB",
+      "linkButton": "Auto-link {{count}} games",
+      "progress": "Linking {{done}} of {{total}} games...",
+      "success": "Linked {{linked}} games ({{noMatch}} had no match, {{failed}} failed)",
+      "error": "Auto-link failed"
     }
   },
   "auth": {
@@ -422,7 +631,8 @@
       "username": "Nome de utilizador",
       "password": "Palavra-passe",
       "signingIn": "A iniciar sessão...",
-      "signIn": "Iniciar sessão"
+      "signIn": "Iniciar sessão",
+      "rememberMe": "Remember me"
     },
     "setupAdmin": {
       "subtitle": "Ainda não existe nenhuma conta de administrador — crie uma para começar.",
@@ -457,7 +667,19 @@
       "linkedGameHelperText": "De que jogo é este um complemento?",
       "officialNameRequiredError": "O nome oficial é obrigatório.",
       "linkedGameRequiredError": "O jogo associado é obrigatório para esta categoria.",
-      "uploadCoverError": "Erro ao carregar a imagem de capa. Por favor, tente novamente."
+      "uploadCoverError": "Erro ao carregar a imagem de capa. Por favor, tente novamente.",
+      "searchCoverButton": "Search web",
+      "coverSearchTitle": "Search for cover art",
+      "coverSearchPlaceholder": "Search Google for cover art...",
+      "coverSearchNotConfigured": "Google image search is not configured. Set GOOGLE_SEARCH_API_KEY and GOOGLE_SEARCH_ENGINE_ID in your environment to enable this feature.",
+      "coverSearchError": "Search failed. Please try again.",
+      "coverSearchNoResults": "No images found. Try a different search.",
+      "coverUrlButton": "Use web link",
+      "coverUrlTitle": "Add cover from web link",
+      "coverUrlLabel": "Image URL",
+      "coverUrlPlaceholder": "https://example.com/cover.jpg",
+      "coverUrlInvalid": "Please enter a valid http(s) URL",
+      "coverUrlUseButton": "Use image"
     },
     "edit": {
       "pageTitle": "Editar Jogo",
@@ -503,7 +725,11 @@
       "noGamesMatchFilter": "Nenhum jogo corresponde a este filtro",
       "pleaseAddGames": "Por favor, adicione alguns jogos",
       "gamesRemovedToast_one": "{{count}} jogo removido da sua biblioteca",
-      "gamesRemovedToast_other": "{{count}} jogos removidos da sua biblioteca"
+      "gamesRemovedToast_other": "{{count}} jogos removidos da sua biblioteca",
+      "gamesHiddenToast": "{{count}} game(s) hidden from public",
+      "gamesHiddenErrorToast": "Failed to hide games from public",
+      "gamesUnhiddenToast": "{{count}} game(s) unhidden",
+      "newestButton": "Newest"
     },
     "listToolbar": {
       "exitSelectionModeAriaLabel": "Sair do modo de seleção",
@@ -540,13 +766,20 @@
       "sortByLabel": "Ordenar por",
       "sortNameAsc": "Nome (ASC)",
       "sortNameDesc": "Nome (DESC)",
+      "sortMostGames": "Most games",
       "sortReleaseDateAsc": "Data de lançamento (ASC)",
       "sortReleaseDateDesc": "Data de lançamento (DESC)",
       "showMissingLabel": "Mostrar o que me falta?",
       "steelbookOnlyLabel": "Somente Steelbooks",
       "clearFiltersButton": "Limpar filtros",
       "noFiltersAvailable": "Sem filtros disponíveis",
-      "noSearchMatches": "Nenhum resultado encontrado."
+      "noSearchMatches": "Nenhum resultado encontrado.",
+      "sortDateAddedAsc": "Date added (oldest first)",
+      "sortDateAddedDesc": "Date added (newest first)",
+      "hideFromPublicButton": "Hide",
+      "confirmRemoveTitle": "Remove Games?",
+      "confirmRemoveMessage": "Are you sure you want to remove {{count}} game(s)? This can be undone.",
+      "unhideButton": "Unhide"
     },
     "card": {
       "playStatusBacklog": "Backlog",
@@ -567,7 +800,10 @@
       "addGame": "Adicionar Jogo",
       "collections": "Coleções",
       "series": "Séries",
-      "platforms": "Plataformas"
+      "platforms": "Plataformas",
+      "playing": "Playing",
+      "wishlist": "Wishlist",
+      "list": "List"
     },
     "add": {
       "pageTitle": "Adicionar Jogo",
@@ -586,7 +822,8 @@
       "addSelectedButton": "Adicionar Selecionados",
       "bulkImportInProgressMessage": "Os jogos estão sendo adicionados, volte novamente mais tarde.",
       "bulkImportCompletedToast": "Adição em massa concluída — {{succeeded}} adicionados, {{failed}} falharam.",
-      "bulkImportFailedToast": "A adição em massa falhou. Tente novamente."
+      "bulkImportFailedToast": "A adição em massa falhou. Tente novamente.",
+      "steamSyncButton": "Steam Sync"
     },
     "suggestionsDialog": {
       "title": "Este jogo já existe no IGDB?",
@@ -681,7 +918,14 @@
       "claimAddonSuccessToast": "Complemento adicionado!",
       "claimGameErrorToast": "Erro ao adicionar o jogo. Por favor, tente novamente.",
       "claimAddonErrorToast": "Erro ao adicionar o complemento. Por favor, tente novamente.",
-      "playGameButton": "Jogar"
+      "playGameButton": "Jogar",
+      "resyncChoiceTitle": "Resync or change IGDB link?",
+      "resyncExistingButton": "Resync existing link",
+      "changeLinkButton": "Change IGDB link",
+      "unlinkIgdbButton": "Unlink IGDB only",
+      "deleteEntirelyButton": "Delete entirely",
+      "unlinkSuccessToast": "Unlinked from IGDB",
+      "unlinkErrorToast": "Failed to unlink from IGDB"
     },
     "addons": {
       "title": "Complementos",
@@ -728,7 +972,8 @@
       "moveWithRomDescription_one": "Esta cópia tem uma ROM ({{name}}). Cópias da lista de desejos não podem ter ROM, então ela será excluída.",
       "moveWithRomDescription_other": "Esta cópia tem {{count}} ROMs ({{name}}). Cópias da lista de desejos não podem ter ROMs, então elas serão excluídas.",
       "moveWithRomAndSavesDescription_one": "Esta cópia tem uma ROM ({{name}}), com seus save states e/ou save do jogo. Cópias da lista de desejos não podem ter ROM, então a ROM e todos os seus saves serão excluídos.",
-      "moveWithRomAndSavesDescription_other": "Esta cópia tem {{count}} ROMs ({{name}}), com save states e/ou saves do jogo. Cópias da lista de desejos não podem ter ROMs, então as ROMs e todos os seus saves serão excluídos."
+      "moveWithRomAndSavesDescription_other": "Esta cópia tem {{count}} ROMs ({{name}}), com save states e/ou saves do jogo. Cópias da lista de desejos não podem ter ROMs, então as ROMs e todos os seus saves serão excluídos.",
+      "hideFromPublicLabel": "Hide"
     },
     "stats": {
       "playStatusNotStarted": "Não iniciado",
@@ -800,10 +1045,28 @@
       "description": "Plataformas com pelo menos um jogo na sua biblioteca.",
       "emptyMessage": "Ainda sem plataformas — aparecem aqui quando adicionar um jogo numa delas.",
       "searchLabel": "Pesquisar plataformas",
-      "searchPlaceholder": "Nome da plataforma"
+      "searchPlaceholder": "Nome da plataforma",
+      "ownedCount_one": "{{count}} owned",
+      "ownedCount_other": "{{count}} owned",
+      "wishlistedCount_one": "{{count}} wishlisted",
+      "wishlistedCount_other": "{{count}} wishlisted"
     },
     "platformPage": {
       "kindLabel": "Plataforma"
+    },
+    "listPage": {
+      "title": "Games List",
+      "searchLabel": "Search games",
+      "nameColumn": "Name",
+      "platformColumn": "Platform",
+      "editionColumn": "Edition",
+      "formatColumn": "Format",
+      "releaseDateColumn": "Date released",
+      "dateAddedColumn": "Date added",
+      "tagsColumn": "Tags",
+      "emptyState": "No games found",
+      "selectedCount": "{{count}} selected",
+      "notesColumn": "Notes"
     }
   },
   "events": {
@@ -840,7 +1103,11 @@
       "hardwareCalendarHeading": "Calendário de Lançamentos de Hardware",
       "onSaleHeading": "Em Promoção Agora",
       "eventsHeading": "Eventos em curso/próximos",
-      "welcomeMessage": "Bem-vindo ao VideoGameTrackarr"
+      "welcomeMessage": "Bem-vindo ao VideoGameTrackarr",
+      "pageTitle": "Dashboard",
+      "addGameButton": "Add game",
+      "publicCollectionButton": "Public Game Collection",
+      "displayModeButton": "Display Mode"
     },
     "page": {
       "gamesHeading": "Jogos",
@@ -907,6 +1174,14 @@
       "addCustomButton": "Adicionar como jogo personalizado",
       "ignoreButton": "Ignorar",
       "ignoreErrorToast": "Não foi possível ignorar esta entrada. Tente novamente.",
+      "ignoreSelectedButton": "Ignore selected",
+      "ignoreConfirmTitle_one": "Ignore {{count}} entry?",
+      "ignoreConfirmTitle_other": "Ignore {{count}} entries?",
+      "ignoreConfirmDescription": "Ignored entries can't be synced, and Hide synced hides them. You can bring each one back with Un-ignore.",
+      "ignoreSuccessToast_one": "Ignored {{count}} entry.",
+      "ignoreSuccessToast_other": "Ignored {{count}} entries.",
+      "ignorePartialErrorToast": "{{failed}} item(s) could not be ignored. Please try again.",
+      "ignoreBulkErrorToast": "Could not ignore the selected entries. Please try again.",
       "relinkButton": "Vincular a outro jogo",
       "relinkPickButton": "Vincular",
       "relinkDialogTitle": "Vincular a outro jogo",
@@ -942,7 +1217,10 @@
       "wishlist": {
         "confirmAddDescription": "Isto irá adicionar \"{{name}}\" à sua Lista de desejos (PC, Digital, Steam)."
       },
-      "syncAllButton": "Sincronizar tudo"
+      "syncAllButton": "Sincronizar tudo",
+      "unignoreButton": "Unignore",
+      "unignoreErrorToast": "Could not unignore this entry. Please try again.",
+      "unignoreNoMatchToast": "Un-ignored. Run Import to try matching it to IGDB again."
     },
     "saleTracked": {
       "heading": "Promoções - Monitorizadas",
@@ -984,11 +1262,18 @@
       "currentPriceLabel": "{{price}} em {{shop}} (-{{cut}}%)",
       "historicalLowLabel": "Mínimo histórico: {{price}}",
       "targetPriceLabel": "Objetivo: {{price}}"
+    },
+    "unlinkedGames": {
+      "description": "Games in your library that aren't linked to IGDB yet.",
+      "emptyState": "All games are linked to IGDB.",
+      "columnName": "Name",
+      "hideWithCoverArt": "Hide games with cover art"
     }
   },
   "catalog": {
     "browseGrid": {
       "importedOnlyNotice": "Apenas os jogos que já importou aparecem aqui.",
+      "platformNotice": "Games you own or wishlisted on this platform.",
       "emptyMessage": "Ainda não há jogos conhecidos localmente nesta {{kind}}.",
       "includeAddonsLabel": "Incluir complementos",
       "gamesSectionTitle": "Jogos",
@@ -1171,7 +1456,8 @@
     },
     "searchBar": {
       "statusAll": "Todos",
-      "searchPlaceholder": "Digite o nome do dispositivo ou acessório"
+      "searchPlaceholder": "Digite o nome do dispositivo ou acessório",
+      "filtersButtonLabel": "Filters & Sort"
     },
     "stats": {
       "ownedConsoles": "Consolas possuídas",
@@ -1230,7 +1516,8 @@
     "mergeButton": "Fundir",
     "mergeSuccess": "Fundido com a entrada existente!",
     "mergeError": "Erro ao fundir com a entrada existente. Por favor, tente novamente.",
-    "mergeProgressConflictError": "Ambas as entradas já registam progresso de jogo — resolva isso manualmente e tente novamente."
+    "mergeProgressConflictError": "Ambas as entradas já registam progresso de jogo — resolva isso manualmente e tente novamente.",
+    "linkChangedSuccess": "IGDB link changed successfully"
   },
   "about": {
     "title": "Sobre",
@@ -1246,6 +1533,7 @@
     "licenseName": "GPL-3.0",
     "authorLabel": "Autor:",
     "authorName": "Eric P Pereira",
+    "basedOn": "Based on <1>VideoGameTrackarr</1> by Eric P Pereira.",
     "creditsHeading": "Créditos",
     "igdbLogoAlt": "IGDB",
     "igdbCredits": "Os dados dos jogos e as imagens de capa são fornecidos por <1>IGDB.com</1>.",
@@ -1364,7 +1652,8 @@
   "public": {
     "nav": {
       "games": "Jogos",
-      "hardware": "Hardware"
+      "hardware": "Hardware",
+      "list": "List"
     },
     "games": {
       "title": "Jogos",
@@ -1373,7 +1662,13 @@
       "filtersButtonLabel": "Filtrar e ordenar",
       "sortTabLabel": "Ordenar",
       "noFiltersAvailable": "Ainda não há filtros disponíveis.",
-      "loadError": "Não foi possível carregar este jogo. Tente novamente."
+      "loadError": "Não foi possível carregar este jogo. Tente novamente.",
+      "ownedOn": "Owned on",
+      "collectionTitle": "Collection",
+      "collectionPlatform": "Platform",
+      "collectionEdition": "Edition",
+      "collectionFormat": "Format",
+      "collectionEmpty": "Not in collection"
     },
     "hardware": {
       "title": "Hardware",
@@ -1381,6 +1676,33 @@
       "devicesHeading": "Dispositivos",
       "accessoriesHeading": "Acessórios",
       "emptyState": "Nenhum hardware encontrado."
+    },
+    "gamesList": {
+      "title": "Games List"
+    }
+  },
+  "library": {
+    "moveItemTitle": "Move library item",
+    "moveItemDescription": "Move '{item}' to a different game or split it into its own listing.",
+    "moveToGameTab": "Move to game",
+    "splitToNewGameTab": "New game",
+    "targetGameLabel": "Target game",
+    "targetGamePlaceholder": "Search for a game...",
+    "newGameNameLabel": "New game name",
+    "newGameNamePlaceholder": "Enter a name for the new game...",
+    "moveButton": "Move",
+    "splitButton": "Create and move",
+    "moveItemSuccess": "Item moved successfully.",
+    "moveItemError": "Failed to move item.",
+    "splitItemSuccess": "New game created and item moved.",
+    "splitItemError": "Failed to create new game.",
+    "format": {
+      "physical": "Physical",
+      "digital": "Digital",
+      "iso": "ISO",
+      "rom": "ROM",
+      "abandonware": "Abandonware",
+      "other": "Other"
     }
   }
 }
