@@ -77,28 +77,29 @@ const AppShell = () => {
       </Link>
       <AppBar position="fixed" sx={{ zIndex: (t) => t.zIndex.drawer + 1 }}>
         <Toolbar>
-          {appIcon === "default" || isCustomIconDataUrl(appIcon) ? (
-            <Box
-              component="img"
-              src={resolveIconSrc(appIcon)}
-              alt=""
-              sx={{ height: 44, width: 44, mr: 1.5 }}
-            />
-          ) : (
-            <Box
-              sx={{
-                height: 44,
-                width: 44,
-                mr: 1.5,
-                fontSize: 36,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {appIcon}
-            </Box>
-          )}
+          <IconButton
+            onClick={() => navigate("/")}
+            title={t("nav.dashboard")}
+            aria-label={t("nav.dashboard")}
+            sx={{ mr: 1, p: 0.5 }}
+          >
+            {appIcon === "default" || isCustomIconDataUrl(appIcon) ? (
+              <Box component="img" src={resolveIconSrc(appIcon)} alt="" sx={{ height: 44, width: 44 }} />
+            ) : (
+              <Box
+                sx={{
+                  height: 44,
+                  width: 44,
+                  fontSize: 36,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {appIcon}
+              </Box>
+            )}
+          </IconButton>
           <Typography variant="h6" component="div" noWrap sx={{ minWidth: 0, flexGrow: 1 }}>
             {appTitle}
           </Typography>
