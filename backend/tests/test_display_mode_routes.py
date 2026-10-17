@@ -88,7 +88,7 @@ def test_display_mode_settings_defaults(auth_client):
     assert response.status_code == 200
     assert response.json() == {
         "slideIntervalSeconds": 10,
-        "showTitle": True,
+        "showTitle": False,
         "showHidden": False,
         "showWishlisted": False,
     }
