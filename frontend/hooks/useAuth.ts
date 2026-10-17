@@ -15,8 +15,8 @@ export function useCurrentUser() {
 export function useLogin() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ username, password }: { username: string; password: string }) =>
-      login(username, password),
+    mutationFn: ({ username, password, rememberMe }: { username: string; password: string; rememberMe: boolean }) =>
+      login(username, password, rememberMe),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
     },
@@ -36,7 +36,7 @@ export function useSetupStatus() {
 export function useSetupAdmin() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ username, password }: { username: string; password: string }) =>
+    mutationFn: ({ username, password, rememberMe }: { username: string; password: string; rememberMe: boolean }) =>
       setupAdmin(username, password),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
