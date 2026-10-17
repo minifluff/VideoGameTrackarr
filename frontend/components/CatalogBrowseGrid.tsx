@@ -15,13 +15,14 @@ import type {
   MediaFormat,
   PlayStatus,
 } from "../api/types";
-import { useCollectionAddons, useCollections, useFranchiseAddons, useFranchises } from "../hooks/useCatalogBrowse";
+import { useCollectionAddons, useCollections, useFranchiseAddons, useFranchises, usePlatformAddons } from "../hooks/useCatalogBrowse";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useGames } from "../hooks/useGames";
 import { usePlatforms } from "../hooks/usePlatforms";
 import { useStorefronts } from "../hooks/useStorefronts";
 import { useTags } from "../hooks/useTags";
 import { gameIdentifier } from "../utils/identifiers";
+import type { PlatformScope } from "../utils/platformScope";
 import { matchesOwnership } from "../utils/ownershipFilter";
 import { ALL_KNOWN_STOREFRONTS } from "../utils/storefronts";
 import CatalogResyncButton from "./CatalogResyncButton";
@@ -63,6 +64,8 @@ interface CatalogBrowseGridProps {
   // When set (platform pages), games are scoped to this platform ID via the
   // platformIds filter, and the platform filter is hidden from the toolbar.
   lockedPlatformId?: number;
+  // Platform pages only: a PC storefront card's format/storefront (see utils/platformScope.ts).
+  platformScope?: PlatformScope;
 }
 
 // A sibling of GameList.tsx — same filter-state shape, same GameListToolbar, reused as-is —
@@ -78,14 +81,17 @@ const CatalogBrowseGrid = ({
   slug,
   resyncLabel,
   lockedPlatformId,
+  platformScope,
 }: CatalogBrowseGridProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const collapsed = useScrollCollapse();
   const isCollection = resyncKind === "collection";
-  // Remembered per collection/series for the session, so filters set on one don't carry
-  // over to another (see hooks/useSessionState.ts).
-  const stateKey = `${isCollection ? "collection" : "series"}.${slug ?? ""}`;
+  const isPlatform = lockedPlatformId !== undefined;
+  // Remembered per collection/series/platform for the session, so filters set on one don't
+  // carry over to another (see hooks/useSessionState.ts).
+  const scopeKey = platformScope?.format ? `.${platformScope.format}.${platformScope.storefront ?? ""}` : "";
+  const stateKey = `${isCollection ? "collection" : isPlatform ? "platform" : "series"}.${slug ?? ""}${scopeKey}`;
 
   const [searchKeyword, setSearchKeyword] = useSessionState(`${stateKey}.searchKeyword`, "");
   const [ownershipStatuses, setOwnershipStatuses] = useSessionState<OwnershipStatus[]>(`${stateKey}.ownershipStatuses`, []);
@@ -185,29 +191,47 @@ const CatalogBrowseGrid = ({
     ]
   );
 
-  const isPlatform = lockedPlatformId !== undefined;
   const gamesFilters = useMemo(
     () => ({
       ...sharedFilters,
       requiredCollectionId: isCollection ? entityId : undefined,
       requiredFranchiseId: !isCollection && !isPlatform ? entityId : undefined,
+      requiredPlatformFormat: isPlatform ? platformScope?.format : undefined,
+      requiredPlatformStorefront: isPlatform ? platformScope?.storefront : undefined,
     }),
-    [sharedFilters, isCollection, isPlatform, entityId]
+    [sharedFilters, isCollection, isPlatform, entityId, platformScope?.format, platformScope?.storefront]
   );
   const { data: games, isLoading: isGamesLoading } = useGames(gamesFilters, { enabled: !!entityId });
 
+  const platformAddonFilters = useMemo(
+    () => ({
+      ...sharedFilters,
+      requiredPlatformFormat: platformScope?.format,
+      requiredPlatformStorefront: platformScope?.storefront,
+    }),
+    [sharedFilters, platformScope?.format, platformScope?.storefront]
+  );
   const { data: collectionAddons, isLoading: isCollectionAddonsLoading } = useCollectionAddons(
     isCollection ? slug : undefined,
     sharedFilters,
     includeAddons && isCollection
   );
   const { data: franchiseAddons, isLoading: isFranchiseAddonsLoading } = useFranchiseAddons(
-    !isCollection ? slug : undefined,
+    !isCollection && !isPlatform ? slug : undefined,
     sharedFilters,
-    includeAddons && !isCollection
+    includeAddons && !isCollection && !isPlatform
   );
-  const addons = isCollection ? collectionAddons : franchiseAddons;
-  const isAddonsLoading = isCollection ? isCollectionAddonsLoading : isFranchiseAddonsLoading;
+  const { data: platformAddons, isLoading: isPlatformAddonsLoading } = usePlatformAddons(
+    isPlatform ? slug : undefined,
+    platformAddonFilters,
+    includeAddons && isPlatform
+  );
+  const addons = isCollection ? collectionAddons : isPlatform ? platformAddons : franchiseAddons;
+  const isAddonsLoading = isCollection
+    ? isCollectionAddonsLoading
+    : isPlatform
+      ? isPlatformAddonsLoading
+      : isFranchiseAddonsLoading;
 
   const visibleGames = useMemo(
     () => filterByOwnershipAndMissing(games, ownershipStatuses, ownershipExclude, matchAll.ownership, showMissing),
@@ -243,7 +267,7 @@ const CatalogBrowseGrid = ({
                 {name ?? t("common.loading")}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {t("catalog.browseGrid.importedOnlyNotice")}
+                {isPlatform ? t("catalog.browseGrid.platformNotice") : t("catalog.browseGrid.importedOnlyNotice")}
               </Typography>
             </Box>
             {slug && resyncKind && resyncLabel ? (
@@ -261,6 +285,7 @@ const CatalogBrowseGrid = ({
             ownershipExclude={ownershipExclude}
             onOwnershipExcludeChange={setOwnershipExclude}
             platformOptions={platforms}
+            hidePlatformsField={isPlatform}
             platformIds={platformIds}
             onPlatformIdsChange={setPlatformIds}
             platformExclude={platformExclude}
@@ -305,8 +330,9 @@ const CatalogBrowseGrid = ({
             onPlayStatusExcludeChange={setPlayStatusExclude}
             matchAll={matchAll}
             onMatchAllChange={setMatchAll}
-            showMissing={showMissing}
-            onShowMissingChange={setShowMissing}
+            // Every game on a Platform page is already one of your copies.
+            showMissing={isPlatform ? undefined : showMissing}
+            onShowMissingChange={isPlatform ? undefined : setShowMissing}
             includeAddons={includeAddons}
             onIncludeAddonsChange={setIncludeAddons}
           />
