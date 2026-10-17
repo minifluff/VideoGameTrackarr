@@ -29,6 +29,7 @@ class DisplayModeSettingsResponse(CamelModel):
     media_screenshots: bool
     media_artwork: bool
     media_videos: bool
+    volume: int
 
 
 class DisplayModeSettingsUpdate(CamelModel):
@@ -40,3 +41,4 @@ class DisplayModeSettingsUpdate(CamelModel):
     media_screenshots: bool | None = None
     media_artwork: bool | None = None
     media_videos: bool | None = None
+    volume: int | None = Field(default=None, ge=0, le=100)
