@@ -4,6 +4,7 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Chip from "@mui/material/Chip";
 import Grid from "@mui/material/Grid";
+import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
@@ -89,7 +90,24 @@ const GameDetails = () => {
   }
 
   if (!game) {
-    return <>{t("common.loading")}</>;
+    return (
+      <Grid container spacing={{ xs: 2, md: 3 }} sx={{ alignItems: "flex-start" }}>
+        <Grid size={{ xs: 12, md: 3 }}>
+          <Stack spacing={2}>
+            <Skeleton variant="rectangular" sx={{ borderRadius: 2, aspectRatio: "3 / 4" }} />
+            <Skeleton variant="text" width="60%" />
+            <Skeleton variant="rectangular" height={36} sx={{ borderRadius: 1 }} />
+          </Stack>
+        </Grid>
+        <Grid size={{ xs: 12, md: 9 }}>
+          <Stack spacing={3}>
+            <Skeleton variant="text" width="40%" height={40} />
+            <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 2 }} />
+            <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
+          </Stack>
+        </Grid>
+      </Grid>
+    );
   }
 
   // Whether removal/the Addons section make sense here is about the *relationship* (does
@@ -137,7 +155,7 @@ const GameDetails = () => {
             resyncGameId={resyncGameId}
             isAutoDiscovered={isAutoDiscovered}
             libraryItems={libraryItems}
-            onGameRemoved={() => navigate("/")}
+            onGameRemoved={() => navigate("/games")}
           />
         </Stack>
       </Grid>

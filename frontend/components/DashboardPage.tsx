@@ -4,6 +4,7 @@ import AddIcon from "@mui/icons-material/Add";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
+import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
@@ -23,7 +24,13 @@ const DashboardPage = () => {
   const { data: releases, isLoading: releasesLoading } = useReleaseCalendar();
   const { data: onSaleItems, isLoading: onSaleLoading } = useOnSale();
   if (releasesLoading || onSaleLoading) {
-    return <Typography color="text.secondary">{t("common.loading")}</Typography>;
+    return (
+      <Stack spacing={3}>
+        <Skeleton variant="text" width="35%" height={44} />
+        <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
+        <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
+      </Stack>
+    );
   }
 
   const hasGameReleases = (releases ?? []).some((item) => item.kind === "game");
@@ -67,7 +74,17 @@ const DashboardPage = () => {
           variant="contained"
           fullWidth
           size="large"
+          startIcon={<AddIcon />}
           sx={{ mt: 4, py: 1.5, fontSize: "1.1rem" }}
+          onClick={() => navigate("/games/add")}
+        >
+          {t("insights.dashboard.addGameButton")}
+        </Button>
+        <Button
+          variant="outlined"
+          fullWidth
+          size="large"
+          sx={{ mt: 2, py: 1.5, fontSize: "1.1rem" }}
           onClick={() => navigate("/display-mode")}
         >
           {t("insights.dashboard.displayModeButton")}

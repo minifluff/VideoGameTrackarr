@@ -267,6 +267,40 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
     setSelectedIds(new Set());
   };
 
+  const hasActiveFilters =
+    ownershipStatuses.length > 0 ||
+    platformIds.length > 0 ||
+    tagIds.length > 0 ||
+    collectionIds.length > 0 ||
+    franchiseIds.length > 0 ||
+    gameTypes.length > 0 ||
+    formats.length > 0 ||
+    storefronts.length > 0 ||
+    steelbookOnly;
+
+  const clearAllFilters = () => {
+    setOwnershipStatuses([]);
+    setOwnershipExclude(false);
+    setPlatformIds([]);
+    setPlatformExclude(false);
+    setTagIds([]);
+    setTagExclude(false);
+    setCollectionIds([]);
+    setCollectionExclude(false);
+    setFranchiseIds([]);
+    setFranchiseExclude(false);
+    setGameTypes([]);
+    setGameTypeExclude(false);
+    setFormats([]);
+    setFormatExclude(false);
+    setStorefronts([]);
+    setStorefrontExclude(false);
+    setPlayStatuses([]);
+    setPlayStatusExclude(false);
+    setMatchAll({});
+    setSteelbookOnly(false);
+  };
+
   return (
     <>
       <Box
@@ -398,19 +432,28 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
           <Paper sx={{ p: 3, textAlign: "center" }}>{t("games.list.searching")}</Paper>
         ) : visibleGames.length === 0 ? (
           <Paper sx={{ p: 3, textAlign: "center" }}>
-            {isSearchActive
-              ? t("games.list.noGamesFound")
-              : ownershipStatuses.length > 0 ||
-                  platformIds.length > 0 ||
-                  tagIds.length > 0 ||
-                  collectionIds.length > 0 ||
-                  franchiseIds.length > 0 ||
-                  gameTypes.length > 0 ||
-                  formats.length > 0 ||
-                  storefronts.length > 0 ||
-                  steelbookOnly
-                ? t("games.list.noGamesMatchFilter")
-                : t("games.list.pleaseAddGames")}
+            {isSearchActive ? (
+              <Typography>{t("games.list.noGamesFound")}</Typography>
+            ) : hasActiveFilters ? (
+              <>
+                <Typography>{t("games.list.noGamesMatchFilter")}</Typography>
+                <Button onClick={clearAllFilters} variant="outlined" sx={{ mt: 2 }}>
+                  {t("games.listToolbar.clearFiltersButton")}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Typography>{t("games.list.pleaseAddGames")}</Typography>
+                <Button
+                  onClick={() => navigate("/games/add")}
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  sx={{ mt: 2 }}
+                >
+                  {t("games.list.addGameButton")}
+                </Button>
+              </>
+            )}
           </Paper>
         ) : (
           <VirtualGameGrid

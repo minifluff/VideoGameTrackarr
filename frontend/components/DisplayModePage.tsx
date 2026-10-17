@@ -428,6 +428,12 @@ const DisplayModePage = () => {
         <Typography variant="h6" sx={{ color: "white", textAlign: "center" }}>
           {t("displayMode.noSlides")}
         </Typography>
+        <Typography
+          variant="body2"
+          sx={{ color: "rgba(255, 255, 255, 0.7)", textAlign: "center" }}
+        >
+          {t("displayMode.noSlidesHint")}
+        </Typography>
         <Button variant="contained" onClick={() => navigate("/")}>
           {t("displayMode.backToDashboard")}
         </Button>

@@ -614,8 +614,15 @@ const GameListToolbar = ({
                   </InputAdornment>
                 ),
                 endAdornment: searchKeyword && (
-                  <InputAdornment position="end" onClick={() => onSearchKeywordChange("")}>
-                    <ClearIcon style={{ cursor: "pointer" }} />
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label={t("common.clearSearch")}
+                      onClick={() => onSearchKeywordChange("")}
+                      edge="end"
+                      size="small"
+                    >
+                      <ClearIcon />
+                    </IconButton>
                   </InputAdornment>
                 ),
               },
