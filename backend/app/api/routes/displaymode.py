@@ -4,13 +4,13 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user, get_db
 from app.repositories import game_repository
 from app.schemas.display_mode import (
-    DisplayModeSettingsResponse,
-    DisplayModeSettingsUpdate,
-    DisplayModeSlide,
     MEDIA_ARTWORK,
     MEDIA_COVER_ART,
     MEDIA_SCREENSHOT,
     MEDIA_VIDEO,
+    DisplayModeSettingsResponse,
+    DisplayModeSettingsUpdate,
+    DisplayModeSlide,
 )
 from app.services import display_mode_service
 
