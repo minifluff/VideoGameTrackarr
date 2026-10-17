@@ -15,6 +15,131 @@ interface WakeLockSentinelLike {
   release: () => Promise<void>;
 }
 
+// Minimal typings for the YouTube IFrame Player API (loaded on demand).
+interface YTPlayerLike {
+  destroy: () => void;
+}
+interface YTStateChangeEvent {
+  data: number;
+  target: YTPlayerLike;
+}
+interface YTNamespaceLike {
+  Player: new (
+    el: HTMLElement,
+    opts: {
+      videoId: string;
+      playerVars?: Record<string, number | string>;
+      events?: {
+        onReady?: (event: { target: YTPlayerLike }) => void;
+        onStateChange?: (event: YTStateChangeEvent) => void;
+        onError?: () => void;
+      };
+    },
+  ) => YTPlayerLike;
+  PlayerState: { ENDED: number };
+}
+
+let ytApiPromise: Promise<YTNamespaceLike> | null = null;
+function loadYouTubeApi(): Promise<YTNamespaceLike> {
+  if (ytApiPromise) return ytApiPromise;
+  ytApiPromise = new Promise<YTNamespaceLike>((resolve, reject) => {
+    const w = window as unknown as {
+      YT?: YTNamespaceLike;
+      onYouTubeIframeAPIReady?: () => void;
+    };
+    if (w.YT?.Player) {
+      resolve(w.YT);
+      return;
+    }
+    const timeout = window.setTimeout(() => reject(new Error("yt api timeout")), 15000);
+    const previous = w.onYouTubeIframeAPIReady;
+    w.onYouTubeIframeAPIReady = () => {
+      previous?.();
+      window.clearTimeout(timeout);
+      if (w.YT) resolve(w.YT);
+      else reject(new Error("yt api missing"));
+    };
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    tag.onerror = () => {
+      window.clearTimeout(timeout);
+      reject(new Error("yt api failed"));
+    };
+    document.head.appendChild(tag);
+  });
+  return ytApiPromise;
+}
+
+function youtubeVideoId(embedUrl: string): string | null {
+  const match = embedUrl.match(/\/embed\/([^/?#]+)/);
+  return match ? match[1] : null;
+}
+
+/** A YouTube slide that plays in full, then calls onEnded. */
+const VideoSlide = ({
+  embedUrl,
+  onEnded,
+  onFailed,
+}: {
+  embedUrl: string;
+  onEnded: () => void;
+  onFailed: () => void;
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const callbacksRef = useRef({ onEnded, onFailed });
+  callbacksRef.current = { onEnded, onFailed };
+
+  useEffect(() => {
+    const videoId = youtubeVideoId(embedUrl);
+    if (!videoId || !containerRef.current) {
+      onFailed();
+      return;
+    }
+    let player: YTPlayerLike | null = null;
+    let cancelled = false;
+    loadYouTubeApi()
+      .then((YT) => {
+        if (cancelled || !containerRef.current) return;
+        player = new YT.Player(containerRef.current, {
+          videoId,
+          playerVars: {
+            autoplay: 1,
+            mute: 1, // muted autoplay is required by browsers
+            rel: 0,
+            controls: 0,
+            playsinline: 1,
+            iv_load_policy: 3,
+          },
+          events: {
+            onStateChange: (event) => {
+              if (event.data === YT.PlayerState.ENDED) callbacksRef.current.onEnded();
+            },
+            onError: () => callbacksRef.current.onFailed(),
+          },
+        });
+      })
+      .catch(() => {
+        if (!cancelled) callbacksRef.current.onFailed();
+      });
+    return () => {
+      cancelled = true;
+      player?.destroy();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [embedUrl]);
+
+  return (
+    <Box
+      ref={containerRef}
+      sx={{
+        position: "absolute",
+        inset: 0,
+        "& iframe": { width: "100%", height: "100%", border: 0 },
+      }}
+    />
+  );
+};
+
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -25,6 +150,9 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 const FADE_MS = 600;
+// Safety cap: if a video's end event never arrives, move on after 10 minutes
+// rather than hanging on one slide forever.
+const VIDEO_MAX_MS = 10 * 60 * 1000;
 
 const DisplayModePage = () => {
   const { t } = useTranslation();
@@ -38,15 +166,37 @@ const DisplayModePage = () => {
   const fetchingRef = useRef(false);
 
   // Keep the screen awake while the slideshow runs (phones, tablets, TVs).
+  // Three layers, first available wins:
+  // 1. The native Android app exposes AndroidDisplayMode.setKeepScreenOn().
+  // 2. The Wake Lock API (HTTPS only — silently absent on plain HTTP).
+  // 3. A hidden looping video, which keeps the screen on even on insecure
+  //    origins where the Wake Lock API is unavailable.
   useEffect(() => {
+    const bridge = (
+      window as unknown as {
+        AndroidDisplayMode?: { setKeepScreenOn: (on: boolean) => void };
+      }
+    ).AndroidDisplayMode;
+    if (bridge) {
+      try {
+        bridge.setKeepScreenOn(true);
+      } catch {
+        // fall through to the web mechanisms below
+      }
+    }
+
     let lock: WakeLockSentinelLike | null = null;
     let cancelled = false;
+    let fallbackVideo: HTMLVideoElement | null = null;
     const request = async () => {
       try {
         const nav = navigator as Navigator & {
           wakeLock?: { request: (type: "screen") => Promise<WakeLockSentinelLike> };
         };
-        if (!nav.wakeLock) return;
+        if (!nav.wakeLock) {
+          startVideoFallback();
+          return;
+        }
         const sentinel = await nav.wakeLock.request("screen");
         if (cancelled) {
           await sentinel.release().catch(() => {});
@@ -54,8 +204,22 @@ const DisplayModePage = () => {
           lock = sentinel;
         }
       } catch {
-        // Wake Lock unsupported or denied — the slideshow still works.
+        // Wake Lock unsupported or denied — fall back to the looping video.
+        startVideoFallback();
       }
+    };
+    const startVideoFallback = () => {
+      if (fallbackVideo || cancelled) return;
+      const video = document.createElement("video");
+      video.setAttribute("muted", "");
+      video.setAttribute("playsinline", "");
+      video.loop = true;
+      video.src = "/keep-awake.mp4";
+      video.style.cssText =
+        "position:fixed;left:0;top:0;width:2px;height:2px;opacity:0.01;pointer-events:none;";
+      document.body.appendChild(video);
+      fallbackVideo = video;
+      video.play().catch(() => {});
     };
     request();
     const onVisibilityChange = () => {
@@ -66,6 +230,18 @@ const DisplayModePage = () => {
       cancelled = true;
       document.removeEventListener("visibilitychange", onVisibilityChange);
       if (lock) lock.release().catch(() => {});
+      if (fallbackVideo) {
+        fallbackVideo.pause();
+        fallbackVideo.remove();
+        fallbackVideo = null;
+      }
+      if (bridge) {
+        try {
+          bridge.setKeepScreenOn(false);
+        } catch {
+          // already gone
+        }
+      }
     };
   }, []);
 
@@ -108,28 +284,40 @@ const DisplayModePage = () => {
     }
   }, []);
 
-  // Advance on the configured interval, with a fade between slides.
+  const advance = useCallback(() => {
+    setIndex((i) => (i + 1) % slides.length);
+    setFading(false);
+  }, [slides.length]);
+
+  const slide: DisplayModeSlide | undefined =
+    slides.length > 0 ? slides[index % slides.length] : undefined;
+  const isVideo = slide?.mediaType === "video";
+
+  // Advance on the configured interval for images; videos play in full and
+  // override the timer (with a safety cap in case the end event never fires).
   useEffect(() => {
     if (loading || slides.length === 0) return;
     if (index >= slides.length - 5) void fetchMore();
+    if (isVideo) {
+      const cap = window.setTimeout(() => advance(), VIDEO_MAX_MS);
+      return () => window.clearTimeout(cap);
+    }
     const durationMs = Math.max(intervalSeconds, 1) * 1000;
     const fadeTimer = window.setTimeout(() => setFading(true), Math.max(durationMs - FADE_MS, 0));
-    const advanceTimer = window.setTimeout(() => {
-      setIndex((i) => (i + 1) % slides.length);
-      setFading(false);
-    }, durationMs);
+    const advanceTimer = window.setTimeout(() => advance(), durationMs);
     return () => {
       window.clearTimeout(fadeTimer);
       window.clearTimeout(advanceTimer);
     };
-  }, [index, slides, loading, intervalSeconds, fetchMore]);
+  }, [index, slides, loading, intervalSeconds, isVideo, fetchMore, advance]);
 
-  // Preload the next cover so transitions never flash.
+  // Preload the next image so transitions never flash (videos load on demand).
   useEffect(() => {
     if (slides.length === 0) return;
     const next = slides[(index + 1) % slides.length];
+    if (next.mediaType === "video") return;
     const img = new Image();
-    img.src = next.coverUrl;
+    img.src = next.mediaUrl;
   }, [index, slides]);
 
   if (loading) {
@@ -150,7 +338,7 @@ const DisplayModePage = () => {
     );
   }
 
-  if (slides.length === 0) {
+  if (slides.length === 0 || !slide) {
     return (
       <Box
         sx={{
@@ -176,7 +364,7 @@ const DisplayModePage = () => {
     );
   }
 
-  const slide = slides[index % slides.length];
+  const slideKey = `${slide.id}-${slide.mediaType}-${slide.mediaUrl}`;
 
   return (
     <Box
@@ -190,22 +378,26 @@ const DisplayModePage = () => {
         overflow: "hidden",
       }}
     >
-      <Box
-        component="img"
-        key={slide.id}
-        src={slide.coverUrl}
-        alt={slide.name}
-        onError={() => setIndex((i) => (i + 1) % slides.length)}
-        sx={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "contain",
-          opacity: fading ? 0 : 1,
-          transition: `opacity ${FADE_MS}ms ease`,
-        }}
-      />
+      {isVideo ? (
+        <VideoSlide key={slideKey} embedUrl={slide.mediaUrl} onEnded={advance} onFailed={advance} />
+      ) : (
+        <Box
+          component="img"
+          key={slideKey}
+          src={slide.mediaUrl}
+          alt={slide.name}
+          onError={advance}
+          sx={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            opacity: fading ? 0 : 1,
+            transition: `opacity ${FADE_MS}ms ease`,
+          }}
+        />
+      )}
       {showTitle && (
         <Typography
           variant="h6"
