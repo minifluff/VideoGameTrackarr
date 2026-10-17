@@ -598,26 +598,83 @@ def delete_game_with_addons(db: Session, game: Game) -> list[str]:
     return rom_filenames
 
 
+MEDIA_TYPE_COVER_ART = "cover_art"
+MEDIA_TYPE_SCREENSHOT = "screenshot"
+MEDIA_TYPE_ARTWORK = "artwork"
+MEDIA_TYPE_VIDEO = "video"
+
+
 def list_display_mode_slides(
     db: Session,
     limit: int = 200,
     include_hidden: bool = False,
     include_wishlisted: bool = False,
-) -> list[tuple[int, str, str]]:
-    """Random sample of (game id, name, cover URL) for the Display Mode slideshow.
-    By default only owned, non-hidden games with cover art; the flags opt hidden
-    and/or wishlisted games back in. Shuffled in Python (DB-agnostic) so each
-    fetch is a fresh random order."""
+    media_types: set[str] | None = None,
+) -> list[tuple[int, str, str, str]]:
+    """Random sample of (game id, name, media type, media URL) for the Display Mode
+    slideshow. By default only owned, non-hidden games; the flags opt hidden and/or
+    wishlisted games back in. media_types selects which media kinds to include
+    ("cover_art", "screenshot", "artwork", "video"); defaults to cover art only.
+    Videos are YouTube embeds built from the stored video id. Shuffled in Python
+    (DB-agnostic) so each fetch is a fresh random order."""
+    if media_types is None:
+        media_types = {MEDIA_TYPE_COVER_ART}
+    media_types = set(media_types)
+    if not media_types:
+        return []
+
     ownership = _owned_exists(Game.id)
     if include_wishlisted:
         ownership = or_(ownership, _wishlisted_exists(Game.id))
-    filters = [
-        Game.cover_url.isnot(None),
-        ownership,
-    ]
+    filters = [ownership]
     if not include_hidden:
         filters.append(Game.hide_from_public.is_(False))
-    rows = db.query(Game.id, Game.name, Game.cover_url).filter(*filters).all()
-    slides = [(row[0], row[1], row[2]) for row in rows if row[2]]
+    games = db.query(Game.id, Game.name, Game.cover_url).filter(*filters).all()
+    if not games:
+        return []
+
+    names = {game_id: name for game_id, name, _ in games}
+    game_ids = list(names.keys())
+    slides: list[tuple[int, str, str, str]] = []
+
+    if MEDIA_TYPE_COVER_ART in media_types:
+        slides.extend(
+            (game_id, name, MEDIA_TYPE_COVER_ART, cover_url)
+            for game_id, name, cover_url in games
+            if cover_url
+        )
+    if MEDIA_TYPE_SCREENSHOT in media_types:
+        for game_id, url in (
+            db.query(Screenshot.game_id, Screenshot.url)
+            .filter(Screenshot.game_id.in_(game_ids))
+            .all()
+        ):
+            if url:
+                slides.append((game_id, names[game_id], MEDIA_TYPE_SCREENSHOT, url))
+    if MEDIA_TYPE_ARTWORK in media_types:
+        for game_id, url in (
+            db.query(Artwork.game_id, Artwork.url)
+            .filter(Artwork.game_id.in_(game_ids))
+            .all()
+        ):
+            if url:
+                slides.append((game_id, names[game_id], MEDIA_TYPE_ARTWORK, url))
+    if MEDIA_TYPE_VIDEO in media_types:
+        for game_id, video_id in (
+            db.query(GameVideo.game_id, GameVideo.video_id)
+            .filter(GameVideo.game_id.in_(game_ids))
+            .all()
+        ):
+            if video_id:
+                slides.append(
+                    (
+                        game_id,
+                        names[game_id],
+                        MEDIA_TYPE_VIDEO,
+                        f"https://www.youtube.com/embed/{video_id}"
+                        "?autoplay=1&mute=1&rel=0",
+                    )
+                )
+
     random.shuffle(slides)
     return slides[:limit]
