@@ -32,7 +32,7 @@ const DisplayModePage = () => {
   const [slides, setSlides] = useState<DisplayModeSlide[]>([]);
   const [index, setIndex] = useState(0);
   const [intervalSeconds, setIntervalSeconds] = useState(10);
-  const [showTitle, setShowTitle] = useState(true);
+  const [showTitle, setShowTitle] = useState(false);
   const [loading, setLoading] = useState(true);
   const [fading, setFading] = useState(false);
   const fetchingRef = useRef(false);
