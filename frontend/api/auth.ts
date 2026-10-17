@@ -6,12 +6,16 @@ import type { AuthTokens, CurrentUser, SetupStatus } from "./types";
 // Login/logout/setup intentionally use plain axios, not apiClient: there's no access token
 // yet at this point, and the interceptors' refresh-on-401 logic doesn't apply to any of them.
 
-export async function login(username: string, password: string): Promise<void> {
+export async function login(username: string, password: string, rememberMe: boolean): Promise<void> {
   const response = await axios.post<AuthTokens>(`${API_BASE_URL}/api/auth/login`, {
     username,
     password,
+    rememberMe,
   });
-  tokenStorage.setTokens(response.data.accessToken, response.data.refreshToken);
+  tokenStorage.setTokens(response.data.accessToken, response.data.refreshToken, rememberMe);
+  // Remembered username prefills the login form after a logout — only when the
+  // user asked to be remembered.
+  tokenStorage.setRememberedUsername(rememberMe ? username : null);
 }
 
 export async function fetchSetupStatus(): Promise<SetupStatus> {
