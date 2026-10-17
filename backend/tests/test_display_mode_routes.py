@@ -62,25 +62,65 @@ def test_slides_respects_limit(auth_client, db_session):
     assert len(response.json()) == 3
 
 
+def test_slides_includes_hidden_and_wishlisted_when_allowed(auth_client, db_session):
+    hidden = _make_game(
+        db_session, "Hidden Game", cover_url="https://example.com/h.jpg", hide_from_public=True
+    )
+    db_session.add(LibraryItem(game_id=hidden.id, status=LibraryStatus.OWNED))
+    wishlisted = _make_game(db_session, "Wishlisted Game", cover_url="https://example.com/w.jpg")
+    db_session.add(LibraryItem(game_id=wishlisted.id, status=LibraryStatus.WISHLIST))
+    db_session.commit()
+
+    auth_client.put(
+        "/api/settings/display-mode",
+        json={"showHidden": True, "showWishlisted": True},
+    )
+    response = auth_client.get("/api/display-mode/slides")
+
+    assert response.status_code == 200
+    names = {slide["name"] for slide in response.json()}
+    assert names == {"Hidden Game", "Wishlisted Game"}
+
+
 def test_display_mode_settings_defaults(auth_client):
     response = auth_client.get("/api/settings/display-mode")
 
     assert response.status_code == 200
-    assert response.json() == {"slideIntervalSeconds": 10, "showTitle": True}
+    assert response.json() == {
+        "slideIntervalSeconds": 10,
+        "showTitle": True,
+        "showHidden": False,
+        "showWishlisted": False,
+    }
 
 
 def test_display_mode_settings_update(auth_client):
     response = auth_client.put(
         "/api/settings/display-mode",
-        json={"slideIntervalSeconds": 30, "showTitle": False},
+        json={
+            "slideIntervalSeconds": 30,
+            "showTitle": False,
+            "showHidden": True,
+            "showWishlisted": True,
+        },
     )
 
     assert response.status_code == 200
-    assert response.json() == {"slideIntervalSeconds": 30, "showTitle": False}
+    assert response.json() == {
+        "slideIntervalSeconds": 30,
+        "showTitle": False,
+        "showHidden": True,
+        "showWishlisted": True,
+    }
 
     # Persisted
     again = auth_client.get("/api/settings/display-mode")
-    assert again.json() == {"slideIntervalSeconds": 30, "showTitle": False}
+    assert again.json() == {
+        "slideIntervalSeconds": 30,
+        "showTitle": False,
+        "showHidden": True,
+        "showWishlisted": True,
+    }
 
 
 def test_display_mode_settings_rejects_out_of_range_interval(auth_client):
