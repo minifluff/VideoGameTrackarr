@@ -598,19 +598,26 @@ def delete_game_with_addons(db: Session, game: Game) -> list[str]:
     return rom_filenames
 
 
-def list_display_mode_slides(db: Session, limit: int = 200) -> list[tuple[int, str, str]]:
-    """Random sample of (game id, name, cover URL) for the Display Mode slideshow:
-    owned games only, excluding hidden ones, and only games that have cover art.
-    Shuffled in Python (DB-agnostic) so each fetch is a fresh random order."""
-    rows = (
-        db.query(Game.id, Game.name, Game.cover_url)
-        .filter(
-            Game.hide_from_public.is_(False),
-            Game.cover_url.isnot(None),
-            _owned_exists(Game.id),
-        )
-        .all()
-    )
+def list_display_mode_slides(
+    db: Session,
+    limit: int = 200,
+    include_hidden: bool = False,
+    include_wishlisted: bool = False,
+) -> list[tuple[int, str, str]]:
+    """Random sample of (game id, name, cover URL) for the Display Mode slideshow.
+    By default only owned, non-hidden games with cover art; the flags opt hidden
+    and/or wishlisted games back in. Shuffled in Python (DB-agnostic) so each
+    fetch is a fresh random order."""
+    ownership = _owned_exists(Game.id)
+    if include_wishlisted:
+        ownership = or_(ownership, _wishlisted_exists(Game.id))
+    filters = [
+        Game.cover_url.isnot(None),
+        ownership,
+    ]
+    if not include_hidden:
+        filters.append(Game.hide_from_public.is_(False))
+    rows = db.query(Game.id, Game.name, Game.cover_url).filter(*filters).all()
     slides = [(row[0], row[1], row[2]) for row in rows if row[2]]
     random.shuffle(slides)
     return slides[:limit]
