@@ -637,4 +637,15 @@ def _release_date_platform_id(db: Session, platform_data: dict[str, Any] | None)
     if not platform_data:
         return None
     platform = platform_repository.get_by_igdb_id(db, platform_data["id"])
-    return platform.id if platform else None
+    if platform is not None:
+        return platform.id
+    # Fallback: IGDB occasionally references a duplicate platform row (see the "--N"
+    # slug handling in get_or_create_by_igdb) or the local row's IGDB link was edited
+    # by hand in the Platform Manager — match on the canonical name rather than
+    # leaving the release date platform-less ("Unknown platform" in the UI).
+    name = platform_data.get("name")
+    if name:
+        platform = platform_repository.get_by_name(db, name)
+        if platform is not None:
+            return platform.id
+    return None
