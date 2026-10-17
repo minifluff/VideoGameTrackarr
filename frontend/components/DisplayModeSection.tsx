@@ -18,6 +18,7 @@ const DisplayModeSection = () => {
   const [mediaScreenshots, setMediaScreenshots] = useState(true);
   const [mediaArtwork, setMediaArtwork] = useState(true);
   const [mediaVideos, setMediaVideos] = useState(true);
+  const [volume, setVolume] = useState(80);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -33,6 +34,7 @@ const DisplayModeSection = () => {
         setMediaScreenshots(settings.mediaScreenshots);
         setMediaArtwork(settings.mediaArtwork);
         setMediaVideos(settings.mediaVideos);
+        setVolume(settings.volume);
         setLoaded(true);
       })
       .catch(() => {
@@ -52,6 +54,7 @@ const DisplayModeSection = () => {
     mediaScreenshots?: boolean;
     mediaArtwork?: boolean;
     mediaVideos?: boolean;
+    volume?: number;
   }) => {
     try {
       const updated = await updateDisplayModeSettings(patch);
@@ -63,6 +66,7 @@ const DisplayModeSection = () => {
       setMediaScreenshots(updated.mediaScreenshots);
       setMediaArtwork(updated.mediaArtwork);
       setMediaVideos(updated.mediaVideos);
+      setVolume(updated.volume);
     } catch {
       // Keep the optimistic local value; the next load re-reads the server value.
     }
@@ -162,6 +166,20 @@ const DisplayModeSection = () => {
           sx={{ display: "block" }}
         />
       ))}
+      <Typography gutterBottom sx={{ mt: 2 }}>
+        {t("settings.displayMode.volume")}
+      </Typography>
+      <Slider
+        value={volume}
+        min={0}
+        max={100}
+        step={1}
+        disabled={!loaded}
+        onChange={(_, value) => setVolume(value as number)}
+        onChangeCommitted={(_, value) => void save({ volume: value as number })}
+        valueLabelDisplay="auto"
+        sx={{ maxWidth: 400 }}
+      />
     </Box>
   );
 };
