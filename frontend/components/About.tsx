@@ -16,6 +16,7 @@ import { useEmulationConfig } from "../hooks/useLibrary";
 import { useVersion } from "../hooks/useVersion";
 
 const REPO_URL = "https://github.com/minifluff/VideoGameTrackarr";
+const BMC_URL = "https://buymeacoffee.com/minifluff";
 const EMULATORJS_URL = "https://github.com/EmulatorJS/EmulatorJS";
 const LIBRETRO_URL = "https://www.libretro.com";
 
@@ -158,6 +159,17 @@ const About = () => {
               </Box>
             </>
           ) : null}
+
+          <Divider sx={{ my: 3 }} />
+
+          <Link href={BMC_URL} target="_blank" rel="noopener noreferrer">
+            <Box
+              component="img"
+              src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+              alt={t("about.buyMeACoffeeAlt")}
+              sx={{ height: 48 }}
+            />
+          </Link>
         </CardContent>
       </Card>
     </Box>
