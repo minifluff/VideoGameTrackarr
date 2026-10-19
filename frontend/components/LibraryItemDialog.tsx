@@ -114,8 +114,9 @@ const FORMAT_OPTIONS: { value: MediaFormat; labelKey: string }[] = [
 ];
 
 // Must stay in sync with the backend's ITAD_ELIGIBLE_PLATFORM_SLUGS
-// (app/services/itad_service.py) and PLATPRICES_ELIGIBLE_PLATFORM_SLUGS
-// (app/services/platprices_service.py) — combined into one set since this dialog only needs
+// (app/services/itad_service.py), PLATPRICES_ELIGIBLE_PLATFORM_SLUGS
+// (app/services/platprices_service.py) and GGDEALS_ELIGIBLE_PLATFORM_SLUGS
+// (app/services/ggdeals_service.py) — combined into one set since this dialog only needs
 // to know "is either provider able to track this row at all," not which one.
 const SALES_TRACKING_ELIGIBLE_PLATFORM_SLUGS = new Set([
   "win",
@@ -124,6 +125,7 @@ const SALES_TRACKING_ELIGIBLE_PLATFORM_SLUGS = new Set([
   "android",
   "ps4",
   "ps5",
+  "steam",
 ]);
 
 interface SelectOption {

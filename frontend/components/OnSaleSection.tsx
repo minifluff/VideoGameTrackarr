@@ -1,9 +1,10 @@
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Grid from "@mui/material/Grid";
+import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import type { OnSaleItem } from "../api/types";
 import { useOnSale } from "../hooks/useInsights";
@@ -31,11 +32,18 @@ export const OnSaleTile = ({ item }: { item: OnSaleItem }) => {
         }
       />
       <Typography variant="caption" color="text.secondary" component="div" sx={{ mt: 0.75 }}>
-        {t("insights.onSale.currentPriceLabel", {
-          price: formatCurrency(item.currentPriceAmount, item.currentPriceCurrency ?? "USD"),
-          shop: item.currentShopName ?? t("common.unknown"),
-          cut: item.currentCut ?? 0,
-        })}
+        {/* GG.deals reports no discount %, so its rows carry currentCut: null — render the
+            price without a cut rather than a misleading "-0%". */}
+        {item.currentCut !== null && item.currentCut !== undefined
+          ? t("insights.onSale.currentPriceLabel", {
+              price: formatCurrency(item.currentPriceAmount, item.currentPriceCurrency ?? "USD"),
+              shop: item.currentShopName ?? t("common.unknown"),
+              cut: item.currentCut,
+            })
+          : t("insights.onSale.currentPriceNoCutLabel", {
+              price: formatCurrency(item.currentPriceAmount, item.currentPriceCurrency ?? "USD"),
+              shop: item.currentShopName ?? t("common.unknown"),
+            })}
       </Typography>
       {item.historicalLowAmount !== null && (
         <Typography variant="caption" color="text.secondary" component="div">
@@ -81,13 +89,27 @@ const OnSaleSection = ({ limit }: OnSaleSectionProps) => {
     // Fixed 16px gap at every breakpoint, matching VirtualGameGrid/CardCarousel's own
     // GRID_GAP_PX — keeps this grid's card width consistent with every other GameCard surface,
     // not just its own column counts.
-    <Grid container spacing={2}>
-      {visibleItems.map((item) => (
-        <Grid key={item.libraryItemId} size={{ xs: 6, sm: 4, md: 3, lg: 2 }}>
-          <OnSaleTile item={item} />
-        </Grid>
-      ))}
-    </Grid>
+    <>
+      <Grid container spacing={2}>
+        {visibleItems.map((item) => (
+          <Grid key={item.libraryItemId} size={{ xs: 6, sm: 4, md: 3, lg: 2 }}>
+            <OnSaleTile item={item} />
+          </Grid>
+        ))}
+      </Grid>
+      {/* GG.deals' API terms require crediting GG.deals with an active hyperlink wherever
+          its price data is displayed — shown only when GG.deals rows are actually present. */}
+      {visibleItems.some((item) => item.currentShopName === "GG.deals") && (
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+          <Trans
+            i18nKey="insights.onSale.ggdealsAttribution"
+            components={{
+              1: <Link href="https://gg.deals" target="_blank" rel="noopener noreferrer" />,
+            }}
+          />
+        </Typography>
+      )}
+    </>
   );
 };
 
