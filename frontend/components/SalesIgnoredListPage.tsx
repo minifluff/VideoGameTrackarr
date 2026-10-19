@@ -31,7 +31,6 @@ import SettingsSubNav from "./SettingsSubNav";
 const PROVIDER_LABEL_KEY: Record<SalesProvider, string> = {
   itad: "insights.salesIgnored.provider.itad",
   platprices: "insights.salesIgnored.provider.platprices",
-  ggdeals: "insights.salesIgnored.provider.ggdeals",
 };
 
 const SalesIgnoredListPage = () => {

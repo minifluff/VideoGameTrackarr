@@ -60,10 +60,6 @@ const JOB_DISPLAY_KEYS: Record<string, { nameKey: string; descriptionKey: string
     nameKey: "settings.jobs.jobs.platpricesRefresh.name",
     descriptionKey: "settings.jobs.jobs.platpricesRefresh.description",
   },
-  ggdeals_refresh: {
-    nameKey: "settings.jobs.jobs.ggdealsRefresh.name",
-    descriptionKey: "settings.jobs.jobs.ggdealsRefresh.description",
-  },
   events_sync: {
     nameKey: "settings.jobs.jobs.eventsSync.name",
     descriptionKey: "settings.jobs.jobs.eventsSync.description",

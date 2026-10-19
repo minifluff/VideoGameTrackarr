@@ -21,7 +21,6 @@ import { toast } from "react-toastify";
 import igdbLogo from "../assets/igdb-logo.png";
 import itadLogo from "../assets/isthereanydeal-logo.png";
 import platpricesLogo from "../assets/platprices-logo.png";
-import ggdealsLogo from "../assets/gg.deals-logo.png";
 import steamLogo from "../assets/steam-logo.png";
 import { useIntegrationsStatus, useUpdateSteamId } from "../hooks/useIntegrations";
 import { useClearPlayniteCache, usePlayniteConfig, useTestPlayniteConnection, useUpdatePlayniteConfig } from "../hooks/usePlaynite";
@@ -394,47 +393,6 @@ const IntegrationsPage = () => {
               i18nKey="settings.integrations.platpricesCredit"
               components={{
                 1: <Link href="https://platprices.com" target="_blank" rel="noopener noreferrer" />,
-              }}
-            />
-          </Typography>
-
-          <Divider sx={{ my: 3 }} />
-
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
-            <Box
-              sx={{
-                bgcolor: "#161616",
-                borderRadius: 1,
-                px: 1,
-                py: 0.5,
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <Box
-                component="img"
-                src={ggdealsLogo}
-                alt={t("settings.integrations.ggdealsLogoAlt")}
-                sx={{ height: 22, display: "block" }}
-              />
-            </Box>
-            <Typography variant="subtitle1">
-              {t("settings.integrations.ggdealsHeading")}
-            </Typography>
-            <ConfiguredChip configured={status?.ggdealsConfigured} />
-            <RegionChip configured={status?.ggdealsConfigured} region={status?.ggdealsRegion} />
-          </Stack>
-          <Alert severity="info" sx={{ mb: 1.5 }}>
-            <Trans
-              i18nKey="settings.integrations.ggdealsDescription"
-              components={{ 1: <code />, 3: <code /> }}
-            />
-          </Alert>
-          <Typography variant="caption" color="text.secondary">
-            <Trans
-              i18nKey="settings.integrations.ggdealsCredit"
-              components={{
-                1: <Link href="https://gg.deals" target="_blank" rel="noopener noreferrer" />,
               }}
             />
           </Typography>
