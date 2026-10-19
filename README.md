@@ -86,6 +86,8 @@ services:
       # - ITAD_COUNTRY=CA
       # - PLATPRICES_API_KEY=
       # - PLATPRICES_REGION=
+      # - GGDEALS_API_KEY=
+      # - GGDEALS_REGION=ca
       # - GOOGLE_SEARCH_API_KEY=
       # - GOOGLE_SEARCH_ENGINE_ID=
     volumes:
