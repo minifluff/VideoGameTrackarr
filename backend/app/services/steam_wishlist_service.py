@@ -9,7 +9,6 @@ from app.models.steam import SteamWishlistEntry
 from app.repositories import game_repository, library_item_repository, platform_repository, steam_wishlist_repository
 from app.services import library_service
 from app.services.exceptions import ConflictError, NotFoundError
-from app.services.steam_service import PC_IGDB_PLATFORM_ID
 
 
 class SteamWishlistEntryStatus(enum.StrEnum):
@@ -105,9 +104,7 @@ def unlink_entry(db: Session, steam_app_id: int) -> SteamWishlistEntryWithStatus
 
 
 def _sync_one(db: Session, entry: SteamWishlistEntry) -> None:
-    pc_platform = platform_repository.get_or_create_by_igdb(
-        db, igdb_id=PC_IGDB_PLATFORM_ID, name="PC (Microsoft Windows)", slug="win", abbreviation="PC"
-    )
+    steam_platform = platform_repository.get_or_create_by_name(db, "Steam")
     already_tracked = (
         len(library_item_repository.list_library_items(db, entry.game_id, status=LibraryStatus.WISHLIST)) > 0
     )
@@ -115,7 +112,7 @@ def _sync_one(db: Session, entry: SteamWishlistEntry) -> None:
         library_service.add_library_item(
             db,
             entry.game_id,
-            platform_id=pc_platform.id,
+            platform_id=steam_platform.id,
             status=LibraryStatus.WISHLIST,
             format=MediaFormat.DIGITAL,
             digital_storefront="Steam",
