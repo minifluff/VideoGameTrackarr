@@ -334,6 +334,10 @@
           "name": "PlatPrices price refresh",
           "description": "Refreshes sale prices for wishlisted PlayStation games via PlatPrices — powers the On Sale badges and Insights → On Sale."
         },
+        "ggdealsRefresh": {
+          "name": "GG.deals price refresh",
+          "description": "Refreshes sale prices for wishlisted Steam games via GG.deals — powers the On Sale badges and Insights → On Sale."
+        },
         "eventsSync": {
           "name": "Sync Events",
           "description": "Fetches currently-upcoming gaming-industry events from IGDB and drops any previously-synced event that has since ended — powers the Events page and Dashboard teaser."
@@ -474,6 +478,10 @@
       "platpricesDescription": "The PlatPrices API key is configured via this server's <1>.env</1> file (<3>PLATPRICES_API_KEY</3>), not through the app. Get a key by applying at platprices.com/api-request (usually issued within 1-2 business days), add it to .env, then restart VideoGameTrackarr.",
       "platpricesRegionCaveat": "PlatPrices' free tier lets your account track any 2 PlayStation Store regions at a time (changeable once every 24 hours on platprices.com), plus 1,000 requests/month. Set PLATPRICES_REGION in .env to the two-letter code of one of them (e.g. GB or IN), then recreate the container with docker compose up -d (a plain restart doesn't pick up .env changes). The region in use is shown above, and prices fetched for any other region are cleared on startup.",
       "platpricesCredit": "PlayStation price data is powered by <1>PlatPrices</1>.",
+      "ggdealsHeading": "GG.deals (Steam)",
+      "ggdealsLogoAlt": "GG.deals",
+      "ggdealsDescription": "The GG.deals API key is configured via this server's <1>.env</1> file (<3>GGDEALS_API_KEY</3>), not through the app. GGDEALS_REGION (default \"us\", e.g. \"ca\" for Canada) picks which region's prices and currency come back in. Sale tracking covers Steam wishlist games: a game counts as on sale while its current retail price sits at or below its historical retail low.",
+      "ggdealsCredit": "Steam price data is powered by <1>GG.deals</1>.",
       "playniteHeading": "Playnite",
       "playniteDescription": "Connect to your Playnite library over the network (SMB share) to sync games into VideoGameTrackarr.",
       "playnitePathLabel": "Playnite folder location",
@@ -1246,7 +1254,8 @@
       "columnActions": "Actions",
       "provider": {
         "itad": "IsThereAnyDeal",
-        "platprices": "PlatPrices"
+        "platprices": "PlatPrices",
+        "ggdeals": "GG.deals"
       },
       "retryButton": "Retry",
       "retrySuccessToast": "Will be retried on the next refresh.",
@@ -1256,12 +1265,14 @@
       "removeErrorToast": "Could not remove this title. Please try again."
     },
     "onSale": {
-      "description": "Current deals on your wishlisted digital games, matched via IsThereAnyDeal (Windows/Mac/Linux/Android) and PlatPrices (PlayStation). A game with no digital release, or on a platform neither provider covers, just won't show up here.",
+      "description": "Current deals on your wishlisted digital games, matched via IsThereAnyDeal (Windows/Mac/Linux/Android), PlatPrices (PlayStation) and GG.deals (Steam). A game with no digital release, or on a platform none of the providers cover, just won't show up here.",
       "noneFound": "No wishlisted games are on sale right now.",
       "targetHitLabel": "Target hit",
       "currentPriceLabel": "{{price}} at {{shop}} (-{{cut}}%)",
       "historicalLowLabel": "Historical low: {{price}}",
-      "targetPriceLabel": "Target: {{price}}"
+      "targetPriceLabel": "Target: {{price}}",
+      "currentPriceNoCutLabel": "{{price}} at {{shop}}",
+      "ggdealsAttribution": "Prices by <1>GG.deals</1>."
     },
     "unlinkedGames": {
       "description": "Games in your library that aren't linked to IGDB yet.",
