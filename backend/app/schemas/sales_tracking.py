@@ -4,7 +4,7 @@ from typing import Literal
 from app.models.library import LibraryItem, MediaFormat
 from app.schemas.base import CamelModel
 
-SalesProvider = Literal["itad", "platprices", "ggdeals"]
+SalesProvider = Literal["itad", "platprices"]
 
 
 class IgnoredSalesTitleResponse(CamelModel):

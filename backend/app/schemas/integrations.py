@@ -11,8 +11,6 @@ class IntegrationsStatusResponse(CamelModel):
     itad_country: str
     platprices_configured: bool
     platprices_region: str
-    ggdeals_configured: bool
-    ggdeals_region: str
     playnite_configured: bool
 
 
