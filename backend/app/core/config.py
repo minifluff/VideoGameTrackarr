@@ -14,11 +14,6 @@ UPLOADS_DIR = BACKEND_DIR / "uploads"
 # that backfills HardwareReferenceEntry.image_url for the naming convention.
 HARDWARE_REFERENCE_IMAGES_DIR = BACKEND_DIR / "static" / "hardware-reference"
 
-# The 19 region codes GG.deals' Prices API recognises (https://gg.deals/api/prices/).
-GGDEALS_REGION_CODES = frozenset(
-    {"au", "be", "br", "ca", "ch", "de", "dk", "es", "eu", "fi", "fr", "gb", "ie", "it", "nl", "no", "pl", "se", "us"}
-)
-
 
 class Settings(BaseSettings):
     # Secrets live in one .env at the repo root (not backend/), so the same file works for
@@ -78,29 +73,6 @@ class Settings(BaseSettings):
         # Stored upper-case for display/comparison (PlatPrices echoes "US" in meta.region);
         # PlatPricesClient sends it lower-case, as PlatPrices' docs show (region=us).
         return value.strip().upper() or "US"
-
-    # GG.deals Prices API key — same "bring your own credentials" shape as ITAD above.
-    # Free for personal/hobby use at https://gg.deals/api/ (100 records/minute,
-    # 1000/hour). ggdeals_region picks which region's prices/currency come back in.
-    # NOTE: GG.deals' API terms require crediting GG.deals with an active hyperlink
-    # wherever its data is displayed — see IntegrationsPage.tsx and OnSaleSection.tsx.
-    ggdeals_api_key: str | None = None
-    ggdeals_region: str = "us"
-
-    @field_validator("ggdeals_region")
-    @classmethod
-    def _normalise_ggdeals_region(cls, value: str) -> str:
-        # Stored lower-case, as GG.deals' docs show (region=us). Anything outside the 19
-        # region codes GG.deals recognises is a configuration error, not something to
-        # silently coerce — fail fast at startup instead of fetching the wrong region's
-        # prices (or 400ing every refresh job run).
-        region = value.strip().lower() or "us"
-        if region not in GGDEALS_REGION_CODES:
-            raise ValueError(
-                f"Unknown GG.deals region {region!r} — expected one of: "
-                f"{', '.join(sorted(GGDEALS_REGION_CODES))}"
-            )
-        return region
 
     # Optional response cache backend — falls back to an in-process TTL cache if unset.
     redis_url: str | None = None
