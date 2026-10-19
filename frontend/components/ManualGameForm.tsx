@@ -7,7 +7,6 @@ import dayjs, { type Dayjs } from "dayjs";
 import CloseIcon from "@mui/icons-material/Close";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import LinkIcon from "@mui/icons-material/Link";
-import SearchIcon from "@mui/icons-material/Search";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -28,7 +27,6 @@ import { useUploadCover } from "../hooks/useUploads";
 import { useLanguage } from "../theme/LanguageProvider";
 import { gameIdentifier } from "../utils/identifiers";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
-import CoverSearchDialog from "./CoverSearchDialog";
 import CoverUrlDialog from "./CoverUrlDialog";
 import AddGameSuggestionsDialog from "./AddGameSuggestionsDialog";
 import AutocompleteSelect from "./AutocompleteSelect";
@@ -84,7 +82,6 @@ const ManualGameForm = ({ initialValues, steamAppId }: ManualGameFormProps) => {
   const [category, setCategory] = useState<GameCategory>("main_game");
   const [releaseDate, setReleaseDate] = useState<Dayjs | null>(null);
   const [coverUrl, setCoverUrl] = useState(initialValues?.coverUrl ?? "");
-  const [coverSearchOpen, setCoverSearchOpen] = useState(false);
   const [coverUrlOpen, setCoverUrlOpen] = useState(false);
   const [developedBy, setDevelopedBy] = useState<string[]>([]);
   const [publishedBy, setPublishedBy] = useState<string[]>([]);
@@ -214,13 +211,6 @@ const ManualGameForm = ({ initialValues, steamAppId }: ManualGameFormProps) => {
                 hidden
                 onChange={(event) => void handleCoverFileChange(event)}
               />
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<SearchIcon />}
-              onClick={() => setCoverSearchOpen(true)}
-            >
-              {t("games.gameForm.searchCoverButton")}
             </Button>
             <Button variant="outlined" startIcon={<LinkIcon />} onClick={() => setCoverUrlOpen(true)}>
               {t("games.gameForm.coverUrlButton")}
@@ -362,12 +352,6 @@ const ManualGameForm = ({ initialValues, steamAppId }: ManualGameFormProps) => {
           void submitManualGame();
         }}
         onClose={() => setSuggestionsDialogOpen(false)}
-      />
-      <CoverSearchDialog
-        open={coverSearchOpen}
-        initialQuery={name.trim() ? `${name.trim()} game cover` : ""}
-        onSelect={(url) => setCoverUrl(url)}
-        onClose={() => setCoverSearchOpen(false)}
       />
       <CoverUrlDialog
         open={coverUrlOpen}
