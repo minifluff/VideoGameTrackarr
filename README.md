@@ -153,7 +153,7 @@ GPL-3.0 — see [LICENSE](LICENSE).
 - Unlink IGDB only option (keeps game as manual entry)
 - Added date added sort option
 - Added unlinked games section in insights
-- Google image search for cover art(broken)
+- Google image search for cover art (broken removed from frontend)
 - Platform page added
 - Platform Manager page added
 - Added platforms to Public page
