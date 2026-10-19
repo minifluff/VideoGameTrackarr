@@ -2,11 +2,13 @@ from datetime import date, datetime
 
 from sqlalchemy.orm import object_session
 
+from app.models.ggdeals import GgDealsPriceCache
 from app.models.itad import ItadPriceCache
 from app.models.library import LibraryItem, LibraryStatus, MediaFormat, RatingBoard, RomFile
 from app.models.platprices import PlatPricesCache
 from app.schemas.base import CamelModel
 from app.services import bios_service, emulation_cores, storefront_matching
+from app.services.ggdeals_service import is_library_item_ggdeals_eligible
 from app.services.itad_service import is_library_item_itad_eligible
 from app.services.platprices_service import is_library_item_platprices_eligible
 
@@ -104,11 +106,13 @@ def library_item_from_orm(
     item: LibraryItem,
     itad_cache: ItadPriceCache | None = None,
     platprices_cache: PlatPricesCache | None = None,
+    ggdeals_cache: GgDealsPriceCache | None = None,
 ) -> LibraryItemResponse:
     session = object_session(item)
     ready_bios = bios_service.ready_systems(session) if item.roms and session is not None else frozenset()
-    # Each row's platform determines at most one eligible provider — never both, since
-    # itad_service/platprices_service's eligible-platform sets are disjoint by construction.
+    # Each row's platform determines which provider's data wins — ITAD is checked first for
+    # Steam rows (its "steam" slug overlaps GG.deals' coverage; see the note on the
+    # on-sale endpoint in app/api/routes/insights.py), then PlatPrices, then GG.deals.
     # Gated on track_for_sales too (not just eligibility + a match) so this stays consistent
     # with insight_service.get_on_sale_game_ids' same gate — otherwise a stale cached price
     # from before tracking was turned off (or from the opt-in migration's backfill) would
@@ -144,6 +148,27 @@ def library_item_from_orm(
         sale_price_currency = platprices_cache.current_price_currency
         sale_shop_name = platprices_cache.current_shop_name
         sale_cut = platprices_cache.current_cut
+    elif (
+        item.track_for_sales
+        and ggdeals_cache is not None
+        and not ggdeals_cache.ignored
+        and is_library_item_ggdeals_eligible(item)
+        and ggdeals_cache.current_price_amount is not None
+        # Same all-time-low gate as ggdeals_service.list_on_sale_items — GG.deals reports
+        # no discount %, so a current price above the historical retail low is just the
+        # normal price, not a sale.
+        and (
+            ggdeals_cache.historical_low_amount is None
+            or ggdeals_cache.current_price_amount <= ggdeals_cache.historical_low_amount
+        )
+    ):
+        # Like PlatPrices, GG.deals has no shop ambiguity — current_shop_name is always
+        # the literal "GG.deals" and current_cut is always null.
+        is_on_sale = True
+        sale_price_amount = ggdeals_cache.current_price_amount
+        sale_price_currency = ggdeals_cache.current_price_currency
+        sale_shop_name = ggdeals_cache.current_shop_name
+        sale_cut = ggdeals_cache.current_cut
 
     return LibraryItemResponse(
         id=item.id,

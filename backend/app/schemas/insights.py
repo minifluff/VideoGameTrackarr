@@ -5,6 +5,7 @@ from app.models.hardware import Accessory
 from app.models.library import LibraryItem
 from app.schemas.base import CamelModel
 from app.schemas.library import LibraryItemResponse, library_item_from_orm
+from app.services.ggdeals_service import GgDealsOnSaleItem
 from app.services.itad_service import OnSaleItem
 from app.services.platprices_service import PlatPricesOnSaleItem
 
@@ -110,9 +111,10 @@ class OnSaleItemResponse(CamelModel):
     is_target_hit: bool
 
 
-def on_sale_item_from_orm(item: OnSaleItem | PlatPricesOnSaleItem) -> OnSaleItemResponse:
-    # ItadPriceCache and PlatPricesCache deliberately share the same field names (see
-    # models/platprices.py), so this works unchanged for either provider's item.
+def on_sale_item_from_orm(item: OnSaleItem | PlatPricesOnSaleItem | GgDealsOnSaleItem) -> OnSaleItemResponse:
+    # ItadPriceCache, PlatPricesCache and GgDealsPriceCache deliberately share the same
+    # field names (see models/platprices.py and models/ggdeals.py), so this works
+    # unchanged for any provider's item.
     library_item = item.library_item
     cache = item.cache
     return OnSaleItemResponse(
