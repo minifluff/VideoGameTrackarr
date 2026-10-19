@@ -8,8 +8,6 @@ export interface IntegrationsStatus {
   itadCountry: string;
   platpricesConfigured: boolean;
   platpricesRegion: string;
-  ggdealsConfigured: boolean;
-  ggdealsRegion: string;
 }
 
 export async function getIntegrationsStatus(): Promise<IntegrationsStatus> {

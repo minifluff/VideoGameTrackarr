@@ -1,7 +1,7 @@
 import { apiClient } from "./client";
 import type { MediaFormat } from "./types";
 
-export type SalesProvider = "itad" | "platprices" | "ggdeals";
+export type SalesProvider = "itad" | "platprices";
 
 export interface IgnoredSalesTitle {
   provider: SalesProvider;
