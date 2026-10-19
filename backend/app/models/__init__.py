@@ -25,7 +25,6 @@ from app.models.catalog import (  # noqa: F401
     Screenshot,
 )
 from app.models.events import Event, EventGame, EventNetwork, EventVideo  # noqa: F401
-from app.models.ggdeals import GgDealsPriceCache  # noqa: F401
 from app.models.hardware import (  # noqa: F401
     Accessory,
     AccessoryCompatibility,
