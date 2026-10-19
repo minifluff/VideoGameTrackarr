@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Callable
-from datetime import datetime
+from datetime import UTC, datetime
 
 from apscheduler.jobstores.base import JobLookupError
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -78,5 +78,11 @@ def get_next_run_time(job_id: str) -> datetime | None:
     # A job added while the scheduler isn't running yet is only "tentatively" scheduled
     # (see APScheduler's own log message for this) — next_run_time isn't computed until the
     # scheduler actually starts processing it, and the attribute is unset (not None) until
-    # then, since Job uses __slots__.
-    return getattr(job, "next_run_time", None)
+    # then, since Job uses __slots__. Fall back to computing it from the trigger so the
+    # Jobs API/ UI shows the upcoming run even before the scheduler starts.
+    next_run = getattr(job, "next_run_time", None)
+    if next_run is not None:
+        return next_run
+    if job.trigger is not None:
+        return job.trigger.get_next_fire_time(None, datetime.now(UTC))
+    return None
