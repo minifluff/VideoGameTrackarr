@@ -6,7 +6,7 @@ from app.models.catalog import Game
 from app.models.hardware import Accessory
 from app.models.library import LibraryItem
 from app.repositories import insight_repository
-from app.services import ggdeals_service, itad_service, platprices_service
+from app.services import itad_service, platprices_service
 
 
 def find_duplicate_library_items(db: Session) -> list[list[LibraryItem]]:
@@ -27,5 +27,4 @@ def get_on_sale_game_ids(db: Session) -> frozenset[int]:
     series, dashboard), not just the dedicated Insights -> On Sale page."""
     itad_ids = {item.library_item.game_id for item in itad_service.list_on_sale_items(db)}
     platprices_ids = {item.library_item.game_id for item in platprices_service.list_on_sale_items(db)}
-    ggdeals_ids = {item.library_item.game_id for item in ggdeals_service.list_on_sale_items(db)}
-    return frozenset(itad_ids | platprices_ids | ggdeals_ids)
+    return frozenset(itad_ids | platprices_ids)
