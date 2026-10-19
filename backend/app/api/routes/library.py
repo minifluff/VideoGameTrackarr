@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db
 from app.models.library import LibraryStatus
-from app.repositories import ggdeals_repository, itad_repository, platprices_repository
+from app.repositories import itad_repository, platprices_repository
 from app.schemas.library import (
     LibraryItemCreateRequest,
     LibraryItemResponse,
@@ -37,8 +37,7 @@ def list_library_items(
     items = library_service.list_library_items(db, game_id, status=status_filter)
     itad_cache = itad_repository.get_cache(db, game_id)
     platprices_cache = platprices_repository.get_cache(db, game_id)
-    ggdeals_cache = ggdeals_repository.get_cache(db, game_id)
-    return [library_item_from_orm(item, itad_cache, platprices_cache, ggdeals_cache) for item in items]
+    return [library_item_from_orm(item, itad_cache, platprices_cache) for item in items]
 
 
 @router.post("/api/games/{game_id}/library", response_model=LibraryItemResponse, status_code=status.HTTP_201_CREATED)
@@ -48,8 +47,7 @@ def add_library_item(
     item = library_service.add_library_item(db, game_id, **body.model_dump())
     itad_cache = itad_repository.get_cache(db, game_id)
     platprices_cache = platprices_repository.get_cache(db, game_id)
-    ggdeals_cache = ggdeals_repository.get_cache(db, game_id)
-    return library_item_from_orm(item, itad_cache, platprices_cache, ggdeals_cache)
+    return library_item_from_orm(item, itad_cache, platprices_cache)
 
 
 @router.put("/api/library/{item_id}", response_model=LibraryItemResponse)
@@ -59,8 +57,7 @@ def update_library_item(
     item = library_service.update_library_item(db, item_id, **body.model_dump(exclude_unset=True))
     itad_cache = itad_repository.get_cache(db, item.game_id)
     platprices_cache = platprices_repository.get_cache(db, item.game_id)
-    ggdeals_cache = ggdeals_repository.get_cache(db, item.game_id)
-    return library_item_from_orm(item, itad_cache, platprices_cache, ggdeals_cache)
+    return library_item_from_orm(item, itad_cache, platprices_cache)
 
 
 @router.delete("/api/library/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -84,8 +81,7 @@ def move_library_item(
     item = library_service.move_library_item(db, item_id, body.target_game_id)
     itad_cache = itad_repository.get_cache(db, item.game_id)
     platprices_cache = platprices_repository.get_cache(db, item.game_id)
-    ggdeals_cache = ggdeals_repository.get_cache(db, item.game_id)
-    return library_item_from_orm(item, itad_cache, platprices_cache, ggdeals_cache)
+    return library_item_from_orm(item, itad_cache, platprices_cache)
 
 
 @router.post("/api/library/{item_id}/split", response_model=LibraryItemResponse)
@@ -98,5 +94,4 @@ def split_library_item(
     )
     itad_cache = itad_repository.get_cache(db, item.game_id)
     platprices_cache = platprices_repository.get_cache(db, item.game_id)
-    ggdeals_cache = ggdeals_repository.get_cache(db, item.game_id)
-    return library_item_from_orm(item, itad_cache, platprices_cache, ggdeals_cache)
+    return library_item_from_orm(item, itad_cache, platprices_cache)

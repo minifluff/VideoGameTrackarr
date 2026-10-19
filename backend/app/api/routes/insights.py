@@ -13,7 +13,7 @@ from app.schemas.insights import (
     missing_addons_from_orm,
     on_sale_item_from_orm,
 )
-from app.services import ggdeals_service, insight_service, itad_service, platprices_service
+from app.services import insight_service, itad_service, platprices_service
 
 router = APIRouter(prefix="/api/insights", tags=["insights"], dependencies=[Depends(get_current_user)])
 
@@ -40,17 +40,10 @@ def list_accessories_without_owned_hardware(db: Session = Depends(get_db)) -> li
 
 @router.get("/on-sale", response_model=list[OnSaleItemResponse])
 def list_on_sale(db: Session = Depends(get_db)) -> list[OnSaleItemResponse]:
-    # ITAD (PC storefronts) and PlatPrices (PlayStation) cover disjoint platforms, but
-    # GG.deals covers Steam — which overlaps ITAD's steam slug. A Steam wishlist row can
-    # therefore surface from both providers at once; that's intentional (more coverage),
-    # and each row keeps its own provider's shop name ("GG.deals" vs the ITAD shop) so the
-    # source stays visible. Merge all three lists and re-sort rather than picking one, so
-    # a PC and a PS5 wishlist row can both show up together, target-hit first then
-    # discount % descending (GG.deals rows carry no discount %, so they sort by price).
-    items = (
-        itad_service.list_on_sale_items(db)
-        + platprices_service.list_on_sale_items(db)
-        + ggdeals_service.list_on_sale_items(db)
-    )
+    # Each provider covers a disjoint set of platforms (see itad_service/platprices_service's
+    # own eligibility gates) — merge both lists and re-sort rather than picking one, so a
+    # PC and a PS5 wishlist row can both show up together, target-hit first then discount %
+    # descending.
+    items = itad_service.list_on_sale_items(db) + platprices_service.list_on_sale_items(db)
     items.sort(key=lambda entry: (not entry.is_target_hit, -(entry.cache.current_cut or 0)))
     return [on_sale_item_from_orm(item) for item in items]

@@ -8,11 +8,11 @@ from app.schemas.sales_tracking import (
     TrackedSalesItemResponse,
     tracked_sales_item_from_orm,
 )
-from app.services import ggdeals_service, itad_service, library_service, platprices_service
+from app.services import itad_service, library_service, platprices_service
 
 router = APIRouter(prefix="/api/sales-tracking", tags=["sales-tracking"], dependencies=[Depends(get_current_user)])
 
-_SERVICE_BY_PROVIDER = {"itad": itad_service, "platprices": platprices_service, "ggdeals": ggdeals_service}
+_SERVICE_BY_PROVIDER = {"itad": itad_service, "platprices": platprices_service}
 
 
 @router.get("/ignored", response_model=list[IgnoredSalesTitleResponse])
@@ -23,9 +23,6 @@ def list_ignored_sales_titles(db: Session = Depends(get_db)) -> list[IgnoredSale
     ] + [
         (item, "platprices")
         for item in platprices_service.list_ignored_items(db)
-    ] + [
-        (item, "ggdeals")
-        for item in ggdeals_service.list_ignored_items(db)
     ]
     responses = [
         IgnoredSalesTitleResponse(

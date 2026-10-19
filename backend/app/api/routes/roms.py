@@ -8,7 +8,7 @@ from app.api.deps import get_current_user, get_db
 from app.core.config import get_settings
 from app.core.security import TokenError, TokenType, create_bios_token, create_rom_token, decode_token
 from app.models.system import User
-from app.repositories import ggdeals_repository, itad_repository, platprices_repository
+from app.repositories import itad_repository, platprices_repository
 from app.schemas.library import LibraryItemResponse, library_item_from_orm, rom_summary_from_orm
 from app.schemas.rom import (
     BiosAcceptedFile,
@@ -37,8 +37,7 @@ content_router = APIRouter(tags=["roms"])
 def _item_response(db: Session, item) -> LibraryItemResponse:
     itad_cache = itad_repository.get_cache(db, item.game_id)
     platprices_cache = platprices_repository.get_cache(db, item.game_id)
-    ggdeals_cache = ggdeals_repository.get_cache(db, item.game_id)
-    return library_item_from_orm(item, itad_cache, platprices_cache, ggdeals_cache)
+    return library_item_from_orm(item, itad_cache, platprices_cache)
 
 
 @router.post("/api/library/{item_id}/roms", response_model=LibraryItemResponse, status_code=status.HTTP_201_CREATED)
