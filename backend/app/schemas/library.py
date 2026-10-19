@@ -125,7 +125,7 @@ def library_item_from_orm(
         # redeem, not whichever shop happens to be globally cheapest (see
         # storefront_matching.find_deal).
         deal = storefront_matching.find_deal(itad_cache, item.digital_storefront)
-        if deal is not None:
+        if deal is not None and deal.cut:
             is_on_sale = True
             sale_price_amount = deal.price_amount
             sale_price_currency = deal.price_currency
