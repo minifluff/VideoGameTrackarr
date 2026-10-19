@@ -173,6 +173,7 @@ GPL-3.0 — see [LICENSE](LICENSE).
 - Added persistent login
 - Added simple Andoid app. Downloadable from settings.
 - Display Mode added. Displays cover art, Screenshot, Artwork and Videos in slideshow
+- Added ggdeals to sale intergrations
 
 ## Support
 
