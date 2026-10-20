@@ -163,6 +163,20 @@ class Game(TimestampMixin, Base):
         JSON, comment="IGDB's similar_games field, cached at import/resync time — powers recommendations (M8)"
     )
 
+    igdb_status: Mapped[int | None] = mapped_column(
+        Integer, comment="IGDB game status enum (0=released, 4=early_access, 6=cancelled, 7=rumored, 8=delisted, ...)"
+    )
+    game_modes: Mapped[list[str] | None] = mapped_column(
+        JSON, comment="IGDB game_modes names, e.g. ['Single player', 'Multiplayer']"
+    )
+    age_ratings: Mapped[dict[str, str] | None] = mapped_column(
+        JSON, comment="IGDB age ratings keyed by system, e.g. {'ESRB': 'E', 'PEGI': '3'}"
+    )
+    time_to_beat: Mapped[dict[str, int] | None] = mapped_column(
+        JSON,
+        comment="IGDB game_time_to_beats in seconds, e.g. {'hastily': 5400, 'normally': 7200, 'completely': 10800, 'count': 42}",
+    )
+
     auto_discovered: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
