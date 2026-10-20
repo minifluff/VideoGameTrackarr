@@ -54,6 +54,10 @@ class GameSummaryResponse(CamelModel):
     nintendo_store_url: str | None
     epic_games_store_url: str | None
     gog_store_url: str | None
+    # Platforms this game is owned on (owned library items), sorted — drives the
+    # platform chips on game cards. Only populated by the main games-list route;
+    # other callers leave the default empty list.
+    owned_platforms: list[str] = []
 
 
 class GameDetailResponse(GameSummaryResponse):
@@ -115,9 +119,15 @@ def _game_fields(game: Game, status: GameWithStatus) -> dict:
 
 
 def game_summary_from_orm(
-    status: GameWithStatus, on_sale_game_ids: frozenset[int] = frozenset()
+    status: GameWithStatus,
+    on_sale_game_ids: frozenset[int] = frozenset(),
+    owned_platforms: list[str] | None = None,
 ) -> GameSummaryResponse:
-    return GameSummaryResponse(**_game_fields(status.game, status), is_on_sale=status.game.id in on_sale_game_ids)
+    return GameSummaryResponse(
+        **_game_fields(status.game, status),
+        is_on_sale=status.game.id in on_sale_game_ids,
+        owned_platforms=owned_platforms if owned_platforms is not None else [],
+    )
 
 
 def game_detail_from_orm(
