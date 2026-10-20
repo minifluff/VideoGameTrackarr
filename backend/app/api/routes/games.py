@@ -82,15 +82,17 @@ def list_games(
         from app.models.library import LibraryItem, LibraryStatus
 
         rows = db.execute(
-            select(LibraryItem.game_id, Platform.name)
+            select(LibraryItem.game_id, Platform.abbreviation, Platform.name)
             .join(Platform, LibraryItem.platform_id == Platform.id)
             .where(
                 LibraryItem.game_id.in_(game_ids),
                 LibraryItem.status == LibraryStatus.OWNED,
             )
         ).all()
-        for game_id, platform_name in rows:
-            platforms_by_game.setdefault(game_id, set()).add(platform_name)
+        for game_id, platform_abbr, platform_name in rows:
+            # Platform chips show the abbreviation when IGDB has one ("PS4"),
+            # falling back to the full name when it doesn't.
+            platforms_by_game.setdefault(game_id, set()).add(platform_abbr or platform_name)
     return [
         game_summary_from_orm(
             game,

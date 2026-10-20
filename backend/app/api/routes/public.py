@@ -46,15 +46,23 @@ def list_public_games(
         from app.models.library import LibraryItem
         from app.schemas.public import PublicOwnedCopyResponse
         rows = db.execute(
-            select(LibraryItem.game_id, Platform.name, LibraryItem.format, LibraryItem.edition)
+            select(
+                LibraryItem.game_id,
+                Platform.abbreviation,
+                Platform.name,
+                LibraryItem.format,
+                LibraryItem.edition,
+            )
             .join(Platform, LibraryItem.platform_id == Platform.id)
             .where(
                 LibraryItem.game_id.in_(game_ids),
                 LibraryItem.status == LibraryStatus.OWNED,
             )
         ).all()
-        for game_id, platform_name, format_val, edition_val in rows:
-            platforms_by_game.setdefault(game_id, set()).add(platform_name)
+        for game_id, platform_abbr, platform_name, format_val, edition_val in rows:
+            # Platform chips show the abbreviation when IGDB has one ("PS4", "WIN"),
+            # falling back to the full name ("Sony PlayStation 4") when it doesn't.
+            platforms_by_game.setdefault(game_id, set()).add(platform_abbr or platform_name)
             if format_val and hasattr(format_val, "value"):
                 fmt = format_val.value
             elif format_val:
@@ -137,19 +145,21 @@ def get_public_game(token: str, game_id: int, db: Session = Depends(get_db)) -> 
     from app.models.library import LibraryItem
 
     rows = db.execute(
-        select(Platform.name, LibraryItem.edition, LibraryItem.format)
+        select(Platform.abbreviation, Platform.name, LibraryItem.edition, LibraryItem.format)
         .join(LibraryItem, LibraryItem.platform_id == Platform.id)
         .where(
             LibraryItem.game_id == status.game.id,
             LibraryItem.status == LibraryStatus.OWNED,
         )
     ).all()
-    owned_platforms = sorted({row[0] for row in rows})
+    # Chips show the abbreviation when IGDB has one, else the full name (same as the
+    # public list); the per-copy rows below keep the full platform name.
+    owned_platforms = sorted({row[0] or row[1] for row in rows})
     owned_copies = [
         PublicOwnedCopyResponse(
-            platform=row[0],
-            edition=row[1],
-            format=row[2].value if row[2] is not None else None,
+            platform=row[1],
+            edition=row[2],
+            format=row[3].value if row[3] is not None else None,
         )
         for row in rows
     ]
