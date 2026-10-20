@@ -174,7 +174,7 @@ class Game(TimestampMixin, Base):
     )
     time_to_beat: Mapped[dict[str, int] | None] = mapped_column(
         JSON,
-        comment="IGDB game_time_to_beats in seconds, e.g. {'hastily': 5400, 'normally': 7200, 'completely': 10800, 'count': 42}",
+        comment="IGDB game_time_to_beats in seconds, e.g. {'hastily': 5400, 'normally': 7200, 'count': 42}",
     )
 
     auto_discovered: Mapped[bool] = mapped_column(
