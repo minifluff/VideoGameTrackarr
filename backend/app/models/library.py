@@ -50,7 +50,9 @@ class LibraryItem(TimestampMixin, Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     game_id: Mapped[int] = mapped_column(ForeignKey("games.id"), index=True, nullable=False)
-    platform_id: Mapped[int | None] = mapped_column(ForeignKey("platforms.id"))
+    # Indexed: platform pages, PC-storefront scoping and the owned-platforms
+    # aggregation all join/filter on this column.
+    platform_id: Mapped[int | None] = mapped_column(ForeignKey("platforms.id"), index=True)
     region_id: Mapped[int | None] = mapped_column(ForeignKey("regions.id"))
 
     status: Mapped[LibraryStatus] = mapped_column(enum_column(LibraryStatus), nullable=False, index=True)
@@ -176,7 +178,8 @@ class GameProgress(TimestampMixin, Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     game_id: Mapped[int] = mapped_column(ForeignKey("games.id"), index=True, nullable=False)
-    platform_id: Mapped[int] = mapped_column(ForeignKey("platforms.id"), nullable=False)
+    # Standalone index (the (game_id, platform_id) unique pair only leads with game_id).
+    platform_id: Mapped[int] = mapped_column(ForeignKey("platforms.id"), index=True, nullable=False)
 
     play_status: Mapped[PlayStatus] = mapped_column(enum_column(PlayStatus), nullable=False, default=PlayStatus.NONE)
     playtime_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
