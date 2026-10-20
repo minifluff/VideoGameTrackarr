@@ -1043,7 +1043,7 @@ def test_list_games_exposes_owned_platforms_on_the_summary(auth_client, db_sessi
 
     body = response.json()
     assert body[0]["name"] == "Test Game"
-    assert body[0]["ownedPlatforms"] == ["PS4", seed_pc_platform.name]
+    assert body[0]["ownedPlatforms"] == sorted(["PS4", seed_pc_platform.name])
 
 
 def test_list_games_owned_platforms_empty_without_owned_copies(auth_client, db_session, seed_game):
