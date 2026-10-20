@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getPublicGame, listPublicAccessories, listPublicCollections, listPublicDevices, listPublicFranchises, listPublicGames, listPublicPlatforms, listPublicTags, type PublicGameFilters } from "../api/public";
+import { getPublicGame, listPublicAccessories, listPublicCollections, listPublicDevices, listPublicFranchises, listPublicGameModes, listPublicGames, listPublicGenres, listPublicPlatforms, listPublicTags, type PublicGameFilters } from "../api/public";
 import type { GameSortOption } from "../api/types";
 
 export function usePublicGames(token: string | undefined, filters: PublicGameFilters) {
@@ -14,6 +14,22 @@ export function usePublicTags(token: string | undefined) {
   return useQuery({
     queryKey: ["public", token, "tags"],
     queryFn: () => listPublicTags(token!),
+    enabled: !!token,
+  });
+}
+
+export function usePublicGenres(token: string | undefined) {
+  return useQuery({
+    queryKey: ["public", token, "genres"],
+    queryFn: () => listPublicGenres(token!),
+    enabled: !!token,
+  });
+}
+
+export function usePublicGameModes(token: string | undefined) {
+  return useQuery({
+    queryKey: ["public", token, "game-modes"],
+    queryFn: () => listPublicGameModes(token!),
     enabled: !!token,
   });
 }
