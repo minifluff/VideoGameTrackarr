@@ -1,7 +1,17 @@
 import time
 from datetime import UTC, datetime
 
-from app.models.catalog import Collection, Franchise, Game, GameCategory, GameCollection, GameFranchise, Platform
+from app.models.catalog import (
+    Collection,
+    Franchise,
+    Game,
+    GameCategory,
+    GameCollection,
+    GameFranchise,
+    GameGenre,
+    Genre,
+    Platform,
+)
 from app.models.itad import ItadPriceCache
 from app.models.library import (
     GameProgress,
@@ -1049,3 +1059,83 @@ def test_list_games_exposes_owned_platforms_on_the_summary(auth_client, db_sessi
 def test_list_games_owned_platforms_empty_without_owned_copies(auth_client, db_session, seed_game):
     response = auth_client.get("/api/games")
     assert response.json()[0]["ownedPlatforms"] == []
+
+
+def _make_game(db_session, name, igdb_id, game_modes=None):
+    game = Game(
+        igdb_id=igdb_id, name=name, slug=name.lower().replace(" ", "-"),
+        category=GameCategory.MAIN_GAME, game_modes=game_modes,
+    )
+    db_session.add(game)
+    db_session.flush()
+    return game
+
+
+def test_list_games_filters_by_game_mode(auth_client, db_session):
+    _make_game(db_session, "Mode Game", 9001, game_modes=["Single player", "Multiplayer"])
+    _make_game(db_session, "Other Game", 9002, game_modes=["Co-operative"])
+    _make_game(db_session, "No Modes Game", 9003)
+    db_session.commit()
+
+    def names(q):
+        return sorted(g["name"] for g in auth_client.get("/api/games", params=q).json())
+    assert names([("gameMode", "Single player")]) == ["Mode Game"]
+    # "Any" default: a game with at least one of the modes matches
+    assert names([("gameMode", "Single player"), ("gameMode", "Co-operative")]) == [
+        "Mode Game",
+        "Other Game",
+    ]
+    # match-all: only games having every selected mode
+    assert names(
+        [("gameMode", "Single player"), ("gameMode", "Co-operative"), ("gameModeMatchAll", "true")]
+    ) == []
+    assert names(
+        [("gameMode", "Single player"), ("gameMode", "Multiplayer"), ("gameModeMatchAll", "true")]
+    ) == ["Mode Game"]
+    # exclude: everything except games with the mode — including games with no modes recorded
+    assert names([("gameMode", "Single player"), ("gameModeExclude", "true")]) == [
+        "No Modes Game",
+        "Other Game",
+    ]
+
+
+def test_list_games_filters_by_genre(auth_client, db_session):
+    genre_game = _make_game(db_session, "Genre Game", 9011)
+    other_game = _make_game(db_session, "Genre Other", 9012)
+    _make_game(db_session, "No Genre", 9013)
+    rpg = Genre(name="RPG", slug="role-playing-rpg")
+    action = Genre(name="Action", slug="action")
+    db_session.add_all([rpg, action])
+    db_session.flush()
+    db_session.add_all(
+        [
+            GameGenre(game_id=genre_game.id, genre_id=rpg.id),
+            GameGenre(game_id=genre_game.id, genre_id=action.id),
+            GameGenre(game_id=other_game.id, genre_id=action.id),
+        ]
+    )
+    db_session.commit()
+
+    def names(q):
+        return sorted(g["name"] for g in auth_client.get("/api/games", params=q).json())
+    assert names([("genreId", rpg.id)]) == ["Genre Game"]
+    assert names([("genreId", rpg.id), ("genreId", action.id)]) == ["Genre Game", "Genre Other"]
+    # match-all: only games carrying every selected genre
+    assert names([("genreId", rpg.id), ("genreId", action.id), ("genreMatchAll", "true")]) == [
+        "Genre Game"
+    ]
+    # exclude: games not carrying the genre
+    assert names([("genreId", rpg.id), ("genreExclude", "true")]) == ["Genre Other", "No Genre"]
+
+
+def test_genre_and_game_mode_option_endpoints(auth_client, db_session):
+    _make_game(db_session, "Option Game", 9021, game_modes=["Single player", "Multiplayer"])
+    rpg = Genre(name="RPG", slug="role-playing-rpg")
+    db_session.add(rpg)
+    db_session.commit()
+
+    genres = auth_client.get("/api/genres").json()
+    assert genres == [{"id": rpg.id, "name": "RPG", "slug": "role-playing-rpg"}]
+
+    modes = auth_client.get("/api/game-modes").json()
+    assert modes == ["Multiplayer", "Single player"]
