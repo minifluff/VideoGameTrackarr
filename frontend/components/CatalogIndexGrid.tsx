@@ -38,8 +38,8 @@ interface CatalogIndexGridProps<T extends CatalogIndexEntry> {
   estimateRowHeight?: (columns: number) => number;
   // sessionStorage key for this page's remembered search/sort (see hooks/useSessionState.ts).
   stateKey: string;
-  // Collections/Series only: a "more than N games" slider in the header's top-right
-  // corner, hiding entries whose game count doesn't beat it. Platforms doesn't pass
+  // Collections/Series only: an "N+ Games" slider in the header's top-right corner,
+  // hiding entries with fewer games than the slider value. Platforms doesn't pass
   // this — a platform card is a storefront slice, so a count threshold means less there.
   showMinGamesFilter?: boolean;
 }
@@ -70,8 +70,8 @@ const CatalogIndexGrid = <T extends CatalogIndexEntry>({
   const collapsed = useScrollCollapse();
   const [searchKeyword, setSearchKeyword] = useSessionState(`${stateKey}.searchKeyword`, "");
   const [sort, setSort] = useSessionState<CatalogSortOption>(`${stateKey}.sort`, "name_asc");
-  // Defaults to 2: on a big library most collections/series have a game or two, and the
-  // page is more useful opening on the substantial ones (3+ games).
+  // Defaults to 2: on a big library many collections/series hold a single game, and the
+  // page is more useful opening on the ones with at least a couple.
   const [minGames, setMinGames] = useSessionState(`${stateKey}.minGames`, 2);
 
   const maxGameCount = useMemo(
@@ -86,7 +86,7 @@ const CatalogIndexGrid = <T extends CatalogIndexEntry>({
       ? entries.filter((entry) => entry.name.toLowerCase().includes(trimmed))
       : entries;
     if (showMinGamesFilter) {
-      filtered = filtered.filter((entry) => getCount(entry) > minGames);
+      filtered = filtered.filter((entry) => getCount(entry) >= minGames);
     }
     const sorted = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
     if (sort === "name_desc") sorted.reverse();
