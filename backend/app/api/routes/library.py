@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db
 from app.models.library import LibraryStatus
-from app.repositories import itad_repository, platprices_repository
+from app.repositories import game_repository, genre_repository, itad_repository, platprices_repository
+from app.schemas.catalog import CatalogRefResponse, genre_ref_from_orm
 from app.schemas.library import (
     LibraryItemCreateRequest,
     LibraryItemResponse,
@@ -20,6 +21,18 @@ router = APIRouter(tags=["library"], dependencies=[Depends(get_current_user)])
 @router.get("/api/storefronts", response_model=list[str])
 def list_storefronts(db: Session = Depends(get_db)) -> list[str]:
     return library_service.list_distinct_storefronts(db)
+
+
+@router.get("/api/genres", response_model=list[CatalogRefResponse])
+def list_genres(db: Session = Depends(get_db)) -> list[CatalogRefResponse]:
+    """Every known genre (id+name+slug), name-sorted — the Genre filter's options."""
+    return [genre_ref_from_orm(genre) for genre in genre_repository.list_all(db)]
+
+
+@router.get("/api/game-modes", response_model=list[str])
+def list_game_modes(db: Session = Depends(get_db)) -> list[str]:
+    """Every IGDB game-mode name recorded on any game, sorted — the Game Modes filter's options."""
+    return game_repository.list_distinct_game_modes(db)
 
 
 @router.get("/api/library/items", response_model=list[LibraryListItemResponse])
