@@ -71,7 +71,34 @@ def list_games(
         required_platform_storefront=required_platform_storefront,
     )
     on_sale_game_ids = insight_service.get_on_sale_game_ids(db)
-    return [game_summary_from_orm(game, on_sale_game_ids) for game in games]
+    # One query for every game on the page: which platforms each is owned on (drives
+    # the platform chips on game cards). Same pattern as the public list route.
+    platforms_by_game: dict[int, set[str]] = {}
+    game_ids = [game.game.id for game in games]
+    if game_ids:
+        from sqlalchemy import select
+
+        from app.models.catalog import Platform
+        from app.models.library import LibraryItem, LibraryStatus
+
+        rows = db.execute(
+            select(LibraryItem.game_id, Platform.name)
+            .join(Platform, LibraryItem.platform_id == Platform.id)
+            .where(
+                LibraryItem.game_id.in_(game_ids),
+                LibraryItem.status == LibraryStatus.OWNED,
+            )
+        ).all()
+        for game_id, platform_name in rows:
+            platforms_by_game.setdefault(game_id, set()).add(platform_name)
+    return [
+        game_summary_from_orm(
+            game,
+            on_sale_game_ids,
+            owned_platforms=sorted(platforms_by_game.get(game.game.id, set())),
+        )
+        for game in games
+    ]
 
 
 def _to_bulk_import_response(state: bulk_import_job.BulkImportJobState) -> BulkImportStatusResponse:
