@@ -65,6 +65,42 @@ const GameAboutSection = ({ game, preview = false, publicToken }: GameAboutSecti
     worldwide: t("games.about.regionWorldwide"),
   };
 
+  // IGDB status enum (0=released, 2=alpha, 3=beta, 4=early_access, 5=offline,
+  // 6=cancelled, 7=rumored, 8=delisted), rendered as a chip by the title.
+  const igdbStatus: Record<number, { label: string; color: "success" | "warning" | "error" | "default" }> = {
+    0: { label: t("games.about.statusReleased"), color: "success" },
+    2: { label: t("games.about.statusAlpha"), color: "warning" },
+    3: { label: t("games.about.statusBeta"), color: "warning" },
+    4: { label: t("games.about.statusEarlyAccess"), color: "warning" },
+    5: { label: t("games.about.statusOffline"), color: "default" },
+    6: { label: t("games.about.statusCancelled"), color: "error" },
+    7: { label: t("games.about.statusRumored"), color: "default" },
+    8: { label: t("games.about.statusDelisted"), color: "error" },
+  };
+  const statusInfo =
+    game.igdbStatus !== null && game.igdbStatus !== undefined ? igdbStatus[game.igdbStatus] : undefined;
+
+  // Age ratings render as compact badges (ESRB letter / PEGI number), IGDB's own box style.
+  const esrbRating = game.ageRatings?.["ESRB"];
+  const pegiRating = game.ageRatings?.["PEGI"];
+
+  const formatHours = (seconds: number | null | undefined): string | null => {
+    if (seconds === null || seconds === undefined || seconds <= 0) return null;
+    const hours = seconds / 3600;
+    if (hours < 1) return `${Math.round(seconds / 60)}m`;
+    const rounded = Math.round(hours * 2) / 2;
+    return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)}h`;
+  };
+  const timeToBeatRows: Array<{ label: string; value: string }> = game.timeToBeat
+    ? (
+        [
+          { label: t("games.about.timeToBeatMain"), value: formatHours(game.timeToBeat.hastily) },
+          { label: t("games.about.timeToBeatExtras"), value: formatHours(game.timeToBeat.normally) },
+          { label: t("games.about.timeToBeatCompletionist"), value: formatHours(game.timeToBeat.completely) },
+        ] as Array<{ label: string; value: string | null }>
+      ).filter((row): row is { label: string; value: string } => row.value !== null)
+    : [];
+
   const companiesByRole = game.companies.reduce<Record<string, GameCompany[]>>((acc, company) => {
     (acc[company.role] ??= []).push(company);
     return acc;
@@ -103,6 +139,52 @@ const GameAboutSection = ({ game, preview = false, publicToken }: GameAboutSecti
               variant="outlined"
               color="primary"
             />
+          ) : null}
+          {statusInfo ? (
+            <Chip label={statusInfo.label} size="small" color={statusInfo.color} />
+          ) : null}
+          {esrbRating ? (
+            <Tooltip title={t("games.about.ageRatingTooltip", { system: "ESRB" })}>
+              <Box
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 30,
+                  height: 36,
+                  border: "2px solid",
+                  borderColor: "text.primary",
+                  borderRadius: 1,
+                  fontWeight: 900,
+                  fontSize: 15,
+                  lineHeight: 1,
+                }}
+              >
+                {esrbRating}
+              </Box>
+            </Tooltip>
+          ) : null}
+          {pegiRating ? (
+            <Tooltip title={t("games.about.ageRatingTooltip", { system: "PEGI" })}>
+              <Box
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: 30,
+                  height: 36,
+                  px: 0.75,
+                  border: "2px solid",
+                  borderColor: "text.primary",
+                  borderRadius: 1,
+                  fontWeight: 900,
+                  fontSize: 13,
+                  lineHeight: 1,
+                }}
+              >
+                {pegiRating}+
+              </Box>
+            </Tooltip>
           ) : null}
         </Stack>
         {game.edition ? (
@@ -236,6 +318,17 @@ const GameAboutSection = ({ game, preview = false, publicToken }: GameAboutSecti
           </Stack>
         ) : null}
 
+        {game.gameModes.length > 0 ? (
+          <Stack direction="row" spacing={1} sx={{ mt: 1.5, flexWrap: "wrap", rowGap: 1, alignItems: "center" }}>
+            <Typography variant="body2" color="text.secondary">
+              {t("games.about.gameModesLabel")}
+            </Typography>
+            {game.gameModes.map((mode) => (
+              <Chip key={`mode-${mode}`} label={mode} size="small" variant="outlined" />
+            ))}
+          </Stack>
+        ) : null}
+
         {game.releaseDates.length > 1 ? (
           <Stack direction="row" spacing={1} sx={{ mt: 1.5, flexWrap: "wrap", rowGap: 1 }}>
             {game.releaseDates.map((releaseDate) => (
@@ -261,6 +354,44 @@ const GameAboutSection = ({ game, preview = false, publicToken }: GameAboutSecti
               {t("games.about.storylineTitle")}
             </Typography>
             <ExpandableText text={game.storyline as string} />
+          </CardContent>
+        </>
+      ) : null}
+      {timeToBeatRows.length > 0 ? (
+        <>
+          <Divider />
+          <CardContent>
+            <Typography variant="subtitle2" gutterBottom>
+              {t("games.about.timeToBeatTitle")}
+            </Typography>
+            <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", rowGap: 1 }}>
+              {timeToBeatRows.map((row) => (
+                <Box
+                  key={row.label}
+                  sx={{
+                    flex: "1 1 100px",
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 2,
+                    px: 1.5,
+                    py: 1,
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                    {row.label}
+                  </Typography>
+                  <Typography variant="h6" sx={{ lineHeight: 1.3 }}>
+                    {row.value}
+                  </Typography>
+                </Box>
+              ))}
+            </Stack>
+            {game.timeToBeat?.count ? (
+              <Typography variant="caption" color="text.secondary">
+                {t("games.about.timeToBeatSubmissions", { count: game.timeToBeat.count })}
+              </Typography>
+            ) : null}
           </CardContent>
         </>
       ) : null}
