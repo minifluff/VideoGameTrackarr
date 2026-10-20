@@ -749,6 +749,8 @@
       "ownershipLabel": "Possession",
       "consoleLabel": "Plateformes",
       "tagLabel": "Étiquettes",
+      "genreLabel": "Genre",
+      "gameModeLabel": "Game modes",
       "collectionLabel": "Collections",
       "seriesLabel": "Série",
       "gameTypeLabel": "Types de jeu",
