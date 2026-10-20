@@ -20,7 +20,12 @@ from app.repositories import (
 from app.repositories.game_repository import GameWithStatus
 from app.services import rom_service, upload_service
 from app.services.exceptions import ConflictError, NotFoundError
-from app.services.igdb_client import IGDBClient, extract_store_urls
+from app.services.igdb_client import (
+    IGDBClient,
+    extract_age_ratings,
+    extract_game_mode_names,
+    extract_store_urls,
+)
 
 _COMPANY_ROLE_FLAGS = (
     ("developer", CompanyRole.DEVELOPER),
@@ -218,6 +223,8 @@ async def get_igdb_preview_payload(
     if not igdb_games:
         raise NotFoundError(f"IGDB game {igdb_id} not found")
     igdb_game = igdb_games[0]
+    time_to_beat_by_id = await igdb_client.get_time_to_beat_by_igdb_ids([igdb_id])
+    igdb_game["time_to_beat_data"] = time_to_beat_by_id.get(igdb_id)
     return (
         igdb_game,
         resolve_igdb_category(igdb_game)[1],
@@ -245,8 +252,6 @@ async def import_game_from_igdb(
     if not igdb_games:
         raise NotFoundError(f"IGDB game {igdb_id} not found")
 
-    game = _upsert_from_igdb_payload(db, igdb_games[0], scope=scope, auto_discovered=auto_discovered)
-
     # get_addons_by_parent_igdb_id only returns the hierarchical addon types (DLC/expansion/
     # pack) now — siblings a parent_game backlink also turns up (remasters, bundles,
     # standalone expansions, mods, ...) are independently ownable/playable, so importing
@@ -255,6 +260,17 @@ async def import_game_from_igdb(
     # known local parent" — _upsert_from_igdb_payload still decides structural vs
     # display-only based on the *child's own* category, same as the direct-import path.
     addons = await igdb_client.get_addons_by_parent_igdb_id(igdb_id)
+
+    # Time-to-beat is a separate IGDB endpoint (game_time_to_beats), so fetch it once for
+    # the main game + its addons and attach each result to its payload before upserting.
+    time_to_beat_by_id = await igdb_client.get_time_to_beat_by_igdb_ids(
+        [igdb_id, *(addon["id"] for addon in addons)]
+    )
+    igdb_games[0]["time_to_beat_data"] = time_to_beat_by_id.get(igdb_id)
+    for addon in addons:
+        addon["time_to_beat_data"] = time_to_beat_by_id.get(addon["id"])
+
+    game = _upsert_from_igdb_payload(db, igdb_games[0], scope=scope, auto_discovered=auto_discovered)
     for addon in addons:
         _upsert_from_igdb_payload(
             db, addon, candidate_parent_id=game.id, scope=scope, auto_discovered=auto_discovered
@@ -475,6 +491,7 @@ def resolve_igdb_category(igdb_game: dict[str, Any]) -> tuple[int | None, GameCa
     return igdb_category_id, GameCategory.from_igdb_category_id(igdb_category_id)
 
 
+
 def _upsert_from_igdb_payload(
     db: Session,
     igdb_game: dict[str, Any],
@@ -534,6 +551,10 @@ def _upsert_from_igdb_payload(
         external_parent_name=external_parent_name,
         external_parent_igdb_url=external_parent_igdb_url,
         similar_game_igdb_ids=igdb_game.get("similar_games"),
+        igdb_status=igdb_game.get("status"),
+        game_modes=extract_game_mode_names(igdb_game),
+        age_ratings=extract_age_ratings(igdb_game),
+        time_to_beat=igdb_game.get("time_to_beat_data"),
         **extract_store_urls(igdb_game),
     )
 

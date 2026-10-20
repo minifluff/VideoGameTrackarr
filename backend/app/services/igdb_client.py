@@ -43,6 +43,8 @@ _HIERARCHICAL_ADDON_GAME_TYPES = (1, 2, 13)
 GAME_FIELDS = (
     "fields *,"
     "genres.name,genres.slug,"
+    "game_modes.name,game_modes.slug,"
+    "age_ratings.category,age_ratings.rating,"
     "involved_companies.company.id,involved_companies.company.name,"
     "involved_companies.company.slug,involved_companies.company.logo.url,"
     "involved_companies.developer,involved_companies.publisher,"
@@ -96,6 +98,39 @@ _STORE_WEBSITE_TYPES = {
     "epic_games_store_url": 16,
     "gog_store_url": 17,
 }
+
+
+# IGDB age_ratings: category 1 = ESRB, 2 = PEGI (others — CERO/USK/GRAC/CLASS_IND/ACB — are
+# kept under their system name with the raw rating value, so nothing IGDB offers is dropped).
+_AGE_RATING_SYSTEMS = {1: "ESRB", 2: "PEGI", 3: "CERO", 4: "USK", 5: "GRAC", 6: "CLASS_IND", 7: "ACB"}
+_ESRB_RATING_LABELS = {1: "RP", 2: "EC", 3: "E", 4: "E10+", 5: "T", 6: "M", 7: "AO"}
+_PEGI_RATING_LABELS = {1: "3", 2: "7", 3: "12", 4: "16", 5: "18"}
+
+
+def extract_age_ratings(igdb_game: dict) -> dict[str, str] | None:
+    """IGDB's age_ratings come back as {category, rating} int pairs — translate the two
+    systems with well-known label sets (ESRB, PEGI); any other system keeps its raw rating
+    value under its system name rather than being silently dropped."""
+    ratings: dict[str, str] = {}
+    for entry in igdb_game.get("age_ratings") or []:
+        system = _AGE_RATING_SYSTEMS.get(entry.get("category"))
+        rating = entry.get("rating")
+        if system is None or rating is None:
+            continue
+        if system == "ESRB":
+            label = _ESRB_RATING_LABELS.get(rating)
+        elif system == "PEGI":
+            label = _PEGI_RATING_LABELS.get(rating)
+        else:
+            label = str(rating)
+        if label is not None:
+            ratings[system] = label
+    return ratings or None
+
+
+def extract_game_mode_names(igdb_game: dict) -> list[str] | None:
+    names = [mode.get("name") for mode in igdb_game.get("game_modes") or [] if mode.get("name")]
+    return names or None
 
 
 def extract_store_urls(igdb_game: dict) -> dict[str, str | None]:
@@ -246,6 +281,38 @@ class IGDBClient:
         await self._attach_covers(games, headers)
         _normalize_nested_image_urls(games)
         return games
+
+    async def get_time_to_beat_by_igdb_ids(self, ids: list[int]) -> dict[int, dict]:
+        """IGDB's game_time_to_beats endpoint, keyed by game id.
+
+        Returns {igdb_id: {"hastily": seconds, "normally": seconds,
+        "completely": seconds, "count": submissions}}. Games with no
+        submissions are absent from the result — callers treat a missing
+        key as "no data", not zero.
+        """
+        if not ids:
+            return {}
+
+        headers = await self._auth_headers()
+        id_list = ",".join(str(int(i)) for i in ids)
+        body = (
+            "fields game,hastily,normally,completely,count;\n"
+            f"where game = ({id_list});\n"
+            f"limit {len(ids)};"
+        )
+        response = await self._request("POST", f"{IGDB_API_BASE}/game_time_to_beats", headers=headers, content=body)
+        result: dict[int, dict] = {}
+        for row in response.json():
+            game_id = row.get("game")
+            if game_id is None:
+                continue
+            result[int(game_id)] = {
+                "hastily": row.get("hastily"),
+                "normally": row.get("normally"),
+                "completely": row.get("completely"),
+                "count": row.get("count"),
+            }
+        return result
 
     async def get_addons_by_parent_igdb_id(self, parent_igdb_id: int) -> list[dict]:
         """The hierarchical addons (DLC/expansion/pack only) of a game per IGDB's
