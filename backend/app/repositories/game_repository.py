@@ -196,6 +196,15 @@ def _match_values(
     return build(values)
 
 
+def _game_modes_clause(modes: list[str]) -> ColumnElement[bool]:
+    """Matches when the game's IGDB game_modes JSON list contains any of these mode names.
+    SQLite's json_each expands the stored list inside an EXISTS subquery — the same shape
+    as every other many-value filter above. Games with no modes recorded (NULL/empty)
+    simply never match, and do match when the Exclude toggle is on."""
+    each = func.json_each(Game.game_modes).table_valued("value")
+    return exists(select(1).select_from(each).where(each.c.value.in_(modes)))
+
+
 def _play_status_clause(statuses: list[PlayStatus]) -> ColumnElement[bool]:
     """Matches when *any* of the game's platforms has one of these statuses, the same "any
     copy" rule the platform/format filters use, not the single priority-picked status a card
@@ -220,6 +229,12 @@ def _apply_optional_game_filters(
     tag_ids: list[int] | None = None,
     tag_exclude: bool = False,
     tag_match_all: bool = False,
+    genre_ids: list[int] | None = None,
+    genre_exclude: bool = False,
+    genre_match_all: bool = False,
+    game_modes: list[str] | None = None,
+    game_mode_exclude: bool = False,
+    game_mode_match_all: bool = False,
     collection_ids: list[int] | None = None,
     collection_exclude: bool = False,
     collection_match_all: bool = False,
@@ -269,6 +284,16 @@ def _apply_optional_game_filters(
             tag_match_all,
         )
         stmt = stmt.where(_maybe_negate(clause, tag_exclude))
+    if genre_ids:
+        clause = _match_values(
+            lambda ids: exists().where(GameGenre.game_id == Game.id, GameGenre.genre_id.in_(ids)),
+            genre_ids,
+            genre_match_all,
+        )
+        stmt = stmt.where(_maybe_negate(clause, genre_exclude))
+    if game_modes:
+        clause = _match_values(_game_modes_clause, game_modes, game_mode_match_all)
+        stmt = stmt.where(_maybe_negate(clause, game_mode_exclude))
     if categories:
         # No "match all" here: a game has exactly one category, so "all of two" could never
         # match. No need to also validate against _BROWSABLE_CATEGORIES here — list_top_level_games'
@@ -331,6 +356,12 @@ def list_top_level_games(
     tag_ids: list[int] | None = None,
     tag_exclude: bool = False,
     tag_match_all: bool = False,
+    genre_ids: list[int] | None = None,
+    genre_exclude: bool = False,
+    genre_match_all: bool = False,
+    game_modes: list[str] | None = None,
+    game_mode_exclude: bool = False,
+    game_mode_match_all: bool = False,
     collection_ids: list[int] | None = None,
     collection_exclude: bool = False,
     collection_match_all: bool = False,
@@ -395,6 +426,12 @@ def list_top_level_games(
         tag_ids=tag_ids,
         tag_exclude=tag_exclude,
         tag_match_all=tag_match_all,
+        genre_ids=genre_ids,
+        genre_exclude=genre_exclude,
+        genre_match_all=genre_match_all,
+        game_modes=game_modes,
+        game_mode_exclude=game_mode_exclude,
+        game_mode_match_all=game_mode_match_all,
         collection_ids=collection_ids,
         collection_exclude=collection_exclude,
         collection_match_all=collection_match_all,
@@ -711,3 +748,15 @@ def list_display_mode_slides(
 
     random.shuffle(slides)
     return slides[:limit]
+
+
+def list_distinct_game_modes(db: Session) -> list[str]:
+    """Every IGDB game-mode name recorded on any game, sorted — feeds the Game Modes filter
+    options in the Games list toolbar. Flattened in Python: SQLite has no clean distinct-over-
+    JSON-list primitive, and a ~10k-row library makes a full scan trivially cheap."""
+    rows = db.execute(select(Game.game_modes).where(Game.game_modes.is_not(None))).scalars().all()
+    modes: set[str] = set()
+    for row in rows:
+        if row:
+            modes.update(row)
+    return sorted(modes)

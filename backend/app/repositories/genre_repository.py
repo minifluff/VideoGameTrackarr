@@ -26,3 +26,8 @@ def sync_for_game(db: Session, game_id: int, genre_ids: list[int]) -> None:
     for genre_id in genre_ids:
         db.add(GameGenre(game_id=game_id, genre_id=genre_id))
     db.flush()
+
+
+def list_all(db: Session) -> list[Genre]:
+    """Every known genre, name-sorted — feeds the Genre filter options in the Games list toolbar."""
+    return list(db.scalars(select(Genre).order_by(Genre.name)).all())
