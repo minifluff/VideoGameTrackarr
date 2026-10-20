@@ -1,4 +1,5 @@
 from app.models.catalog import Game, GameCategory
+from app.models.library import LibraryItem, LibraryStatus
 
 
 def _get_token(auth_client):
@@ -267,3 +268,47 @@ def test_public_genre_and_game_mode_options_and_filters(auth_client, client, db_
     by_genre = client.get(f"/api/public/{token}/games", params={"genreId": genre.id})
     assert [g["name"] for g in by_genre.json()] == ["Test Game"]
     assert client.get(f"/api/public/{token}/games", params={"genreId": 999999}).json() == []
+
+
+def test_public_games_exclude_unclaimed_auto_discovered(auth_client, client, db_session, seed_game):
+    # A "what's missing" resync catalogues games the user doesn't have as
+    # auto_discovered — they're not part of the library until claimed, so the
+    # public list and detail must not show them (the private Games list hides
+    # exactly these too; see GameList.tsx).
+    discovered = Game(
+        igdb_id=2001,
+        name="Missing Game",
+        slug="missing-game",
+        category=GameCategory.MAIN_GAME,
+        auto_discovered=True,
+    )
+    db_session.add(discovered)
+    db_session.commit()
+    share = _get_token(auth_client)
+
+    names = [game["name"] for game in client.get(f"/api/public/{share}/games").json()]
+    assert names == ["Test Game"]
+    assert client.get(f"/api/public/{share}/games/{discovered.id}").status_code == 404
+
+
+def test_public_games_include_wishlisted_auto_discovered(auth_client, client, db_session, seed_game, seed_platform):
+    # Wishlisting a discovered game claims a stake in it — it stays public,
+    # mirroring the private list's rule.
+    discovered = Game(
+        igdb_id=2002,
+        name="Wishlisted Discovery",
+        slug="wishlisted-discovery",
+        category=GameCategory.MAIN_GAME,
+        auto_discovered=True,
+    )
+    db_session.add(discovered)
+    db_session.flush()
+    db_session.add(
+        LibraryItem(game_id=discovered.id, platform_id=seed_platform.id, status=LibraryStatus.WISHLIST)
+    )
+    db_session.commit()
+    share = _get_token(auth_client)
+
+    names = [game["name"] for game in client.get(f"/api/public/{share}/games").json()]
+    assert "Wishlisted Discovery" in names
+    assert client.get(f"/api/public/{share}/games/{discovered.id}").status_code == 200
