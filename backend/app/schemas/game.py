@@ -48,12 +48,6 @@ class GameSummaryResponse(CamelModel):
     # alone.
     auto_discovered: bool
     hide_from_public: bool
-    steam_store_url: str | None
-    xbox_store_url: str | None
-    playstation_store_url: str | None
-    nintendo_store_url: str | None
-    epic_games_store_url: str | None
-    gog_store_url: str | None
     # Platforms this game is owned on (owned library items), sorted — drives the
     # platform chips on game cards. Only populated by the main games-list route;
     # other callers leave the default empty list.
@@ -61,6 +55,14 @@ class GameSummaryResponse(CamelModel):
 
 
 class GameDetailResponse(GameSummaryResponse):
+    # Store URLs live only on the detail — the summary is shipped by the thousand on
+    # list pages and no card/list reads them (see the perf audit, 2026-10-20).
+    steam_store_url: str | None
+    xbox_store_url: str | None
+    playstation_store_url: str | None
+    nintendo_store_url: str | None
+    epic_games_store_url: str | None
+    gog_store_url: str | None
     summary: str | None
     storyline: str | None
     edition: str | None
@@ -109,6 +111,13 @@ def _game_fields(game: Game, status: GameWithStatus) -> dict:
         "rating": status.rating,
         "auto_discovered": game.auto_discovered,
         "hide_from_public": game.hide_from_public,
+    }
+
+
+def _store_url_fields(game: Game) -> dict:
+    # Only the detail response carries these — kept out of _game_fields so the
+    # summary payload (one entry per game on every list page) stays lean.
+    return {
         "steam_store_url": game.steam_store_url,
         "xbox_store_url": game.xbox_store_url,
         "playstation_store_url": game.playstation_store_url,
@@ -142,6 +151,7 @@ def game_detail_from_orm(
     # this can't just be GameDetailResponse.model_validate(game, from_attributes=True).
     return GameDetailResponse(
         **_game_fields(game, status),
+        **_store_url_fields(game),
         is_on_sale=game.id in on_sale_game_ids,
         summary=game.summary,
         storyline=game.storyline,
