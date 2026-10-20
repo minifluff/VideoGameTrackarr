@@ -91,6 +91,7 @@ async def test_get_time_to_beat_by_igdb_ids_empty_input_makes_no_request():
 
 
 def test_upsert_stores_enrichment_fields_and_detail_exposes_them(db_session):
+    from app.schemas.game import game_detail_from_orm
     from app.services.game_service import _upsert_from_igdb_payload, get_game_detail
 
     payload = {
@@ -114,7 +115,9 @@ def test_upsert_stores_enrichment_fields_and_detail_exposes_them(db_session):
     assert game.age_ratings == {"ESRB": "M", "PEGI": "18"}
     assert game.time_to_beat == {"hastily": 3600, "normally": 5400, "completely": 9000, "count": 11}
 
-    detail = get_game_detail(db_session, game.id)
+    # get_game_detail returns a GameWithStatus wrapper; the API-facing schema comes from
+    # game_detail_from_orm — that's where the frontend fields must appear.
+    detail = game_detail_from_orm(get_game_detail(db_session, game.id), None, [])
     assert detail.igdb_status == 4
     assert detail.game_modes == ["Single player", "Co-operative"]
     assert detail.age_ratings == {"ESRB": "M", "PEGI": "18"}
