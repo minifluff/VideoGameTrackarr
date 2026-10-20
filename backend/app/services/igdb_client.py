@@ -296,14 +296,14 @@ class IGDBClient:
         headers = await self._auth_headers()
         id_list = ",".join(str(int(i)) for i in ids)
         body = (
-            "fields game,hastily,normally,completely,count;\n"
-            f"where game = ({id_list});\n"
+            "fields game_id,hastily,normally,completely,count;\n"
+            f"where game_id = ({id_list});\n"
             f"limit {len(ids)};"
         )
         response = await self._request("POST", f"{IGDB_API_BASE}/game_time_to_beats", headers=headers, content=body)
         result: dict[int, dict] = {}
         for row in response.json():
-            game_id = row.get("game")
+            game_id = row.get("game_id")
             if game_id is None:
                 continue
             result[int(game_id)] = {

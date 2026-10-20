@@ -1,4 +1,5 @@
 import enum
+import logging
 from datetime import date
 from typing import Any
 
@@ -26,6 +27,8 @@ from app.services.igdb_client import (
     extract_game_mode_names,
     extract_store_urls,
 )
+
+logger = logging.getLogger(__name__)
 
 _COMPANY_ROLE_FLAGS = (
     ("developer", CompanyRole.DEVELOPER),
@@ -223,7 +226,11 @@ async def get_igdb_preview_payload(
     if not igdb_games:
         raise NotFoundError(f"IGDB game {igdb_id} not found")
     igdb_game = igdb_games[0]
-    time_to_beat_by_id = await igdb_client.get_time_to_beat_by_igdb_ids([igdb_id])
+    try:
+        time_to_beat_by_id = await igdb_client.get_time_to_beat_by_igdb_ids([igdb_id])
+    except Exception:
+        logger.warning("game_time_to_beats fetch failed for IGDB %s preview — continuing without it", igdb_id)
+        time_to_beat_by_id = {}
     igdb_game["time_to_beat_data"] = time_to_beat_by_id.get(igdb_id)
     return (
         igdb_game,
@@ -263,9 +270,14 @@ async def import_game_from_igdb(
 
     # Time-to-beat is a separate IGDB endpoint (game_time_to_beats), so fetch it once for
     # the main game + its addons and attach each result to its payload before upserting.
-    time_to_beat_by_id = await igdb_client.get_time_to_beat_by_igdb_ids(
-        [igdb_id, *(addon["id"] for addon in addons)]
-    )
+    # Best-effort: enrichment data must never take down an import/resync.
+    try:
+        time_to_beat_by_id = await igdb_client.get_time_to_beat_by_igdb_ids(
+            [igdb_id, *(addon["id"] for addon in addons)]
+        )
+    except Exception:
+        logger.warning("game_time_to_beats fetch failed for IGDB %s — continuing without it", igdb_id)
+        time_to_beat_by_id = {}
     igdb_games[0]["time_to_beat_data"] = time_to_beat_by_id.get(igdb_id)
     for addon in addons:
         addon["time_to_beat_data"] = time_to_beat_by_id.get(addon["id"])
