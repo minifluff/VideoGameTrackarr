@@ -29,6 +29,16 @@ function renderToolbar(overrides: Partial<ComponentProps<typeof GameListToolbar>
     onTagIdsChange: vi.fn(),
     tagExclude: false,
     onTagExcludeChange: vi.fn(),
+    genreOptions: [],
+    genreIds: [],
+    onGenreIdsChange: vi.fn(),
+    genreExclude: false,
+    onGenreExcludeChange: vi.fn(),
+    gameModeOptions: [],
+    gameModes: [],
+    onGameModesChange: vi.fn(),
+    gameModeExclude: false,
+    onGameModeExcludeChange: vi.fn(),
     collectionOptions: [],
     collectionIds: [],
     onCollectionIdsChange: vi.fn(),
@@ -96,13 +106,25 @@ describe("GameListToolbar match mode", () => {
     expect(props.onMatchAllChange).toHaveBeenCalledWith({ platform: true, tag: true });
   });
 
+  it("switches Genre to Match all without touching the others", async () => {
+    const props = renderToolbar({ genreIds: [1, 2] });
+    const { user, dialog } = await openFilters();
+
+    // Toggle order follows the field order: Tags first, then Genre, then Game Modes.
+    const groups = within(dialog).getAllByRole("group", { name: "Match any or all of the selected values" });
+    await user.click(within(groups[1]).getByRole("button", { name: "Match all" }));
+
+    expect(props.onMatchAllChange).toHaveBeenCalledWith({ genre: true });
+  });
+
   it("offers no match toggle for Game Types", async () => {
     renderToolbar({ gameTypes: ["main_game", "bundle"] });
     const { dialog } = await openFilters();
 
-    // One toggle per field except Game Types: Tags, Ownership, Play Status, Platforms,
-    // Formats, Collections, Series (Storefront only shows once Digital is picked).
-    expect(within(dialog).getAllByRole("group", { name: "Match any or all of the selected values" })).toHaveLength(7);
+    // One toggle per field except Game Types: Tags, Genre, Game Modes, Ownership,
+    // Play Status, Platforms, Formats, Collections, Series (Storefront only shows once
+    // Digital is picked).
+    expect(within(dialog).getAllByRole("group", { name: "Match any or all of the selected values" })).toHaveLength(9);
   });
 
   it("lists the play statuses, including Not started", async () => {
