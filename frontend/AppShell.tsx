@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import LogoutIcon from "@mui/icons-material/Logout";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
@@ -154,7 +156,15 @@ const AppShell = () => {
         }}
       >
         <Toolbar />
-        <Outlet />
+        <Suspense
+          fallback={
+            <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+              <CircularProgress />
+            </Box>
+          }
+        >
+          <Outlet />
+        </Suspense>
       </Box>
 
       {isCompact ? <BottomNavBar /> : null}

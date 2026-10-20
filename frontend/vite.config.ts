@@ -89,6 +89,22 @@ export default defineConfig({
       // Two pages: the app itself, and the DOS/PSP player tab (see crossOriginIsolation).
       // Relative to the project root (frontend/), where every build runs.
       input: { main: "index.html", playerIsolated: "player-isolated.html" },
+      output: {
+        // The framework stack every page needs anyway gets one stable chunk (it
+        // pairs with the immutable /assets caching); page code itself is split
+        // per route via React.lazy in router.tsx. MUI is deliberately left to
+        // Rollup's automatic shared-chunk extraction so page-only components
+        // don't get dragged into the entry load.
+        manualChunks(id: string) {
+          if (
+            id.includes("node_modules") &&
+            /(react|react-dom|react-router|@tanstack|i18next|scheduler)/.test(id)
+          ) {
+            return "framework";
+          }
+          return undefined;
+        },
+      },
     },
   },
   server: {

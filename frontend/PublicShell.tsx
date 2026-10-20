@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import { Outlet } from "react-router-dom";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
 import Toolbar from "@mui/material/Toolbar";
@@ -59,7 +61,15 @@ const PublicShell = () => {
       <Box component="main" sx={{ flexGrow: 1, p: { xs: 1.5, sm: 2, md: 3 } }}>
         <Toolbar />
         <PublicSubNav />
-        <Outlet />
+        <Suspense
+          fallback={
+            <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+              <CircularProgress />
+            </Box>
+          }
+        >
+          <Outlet />
+        </Suspense>
       </Box>
     </Box>
   );
