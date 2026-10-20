@@ -370,13 +370,9 @@ const GameCard = ({
             )}
           </>
         ) : null}
-        {/* Platform chips reserve their slot whenever the caller passes the prop at all
-            (even empty) — same trick as the play-status chip above: a fixed two-chip-row
-            min-height (2 x 24px small chips + 4px gap) keeps every card in the public grid
-            the same height regardless of how many platforms a game is owned on. Rarer
-            games with more platforms than fit simply grow past it instead of clipping. */}
-        {ownedPlatforms !== undefined ? (
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 1, minHeight: 52 }}>
+        {/* Platform chips render only when the game is owned on at least one platform. */}
+        {ownedPlatforms !== undefined && ownedPlatforms.length > 0 ? (
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 1 }}>
             {ownedPlatforms.map((platform) => (
               <Chip key={platform} label={platform} size="small" variant="outlined" />
             ))}

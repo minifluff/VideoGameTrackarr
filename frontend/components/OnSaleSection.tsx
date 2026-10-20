@@ -30,7 +30,12 @@ export const OnSaleTile = ({ item }: { item: OnSaleItem }) => {
           navigate(`/${addon ? "addon" : "game"}/${gameIdentifier(item.game)}`)
         }
       />
-      <Typography variant="caption" color="text.secondary" component="div" sx={{ mt: 0.75 }}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        component="div"
+        sx={{ mt: 0.75, fontWeight: "bold", textAlign: "center" }}
+      >
         {t("insights.onSale.currentPriceLabel", {
           price: formatCurrency(item.currentPriceAmount, item.currentPriceCurrency ?? "USD"),
           shop: item.currentShopName ?? t("common.unknown"),
@@ -38,7 +43,12 @@ export const OnSaleTile = ({ item }: { item: OnSaleItem }) => {
         })}
       </Typography>
       {item.historicalLowAmount !== null && (
-        <Typography variant="caption" color="text.secondary" component="div">
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          component="div"
+          sx={{ fontWeight: "bold", textAlign: "center" }}
+        >
           {t("insights.onSale.historicalLowLabel", {
             price: formatCurrency(item.historicalLowAmount, item.historicalLowCurrency ?? "USD"),
           })}
@@ -48,9 +58,9 @@ export const OnSaleTile = ({ item }: { item: OnSaleItem }) => {
         <Stack
           direction="row"
           spacing={0.5}
-          sx={{ alignItems: "center", flexWrap: "wrap", mt: 0.25 }}
+          sx={{ alignItems: "center", justifyContent: "center", flexWrap: "wrap", mt: 0.25 }}
         >
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: "bold", textAlign: "center" }}>
             {t("insights.onSale.targetPriceLabel", {
               price: formatCurrency(item.targetPrice, item.currentPriceCurrency ?? "USD"),
             })}
