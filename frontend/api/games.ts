@@ -19,6 +19,8 @@ export type MatchAllField =
   | "ownership"
   | "platform"
   | "tag"
+  | "genre"
+  | "gameMode"
   | "collection"
   | "franchise"
   | "format"
@@ -32,6 +34,10 @@ export interface GameListFilters {
   platformExclude?: boolean;
   tagIds?: number[];
   tagExclude?: boolean;
+  genreIds?: number[];
+  genreExclude?: boolean;
+  gameModes?: string[];
+  gameModeExclude?: boolean;
   collectionIds?: number[];
   collectionExclude?: boolean;
   franchiseIds?: number[];
@@ -74,6 +80,10 @@ export function buildGameFilterParams(filters: GameListFilters) {
     platformExclude,
     tagIds,
     tagExclude,
+    genreIds,
+    genreExclude,
+    gameModes,
+    gameModeExclude,
     collectionIds,
     collectionExclude,
     franchiseIds,
@@ -108,6 +118,12 @@ export function buildGameFilterParams(filters: GameListFilters) {
     tagId: tagIds?.length ? tagIds : undefined,
     tagExclude: tagIds?.length ? tagExclude : undefined,
     tagMatchAll: matchAllParam("tag", tagIds),
+    genreId: genreIds?.length ? genreIds : undefined,
+    genreExclude: genreIds?.length ? genreExclude : undefined,
+    genreMatchAll: matchAllParam("genre", genreIds),
+    gameMode: gameModes?.length ? gameModes : undefined,
+    gameModeExclude: gameModes?.length ? gameModeExclude : undefined,
+    gameModeMatchAll: matchAllParam("gameMode", gameModes),
     collectionId: collectionIds?.length ? collectionIds : undefined,
     collectionExclude: collectionIds?.length ? collectionExclude : undefined,
     collectionMatchAll: matchAllParam("collection", collectionIds),
