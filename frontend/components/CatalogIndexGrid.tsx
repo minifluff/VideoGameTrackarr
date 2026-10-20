@@ -120,7 +120,12 @@ const CatalogIndexGrid = <T extends CatalogIndexEntry>({
             </Box>
             {showMinGamesFilter && entries && entries.length > 0 ? (
               <Box sx={{ width: { xs: 150, sm: 220 }, flexShrink: 0, pt: 1 }}>
-                <Typography variant="caption" color="text.secondary" component="div" sx={{ textAlign: "right" }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  component="div"
+                  sx={{ textAlign: "right", fontWeight: "bold", fontSize: "0.85rem" }}
+                >
                   {t("catalog.browseGrid.minGamesLabel", { count: minGames })}
                 </Typography>
                 <Slider
@@ -132,6 +137,13 @@ const CatalogIndexGrid = <T extends CatalogIndexEntry>({
                   step={1}
                   valueLabelDisplay="auto"
                   size="small"
+                  sx={{
+                    // Thicker bar than MUI's small default (2px) so it reads as a control,
+                    // not a divider; thumb grows a touch to match.
+                    "& .MuiSlider-track": { height: 6 },
+                    "& .MuiSlider-rail": { height: 6 },
+                    "& .MuiSlider-thumb": { width: 16, height: 16 },
+                  }}
                 />
               </Box>
             ) : null}
