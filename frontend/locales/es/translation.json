@@ -891,7 +891,22 @@
       "viewOnPlaystation": "Ver en PlayStation Store",
       "viewOnNintendo": "Ver en Nintendo eShop",
       "viewOnEpicGames": "Ver en Epic Games Store",
-      "viewOnGog": "Ver en GOG.com"
+      "viewOnGog": "Ver en GOG.com",
+      "statusReleased": "Released",
+      "statusAlpha": "Alpha",
+      "statusBeta": "Beta",
+      "statusEarlyAccess": "Early Access",
+      "statusOffline": "Offline",
+      "statusCancelled": "Cancelled",
+      "statusRumored": "Rumored",
+      "statusDelisted": "Delisted",
+      "ageRatingTooltip": "{{system}} age rating",
+      "gameModesLabel": "Game modes",
+      "timeToBeatTitle": "Time to Beat",
+      "timeToBeatMain": "Main Story",
+      "timeToBeatExtras": "Main + Extras",
+      "timeToBeatCompletionist": "Completionist",
+      "timeToBeatSubmissions": "Based on {{count}} player submissions"
     },
     "actions": {
       "removeSuccessToast": "¡Juego eliminado de tu biblioteca!",
