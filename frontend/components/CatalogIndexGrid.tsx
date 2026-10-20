@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Collapse from "@mui/material/Collapse";
 import Paper from "@mui/material/Paper";
+import Slider from "@mui/material/Slider";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import type { CatalogSortOption } from "../api/types";
@@ -37,6 +38,10 @@ interface CatalogIndexGridProps<T extends CatalogIndexEntry> {
   estimateRowHeight?: (columns: number) => number;
   // sessionStorage key for this page's remembered search/sort (see hooks/useSessionState.ts).
   stateKey: string;
+  // Collections/Series only: a "more than N games" slider in the header's top-right
+  // corner, hiding entries whose game count doesn't beat it. Platforms doesn't pass
+  // this — a platform card is a storefront slice, so a count threshold means less there.
+  showMinGamesFilter?: boolean;
 }
 
 // Shared by CollectionsPage, SeriesPage and PlatformsPage — same "index of catalog refs, each
@@ -58,25 +63,37 @@ const CatalogIndexGrid = <T extends CatalogIndexEntry>({
   renderCard,
   estimateRowHeight,
   stateKey,
+  showMinGamesFilter = false,
 }: CatalogIndexGridProps<T>) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const collapsed = useScrollCollapse();
   const [searchKeyword, setSearchKeyword] = useSessionState(`${stateKey}.searchKeyword`, "");
   const [sort, setSort] = useSessionState<CatalogSortOption>(`${stateKey}.sort`, "name_asc");
+  // Defaults to 2: on a big library most collections/series have a game or two, and the
+  // page is more useful opening on the substantial ones (3+ games).
+  const [minGames, setMinGames] = useSessionState(`${stateKey}.minGames`, 2);
+
+  const maxGameCount = useMemo(
+    () => (entries ?? []).reduce((max, entry) => Math.max(max, getCount(entry)), 0),
+    [entries, getCount]
+  );
 
   const visibleEntries = useMemo(() => {
     if (!entries) return [];
     const trimmed = searchKeyword.trim().toLowerCase();
-    const filtered = trimmed
+    let filtered = trimmed
       ? entries.filter((entry) => entry.name.toLowerCase().includes(trimmed))
       : entries;
+    if (showMinGamesFilter) {
+      filtered = filtered.filter((entry) => getCount(entry) > minGames);
+    }
     const sorted = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
     if (sort === "name_desc") sorted.reverse();
     // Stable sort, so entries with the same count stay in name order.
     if (sort === "count_desc") sorted.sort((a, b) => getCount(b) - getCount(a));
     return sorted;
-  }, [entries, searchKeyword, sort, getCount]);
+  }, [entries, searchKeyword, sort, getCount, showMinGamesFilter, minGames]);
 
   return (
     <>
@@ -92,13 +109,32 @@ const CatalogIndexGrid = <T extends CatalogIndexEntry>({
         }}
       >
         <Collapse in={!collapsed}>
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="h4" component="h1" gutterBottom>
-              {title}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {description}
-            </Typography>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2, mb: 2 }}>
+            <Box>
+              <Typography variant="h4" component="h1" gutterBottom>
+                {title}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {description}
+              </Typography>
+            </Box>
+            {showMinGamesFilter && entries && entries.length > 0 ? (
+              <Box sx={{ width: { xs: 150, sm: 220 }, flexShrink: 0, pt: 1 }}>
+                <Typography variant="caption" color="text.secondary" component="div" sx={{ textAlign: "right" }}>
+                  {t("catalog.browseGrid.minGamesLabel", { count: minGames })}
+                </Typography>
+                <Slider
+                  aria-label={t("catalog.browseGrid.minGamesLabel", { count: minGames })}
+                  value={Math.min(minGames, maxGameCount)}
+                  onChange={(_, value) => setMinGames(value as number)}
+                  min={0}
+                  max={maxGameCount}
+                  step={1}
+                  valueLabelDisplay="auto"
+                  size="small"
+                />
+              </Box>
+            ) : null}
           </Box>
         </Collapse>
         <CatalogIndexToolbar
