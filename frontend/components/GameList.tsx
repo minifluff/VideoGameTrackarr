@@ -470,6 +470,7 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
                 selectable={selectionMode}
                 selected={selectedIds.has(game.id)}
                 onToggleSelect={() => toggleSelected(game.id)}
+                ownedPlatforms={game.ownedPlatforms}
               />
             )}
           />
