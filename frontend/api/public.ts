@@ -14,6 +14,8 @@ export interface PublicGameFilters {
   platformExclude?: boolean;
   tagIds?: number[];
   tagExclude?: boolean;
+  genreIds?: number[];
+  gameModes?: string[];
   collectionIds?: number[];
   collectionExclude?: boolean;
   franchiseIds?: number[];
@@ -36,6 +38,8 @@ export async function listPublicGames(
     platformExclude: filters.platformExclude || undefined,
     tagId: filters.tagIds?.length ? filters.tagIds : undefined,
     tagExclude: filters.tagExclude || undefined,
+    genreId: filters.genreIds?.length ? filters.genreIds : undefined,
+    gameMode: filters.gameModes?.length ? filters.gameModes : undefined,
     collectionId: filters.collectionIds?.length ? filters.collectionIds : undefined,
     collectionExclude: filters.collectionExclude || undefined,
     franchiseId: filters.franchiseIds?.length ? filters.franchiseIds : undefined,
@@ -74,6 +78,16 @@ export async function listPublicAccessories(token: string, search?: string): Pro
 
 export async function listPublicTags(token: string): Promise<{ id: number; name: string }[]> {
   const response = await publicClient.get<{ id: number; name: string }[]>(`/api/public/${token}/tags`);
+  return response.data;
+}
+
+export async function listPublicGenres(token: string): Promise<{ id: number; name: string }[]> {
+  const response = await publicClient.get<{ id: number; name: string }[]>(`/api/public/${token}/genres`);
+  return response.data;
+}
+
+export async function listPublicGameModes(token: string): Promise<string[]> {
+  const response = await publicClient.get<string[]>(`/api/public/${token}/game-modes`);
   return response.data;
 }
 
