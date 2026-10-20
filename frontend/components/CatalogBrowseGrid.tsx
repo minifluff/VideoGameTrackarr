@@ -19,6 +19,8 @@ import { useCollectionAddons, useCollections, useFranchiseAddons, useFranchises,
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useGames } from "../hooks/useGames";
 import { usePlatforms } from "../hooks/usePlatforms";
+import { useGameModes } from "../hooks/useGameModes";
+import { useGenres } from "../hooks/useGenres";
 import { useStorefronts } from "../hooks/useStorefronts";
 import { useTags } from "../hooks/useTags";
 import { gameIdentifier } from "../utils/identifiers";
@@ -100,6 +102,10 @@ const CatalogBrowseGrid = ({
   const [platformExclude, setPlatformExclude] = useSessionState(`${stateKey}.platformExclude`, false);
   const [tagIds, setTagIds] = useSessionState<number[]>(`${stateKey}.tagIds`, []);
   const [tagExclude, setTagExclude] = useSessionState(`${stateKey}.tagExclude`, false);
+  const [genreIds, setGenreIds] = useSessionState<number[]>(`${stateKey}.genreIds`, []);
+  const [genreExclude, setGenreExclude] = useSessionState(`${stateKey}.genreExclude`, false);
+  const [gameModes, setGameModes] = useSessionState<string[]>(`${stateKey}.gameModes`, []);
+  const [gameModeExclude, setGameModeExclude] = useSessionState(`${stateKey}.gameModeExclude`, false);
   const [collectionIds, setCollectionIds] = useSessionState<number[]>(`${stateKey}.collectionIds`, []);
   const [collectionExclude, setCollectionExclude] = useSessionState(`${stateKey}.collectionExclude`, false);
   const [franchiseIds, setFranchiseIds] = useSessionState<number[]>(`${stateKey}.franchiseIds`, []);
@@ -133,6 +139,9 @@ const CatalogBrowseGrid = ({
   usePruneStaleIds(tagIds, setTagIds, tags, tagsLoaded);
   usePruneStaleIds(collectionIds, setCollectionIds, collections, collectionsLoaded);
   usePruneStaleIds(franchiseIds, setFranchiseIds, franchises, franchisesLoaded);
+  const { data: genres = [], isSuccess: genresLoaded } = useGenres();
+  const { data: gameModeOptions = [] } = useGameModes();
+  usePruneStaleIds(genreIds, setGenreIds, genres, genresLoaded);
   const { data: realStorefronts = [] } = useStorefronts();
   const storefrontOptions = useMemo(
     () => Array.from(new Set([...ALL_KNOWN_STOREFRONTS, ...realStorefronts])).sort(),
@@ -150,6 +159,10 @@ const CatalogBrowseGrid = ({
       platformExclude,
       tagIds: tagIds.length > 0 ? tagIds : undefined,
       tagExclude,
+      genreIds: genreIds.length > 0 ? genreIds : undefined,
+      genreExclude,
+      gameModes: gameModes.length > 0 ? gameModes : undefined,
+      gameModeExclude,
       collectionIds: collectionIds.length > 0 ? collectionIds : undefined,
       collectionExclude,
       franchiseIds: franchiseIds.length > 0 ? franchiseIds : undefined,
@@ -173,6 +186,10 @@ const CatalogBrowseGrid = ({
       platformExclude,
       tagIds,
       tagExclude,
+      genreIds,
+      genreExclude,
+      gameModes,
+      gameModeExclude,
       collectionIds,
       collectionExclude,
       franchiseIds,
@@ -294,6 +311,16 @@ const CatalogBrowseGrid = ({
             tagIds={tagIds}
             onTagIdsChange={setTagIds}
             tagExclude={tagExclude}
+            genreOptions={genres}
+            genreIds={genreIds}
+            onGenreIdsChange={setGenreIds}
+            genreExclude={genreExclude}
+            onGenreExcludeChange={setGenreExclude}
+            gameModeOptions={gameModeOptions}
+            gameModes={gameModes}
+            onGameModesChange={setGameModes}
+            gameModeExclude={gameModeExclude}
+            onGameModeExcludeChange={setGameModeExclude}
             onTagExcludeChange={setTagExclude}
             collectionOptions={collections}
             collectionIds={collectionIds}

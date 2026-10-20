@@ -14,6 +14,8 @@ import { useCollections, useFranchises } from "../hooks/useCatalogBrowse";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useDeleteGame, useGames } from "../hooks/useGames";
 import { usePlatforms } from "../hooks/usePlatforms";
+import { useGameModes } from "../hooks/useGameModes";
+import { useGenres } from "../hooks/useGenres";
 import { useStorefronts } from "../hooks/useStorefronts";
 import { toast } from "react-toastify";
 import { useTags } from "../hooks/useTags";
@@ -58,6 +60,10 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
   const [platformExclude, setPlatformExclude] = useSessionState(`${sp}.platformExclude`, false);
   const [tagIds, setTagIds] = useSessionState<number[]>(`${sp}.tagIds`, []);
   const [tagExclude, setTagExclude] = useSessionState(`${sp}.tagExclude`, false);
+  const [genreIds, setGenreIds] = useSessionState<number[]>(`${sp}.genreIds`, []);
+  const [genreExclude, setGenreExclude] = useSessionState(`${sp}.genreExclude`, false);
+  const [gameModes, setGameModes] = useSessionState<string[]>(`${sp}.gameModes`, []);
+  const [gameModeExclude, setGameModeExclude] = useSessionState(`${sp}.gameModeExclude`, false);
   const [collectionIds, setCollectionIds] = useSessionState<number[]>(`${sp}.collectionIds`, []);
   const [collectionExclude, setCollectionExclude] = useSessionState(`${sp}.collectionExclude`, false);
   const [franchiseIds, setFranchiseIds] = useSessionState<number[]>(`${sp}.franchiseIds`, []);
@@ -102,6 +108,9 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
   usePruneStaleIds(tagIds, setTagIds, tags, tagsLoaded);
   usePruneStaleIds(collectionIds, setCollectionIds, collections, collectionsLoaded);
   usePruneStaleIds(franchiseIds, setFranchiseIds, franchises, franchisesLoaded);
+  const { data: genres = [], isSuccess: genresLoaded } = useGenres();
+  const { data: gameModeOptions = [] } = useGameModes();
+  usePruneStaleIds(genreIds, setGenreIds, genres, genresLoaded);
   const { data: realStorefronts = [] } = useStorefronts();
   // Always offer every storefront the app knows about (Steam/GOG/PlayStation Store/etc.),
   // not just whatever already happens to exist in the data — otherwise a brand-new instance
@@ -119,6 +128,10 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
       platformExclude,
       tagIds: tagIds.length > 0 ? tagIds : undefined,
       tagExclude,
+      genreIds: genreIds.length > 0 ? genreIds : undefined,
+      genreExclude,
+      gameModes: gameModes.length > 0 ? gameModes : undefined,
+      gameModeExclude,
       collectionIds: collectionIds.length > 0 ? collectionIds : undefined,
       collectionExclude,
       franchiseIds: franchiseIds.length > 0 ? franchiseIds : undefined,
@@ -144,6 +157,10 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
       platformExclude,
       tagIds,
       tagExclude,
+      genreIds,
+      genreExclude,
+      gameModes,
+      gameModeExclude,
       collectionIds,
       collectionExclude,
       franchiseIds,
@@ -272,6 +289,8 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
     ownershipStatuses.length > 0 ||
     platformIds.length > 0 ||
     tagIds.length > 0 ||
+    genreIds.length > 0 ||
+    gameModes.length > 0 ||
     collectionIds.length > 0 ||
     franchiseIds.length > 0 ||
     gameTypes.length > 0 ||
@@ -288,6 +307,10 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
     setPlatformExclude(false);
     setTagIds([]);
     setTagExclude(false);
+    setGenreIds([]);
+    setGenreExclude(false);
+    setGameModes([]);
+    setGameModeExclude(false);
     setCollectionIds([]);
     setCollectionExclude(false);
     setFranchiseIds([]);
@@ -389,6 +412,16 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
             onTagIdsChange={setTagIds}
             tagExclude={tagExclude}
             onTagExcludeChange={setTagExclude}
+            genreOptions={genres}
+            genreIds={genreIds}
+            onGenreIdsChange={setGenreIds}
+            genreExclude={genreExclude}
+            onGenreExcludeChange={setGenreExclude}
+            gameModeOptions={gameModeOptions}
+            gameModes={gameModes}
+            onGameModesChange={setGameModes}
+            gameModeExclude={gameModeExclude}
+            onGameModeExcludeChange={setGameModeExclude}
             collectionOptions={collections}
             collectionIds={collectionIds}
             onCollectionIdsChange={setCollectionIds}

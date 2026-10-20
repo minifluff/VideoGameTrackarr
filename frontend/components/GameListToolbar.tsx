@@ -40,6 +40,7 @@ import { useTranslation } from "react-i18next";
 import { useScrollDirection } from "../hooks/useScrollCollapse";
 import type { MatchAllField, MatchAllFilters } from "../api/games";
 import type {
+  CatalogRef,
   CatalogRefSummary,
   GameCategory,
   GameSortOption,
@@ -239,6 +240,16 @@ interface GameListToolbarProps {
   onTagIdsChange: (value: number[]) => void;
   tagExclude: boolean;
   onTagExcludeChange: (value: boolean) => void;
+  genreOptions: CatalogRef[];
+  genreIds: number[];
+  onGenreIdsChange: (value: number[]) => void;
+  genreExclude: boolean;
+  onGenreExcludeChange: (value: boolean) => void;
+  gameModeOptions: string[];
+  gameModes: string[];
+  onGameModesChange: (value: string[]) => void;
+  gameModeExclude: boolean;
+  onGameModeExcludeChange: (value: boolean) => void;
   collectionOptions: CatalogRefSummary[];
   collectionIds: number[];
   onCollectionIdsChange: (value: number[]) => void;
@@ -336,6 +347,16 @@ const GameListToolbar = ({
   onTagIdsChange,
   tagExclude,
   onTagExcludeChange,
+  genreOptions,
+  genreIds,
+  onGenreIdsChange,
+  genreExclude,
+  onGenreExcludeChange,
+  gameModeOptions,
+  gameModes,
+  onGameModesChange,
+  gameModeExclude,
+  onGameModeExcludeChange,
   collectionOptions,
   collectionIds,
   onCollectionIdsChange,
@@ -382,6 +403,8 @@ const GameListToolbar = ({
   const hideSearchBar = useScrollDirection(80);
   const allPlaceholder = t("games.listToolbar.allOption");
   const selectedTags = tagOptions.filter((tag) => tagIds.includes(tag.id));
+  const selectedGenres = genreOptions.filter((genre) => genreIds.includes(genre.id));
+  const selectedGameModes = gameModeOptions.filter((mode) => gameModes.includes(mode));
   const selectedPlatforms = platformOptions.filter((platform) => platformIds.includes(platform.id));
   const selectedCollections = collectionOptions.filter((collection) =>
     collectionIds.includes(collection.id)
@@ -408,6 +431,8 @@ const GameListToolbar = ({
     ownershipStatuses.length +
     platformIds.length +
     tagIds.length +
+    genreIds.length +
+    gameModes.length +
     collectionIds.length +
     franchiseIds.length +
     gameTypes.length +
@@ -449,6 +474,10 @@ const GameListToolbar = ({
     onPlatformExcludeChange(false);
     onTagIdsChange([]);
     onTagExcludeChange(false);
+    onGenreIdsChange([]);
+    onGenreExcludeChange(false);
+    onGameModesChange([]);
+    onGameModeExcludeChange(false);
     onCollectionIdsChange([]);
     onCollectionExcludeChange(false);
     onFranchiseIdsChange([]);
@@ -743,6 +772,48 @@ const GameListToolbar = ({
                       exclude={tagExclude}
                       onExcludeChange={onTagExcludeChange}
                       {...matchAllProps("tag")}
+                    />
+                  </Stack>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Stack spacing={0.5}>
+                    <AutocompleteMultiSelect<CatalogRef>
+                      label={t("games.listToolbar.genreLabel")}
+                      options={genreOptions}
+                      value={selectedGenres}
+                      onChange={(newValue) =>
+                        onGenreIdsChange(newValue.map((genre) => genre.id))
+                      }
+                      getOptionLabel={(option) => option.name}
+                      isOptionEqualToValue={(option, val) => option.id === val.id}
+                      placeholder={allPlaceholder}
+                      fullWidth
+                    />
+                    <FilterFieldOptions
+                      selectedCount={genreIds.length}
+                      exclude={genreExclude}
+                      onExcludeChange={onGenreExcludeChange}
+                      {...matchAllProps("genre")}
+                    />
+                  </Stack>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Stack spacing={0.5}>
+                    <AutocompleteMultiSelect<string>
+                      label={t("games.listToolbar.gameModeLabel")}
+                      options={gameModeOptions}
+                      value={selectedGameModes}
+                      onChange={onGameModesChange}
+                      getOptionLabel={(option) => option}
+                      isOptionEqualToValue={(option, val) => option === val}
+                      placeholder={allPlaceholder}
+                      fullWidth
+                    />
+                    <FilterFieldOptions
+                      selectedCount={gameModes.length}
+                      exclude={gameModeExclude}
+                      onExcludeChange={onGameModeExcludeChange}
+                      {...matchAllProps("gameMode")}
                     />
                   </Stack>
                 </Grid>

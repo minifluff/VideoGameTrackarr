@@ -15,6 +15,8 @@ import { useStorefronts } from "../hooks/useStorefronts";
 import { useTags } from "../hooks/useTags";
 import { gameIdentifier } from "../utils/identifiers";
 import { matchesOwnership } from "../utils/ownershipFilter";
+import { useGameModes } from "../hooks/useGameModes";
+import { useGenres } from "../hooks/useGenres";
 import { ALL_KNOWN_STOREFRONTS } from "../utils/storefronts";
 import GameCard from "./GameCard";
 import GameListToolbar, { type OwnershipStatus } from "./GameListToolbar";
@@ -34,6 +36,10 @@ const MissingAddonsSection = () => {
   const [platformExclude, setPlatformExclude] = useSessionState("missingAddons.platformExclude", false);
   const [tagIds, setTagIds] = useSessionState<number[]>("missingAddons.tagIds", []);
   const [tagExclude, setTagExclude] = useSessionState("missingAddons.tagExclude", false);
+  const [genreIds, setGenreIds] = useSessionState<number[]>("missingAddons.genreIds", []);
+  const [genreExclude, setGenreExclude] = useSessionState("missingAddons.genreExclude", false);
+  const [gameModes, setGameModes] = useSessionState<string[]>("missingAddons.gameModes", []);
+  const [gameModeExclude, setGameModeExclude] = useSessionState("missingAddons.gameModeExclude", false);
   const [collectionIds, setCollectionIds] = useSessionState<number[]>("missingAddons.collectionIds", []);
   const [collectionExclude, setCollectionExclude] = useSessionState("missingAddons.collectionExclude", false);
   const [franchiseIds, setFranchiseIds] = useSessionState<number[]>("missingAddons.franchiseIds", []);
@@ -59,6 +65,9 @@ const MissingAddonsSection = () => {
   usePruneStaleIds(tagIds, setTagIds, tags, tagsLoaded);
   usePruneStaleIds(collectionIds, setCollectionIds, collections, collectionsLoaded);
   usePruneStaleIds(franchiseIds, setFranchiseIds, franchises, franchisesLoaded);
+  const { data: genres = [], isSuccess: genresLoaded } = useGenres();
+  const { data: gameModeOptions = [] } = useGameModes();
+  usePruneStaleIds(genreIds, setGenreIds, genres, genresLoaded);
   const { data: realStorefronts = [] } = useStorefronts();
   const storefrontOptions = useMemo(
     () => Array.from(new Set([...ALL_KNOWN_STOREFRONTS, ...realStorefronts])).sort(),
@@ -72,6 +81,10 @@ const MissingAddonsSection = () => {
       platformExclude,
       tagIds: tagIds.length > 0 ? tagIds : undefined,
       tagExclude,
+      genreIds: genreIds.length > 0 ? genreIds : undefined,
+      genreExclude,
+      gameModes: gameModes.length > 0 ? gameModes : undefined,
+      gameModeExclude,
       collectionIds: collectionIds.length > 0 ? collectionIds : undefined,
       collectionExclude,
       franchiseIds: franchiseIds.length > 0 ? franchiseIds : undefined,
@@ -97,6 +110,10 @@ const MissingAddonsSection = () => {
       platformExclude,
       tagIds,
       tagExclude,
+      genreIds,
+      genreExclude,
+      gameModes,
+      gameModeExclude,
       collectionIds,
       collectionExclude,
       franchiseIds,
@@ -150,6 +167,16 @@ const MissingAddonsSection = () => {
           tagIds={tagIds}
           onTagIdsChange={setTagIds}
           tagExclude={tagExclude}
+          genreOptions={genres}
+          genreIds={genreIds}
+          onGenreIdsChange={setGenreIds}
+          genreExclude={genreExclude}
+          onGenreExcludeChange={setGenreExclude}
+          gameModeOptions={gameModeOptions}
+          gameModes={gameModes}
+          onGameModesChange={setGameModes}
+          gameModeExclude={gameModeExclude}
+          onGameModeExcludeChange={setGameModeExclude}
           onTagExcludeChange={setTagExclude}
           collectionOptions={collections}
           collectionIds={collectionIds}
