@@ -110,6 +110,24 @@ def list_public_tags(
     return [{"id": t.id, "name": t.name} for t in tag_repository.list_tags(db)]
 
 
+@router.get("/genres", response_model=list[dict])
+def list_public_genres(token: str, db: Session = Depends(get_db)) -> list[dict]:
+    """All known genres, for the public page filter."""
+    from app.repositories import genre_repository
+
+    auth_service.get_user_by_share_token(db, token)
+    return [{"id": g.id, "name": g.name} for g in genre_repository.list_all(db)]
+
+
+@router.get("/game-modes", response_model=list[str])
+def list_public_game_modes(token: str, db: Session = Depends(get_db)) -> list[str]:
+    """Every IGDB game-mode name recorded on any game, for the public page filter."""
+    from app.repositories import game_repository
+
+    auth_service.get_user_by_share_token(db, token)
+    return game_repository.list_distinct_game_modes(db)
+
+
 @router.get("/collections", response_model=list[dict])
 def list_public_collections(
     token: str,
