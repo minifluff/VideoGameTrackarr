@@ -7,7 +7,7 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -79,6 +79,33 @@ class UploadsStaticFiles(StaticFiles):
         if first_segment.lower() == rom_service.ROMS_SUBDIR:
             raise StarletteHTTPException(status_code=404)
         return path
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        response = await super().get_response(path, scope)
+        # Uploaded covers keep a stable URL per file, but a re-upload can replace
+        # one — a day of caching balances scroll speed against freshness. Without
+        # this, Starlette sends only ETag/Last-Modified and every cover costs a
+        # revalidation round trip while scrolling.
+        response.headers["Cache-Control"] = "public, max-age=86400"
+        return response
+
+
+class CachedStaticFiles(StaticFiles):
+    """StaticFiles with a fixed Cache-Control on every response — see the mounts
+    below for which policy each tree gets."""
+
+    cache_control: str = "public, max-age=86400"
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = self.cache_control
+        return response
+
+
+class ImmutableAssetsStaticFiles(CachedStaticFiles):
+    # Vite emits /assets files with a content hash in the name — a new build is
+    # new URLs, so these can be cached effectively forever.
+    cache_control = "public, max-age=31536000, immutable"
 
 
 def resolve_static_file(base_dir: Path, requested_path: str) -> Path | None:
@@ -226,7 +253,7 @@ app.mount("/uploads", UploadsStaticFiles(directory=UPLOADS_DIR), name="uploads")
 HARDWARE_REFERENCE_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 app.mount(
     "/static/hardware-reference",
-    StaticFiles(directory=HARDWARE_REFERENCE_IMAGES_DIR),
+    CachedStaticFiles(directory=HARDWARE_REFERENCE_IMAGES_DIR),
     name="hardware-reference-images",
 )
 
@@ -236,12 +263,28 @@ app.mount(
 # unaffected. Registered last so it never shadows the /api/* or /healthz routes above —
 # Starlette matches routes in registration order.
 if FRONTEND_BUILD_DIR.is_dir():
-    app.mount("/assets", StaticFiles(directory=FRONTEND_BUILD_DIR / "assets"), name="frontend-assets")
+    app.mount("/assets", ImmutableAssetsStaticFiles(directory=FRONTEND_BUILD_DIR / "assets"), name="frontend-assets")
 
     @app.get("/{full_path:path}", include_in_schema=False)
     async def serve_frontend(full_path: str, request: Request) -> FileResponse:
         static_file = resolve_static_file(FRONTEND_BUILD_DIR, full_path)
-        return FileResponse(
-            static_file if static_file is not None else FRONTEND_BUILD_DIR / "index.html",
-            headers=isolation_headers_for(full_path, request.query_params.get("threads")),
+        headers = isolation_headers_for(full_path, request.query_params.get("threads"))
+        is_shell_file = (
+            static_file is None
+            or static_file.suffix == ".html"
+            or static_file.name == "sw.js"
+            or static_file.name.startswith("workbox-")
         )
+        if is_shell_file:
+            # index.html (and every SPA-route fallback to it) must revalidate on
+            # every load — a heuristically-cached copy points at the previous
+            # build's hashed assets, which no longer exist after a redeploy.
+            # Same for the service worker and the player page (both .html/.js at
+            # the build root with stable names).
+            headers["Cache-Control"] = "no-cache"
+            return FileResponse(
+                static_file if static_file is not None else FRONTEND_BUILD_DIR / "index.html",
+                headers=headers,
+            )
+        headers["Cache-Control"] = "public, max-age=86400"
+        return FileResponse(static_file, headers=headers)
