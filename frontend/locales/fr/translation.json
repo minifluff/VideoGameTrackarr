@@ -1292,6 +1292,7 @@
       "importedOnlyNotice": "Seuls les jeux que vous avez déjà importés apparaissent ici.",
       "platformNotice": "Games you own or wishlisted on this platform.",
       "emptyMessage": "Aucun jeu connu localement dans cette {{kind}} pour l'instant.",
+      "minGamesLabel": "{{count}}+ Games",
       "includeAddonsLabel": "Inclure les extensions",
       "gamesSectionTitle": "Jeux",
       "addonsSectionTitle": "Extensions"
