@@ -1012,3 +1012,28 @@ def test_acknowledge_bulk_import_status_resets_a_completed_run(auth_client, db_s
     ack_response = auth_client.post("/api/games/bulk-import/status/acknowledge")
     assert ack_response.status_code == 204
     assert auth_client.get("/api/games/bulk-import/status").json()["status"] == "idle"
+
+
+def test_list_games_exposes_owned_platforms_on_the_summary(auth_client, db_session, seed_game, seed_pc_platform):
+    """ownedPlatforms drives the platform chips on Games-page cards — owned copies only,
+    sorted; a wishlisted copy's platform must not appear."""
+    db_session.add(
+        LibraryItem(
+            game_id=seed_game.id,
+            platform_id=seed_pc_platform.id,
+            status=LibraryStatus.OWNED,
+            format=MediaFormat.DIGITAL,
+        )
+    )
+    db_session.commit()
+
+    response = auth_client.get("/api/games")
+
+    body = response.json()
+    assert body[0]["name"] == "Test Game"
+    assert body[0]["ownedPlatforms"] == [seed_pc_platform.name]
+
+
+def test_list_games_owned_platforms_empty_without_owned_copies(auth_client, db_session, seed_game):
+    response = auth_client.get("/api/games")
+    assert response.json()[0]["ownedPlatforms"] == []
