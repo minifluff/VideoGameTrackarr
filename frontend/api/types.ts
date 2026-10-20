@@ -291,6 +291,10 @@ export interface GameDetail extends GameSummary {
   artworkUrls: string[];
   videos: GameVideo[];
   releaseDates: GameReleaseDate[];
+  igdbStatus: number | null;
+  gameModes: string[];
+  ageRatings: Record<string, string>;
+  timeToBeat: { hastily: number | null; normally: number | null; completely: number | null; count: number | null } | null;
 }
 
 // Exactly what GameAboutSection reads — satisfied by a real GameDetail and by the Add Game
@@ -331,6 +335,10 @@ export type GameAboutData = Pick<
   | "nintendoStoreUrl"
   | "epicGamesStoreUrl"
   | "gogStoreUrl"
+  | "igdbStatus"
+  | "gameModes"
+  | "ageRatings"
+  | "timeToBeat"
 >;
 
 // GET /api/igdb/games/{igdbId}: a game straight from IGDB for the Add Game preview page —
