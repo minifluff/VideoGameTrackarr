@@ -50,6 +50,12 @@ interface PublicGamesToolbarProps {
   tagOptions: FilterOption[];
   tagIds: number[];
   onTagIdsChange: (value: number[]) => void;
+  genreOptions: FilterOption[];
+  genreIds: number[];
+  onGenreIdsChange: (value: number[]) => void;
+  gameModeOptions: string[];
+  gameModes: string[];
+  onGameModesChange: (value: string[]) => void;
 
   formats: string[];
   onFormatsChange: (value: string[]) => void;
@@ -75,6 +81,12 @@ const PublicGamesToolbar = ({
   tagOptions,
   tagIds,
   onTagIdsChange,
+  genreOptions,
+  genreIds,
+  onGenreIdsChange,
+  gameModeOptions,
+  gameModes,
+  onGameModesChange,
 
   formats,
   onFormatsChange,
@@ -167,6 +179,30 @@ const PublicGamesToolbar = ({
               </Grid>
 
 
+              <Grid size={{ xs: 12 }}>
+                <AutocompleteMultiSelect<FilterOption>
+                  label={t("games.listToolbar.genreLabel")}
+                  options={genreOptions}
+                  value={genreOptions.filter((p) => genreIds.includes(p.id))}
+                  onChange={(newValue) => onGenreIdsChange(newValue.map((p) => p.id))}
+                  getOptionLabel={(option) => option.name}
+                  isOptionEqualToValue={(option, val) => option.id === val.id}
+                  fullWidth
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <AutocompleteMultiSelect<{ id: string; name: string }>
+                  label={t("games.listToolbar.gameModeLabel")}
+                  options={gameModeOptions.map((mode) => ({ id: mode, name: mode }))}
+                  value={gameModeOptions
+                    .filter((mode) => gameModes.includes(mode))
+                    .map((mode) => ({ id: mode, name: mode }))}
+                  onChange={(newValue) => onGameModesChange(newValue.map((p) => p.id))}
+                  getOptionLabel={(option) => option.name}
+                  isOptionEqualToValue={(option, val) => option.id === val.id}
+                  fullWidth
+                />
+              </Grid>
               <Grid size={{ xs: 12 }}>
                 <AutocompleteMultiSelect<{ id: string; name: string }>
                   label={t("games.listToolbar.formatLabel")}

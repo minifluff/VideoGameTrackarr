@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import type { GameSortOption } from "../api/types";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useScrollDirection } from "../hooks/useScrollCollapse";
-import { usePublicGames, usePublicPlatforms, usePublicTags } from "../hooks/usePublic";
+import { usePublicGameModes, usePublicGames, usePublicGenres, usePublicPlatforms, usePublicTags } from "../hooks/usePublic";
 import { useSessionState } from "../hooks/useSessionState";
 import GameCard from "./GameCard";
 import PublicGamesToolbar, { type OwnershipStatus } from "./PublicGamesToolbar";
@@ -23,6 +23,8 @@ const PublicGamesPage = () => {
   const [sort, setSort] = useSessionState<GameSortOption>("public.games.sort", "name_asc");
   const [platformIds, setPlatformIds] = useSessionState<number[]>("public.games.platformIds", []);
   const [tagIds, setTagIds] = useSessionState<number[]>("public.games.tagIds", []);
+  const [genreIds, setGenreIds] = useSessionState<number[]>("public.games.genreIds", []);
+  const [gameModes, setGameModes] = useSessionState<string[]>("public.games.gameModes", []);
   const [formats, setFormats] = useSessionState<string[]>("public.games.formats", []);
   const [playStatuses, setPlayStatuses] = useSessionState<string[]>("public.games.playStatuses", []);
   const [ownershipStatuses, setOwnershipStatuses] = useSessionState<OwnershipStatus[]>("public.games.ownershipStatuses", []);
@@ -34,11 +36,15 @@ const PublicGamesPage = () => {
     sort,
     platformIds,
     tagIds,
+    genreIds,
+    gameModes,
     formats,
     playStatuses,
   });
   const { data: platforms = [] } = usePublicPlatforms(token);
   const { data: tags = [] } = usePublicTags(token);
+  const { data: genres = [] } = usePublicGenres(token);
+  const { data: gameModeOptions = [] } = usePublicGameModes(token);
 
   // Ownership filter is applied client-side (owned/wishlisted arrive on every public game).
   const games = useMemo(() => {
@@ -54,6 +60,8 @@ const PublicGamesPage = () => {
     sort !== "name_asc" ||
     platformIds.length > 0 ||
     tagIds.length > 0 ||
+    genreIds.length > 0 ||
+    gameModes.length > 0 ||
     formats.length > 0 ||
     playStatuses.length > 0 ||
     ownershipStatuses.length > 0;
@@ -63,6 +71,8 @@ const PublicGamesPage = () => {
     setSort("name_asc");
     setPlatformIds([]);
     setTagIds([]);
+    setGenreIds([]);
+    setGameModes([]);
     setFormats([]);
     setPlayStatuses([]);
     setOwnershipStatuses([]);
@@ -105,6 +115,12 @@ const PublicGamesPage = () => {
         tagOptions={tags}
         tagIds={tagIds}
         onTagIdsChange={setTagIds}
+        genreOptions={genres}
+        genreIds={genreIds}
+        onGenreIdsChange={setGenreIds}
+        gameModeOptions={gameModeOptions}
+        gameModes={gameModes}
+        onGameModesChange={setGameModes}
 
         formats={formats}
         onFormatsChange={setFormats}
