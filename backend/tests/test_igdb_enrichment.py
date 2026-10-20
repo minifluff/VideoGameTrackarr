@@ -67,8 +67,8 @@ async def test_get_time_to_beat_by_igdb_ids(monkeypatch):
         return_value=httpx.Response(
             200,
             json=[
-                {"game": 1, "hastily": 5400, "normally": 7200, "completely": 10800, "count": 42},
-                {"game": 2, "hastily": None, "normally": 3600, "completely": None, "count": 7},
+                {"game_id": 1, "hastily": 5400, "normally": 7200, "completely": 10800, "count": 42},
+                {"game_id": 2, "hastily": None, "normally": 3600, "completely": None, "count": 7},
             ],
         )
     )
