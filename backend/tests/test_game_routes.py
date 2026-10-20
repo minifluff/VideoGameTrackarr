@@ -1016,14 +1016,26 @@ def test_acknowledge_bulk_import_status_resets_a_completed_run(auth_client, db_s
 
 def test_list_games_exposes_owned_platforms_on_the_summary(auth_client, db_session, seed_game, seed_pc_platform):
     """ownedPlatforms drives the platform chips on Games-page cards — owned copies only,
-    sorted; a wishlisted copy's platform must not appear."""
-    db_session.add(
-        LibraryItem(
-            game_id=seed_game.id,
-            platform_id=seed_pc_platform.id,
-            status=LibraryStatus.OWNED,
-            format=MediaFormat.DIGITAL,
-        )
+    sorted. Each platform shows its abbreviation when it has one ("PS4"), falling back to
+    the full name when it doesn't (the seeded PC platform has no abbreviation)."""
+    ps4 = Platform(name="Sony PlayStation 4", slug="ps4", abbreviation="PS4")
+    db_session.add(ps4)
+    db_session.flush()
+    db_session.add_all(
+        [
+            LibraryItem(
+                game_id=seed_game.id,
+                platform_id=seed_pc_platform.id,
+                status=LibraryStatus.OWNED,
+                format=MediaFormat.DIGITAL,
+            ),
+            LibraryItem(
+                game_id=seed_game.id,
+                platform_id=ps4.id,
+                status=LibraryStatus.OWNED,
+                format=MediaFormat.PHYSICAL,
+            ),
+        ]
     )
     db_session.commit()
 
@@ -1031,7 +1043,7 @@ def test_list_games_exposes_owned_platforms_on_the_summary(auth_client, db_sessi
 
     body = response.json()
     assert body[0]["name"] == "Test Game"
-    assert body[0]["ownedPlatforms"] == [seed_pc_platform.name]
+    assert body[0]["ownedPlatforms"] == ["PS4", seed_pc_platform.name]
 
 
 def test_list_games_owned_platforms_empty_without_owned_copies(auth_client, db_session, seed_game):
