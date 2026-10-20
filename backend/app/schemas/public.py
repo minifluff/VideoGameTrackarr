@@ -98,6 +98,10 @@ class PublicGameDetailResponse(PublicGameSummaryResponse):
     artwork_urls: list[str]
     videos: list[GameVideoResponse]
     release_dates: list[ReleaseDateResponse]
+    igdb_status: int | None
+    game_modes: list[str]
+    age_ratings: dict[str, str]
+    time_to_beat: dict[str, int | None] | None
     steam_store_url: str | None
     xbox_store_url: str | None
     owned_copies: list[PublicOwnedCopyResponse]
@@ -148,6 +152,10 @@ def public_game_detail_from_orm(
         artwork_urls=[a.url for a in game.artworks],
         videos=[game_video_from_orm(v) for v in game.videos],
         release_dates=[release_date_from_orm(rd) for rd in game.release_dates],
+        igdb_status=game.igdb_status,
+        game_modes=game.game_modes or [],
+        age_ratings=game.age_ratings or {},
+        time_to_beat=game.time_to_beat,
         steam_store_url=game.steam_store_url,
         xbox_store_url=game.xbox_store_url,
         playstation_store_url=game.playstation_store_url,

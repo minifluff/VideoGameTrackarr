@@ -19,6 +19,7 @@ from app.schemas.catalog import (
 from app.schemas.platform import PlatformResponse
 from app.schemas.progress import GameProgressResponse, game_progress_from_orm
 from app.schemas.tag import TagResponse, tag_from_orm
+from app.services.igdb_client import extract_age_ratings, extract_game_mode_names
 
 
 class GameSummaryResponse(CamelModel):
@@ -82,6 +83,10 @@ class GameDetailResponse(GameSummaryResponse):
     artwork_urls: list[str]
     videos: list[GameVideoResponse]
     release_dates: list[ReleaseDateResponse]
+    igdb_status: int | None
+    game_modes: list[str]
+    age_ratings: dict[str, str]
+    time_to_beat: dict[str, int | None] | None
 
 
 def _game_fields(game: Game, status: GameWithStatus) -> dict:
@@ -154,6 +159,10 @@ def game_detail_from_orm(
         artwork_urls=[a.url for a in game.artworks],
         videos=[game_video_from_orm(v) for v in game.videos],
         release_dates=[release_date_from_orm(rd) for rd in game.release_dates],
+        igdb_status=game.igdb_status,
+        game_modes=game.game_modes or [],
+        age_ratings=game.age_ratings or {},
+        time_to_beat=game.time_to_beat,
     )
 
 
@@ -224,6 +233,10 @@ class IgdbGamePreviewResponse(CamelModel):
     artwork_urls: list[str]
     videos: list[GameVideoResponse]
     release_dates: list[ReleaseDateResponse]
+    igdb_status: int | None = None
+    game_modes: list[str] = []
+    age_ratings: dict[str, str] = {}
+    time_to_beat: dict[str, int | None] | None = None
     steam_store_url: str | None = None
     xbox_store_url: str | None = None
     playstation_store_url: str | None = None
@@ -310,6 +323,10 @@ def igdb_game_preview_from_payload(
             for v in igdb_game.get("videos") or []
             if v.get("video_id")
         ],
+        igdb_status=igdb_game.get("status"),
+        game_modes=extract_game_mode_names(igdb_game) or [],
+        age_ratings=extract_age_ratings(igdb_game) or {},
+        time_to_beat=igdb_game.get("time_to_beat_data"),
         release_dates=[
             ReleaseDateResponse(
                 id=rd["id"],
