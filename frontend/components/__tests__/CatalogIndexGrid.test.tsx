@@ -79,4 +79,34 @@ describe("CatalogIndexGrid min-games slider", () => {
     expect(screen.getByText("Huge")).toBeInTheDocument();
     expect(screen.getByRole("slider")).toBeInTheDocument();
   });
+
+  it("honours a per-page default of 1, keeping single-game entries", () => {
+    const entries = [
+      { id: 1, name: "Empty", coverUrls: [] },
+      { id: 2, name: "Solo", coverUrls: [] },
+    ];
+    const counts: Record<number, number> = { 1: 0, 2: 1 };
+
+    render(
+      <MemoryRouter>
+        <CatalogIndexGrid
+          stateKey="platforms-slider"
+          title="Platforms"
+          description=""
+          emptyMessage="None"
+          searchLabel="Search platforms"
+          searchPlaceholder="Enter platform name"
+          entries={entries}
+          isLoading={false}
+          getCount={(entry) => counts[entry.id]}
+          getHref={() => "/"}
+          showMinGamesFilter
+          minGamesDefault={1}
+        />
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByText("Empty")).not.toBeInTheDocument();
+    expect(screen.getByText("Solo")).toBeInTheDocument();
+  });
 });
