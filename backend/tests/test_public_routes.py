@@ -238,3 +238,32 @@ def test_public_game_detail_only_links_a_public_display_parent(auth_client, clie
     assert linked_body["displayParentGameName"] == "Test Game"
     assert unlinked_body["displayParentGameId"] is None
     assert unlinked_body["displayParentGameName"] is None
+
+
+def test_public_genre_and_game_mode_options_and_filters(auth_client, client, db_session, seed_game):
+    from app.models.catalog import GameGenre, Genre
+
+    seed_game.game_modes = ["Single player"]
+    genre = Genre(name="RPG", slug="role-playing-rpg")
+    db_session.add(genre)
+    db_session.flush()
+    db_session.add(GameGenre(game_id=seed_game.id, genre_id=genre.id))
+    db_session.commit()
+    token = _get_token(auth_client)
+
+    genres = client.get(f"/api/public/{token}/genres")
+    assert genres.status_code == 200
+    assert genres.json() == [{"id": genre.id, "name": "RPG"}]
+
+    modes = client.get(f"/api/public/{token}/game-modes")
+    assert modes.status_code == 200
+    assert modes.json() == ["Single player"]
+
+    # The public list honors both filters — it shares the private list's GameFilterParams
+    # plumbing (search_local_games), so genreId/gameMode just work there too.
+    by_mode = client.get(f"/api/public/{token}/games", params={"gameMode": "Single player"})
+    assert [g["name"] for g in by_mode.json()] == ["Test Game"]
+    assert client.get(f"/api/public/{token}/games", params={"gameMode": "Multiplayer"}).json() == []
+    by_genre = client.get(f"/api/public/{token}/games", params={"genreId": genre.id})
+    assert [g["name"] for g in by_genre.json()] == ["Test Game"]
+    assert client.get(f"/api/public/{token}/games", params={"genreId": 999999}).json() == []
