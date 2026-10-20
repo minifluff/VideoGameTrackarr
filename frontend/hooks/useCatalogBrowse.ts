@@ -28,6 +28,7 @@ export function useFranchiseAddons(slug: string | undefined, filters: GameListFi
   return useQuery({
     queryKey: ["franchises", slug, "addons", filters],
     queryFn: ({ signal }) => listFranchiseAddons(slug!, filters, signal),
+    staleTime: 5 * 60_000,
     enabled: enabled && !!slug,
   });
 }
@@ -52,6 +53,7 @@ export function useCollectionAddons(slug: string | undefined, filters: GameListF
   return useQuery({
     queryKey: ["collections", slug, "addons", filters],
     queryFn: ({ signal }) => listCollectionAddons(slug!, filters, signal),
+    staleTime: 5 * 60_000,
     enabled: enabled && !!slug,
   });
 }
@@ -69,6 +71,7 @@ export function usePlatformAddons(slug: string | undefined, filters: GameListFil
   return useQuery({
     queryKey: ["platforms", slug, "addons", filters],
     queryFn: ({ signal }) => listPlatformAddons(slug!, filters, signal),
+    staleTime: 5 * 60_000,
     enabled: enabled && !!slug,
   });
 }

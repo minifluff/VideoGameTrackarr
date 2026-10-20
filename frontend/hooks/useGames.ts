@@ -26,6 +26,10 @@ export function useGames(filters: GameListFilters = {}, options?: { enabled?: bo
   return useQuery({
     queryKey: ["games", filters],
     queryFn: ({ signal }) => listGames(filters, signal),
+    // The list is the whole library (multi-MB before gzip) — refetching it on a
+    // 30 s staleness window made navigation feel sluggish. Mutations invalidate
+    // ["games"], so a longer window is safe.
+    staleTime: 5 * 60_000,
     enabled: options?.enabled ?? true,
   });
 }
