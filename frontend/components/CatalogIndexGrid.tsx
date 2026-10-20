@@ -38,10 +38,12 @@ interface CatalogIndexGridProps<T extends CatalogIndexEntry> {
   estimateRowHeight?: (columns: number) => number;
   // sessionStorage key for this page's remembered search/sort (see hooks/useSessionState.ts).
   stateKey: string;
-  // Collections/Series only: an "N+ Games" slider in the header's top-right corner,
-  // hiding entries with fewer games than the slider value. Platforms doesn't pass
-  // this — a platform card is a storefront slice, so a count threshold means less there.
+  // An "N+ Games" slider in the header's top-right corner, hiding entries with fewer
+  // games than the slider value. Collections/Series/Platforms pass this.
   showMinGamesFilter?: boolean;
+  // Where the slider starts (and its remembered value's fallback): Collections/Series
+  // use 2, Platforms uses 1 — a single-game platform is still worth showing by default.
+  minGamesDefault?: number;
 }
 
 // Shared by CollectionsPage, SeriesPage and PlatformsPage — same "index of catalog refs, each
@@ -64,15 +66,16 @@ const CatalogIndexGrid = <T extends CatalogIndexEntry>({
   estimateRowHeight,
   stateKey,
   showMinGamesFilter = false,
+  minGamesDefault = 2,
 }: CatalogIndexGridProps<T>) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const collapsed = useScrollCollapse();
   const [searchKeyword, setSearchKeyword] = useSessionState(`${stateKey}.searchKeyword`, "");
   const [sort, setSort] = useSessionState<CatalogSortOption>(`${stateKey}.sort`, "name_asc");
-  // Defaults to 2: on a big library many collections/series hold a single game, and the
-  // page is more useful opening on the ones with at least a couple.
-  const [minGames, setMinGames] = useSessionState(`${stateKey}.minGames`, 2);
+  // On a big library many entries hold a single game, and the page is more useful
+  // opening on the ones with at least a couple (Platforms opts down to 1).
+  const [minGames, setMinGames] = useSessionState(`${stateKey}.minGames`, minGamesDefault);
 
   const maxGameCount = useMemo(
     () => (entries ?? []).reduce((max, entry) => Math.max(max, getCount(entry)), 0),
