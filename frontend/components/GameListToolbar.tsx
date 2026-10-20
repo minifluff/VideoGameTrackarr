@@ -698,19 +698,6 @@ const GameListToolbar = ({
                     fullWidth
                   />
                 </Grid>
-                {onSteelbookOnlyChange ? (
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={Boolean(steelbookOnly)}
-                          onChange={(event) => onSteelbookOnlyChange(event.target.checked)}
-                        />
-                      }
-                      label={t("games.listToolbar.steelbookOnlyLabel")}
-                    />
-                  </Grid>
-                ) : null}
                 {onShowMissingChange || onIncludeAddonsChange ? (
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Stack spacing={0.5}>
@@ -988,6 +975,19 @@ const GameListToolbar = ({
                         {...matchAllProps("franchise")}
                       />
                     </Stack>
+                  </Grid>
+                ) : null}
+                {onSteelbookOnlyChange ? (
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={Boolean(steelbookOnly)}
+                          onChange={(event) => onSteelbookOnlyChange(event.target.checked)}
+                        />
+                      }
+                      label={t("games.listToolbar.steelbookOnlyLabel")}
+                    />
                   </Grid>
                 ) : null}
               </Grid>
