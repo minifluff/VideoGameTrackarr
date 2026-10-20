@@ -70,6 +70,7 @@ export interface GameSummary {
   nintendoStoreUrl: string | null;
   epicGamesStoreUrl: string | null;
   gogStoreUrl: string | null;
+  ownedPlatforms: string[];
 }
 
 export interface GameProgress {
