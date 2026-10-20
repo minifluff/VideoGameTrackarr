@@ -33,6 +33,11 @@ def list_public_games(
     games = game_service.search_local_games(db, **vars(params))
     # Hidden games never appear on public pages.
     games = [g for g in games if not g.game.hide_from_public]
+    # Neither do unclaimed "what's missing" discoveries: an auto-discovered catalog
+    # entry the user hasn't claimed (not owned, not wishlisted) isn't part of their
+    # library yet — the private Games list hides exactly these (see GameList.tsx),
+    # and they must not leak onto the public share page either.
+    games = [g for g in games if not (g.game.auto_discovered and not g.owned and not g.wishlisted)]
     # Single query for all owned platforms and formats across the returned games (avoids N+1).
     game_ids = [g.game.id for g in games]
     platforms_by_game: dict[int, set[str]] = {}
@@ -155,6 +160,9 @@ def get_public_game(token: str, game_id: int, db: Session = Depends(get_db)) -> 
     auth_service.get_user_by_share_token(db, token)
     status = game_service.get_public_game_detail(db, game_id)
     if status.game.hide_from_public:
+        raise NotFoundError(f"Game {game_id} not found")
+    # Same unclaimed-discovery rule as the list above: no direct-link back door.
+    if status.game.auto_discovered and not status.owned and not status.wishlisted:
         raise NotFoundError(f"Game {game_id} not found")
     # Owned platforms for this game.
     from sqlalchemy import select
