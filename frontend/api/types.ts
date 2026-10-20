@@ -64,12 +64,6 @@ export interface GameSummary {
   // that just isn't owned/wishlisted yet (greyscale, no chip) — see GameCard.tsx.
   autoDiscovered: boolean;
   hideFromPublic: boolean;
-  steamStoreUrl: string | null;
-  xboxStoreUrl: string | null;
-  playstationStoreUrl: string | null;
-  nintendoStoreUrl: string | null;
-  epicGamesStoreUrl: string | null;
-  gogStoreUrl: string | null;
   ownedPlatforms: string[];
 }
 
@@ -266,6 +260,13 @@ export interface GameReleaseDate {
 }
 
 export interface GameDetail extends GameSummary {
+  // Store URLs are detail-only (the backend summary no longer ships them).
+  steamStoreUrl: string | null;
+  xboxStoreUrl: string | null;
+  playstationStoreUrl: string | null;
+  nintendoStoreUrl: string | null;
+  epicGamesStoreUrl: string | null;
+  gogStoreUrl: string | null;
   summary: string | null;
   storyline: string | null;
   edition: string | null;
