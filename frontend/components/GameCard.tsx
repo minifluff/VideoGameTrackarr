@@ -81,6 +81,9 @@ interface GameCardProps {
   // "add" context only: opens the result when its cover is clicked (Add Game's IGDB
   // preview page), separately from contextFunction, which stays the Add button's action.
   onOpen?: () => void;
+  // Platform names rendered as chips at the bottom of the card's paper (public games
+  // grid passes the owned platforms; no other context passes this).
+  ownedPlatforms?: string[];
 }
 
 const GameCard = ({
@@ -93,6 +96,7 @@ const GameCard = ({
   actionLabel,
   actionIcon,
   onOpen,
+  ownedPlatforms,
 }: GameCardProps) => {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -365,6 +369,13 @@ const GameCard = ({
               </Button>
             )}
           </>
+        ) : null}
+        {ownedPlatforms && ownedPlatforms.length > 0 ? (
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 1 }}>
+            {ownedPlatforms.map((platform) => (
+              <Chip key={platform} label={platform} size="small" variant="outlined" />
+            ))}
+          </Box>
         ) : null}
       </CardContent>
     </Card>

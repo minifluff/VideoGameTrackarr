@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
@@ -133,20 +132,12 @@ const PublicGamesPage = () => {
           items={games}
           getKey={(game) => game.id}
           renderItem={(game) => (
-            <Box>
-              <GameCard
-                game={game}
-                context="public"
-                contextFunction={() => navigate(`/public/${token}/games/${game.id}`)}
-              />
-              {game.ownedPlatforms.length > 0 && (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 1, justifyContent: "center" }}>
-                  {game.ownedPlatforms.map((platform) => (
-                    <Chip key={platform} label={platform} size="small" variant="outlined" />
-                  ))}
-                </Box>
-              )}
-            </Box>
+            <GameCard
+              game={game}
+              context="public"
+              contextFunction={() => navigate(`/public/${token}/games/${game.id}`)}
+              ownedPlatforms={game.ownedPlatforms}
+            />
           )}
         />
       )}
