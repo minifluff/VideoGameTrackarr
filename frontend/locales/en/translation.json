@@ -749,6 +749,8 @@
       "ownershipLabel": "Ownership",
       "consoleLabel": "Platforms",
       "tagLabel": "Tags",
+      "genreLabel": "Genre",
+      "gameModeLabel": "Game modes",
       "collectionLabel": "Collections",
       "seriesLabel": "Series",
       "gameTypeLabel": "Game Types",
