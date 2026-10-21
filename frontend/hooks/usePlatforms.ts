@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createPlatform, deletePlatform, listLibraryPlatforms, listPlatforms, massMoveGames, updatePlatform } from "../api/platforms";
+import { createPlatform, deletePlatform, listLibraryPlatforms, listPlatforms, massMoveGames, setPlatformSpineTemplate, updatePlatform } from "../api/platforms";
 
 export function usePlatforms() {
   return useQuery({ queryKey: ["platforms"], queryFn: listPlatforms });
@@ -69,5 +69,14 @@ export function useDeletePlatform() {
       // the change is reflected everywhere.
       queryClient.invalidateQueries({ queryKey: ["games"] });
     },
+  });
+}
+
+export function useSetPlatformSpineTemplate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ platformId, spineUrl }: { platformId: number; spineUrl: string | null }) =>
+      setPlatformSpineTemplate(platformId, spineUrl),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["platforms"] }),
   });
 }
