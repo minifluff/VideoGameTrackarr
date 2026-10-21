@@ -19,6 +19,7 @@ import { usePlatforms } from "../hooks/usePlatforms";
 import { gameIdentifier } from "../utils/identifiers";
 import GamesSubNav from "./GamesSubNav";
 import PlatformTemplateDialog from "./PlatformTemplateDialog";
+import { caseSizeToPixels, effectiveCaseSizeMm } from "../utils/caseSizes";
 
 export interface ShelfCase {
   game: GameSummary;
@@ -195,10 +196,32 @@ const CASE_GAP = 3;
 // packed greedily against the measured shelf width so EVERY row sits on its
 // own shelf board. A platform's bookend tile leads its first case and is
 // never left orphaned at a row's end.
+// The fixed size a platform's cases render at, in priority order: the
+// platform's ACTUAL physical case size at 40% (user-chosen or the known size
+// for the system) beats the template-proportional size. Platforms with
+// neither get no entry and keep their varied flat spines.
+export function resolvePlatformCaseSizes(
+  labels: string[],
+  platformsByLabel: Map<string, PlatformResponse>,
+  templateSizes: Map<string, { width: number; height: number }>
+): Map<string, { width: number; height: number }> {
+  const sizes = new Map<string, { width: number; height: number }>();
+  for (const label of labels) {
+    const record = platformsByLabel.get(label);
+    const actual = record ? effectiveCaseSizeMm(record) : null;
+    if (actual) {
+      sizes.set(label, caseSizeToPixels(actual.heightMm, actual.spineMm));
+    } else if (templateSizes.has(label)) {
+      sizes.set(label, templateSizes.get(label)!);
+    }
+  }
+  return sizes;
+}
+
 export function packRows(
   shelves: Shelf[],
   maxWidth: number,
-  templateSizes?: Map<string, { width: number; height: number }>
+  caseSizes?: Map<string, { width: number; height: number }>
 ): ShelfRowItem[][] {
   const items: ShelfRowItem[] = [];
   for (const shelf of shelves) {
@@ -209,7 +232,7 @@ export function packRows(
       height: spineStyle(shelf.platform, 0).height,
     });
     for (const entry of shelf.cases) {
-      const size = caseSize(entry.platform, entry.game.id, templateSizes?.get(entry.platform));
+      const size = caseSize(entry.platform, entry.game.id, caseSizes?.get(entry.platform));
       items.push({
         kind: "case",
         platform: shelf.platform,
@@ -307,6 +330,15 @@ const BookshelfPage = () => {
     () => buildTemplateCaseSizes(templateInfo, TEMPLATE_TARGET_HEIGHT, new Set(shelves.map((s) => s.platform))),
     [templateInfo, shelves]
   );
+  const platformCaseSizes = useMemo(
+    () =>
+      resolvePlatformCaseSizes(
+        shelves.map((s) => s.platform),
+        platformsByLabel,
+        templateCaseSizes
+      ),
+    [shelves, platformsByLabel, templateCaseSizes]
+  );
   const visibleShelves = useMemo(
     () =>
       shelves
@@ -344,8 +376,8 @@ const BookshelfPage = () => {
     return () => observer.disconnect();
   }, []);
   const rows = useMemo(
-    () => packRows(visibleShelves, Math.max(shelfWidth - 16, 200), templateCaseSizes),
-    [visibleShelves, shelfWidth, templateCaseSizes]
+    () => packRows(visibleShelves, Math.max(shelfWidth - 16, 200), platformCaseSizes),
+    [visibleShelves, shelfWidth, platformCaseSizes]
   );
 
   return (

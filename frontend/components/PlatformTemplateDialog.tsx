@@ -8,12 +8,24 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import FormControl from "@mui/material/FormControl";
+import FormHelperText from "@mui/material/FormHelperText";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
 import DeleteIcon from "@mui/icons-material/Delete";
 import UploadIcon from "@mui/icons-material/Upload";
 import { useTranslation } from "react-i18next";
 import { resolveAssetUrl } from "../api/client";
 import type { PlatformResponse } from "../api/types";
-import { useSetPlatformSpineTemplate } from "../hooks/usePlatforms";
+import { useSetPlatformCaseSize, useSetPlatformSpineTemplate } from "../hooks/usePlatforms";
+import {
+  CASE_SIZE_PRESETS,
+  caseSizeToPixels,
+  defaultCaseSizeForPlatform,
+  effectiveCaseSizeMm,
+  presetForDimensions,
+} from "../utils/caseSizes";
 import { useUploadSpine } from "../hooks/useUploads";
 
 interface PlatformTemplateDialogProps {
@@ -27,11 +39,52 @@ const PlatformTemplateDialog = ({ platform, onClose }: PlatformTemplateDialogPro
   const { t } = useTranslation();
   const uploadSpine = useUploadSpine();
   const setTemplate = useSetPlatformSpineTemplate();
+  const setCaseSize = useSetPlatformCaseSize();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState(false);
 
   const busy = uploadSpine.isPending || setTemplate.isPending;
   const templateUrl = platform?.spineTemplateUrl ?? null;
+
+  // Case size: "auto" = no per-platform choice (the known size for the system
+  // applies, if any); a preset id stores that size on the platform.
+  const hasOverride = platform != null && platform.caseHeightMm != null && platform.caseSpineMm != null;
+  const overridePreset =
+    hasOverride && platform ? presetForDimensions(platform.caseHeightMm!, platform.caseSpineMm!) : null;
+  const customPreset = hasOverride && !overridePreset ? "custom" : null;
+  const caseSizeValue = !hasOverride ? "auto" : (overridePreset?.id ?? "custom");
+  const defaultPreset = platform ? defaultCaseSizeForPlatform(platform) : null;
+  const autoLabel = defaultPreset
+    ? t("games.bookshelf.caseSize.autoKnown", {
+        name: defaultPreset.label,
+        height: defaultPreset.heightMm,
+        spine: defaultPreset.spineMm,
+      })
+    : t("games.bookshelf.caseSize.autoUnknown");
+  const effectiveMm = platform ? effectiveCaseSizeMm(platform) : null;
+  const renderedSize = effectiveMm
+    ? caseSizeToPixels(effectiveMm.heightMm, effectiveMm.spineMm)
+    : { width: 0, height: 0 };
+
+  const handleCaseSizeChange = async (value: string) => {
+    if (!platform || value === "custom") return;
+    setError(false);
+    try {
+      if (value === "auto") {
+        await setCaseSize.mutateAsync({ platformId: platform.id, heightMm: null, spineMm: null });
+      } else {
+        const preset = CASE_SIZE_PRESETS.find((entry) => entry.id === value);
+        if (!preset) return;
+        await setCaseSize.mutateAsync({
+          platformId: platform.id,
+          heightMm: preset.heightMm,
+          spineMm: preset.spineMm,
+        });
+      }
+    } catch {
+      setError(true);
+    }
+  };
 
   const handleFilePicked = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -95,6 +148,42 @@ const PlatformTemplateDialog = ({ platform, onClose }: PlatformTemplateDialogPro
             {t("games.bookshelf.template.saveError")}
           </Typography>
         )}
+        <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+          <InputLabel>{t("games.bookshelf.caseSize.label")}</InputLabel>
+          <Select
+            value={caseSizeValue}
+            label={t("games.bookshelf.caseSize.label")}
+            onChange={(event) => handleCaseSizeChange(event.target.value)}
+            disabled={busy || setCaseSize.isPending}
+          >
+            <MenuItem value="auto">{autoLabel}</MenuItem>
+            {customPreset === "custom" && (
+              <MenuItem value="custom">
+                {t("games.bookshelf.caseSize.custom", {
+                  height: platform?.caseHeightMm,
+                  spine: platform?.caseSpineMm,
+                })}
+              </MenuItem>
+            )}
+            {CASE_SIZE_PRESETS.map((preset) => (
+              <MenuItem key={preset.id} value={preset.id}>
+                {t("games.bookshelf.caseSize.preset", {
+                  name: preset.label,
+                  height: preset.heightMm,
+                  spine: preset.spineMm,
+                })}
+              </MenuItem>
+            ))}
+          </Select>
+          {effectiveMm && (
+            <FormHelperText>
+              {t("games.bookshelf.caseSize.renders", {
+                height: renderedSize.height,
+                width: renderedSize.width,
+              })}
+            </FormHelperText>
+          )}
+        </FormControl>
         <Stack direction="row" spacing={1}>
           <Button
             variant="contained"
