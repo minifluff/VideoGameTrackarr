@@ -20,7 +20,6 @@ import GameAboutSection from "./GameAboutSection";
 import GameActionButtons from "./GameActionButtons";
 import GameAddonsSection from "./GameAddonsSection";
 import GameCoverCard from "./GameCoverCard";
-import SpineArtCard from "./SpineArtCard";
 import GameLibrarySection from "./GameLibrarySection";
 import GameProgressSection from "./GameProgressSection";
 import NotesSection from "./NotesSection";
@@ -134,7 +133,6 @@ const GameDetails = () => {
       <Grid size={{ xs: 12, md: 3 }}>
         <Stack spacing={2}>
           <GameCoverCard game={game} />
-          {!isAutoDiscovered && <SpineArtCard gameId={gameId} spineUrl={game.spineUrl} />}
           {ownedPlatforms.length > 0 && (
             <Box>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
