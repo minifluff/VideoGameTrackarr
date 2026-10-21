@@ -53,6 +53,9 @@ class Platform(TimestampMixin, Base):
     slug: Mapped[str | None] = mapped_column(String(255), index=True)
     abbreviation: Mapped[str | None] = mapped_column(String(50))
     logo_url: Mapped[str | None] = mapped_column(String(1024))
+    # Bookshelf mode: a user-supplied blank spine template image rendered
+    # behind every case of this platform (uploaded /uploads/spines/... URL).
+    spine_template_url: Mapped[str | None] = mapped_column(String(1024))
 
 
 class Region(TimestampMixin, Base):
