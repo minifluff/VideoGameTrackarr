@@ -361,7 +361,7 @@ const BookshelfPage = () => {
                         flexShrink: 0,
                         transition: "transform 120ms ease",
                         "&:hover": { transform: "translateY(-6px)" },
-                        backgroundColor: templateUrl ? "transparent" : style.background,
+                        backgroundColor: style.background,
                         color: templateUrl ? "#ffffff" : style.color,
                         boxShadow: "inset -3px 0 5px rgba(0,0,0,0.35), inset 2px 0 3px rgba(255,255,255,0.15)",
                       }}
@@ -376,9 +376,11 @@ const BookshelfPage = () => {
                             inset: 0,
                             width: "100%",
                             height: "100%",
-                            // Templates are never cropped — the whole image is
-                            // scaled to the case, like a printed spine wrap.
-                            objectFit: "fill",
+                            // Templates are only ever scaled proportionally —
+                            // never cropped, never stretched. The platform
+                            // colour fills whatever space the scaled image
+                            // doesn't cover.
+                            objectFit: "contain",
                             display: "block",
                           }}
                         />
