@@ -116,22 +116,34 @@ export function spineStyle(platform: string, gameId: number) {
 }
 
 // A case on a platform WITH a spine template is sized to the template's own
-// proportions: at the platform's shelf height, the width follows the image's
-// aspect ratio, so the template fills the case exactly — scaled, never
-// cropped, never stretched, no empty space. Cases grow as needed ("larger")
-// to fit the template properly. Without a template, the varied flat-spine
-// width is used.
+// proportions: BOTH dimensions come from the image's aspect ratio, so the
+// template fills the case exactly — scaled, never cropped, never stretched,
+// no empty space. Starting from the platform's shelf height, the width
+// follows the aspect; if that width would be too thin, the case grows
+// TALLER instead (height is never frozen), and if it would be too wide the
+// height comes down — the aspect is sacred either way. Without a template,
+// the varied flat-spine size is used.
 export const TEMPLATE_CASE_MIN_WIDTH = 28;
 export const TEMPLATE_CASE_MAX_WIDTH = 200;
-export function caseWidth(platform: string, gameId: number, templateAspect?: number): number {
-  if (templateAspect && templateAspect > 0) {
-    const height = spineStyle(platform, gameId).height;
-    return Math.min(
-      TEMPLATE_CASE_MAX_WIDTH,
-      Math.max(TEMPLATE_CASE_MIN_WIDTH, Math.round(height * templateAspect))
-    );
+export function caseSize(
+  platform: string,
+  gameId: number,
+  templateAspect?: number
+): { width: number; height: number } {
+  const flat = spineStyle(platform, gameId);
+  if (!templateAspect || templateAspect <= 0) {
+    return { width: flat.width, height: flat.height };
   }
-  return spineStyle(platform, gameId).width;
+  let width = flat.height * templateAspect;
+  let height = flat.height;
+  if (width < TEMPLATE_CASE_MIN_WIDTH) {
+    width = TEMPLATE_CASE_MIN_WIDTH;
+    height = width / templateAspect;
+  } else if (width > TEMPLATE_CASE_MAX_WIDTH) {
+    width = TEMPLATE_CASE_MAX_WIDTH;
+    height = width / templateAspect;
+  }
+  return { width: Math.round(width), height: Math.round(height) };
 }
 
 export interface ShelfRowItem {
@@ -139,6 +151,7 @@ export interface ShelfRowItem {
   platform: string;
   entry?: ShelfCase;
   width: number;
+  height: number;
 }
 
 export const BOOKEND_WIDTH = 38;
@@ -156,13 +169,20 @@ export function packRows(
 ): ShelfRowItem[][] {
   const items: ShelfRowItem[] = [];
   for (const shelf of shelves) {
-    items.push({ kind: "bookend", platform: shelf.platform, width: BOOKEND_WIDTH });
+    items.push({
+      kind: "bookend",
+      platform: shelf.platform,
+      width: BOOKEND_WIDTH,
+      height: spineStyle(shelf.platform, 0).height,
+    });
     for (const entry of shelf.cases) {
+      const size = caseSize(entry.platform, entry.game.id, templateAspects?.get(entry.platform));
       items.push({
         kind: "case",
         platform: shelf.platform,
         entry,
-        width: caseWidth(entry.platform, entry.game.id, templateAspects?.get(entry.platform)),
+        width: size.width,
+        height: size.height,
       });
     }
   }
@@ -399,7 +419,7 @@ const BookshelfPage = () => {
                       onClick={() => navigate(`/game/${gameIdentifier(entry.game)}`)}
                       sx={{
                         width: item.width,
-                        height: style.height,
+                        height: item.height,
                         p: 0,
                         border: "none",
                         borderRadius: "2px 2px 0 0",
@@ -425,7 +445,7 @@ const BookshelfPage = () => {
                             width: "100%",
                             height: "100%",
                             // The case is sized to the template's aspect
-                            // (see caseWidth), so the image fills it exactly —
+                            // (see caseSize), so the image fills it exactly —
                             // scaled, never cropped, never stretched.
                             objectFit: "fill",
                             display: "block",
