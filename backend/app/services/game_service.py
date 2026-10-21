@@ -197,6 +197,21 @@ def claim_discovered_game(db: Session, game_id: int) -> GameWithStatus:
     return get_game_detail(db, game_id)
 
 
+def set_game_spine(db: Session, game_id: int, spine_url: str | None) -> GameWithStatus:
+    """Sets or clears a game's Bookshelf spine art. Works for any game — unlike the
+    manual-edit path, IGDB-linked games are the main case here. A replaced/cleared
+    local upload is deleted so orphaned spine files don't accumulate."""
+    game = db.get(Game, game_id)
+    if game is None:
+        raise NotFoundError(f"Game {game_id} not found")
+    old_spine_url = game.spine_url
+    game.spine_url = spine_url
+    db.commit()
+    if old_spine_url != spine_url:
+        upload_service.delete_spine_if_local(old_spine_url)
+    return get_game_detail(db, game_id)
+
+
 def set_game_visibility(db: Session, game_id: int, hide_from_public: bool) -> GameWithStatus:
     """Sets the per-game public visibility flag — hidden games are excluded from all
     public share pages. Toggled from the game detail page's Collection section."""
