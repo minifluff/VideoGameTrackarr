@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GameSummary, LibraryListItem, PlatformResponse } from "../../api/types";
-import { buildCaseFormats, buildShelves, caseFormatsKey, packRows, spineStyle } from "../BookshelfPage";
+import { buildCaseFormats, buildShelves, caseFormatsKey, indexPlatformsByLabel, packRows, spineStyle } from "../BookshelfPage";
 
 const game = (overrides: Partial<GameSummary>): GameSummary => ({
   id: 1,
@@ -63,6 +63,7 @@ describe("buildCaseFormats", () => {
     name: "PlayStation 5",
     slug: "ps5",
     abbreviation: "PS5",
+    spineTemplateUrl: null,
     gameCount: 0,
     ...overrides,
   });
@@ -126,6 +127,29 @@ describe("packRows", () => {
     expect(rows).toHaveLength(2);
     expect(rows[0].map((item) => item.platform)).toEqual(["Alpha", "Alpha"]);
     expect(rows[1].map((item) => item.kind)).toEqual(["bookend", "case"]);
+  });
+});
+
+describe("indexPlatformsByLabel", () => {
+  const platform = (overrides: Partial<PlatformResponse>): PlatformResponse => ({
+    id: 1,
+    igdbId: null,
+    name: "PlayStation 5",
+    slug: "ps5",
+    abbreviation: "PS5",
+    spineTemplateUrl: null,
+    gameCount: 0,
+    ...overrides,
+  });
+
+  it("keys platforms by abbreviation, falling back to the full name", () => {
+    const index = indexPlatformsByLabel([
+      platform({}),
+      platform({ id: 2, name: "Nintendo Switch", abbreviation: null }),
+    ]);
+    expect(index.get("PS5")?.id).toBe(1);
+    expect(index.get("Nintendo Switch")?.id).toBe(2);
+    expect(index.get("PlayStation 5")).toBeUndefined();
   });
 });
 
