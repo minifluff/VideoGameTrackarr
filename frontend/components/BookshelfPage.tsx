@@ -1,13 +1,20 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import Box from "@mui/material/Box";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
+import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
-import type { GameSummary } from "../api/types";
+import { listAllLibraryItems } from "../api/library";
+import type { GameSummary, LibraryListItem, PlatformResponse } from "../api/types";
 import { useGames } from "../hooks/useGames";
+import { usePlatforms } from "../hooks/usePlatforms";
 import { gameIdentifier } from "../utils/identifiers";
 import GamesSubNav from "./GamesSubNav";
 
@@ -41,6 +48,31 @@ export function buildShelves(games: GameSummary[] | undefined): Shelf[] {
     .sort((a, b) => a.platform.localeCompare(b.platform));
 }
 
+// Shelf cases are keyed by the game summary's platform label (the IGDB
+// abbreviation when there is one, e.g. "PS5"), while library items carry the
+// full platform name ("PlayStation 5") — bridge the two through the platform
+// catalogue so a case can find its copies' formats for the Format filter.
+export function caseFormatsKey(gameId: number, platform: string) {
+  return `${gameId}|${platform}`;
+}
+
+export function buildCaseFormats(
+  items: LibraryListItem[] | undefined,
+  platforms: PlatformResponse[] | undefined
+): Map<string, Set<string>> {
+  const keyByName = new Map((platforms ?? []).map((p) => [p.name, p.abbreviation ?? p.name]));
+  const formats = new Map<string, Set<string>>();
+  for (const item of items ?? []) {
+    if (!item.format || !item.platformName) continue;
+    const platform = keyByName.get(item.platformName) ?? item.platformName;
+    const key = caseFormatsKey(item.gameId, platform);
+    const set = formats.get(key) ?? new Set<string>();
+    set.add(item.format);
+    formats.set(key, set);
+  }
+  return formats;
+}
+
 // Blank spine art is platform-based, not per-game: every case on a platform
 // shares the platform's brand colours — matched on platform-name substrings,
 // with a stable palette fallback.
@@ -72,25 +104,116 @@ export function spineStyle(platform: string, gameId: number) {
   };
 }
 
+export interface ShelfRowItem {
+  kind: "bookend" | "case";
+  platform: string;
+  entry?: ShelfCase;
+  width: number;
+}
+
+export const BOOKEND_WIDTH = 38;
+const CASE_GAP = 3;
+
+// Cases flow continuously across platforms — the next platform starts right
+// where the previous one ended instead of forcing a new shelf. Rows are
+// packed greedily against the measured shelf width so EVERY row sits on its
+// own shelf board. A platform's bookend tile leads its first case and is
+// never left orphaned at a row's end.
+export function packRows(shelves: Shelf[], maxWidth: number): ShelfRowItem[][] {
+  const items: ShelfRowItem[] = [];
+  for (const shelf of shelves) {
+    items.push({ kind: "bookend", platform: shelf.platform, width: BOOKEND_WIDTH });
+    for (const entry of shelf.cases) {
+      items.push({
+        kind: "case",
+        platform: shelf.platform,
+        entry,
+        width: spineStyle(entry.platform, entry.game.id).width,
+      });
+    }
+  }
+  const rows: ShelfRowItem[][] = [];
+  let row: ShelfRowItem[] = [];
+  let rowWidth = 0;
+  items.forEach((item, index) => {
+    let needed = item.width;
+    // A bookend must share its row with its platform's first case.
+    if (item.kind === "bookend" && index + 1 < items.length) {
+      needed += CASE_GAP + items[index + 1].width;
+    }
+    if (row.length > 0 && rowWidth + CASE_GAP + needed > maxWidth) {
+      rows.push(row);
+      row = [];
+      rowWidth = 0;
+    }
+    if (row.length > 0) rowWidth += CASE_GAP;
+    rowWidth += item.width;
+    row.push(item);
+  });
+  if (row.length > 0) rows.push(row);
+  return rows;
+}
+
 const BookshelfPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: games, isLoading } = useGames();
   const [search, setSearch] = useState("");
+  const [platformFilter, setPlatformFilter] = useState("all");
+  const [formatFilter, setFormatFilter] = useState("all");
+
+  // Same data the Games List page's Platform/Format filters run on (shared
+  // query cache with that page).
+  const { data: items } = useQuery({ queryKey: ["library", "all-items"], queryFn: listAllLibraryItems });
+  const { data: platforms } = usePlatforms();
+  const caseFormats = useMemo(() => buildCaseFormats(items, platforms), [items, platforms]);
+  const formatOptions = useMemo(
+    () => [...new Set([...caseFormats.values()].flatMap((set) => [...set]))].sort(),
+    [caseFormats]
+  );
 
   const shelves = useMemo(() => buildShelves(games), [games]);
   const keyword = search.trim().toLowerCase();
-  const visibleShelves = useMemo(() => {
-    if (!keyword) return shelves;
-    return shelves
-      .map((shelf) => ({
-        ...shelf,
-        cases: shelf.cases.filter((entry) => entry.game.name.toLowerCase().includes(keyword)),
-      }))
-      .filter((shelf) => shelf.cases.length > 0);
-  }, [shelves, keyword]);
+  const visibleShelves = useMemo(
+    () =>
+      shelves
+        .filter((shelf) => platformFilter === "all" || shelf.platform === platformFilter)
+        .map((shelf) => ({
+          ...shelf,
+          cases: shelf.cases.filter((entry) => {
+            if (keyword && !entry.game.name.toLowerCase().includes(keyword)) return false;
+            if (
+              formatFilter !== "all" &&
+              !caseFormats.get(caseFormatsKey(entry.game.id, entry.platform))?.has(formatFilter)
+            )
+              return false;
+            return true;
+          }),
+        }))
+        .filter((shelf) => shelf.cases.length > 0),
+    [shelves, keyword, platformFilter, formatFilter, caseFormats]
+  );
 
   const totalCases = shelves.reduce((sum, shelf) => sum + shelf.cases.length, 0);
+
+  // Rows are packed against the real shelf width (repacked on resize) so each
+  // row of cases gets its own shelf board at any window size.
+  const shelfRef = useRef<HTMLDivElement>(null);
+  const [shelfWidth, setShelfWidth] = useState(1200);
+  useEffect(() => {
+    const element = shelfRef.current;
+    if (!element) return;
+    const update = () => setShelfWidth(element.clientWidth);
+    update();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  const rows = useMemo(
+    () => packRows(visibleShelves, Math.max(shelfWidth - 16, 200)),
+    [visibleShelves, shelfWidth]
+  );
 
   return (
     <Box>
@@ -108,95 +231,153 @@ const BookshelfPage = () => {
             {t("games.bookshelf.summary", { cases: totalCases })}
           </Typography>
         </Box>
-        <TextField
-          size="small"
-          placeholder={t("games.bookshelf.searchPlaceholder")}
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+          <TextField
+            size="small"
+            placeholder={t("games.bookshelf.searchPlaceholder")}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <InputLabel>{t("games.listPage.platformColumn")}</InputLabel>
+            <Select
+              value={platformFilter}
+              label={t("games.listPage.platformColumn")}
+              onChange={(event) => setPlatformFilter(event.target.value)}
+            >
+              <MenuItem value="all">{t("common.all")}</MenuItem>
+              {shelves.map((shelf) => (
+                <MenuItem key={shelf.platform} value={shelf.platform}>
+                  {shelf.platform}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <InputLabel>{t("games.listPage.formatColumn")}</InputLabel>
+            <Select
+              value={formatFilter}
+              label={t("games.listPage.formatColumn")}
+              onChange={(event) => setFormatFilter(event.target.value)}
+            >
+              <MenuItem value="all">{t("common.all")}</MenuItem>
+              {formatOptions.map((format) => (
+                <MenuItem key={format} value={format}>
+                  {format}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
       </Stack>
       {isLoading ? (
         <Paper sx={{ p: 3, textAlign: "center" }}>{t("common.loading")}</Paper>
-      ) : visibleShelves.length === 0 ? (
+      ) : rows.length === 0 ? (
         <Paper sx={{ p: 3, textAlign: "center" }}>{t("games.bookshelf.empty")}</Paper>
       ) : (
-        visibleShelves.map((shelf) => (
-          <Box key={shelf.platform} sx={{ mb: 4 }}>
-            <Box sx={{ display: "flex", alignItems: "baseline", gap: 1, mb: 1 }}>
-              <Typography variant="h6" component="h2">
-                {shelf.platform}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {shelf.cases.length}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                alignItems: "flex-end",
-                gap: "3px",
-                px: 1,
-              }}
-            >
-              {shelf.cases.map((entry) => {
-                const style = spineStyle(entry.platform, entry.game.id);
-                return (
-                  <Box
-                    key={`${entry.game.id}-${entry.platform}`}
-                    component="button"
-                    title={`${entry.game.name} — ${entry.platform}`}
-                    onClick={() => navigate(`/game/${gameIdentifier(entry.game)}`)}
-                    sx={{
-                      width: style.width,
-                      height: style.height,
-                      p: 0,
-                      border: "none",
-                      borderRadius: "2px 2px 0 0",
-                      cursor: "pointer",
-                      overflow: "hidden",
-                      position: "relative",
-                      flexShrink: 0,
-                      transition: "transform 120ms ease",
-                      "&:hover": { transform: "translateY(-6px)" },
-                      backgroundColor: style.background,
-                      color: style.color,
-                      boxShadow: "inset -3px 0 5px rgba(0,0,0,0.35), inset 2px 0 3px rgba(255,255,255,0.15)",
-                    }}
-                  >
+        <Box ref={shelfRef}>
+          {rows.map((row, rowIndex) => (
+            <Box key={rowIndex} sx={{ mb: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "flex-end", gap: "3px", px: 1 }}>
+                {row.map((item) => {
+                  if (item.kind === "bookend") {
+                    const style = spineStyle(item.platform, 0);
+                    return (
+                      <Box
+                        key={`bookend-${item.platform}`}
+                        title={item.platform}
+                        sx={{
+                          width: BOOKEND_WIDTH,
+                          height: style.height,
+                          flexShrink: 0,
+                          borderRadius: "2px 2px 0 0",
+                          background: "linear-gradient(180deg, #4a3220 0%, #3a2716 100%)",
+                          color: "#f5e9d0",
+                          boxShadow:
+                            "inset -3px 0 5px rgba(0,0,0,0.45), inset 2px 0 3px rgba(255,255,255,0.08)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            writingMode: "vertical-rl",
+                            transform: "rotate(180deg)",
+                            fontSize: 11.5,
+                            fontWeight: 700,
+                            letterSpacing: 1.2,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            maxHeight: "100%",
+                            py: 0.75,
+                          }}
+                        >
+                          {item.platform}
+                        </Box>
+                      </Box>
+                    );
+                  }
+                  const entry = item.entry!;
+                  const style = spineStyle(entry.platform, entry.game.id);
+                  return (
                     <Box
+                      key={`${entry.game.id}-${entry.platform}`}
+                      component="button"
+                      title={`${entry.game.name} — ${entry.platform}`}
+                      onClick={() => navigate(`/game/${gameIdentifier(entry.game)}`)}
                       sx={{
-                        writingMode: "vertical-rl",
-                        transform: "rotate(180deg)",
-                        fontSize: 10.5,
-                        fontWeight: 600,
-                        letterSpacing: 0.4,
-                        lineHeight: 1.15,
-                        maxHeight: "100%",
+                        width: style.width,
+                        height: style.height,
+                        p: 0,
+                        border: "none",
+                        borderRadius: "2px 2px 0 0",
+                        cursor: "pointer",
                         overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        mx: "auto",
-                        py: 0.75,
-                        height: "100%",
+                        position: "relative",
+                        flexShrink: 0,
+                        transition: "transform 120ms ease",
+                        "&:hover": { transform: "translateY(-6px)" },
+                        backgroundColor: style.background,
+                        color: style.color,
+                        boxShadow: "inset -3px 0 5px rgba(0,0,0,0.35), inset 2px 0 3px rgba(255,255,255,0.15)",
                       }}
                     >
-                      {entry.game.name}
+                      <Box
+                        sx={{
+                          writingMode: "vertical-rl",
+                          transform: "rotate(180deg)",
+                          fontSize: 10.5,
+                          fontWeight: 600,
+                          letterSpacing: 0.4,
+                          lineHeight: 1.15,
+                          maxHeight: "100%",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          mx: "auto",
+                          py: 0.75,
+                          height: "100%",
+                        }}
+                      >
+                        {entry.game.name}
+                      </Box>
                     </Box>
-                  </Box>
-                );
-              })}
+                  );
+                })}
+              </Box>
+              <Box
+                sx={{
+                  height: 14,
+                  background: "linear-gradient(180deg, #8b5a2b 0%, #6f4520 55%, #59371a 100%)",
+                  borderRadius: "0 0 4px 4px",
+                  boxShadow: "0 6px 10px rgba(0,0,0,0.35)",
+                }}
+              />
             </Box>
-            <Box
-              sx={{
-                height: 14,
-                background: "linear-gradient(180deg, #8b5a2b 0%, #6f4520 55%, #59371a 100%)",
-                borderRadius: "0 0 4px 4px",
-                boxShadow: "0 6px 10px rgba(0,0,0,0.35)",
-              }}
-            />
-          </Box>
-        ))
+          ))}
+        </Box>
       )}
     </Box>
   );
