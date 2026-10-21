@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GameSummary, LibraryListItem, PlatformResponse } from "../../api/types";
-import { buildCaseFormats, buildShelves, caseFormatsKey, caseWidth, indexPlatformsByLabel, packRows, spineStyle } from "../BookshelfPage";
+import { buildCaseFormats, buildShelves, caseFormatsKey, caseSize, indexPlatformsByLabel, packRows, spineStyle } from "../BookshelfPage";
 
 const game = (overrides: Partial<GameSummary>): GameSummary => ({
   id: 1,
@@ -153,22 +153,30 @@ describe("indexPlatformsByLabel", () => {
   });
 });
 
-describe("caseWidth", () => {
-  it("uses the flat spine width when the platform has no template", () => {
-    expect(caseWidth("PlayStation 5", 10)).toBe(spineStyle("PlayStation 5", 10).width);
-    expect(caseWidth("PlayStation 5", 10, undefined)).toBe(spineStyle("PlayStation 5", 10).width);
+describe("caseSize", () => {
+  it("uses the flat spine size when the platform has no template", () => {
+    const flat = spineStyle("PlayStation 5", 10);
+    expect(caseSize("PlayStation 5", 10)).toEqual({ width: flat.width, height: flat.height });
+    expect(caseSize("PlayStation 5", 10, undefined)).toEqual({ width: flat.width, height: flat.height });
   });
 
   it("sizes a templated case to the template's aspect at shelf height", () => {
-    // PS cases are 176 tall; a 1:4 template makes the case 44 wide.
-    expect(caseWidth("PlayStation 5", 10, 0.25)).toBe(44);
+    // PS cases are 176 tall; a 1:4 template makes the case 44 wide, 176 tall.
+    expect(caseSize("PlayStation 5", 10, 0.25)).toEqual({ width: 44, height: 176 });
     // A squarer 1:2 template makes it 88 wide, regardless of the game id.
-    expect(caseWidth("PlayStation 5", 99, 0.5)).toBe(88);
+    expect(caseSize("PlayStation 5", 99, 0.5)).toEqual({ width: 88, height: 176 });
   });
 
-  it("clamps templated case widths to sane bounds", () => {
-    expect(caseWidth("PlayStation 5", 10, 0.05)).toBe(28);
-    expect(caseWidth("PlayStation 5", 10, 3)).toBe(200);
+  it("grows the HEIGHT for very tall thin templates instead of distorting", () => {
+    // At 176 tall a 1:20 template would be 9px wide — under the 28px floor,
+    // so the case grows taller: 28 wide, 28 / 0.05 = 560 tall, aspect intact.
+    expect(caseSize("PlayStation 5", 10, 0.05)).toEqual({ width: 28, height: 560 });
+  });
+
+  it("caps very wide templates by height, keeping the aspect exact", () => {
+    // A 3:1 template at shelf height would be 528 wide — capped at 200 wide,
+    // height follows the aspect down to 67. Never stretched.
+    expect(caseSize("PlayStation 5", 10, 3)).toEqual({ width: 200, height: 67 });
   });
 });
 
