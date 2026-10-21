@@ -136,26 +136,34 @@ export function isMostlyWhite(rgba: ArrayLike<number>): boolean {
   return pixels > 0 && total / pixels >= 205;
 }
 
-// Templated cases share ONE scale, set by the largest template: the tallest
-// template image renders at TEMPLATE_TARGET_HEIGHT and every other template
-// scales proportionally to it — so templates keep their true relative sizes
-// on the shelf, fill their cases exactly, and are never cropped or stretched.
+// Templated cases share ONE scale, set by the largest template ON THE SHELF:
+// the tallest of those renders at TEMPLATE_TARGET_HEIGHT and the others
+// scale proportionally to it, keeping their true relative sizes. Two guards
+// keep pixel dimensions from wrecking the shelf: templates for platforms
+// with no cases here don't set the scale (one huge stray scan can't shrink
+// everything), and the proportional shrink is floored at MIN_TEMPLATE_RATIO
+// so no case renders tiny — widths always follow the same factor, so the
+// aspect stays exact and nothing is ever cropped or stretched.
 export const TEMPLATE_TARGET_HEIGHT = 190;
+export const MIN_TEMPLATE_RATIO = 0.6;
 export function buildTemplateCaseSizes(
   info: Map<string, TemplateInfo>,
-  targetHeight: number = TEMPLATE_TARGET_HEIGHT
+  targetHeight: number = TEMPLATE_TARGET_HEIGHT,
+  shelfLabels?: Set<string>
 ): Map<string, { width: number; height: number }> {
   const sizes = new Map<string, { width: number; height: number }>();
+  const included = [...info.entries()].filter(([label]) => !shelfLabels || shelfLabels.has(label));
   let largest = 0;
-  for (const template of info.values()) {
+  for (const [, template] of included) {
     largest = Math.max(largest, template.naturalHeight);
   }
   if (largest <= 0) return sizes;
-  const scale = targetHeight / largest;
-  for (const [label, template] of info) {
+  for (const [label, template] of included) {
+    const ratio = Math.max(template.naturalHeight / largest, MIN_TEMPLATE_RATIO);
+    const height = targetHeight * ratio;
     sizes.set(label, {
-      width: Math.max(1, Math.round(template.naturalWidth * scale)),
-      height: Math.max(1, Math.round(template.naturalHeight * scale)),
+      width: Math.max(1, Math.round(height * (template.naturalWidth / template.naturalHeight))),
+      height: Math.max(1, Math.round(height)),
     });
   }
   return sizes;
@@ -288,7 +296,6 @@ const BookshelfPage = () => {
       image.src = resolveAssetUrl(platform.spineTemplateUrl) ?? platform.spineTemplateUrl;
     }
   }, [platforms, templateInfo]);
-  const templateCaseSizes = useMemo(() => buildTemplateCaseSizes(templateInfo), [templateInfo]);
   const formatOptions = useMemo(
     () => [...new Set([...caseFormats.values()].flatMap((set) => [...set]))].sort(),
     [caseFormats]
@@ -296,6 +303,10 @@ const BookshelfPage = () => {
 
   const shelves = useMemo(() => buildShelves(games), [games]);
   const keyword = search.trim().toLowerCase();
+  const templateCaseSizes = useMemo(
+    () => buildTemplateCaseSizes(templateInfo, TEMPLATE_TARGET_HEIGHT, new Set(shelves.map((s) => s.platform))),
+    [templateInfo, shelves]
+  );
   const visibleShelves = useMemo(
     () =>
       shelves
