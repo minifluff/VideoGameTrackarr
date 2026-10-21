@@ -22,6 +22,8 @@ class PlatformSummaryResponse(CamelModel):
     slug: str | None
     abbreviation: str | None
     spine_template_url: str | None
+    case_height_mm: float | None
+    case_spine_mm: float | None
     game_count: int
 
 
@@ -49,12 +51,19 @@ def platform_summary_from_orm(platform: Platform, game_count: int) -> PlatformSu
         slug=platform.slug,
         abbreviation=platform.abbreviation,
         spine_template_url=platform.spine_template_url,
+        case_height_mm=platform.case_height_mm,
+        case_spine_mm=platform.case_spine_mm,
         game_count=game_count,
     )
 
 
 class PlatformSpineTemplateRequest(CamelModel):
     spine_url: str | None = Field(default=None, max_length=1024)
+
+
+class PlatformCaseSizeRequest(CamelModel):
+    height_mm: float | None = Field(default=None, gt=0, le=1000)
+    spine_mm: float | None = Field(default=None, gt=0, le=500)
 
 
 class PlatformCreateRequest(CamelModel):
