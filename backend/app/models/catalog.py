@@ -56,6 +56,11 @@ class Platform(TimestampMixin, Base):
     # Bookshelf mode: a user-supplied blank spine template image rendered
     # behind every case of this platform (uploaded /uploads/spines/... URL).
     spine_template_url: Mapped[str | None] = mapped_column(String(1024))
+    # Bookshelf mode: the platform's ACTUAL physical case size in millimetres
+    # (height x spine thickness), chosen in the template dialog when the app
+    # has no known size for the system. Cases render at a fixed 40% of this.
+    case_height_mm: Mapped[float | None] = mapped_column()
+    case_spine_mm: Mapped[float | None] = mapped_column()
 
 
 class Region(TimestampMixin, Base):
