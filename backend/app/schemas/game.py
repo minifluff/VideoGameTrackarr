@@ -29,6 +29,8 @@ class GameSummaryResponse(CamelModel):
     name: str
     slug: str | None
     cover_url: str | None
+    # Spine art for Bookshelf mode (uploaded /uploads/spines/... or external URL).
+    spine_url: str | None
     category: GameCategory | None
     first_release_date: int | None
     # Computed fresh per request (EXISTS/scalar-subquery against library_items and
@@ -103,6 +105,7 @@ def _game_fields(game: Game, status: GameWithStatus) -> dict:
         "name": game.name,
         "slug": game.slug,
         "cover_url": game.cover_url,
+        "spine_url": game.spine_url,
         "category": game.category,
         "first_release_date": game.first_release_date,
         "owned": status.owned,
@@ -385,3 +388,23 @@ class IGDBAutolinkResultResponse(CamelModel):
 class UnlinkedGameResponse(CamelModel):
     id: int
     name: str
+
+
+class SpineUpdateRequest(CamelModel):
+    """Body for PUT /api/games/{game_id}/spine — a spine image URL (typically the
+    /uploads/spines/... URL returned by POST /api/uploads/spines), or null to clear."""
+
+    spine_url: str | None = None
+
+
+class SpineImportMatched(CamelModel):
+    game_id: int
+    name: str
+    path: str
+
+
+class SpineImportResponse(CamelModel):
+    matched: list[SpineImportMatched]
+    unmatched: list[str]
+    ambiguous: list[str]
+    invalid: list[str]
