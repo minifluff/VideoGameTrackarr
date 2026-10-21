@@ -182,6 +182,34 @@ describe("buildTemplateCaseSizes", () => {
   it("returns nothing when no template has been measured", () => {
     expect(buildTemplateCaseSizes(new Map()).size).toBe(0);
   });
+
+  it("floors the proportional shrink so a small template never renders tiny", () => {
+    const sizes = buildTemplateCaseSizes(
+      new Map([
+        ["Huge", { naturalWidth: 400, naturalHeight: 3200, light: false }],
+        ["Tiny", { naturalWidth: 50, naturalHeight: 200, light: false }],
+      ]),
+      190
+    );
+    expect(sizes.get("Huge")).toEqual({ width: 24, height: 190 });
+    // Tiny's true ratio is 1/16 — floored to 0.6, so it renders 114 tall with
+    // its width following the same factor (aspect exact, just not tiny).
+    expect(sizes.get("Tiny")).toEqual({ width: 29, height: 114 });
+  });
+
+  it("ignores templates for platforms that are not on the shelf", () => {
+    const sizes = buildTemplateCaseSizes(
+      new Map([
+        ["Steam", { naturalWidth: 400, naturalHeight: 1600, light: false }],
+        ["Stray", { naturalWidth: 900, naturalHeight: 9000, light: false }],
+      ]),
+      190,
+      new Set(["Steam"])
+    );
+    expect(sizes.has("Stray")).toBe(false);
+    // Steam is the largest SHELF template, so it still gets the full height.
+    expect(sizes.get("Steam")).toEqual({ width: 48, height: 190 });
+  });
 });
 
 describe("isMostlyWhite", () => {
