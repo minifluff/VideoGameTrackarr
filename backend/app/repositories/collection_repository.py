@@ -1,8 +1,8 @@
-from sqlalchemy import delete, func, select
+from sqlalchemy import case, delete, exists, func, select
 from sqlalchemy.orm import Session
 
 from app.models.catalog import Collection, Game, GameCategory, GameCollection
-from app.models.library import MediaFormat, PlayStatus
+from app.models.library import LibraryItem, LibraryStatus, MediaFormat, PlayStatus
 from app.repositories.game_repository import (
     GameSortOption,
     GameWithStatus,
@@ -47,12 +47,20 @@ def get_by_slug(db: Session, slug: str) -> Collection | None:
 
 def list_collections_with_counts(db: Session) -> list[tuple[Collection, int]]:
     """Every collection with at least one locally-known, browsable (non-addon) game — same
-    _is_browsable_game/parent_game_id filter as list_games_for_collection below, so this
-    count always matches what the collection's own Details page actually shows; a collection
+    _is_browsable_game/parent_game_id filter as list_games_for_collection below; a collection
     whose only locally-known members are addons is excluded entirely rather than showing a
-    non-zero count that leads to an empty Details page."""
+    count that leads to an empty Details page. The count itself is OWNED games only (a
+    wishlisted or "what's missing" discovered member doesn't count): the CASE yields the
+    game id only for owned members, and count(distinct ...) ignores the NULLs — so a
+    collection can legitimately show 0 while still being listed."""
+    owned_member_id = case(
+        (
+            exists().where(LibraryItem.game_id == Game.id, LibraryItem.status == LibraryStatus.OWNED),
+            GameCollection.game_id,
+        ),
+    )
     stmt = (
-        select(Collection, func.count(func.distinct(GameCollection.game_id)))
+        select(Collection, func.count(func.distinct(owned_member_id)))
         .join(GameCollection, GameCollection.collection_id == Collection.id)
         .join(Game, Game.id == GameCollection.game_id)
         .where(Game.parent_game_id.is_(None), _is_browsable_game(Game.category))
