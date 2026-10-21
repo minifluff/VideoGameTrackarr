@@ -11,12 +11,14 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
+import { resolveAssetUrl } from "../api/client";
 import { listAllLibraryItems } from "../api/library";
 import type { GameSummary, LibraryListItem, PlatformResponse } from "../api/types";
 import { useGames } from "../hooks/useGames";
 import { usePlatforms } from "../hooks/usePlatforms";
 import { gameIdentifier } from "../utils/identifiers";
 import GamesSubNav from "./GamesSubNav";
+import PlatformTemplateDialog from "./PlatformTemplateDialog";
 
 export interface ShelfCase {
   game: GameSummary;
@@ -46,6 +48,15 @@ export function buildShelves(games: GameSummary[] | undefined): Shelf[] {
       cases: cases.sort((a, b) => a.game.name.localeCompare(b.game.name)),
     }))
     .sort((a, b) => a.platform.localeCompare(b.platform));
+}
+
+// Shelf platforms are labelled by abbreviation when IGDB has one ("PS5"),
+// else the full name — index the platform catalogue by that same label so a
+// divider or case can find its platform record (template, id, ...).
+export function indexPlatformsByLabel(
+  platforms: PlatformResponse[] | undefined
+): Map<string, PlatformResponse> {
+  return new Map((platforms ?? []).map((p) => [p.abbreviation ?? p.name, p]));
 }
 
 // Shelf cases are keyed by the game summary's platform label (the IGDB
@@ -161,12 +172,14 @@ const BookshelfPage = () => {
   const [search, setSearch] = useState("");
   const [platformFilter, setPlatformFilter] = useState("all");
   const [formatFilter, setFormatFilter] = useState("all");
+  const [templatePlatform, setTemplatePlatform] = useState<PlatformResponse | null>(null);
 
   // Same data the Games List page's Platform/Format filters run on (shared
   // query cache with that page).
   const { data: items } = useQuery({ queryKey: ["library", "all-items"], queryFn: listAllLibraryItems });
   const { data: platforms } = usePlatforms();
   const caseFormats = useMemo(() => buildCaseFormats(items, platforms), [items, platforms]);
+  const platformsByLabel = useMemo(() => indexPlatformsByLabel(platforms), [platforms]);
   const formatOptions = useMemo(
     () => [...new Set([...caseFormats.values()].flatMap((set) => [...set]))].sort(),
     [caseFormats]
@@ -282,31 +295,39 @@ const BookshelfPage = () => {
                 {row.map((item) => {
                   if (item.kind === "bookend") {
                     const style = spineStyle(item.platform, 0);
+                    const record = platformsByLabel.get(item.platform);
                     return (
                       <Box
                         key={`bookend-${item.platform}`}
-                        title={item.platform}
+                        component="button"
+                        title={t("games.bookshelf.template.forPlatform", { platform: item.platform })}
+                        onClick={() => record && setTemplatePlatform(record)}
                         sx={{
                           width: BOOKEND_WIDTH,
                           height: style.height,
                           flexShrink: 0,
+                          p: 0,
+                          cursor: "pointer",
+                          border: "1px solid #000",
                           borderRadius: "2px 2px 0 0",
-                          background: "linear-gradient(180deg, #4a3220 0%, #3a2716 100%)",
-                          color: "#f5e9d0",
+                          background: "linear-gradient(180deg, #2b2b2e 0%, #000000 100%)",
+                          color: "#ffffff",
                           boxShadow:
-                            "inset -3px 0 5px rgba(0,0,0,0.45), inset 2px 0 3px rgba(255,255,255,0.08)",
+                            "inset -3px 0 6px rgba(0,0,0,0.9), inset 2px 0 4px rgba(255,255,255,0.22), 0 0 0 1px rgba(0,0,0,0.55), 2px 0 6px rgba(0,0,0,0.45)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
+                          transition: "transform 120ms ease",
+                          "&:hover": { transform: "translateY(-6px)" },
                         }}
                       >
                         <Box
                           sx={{
                             writingMode: "vertical-rl",
                             transform: "rotate(180deg)",
-                            fontSize: 11.5,
-                            fontWeight: 700,
-                            letterSpacing: 1.2,
+                            fontSize: 12.5,
+                            fontWeight: 800,
+                            letterSpacing: 1.4,
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
@@ -321,6 +342,7 @@ const BookshelfPage = () => {
                   }
                   const entry = item.entry!;
                   const style = spineStyle(entry.platform, entry.game.id);
+                  const templateUrl = platformsByLabel.get(entry.platform)?.spineTemplateUrl ?? null;
                   return (
                     <Box
                       key={`${entry.game.id}-${entry.platform}`}
@@ -339,11 +361,26 @@ const BookshelfPage = () => {
                         flexShrink: 0,
                         transition: "transform 120ms ease",
                         "&:hover": { transform: "translateY(-6px)" },
-                        backgroundColor: style.background,
-                        color: style.color,
+                        backgroundColor: templateUrl ? "transparent" : style.background,
+                        color: templateUrl ? "#ffffff" : style.color,
                         boxShadow: "inset -3px 0 5px rgba(0,0,0,0.35), inset 2px 0 3px rgba(255,255,255,0.15)",
                       }}
                     >
+                      {templateUrl && (
+                        <Box
+                          component="img"
+                          src={resolveAssetUrl(templateUrl) ?? undefined}
+                          alt=""
+                          sx={{
+                            position: "absolute",
+                            inset: 0,
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            display: "block",
+                          }}
+                        />
+                      )}
                       <Box
                         sx={{
                           writingMode: "vertical-rl",
@@ -359,6 +396,10 @@ const BookshelfPage = () => {
                           mx: "auto",
                           py: 0.75,
                           height: "100%",
+                          position: "relative",
+                          ...(templateUrl
+                            ? { textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 0 7px rgba(0,0,0,0.75)" }
+                            : {}),
                         }}
                       >
                         {entry.game.name}
@@ -379,6 +420,7 @@ const BookshelfPage = () => {
           ))}
         </Box>
       )}
+      <PlatformTemplateDialog platform={templatePlatform} onClose={() => setTemplatePlatform(null)} />
     </Box>
   );
 };
