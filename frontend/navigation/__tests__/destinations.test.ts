@@ -11,6 +11,12 @@ describe("getNavDestinations", () => {
     expect(tos).toContain("/hardware");
   });
 
+  it("puts Bookshelf in the Games menu right after Add Game", () => {
+    const games = getNavDestinations(t).find((destination) => destination.to === "/games");
+    const subTos = (games?.subItems ?? []).map((item) => item.to);
+    expect(subTos.indexOf("/games/bookshelf")).toBe(subTos.indexOf("/games/add") + 1);
+  });
+
   it("omits only the Hardware destination when hideHardwareMenu is on", () => {
     const withHardware = getNavDestinations(t).map((destination) => destination.to);
     const withoutHardware = getNavDestinations(t, { hideHardwareMenu: true }).map(
