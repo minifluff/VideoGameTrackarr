@@ -35,7 +35,7 @@ def _save_optimized_image(raw: bytes, directory: Path, url_prefix: str, target_s
         raise ValueError("Not a valid image file") from exc
 
     image = image.convert("RGB")
-    image = ImageOps.fit(image, target_size, method=Image.Resampling.LANCZOS)
+    image = ImageOps.fit(image, target_size, resample=Image.Resampling.LANCZOS)
 
     directory.mkdir(parents=True, exist_ok=True)
     filename = f"{uuid.uuid4()}.jpg"
@@ -63,7 +63,7 @@ def save_spine_image(raw: bytes) -> str:
 
     image = image.convert("RGB")
     if max(image.size) > SPINE_MAX_EDGE:
-        image.thumbnail((SPINE_MAX_EDGE, SPINE_MAX_EDGE), method=Image.Resampling.LANCZOS)
+        image.thumbnail((SPINE_MAX_EDGE, SPINE_MAX_EDGE), resample=Image.Resampling.LANCZOS)
 
     SPINES_DIR.mkdir(parents=True, exist_ok=True)
     filename = f"{uuid.uuid4()}.jpg"
