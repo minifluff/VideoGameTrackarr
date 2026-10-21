@@ -3,6 +3,8 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Slider from "@mui/material/Slider";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Switch from "@mui/material/Switch";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import {
@@ -42,6 +44,8 @@ const AppearanceSection = () => {
     setAppIcon,
     cardSize,
     setCardSize,
+    hideHardwareMenu,
+    setHideHardwareMenu,
     resetAppearance,
   } = useAppearance();
   const [titleDraft, setTitleDraft] = useState(appTitle);
@@ -85,7 +89,8 @@ const AppearanceSection = () => {
     accentColor !== SEED_COLOR_HEX ||
     appTitle !== DEFAULT_APP_TITLE ||
     appIcon !== DEFAULT_APP_ICON ||
-    cardSize !== DEFAULT_CARD_SIZE;
+    cardSize !== DEFAULT_CARD_SIZE ||
+    hideHardwareMenu;
 
   return (
     <Box>
@@ -284,6 +289,22 @@ const AppearanceSection = () => {
       </Box>
       <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
         {t("settings.appearance.cardSizeHelp")}
+      </Typography>
+
+      <Typography variant="subtitle2" gutterBottom>
+        {t("settings.appearance.navigationHeading")}
+      </Typography>
+      <FormControlLabel
+        control={
+          <Switch
+            checked={hideHardwareMenu}
+            onChange={(event) => setHideHardwareMenu(event.target.checked)}
+          />
+        }
+        label={t("settings.appearance.hideHardwareMenu")}
+      />
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
+        {t("settings.appearance.hideHardwareMenuHelp")}
       </Typography>
 
       {isCustomized && (
