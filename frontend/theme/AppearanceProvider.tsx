@@ -21,6 +21,8 @@ interface AppearanceContextValue {
   setAppIcon: (icon: string) => void;
   cardSize: number;
   setCardSize: (size: number) => void;
+  hideHardwareMenu: boolean;
+  setHideHardwareMenu: (hide: boolean) => void;
   resetAppearance: () => void;
 }
 
@@ -33,6 +35,8 @@ const AppearanceContext = createContext<AppearanceContextValue>({
   setAppIcon: () => {},
   cardSize: DEFAULT_CARD_SIZE,
   setCardSize: () => {},
+  hideHardwareMenu: false,
+  setHideHardwareMenu: () => {},
   resetAppearance: () => {},
 });
 
@@ -42,6 +46,7 @@ const ACCENT_STORAGE_KEY = "vgt.accentColor";
 const TITLE_STORAGE_KEY = "vgt.appTitle";
 const ICON_STORAGE_KEY = "vgt.appIcon";
 const CARD_SIZE_STORAGE_KEY = "vgt.cardSize";
+const HIDE_HARDWARE_STORAGE_KEY = "vgt.hideHardwareMenu";
 
 const HEX_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
@@ -72,6 +77,10 @@ export function resolveIconSrc(icon: string): string {
   if (icon === "default") return DEFAULT_ICON_SRC;
   if (isCustomIconDataUrl(icon)) return icon;
   return DEFAULT_ICON_SRC; // emoji icons use favicon only, title bar shows SVG fallback
+}
+
+function readStoredHideHardwareMenu(): boolean {
+  return localStorage.getItem(HIDE_HARDWARE_STORAGE_KEY) === "true";
 }
 
 function readStoredCardSize(): number {
@@ -123,6 +132,7 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
   const [appTitle, setAppTitleState] = useState<string>(readStoredTitle);
   const [appIcon, setAppIconState] = useState<string>(readStoredIcon);
   const [cardSize, setCardSizeState] = useState<number>(readStoredCardSize);
+  const [hideHardwareMenu, setHideHardwareMenuState] = useState<boolean>(readStoredHideHardwareMenu);
   const [loadedFromServer, setLoadedFromServer] = useState(false);
 
   // Load from server on mount (overrides localStorage if different)
@@ -149,6 +159,10 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
           setCardSizeState(clamped);
           localStorage.setItem(CARD_SIZE_STORAGE_KEY, String(clamped));
         }
+        if (typeof settings.hideHardwareMenu === "boolean") {
+          setHideHardwareMenuState(settings.hideHardwareMenu);
+          localStorage.setItem(HIDE_HARDWARE_STORAGE_KEY, String(settings.hideHardwareMenu));
+        }
         setLoadedFromServer(true);
       })
       .catch(() => {
@@ -157,7 +171,13 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
       });
   }, []);
 
-  const persist = (patch: { accentColor?: string; appTitle?: string; appIcon?: string; cardSize?: number }) => {
+  const persist = (patch: {
+    accentColor?: string;
+    appTitle?: string;
+    appIcon?: string;
+    cardSize?: number;
+    hideHardwareMenu?: boolean;
+  }) => {
     if (!loadedFromServer) return; // don't overwrite server before we've loaded
     updateAppearance(patch).catch(() => {
       // Server save failed — localStorage already updated, will retry next change
@@ -199,20 +219,29 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
     persist({ cardSize: clamped });
   };
 
+  const setHideHardwareMenu = (hide: boolean) => {
+    setHideHardwareMenuState(hide);
+    localStorage.setItem(HIDE_HARDWARE_STORAGE_KEY, String(hide));
+    persist({ hideHardwareMenu: hide });
+  };
+
   const resetAppearance = () => {
     setAccentColorState(SEED_COLOR_HEX);
     setAppTitleState(DEFAULT_APP_TITLE);
     setAppIconState(DEFAULT_APP_ICON);
     setCardSizeState(DEFAULT_CARD_SIZE);
+    setHideHardwareMenuState(false);
     localStorage.removeItem(ACCENT_STORAGE_KEY);
     localStorage.removeItem(TITLE_STORAGE_KEY);
     localStorage.removeItem(ICON_STORAGE_KEY);
     localStorage.removeItem(CARD_SIZE_STORAGE_KEY);
+    localStorage.removeItem(HIDE_HARDWARE_STORAGE_KEY);
     persist({
       accentColor: SEED_COLOR_HEX,
       appTitle: DEFAULT_APP_TITLE,
       appIcon: DEFAULT_APP_ICON,
       cardSize: DEFAULT_CARD_SIZE,
+      hideHardwareMenu: false,
     });
   };
 
@@ -230,7 +259,19 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AppearanceContext.Provider
-      value={{ accentColor, setAccentColor, appTitle, setAppTitle, appIcon, setAppIcon, cardSize, setCardSize, resetAppearance }}
+      value={{
+        accentColor,
+        setAccentColor,
+        appTitle,
+        setAppTitle,
+        appIcon,
+        setAppIcon,
+        cardSize,
+        setCardSize,
+        hideHardwareMenu,
+        setHideHardwareMenu,
+        resetAppearance,
+      }}
     >
       {children}
     </AppearanceContext.Provider>
