@@ -6,6 +6,7 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import { useTranslation } from "react-i18next";
 import { getNavDestinations } from "./destinations";
+import { useAppearance } from "../theme/AppearanceProvider";
 
 export const BOTTOM_NAV_HEIGHT = 64;
 
@@ -13,7 +14,8 @@ const BottomNavBar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const navDestinations = getNavDestinations(t);
+  const { hideHardwareMenu } = useAppearance();
+  const navDestinations = getNavDestinations(t, { hideHardwareMenu });
 
   // Hide on scroll down, show on scroll up — so the nav never blocks content
   // at the bottom of the page (e.g. Save buttons) when the user scrolls there.

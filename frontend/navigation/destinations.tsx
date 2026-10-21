@@ -46,8 +46,14 @@ export interface NavDestination {
 // responsive nav patterns (bottom bar / rail / drawer) so they can never drift apart.
 // Takes `t` rather than being a static array so labels stay reactive to language changes;
 // call from inside a component with useTranslation()'s t.
-export function getNavDestinations(t: TFunction): NavDestination[] {
-  return [
+export interface NavDestinationOptions {
+  // Settings → Appearance: drop the Hardware destination from every nav surface
+  // (drawer, rail, bottom bar). The pages themselves stay reachable by URL.
+  hideHardwareMenu?: boolean;
+}
+
+export function getNavDestinations(t: TFunction, options?: NavDestinationOptions): NavDestination[] {
+  const destinations: NavDestination[] = [
     { to: "/", label: t("nav.dashboard"), icon: <DashboardIcon /> },
     {
       to: "/games",
@@ -124,4 +130,7 @@ export function getNavDestinations(t: TFunction): NavDestination[] {
       ],
     },
   ];
+  return options?.hideHardwareMenu
+    ? destinations.filter((destination) => destination.to !== "/hardware")
+    : destinations;
 }
