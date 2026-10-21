@@ -127,6 +127,10 @@ class Game(TimestampMixin, Base):
     igdb_url: Mapped[str | None] = mapped_column(String(1024))
     first_release_date: Mapped[int | None] = mapped_column(BigInteger)  # unix timestamp, from IGDB
     cover_url: Mapped[str | None] = mapped_column(String(1024))
+    # Spine art for Bookshelf mode — an uploaded local file (/uploads/spines/...)
+    # or an external URL, mirroring cover_url. Set via the dedicated spine
+    # endpoints (any game, IGDB-linked or not), never by IGDB sync itself.
+    spine_url: Mapped[str | None] = mapped_column(String(1024))
 
     # Store page links, cached at import/resync time from IGDB's websites relation (see
     # igdb_client.extract_store_urls) — same "fetch from IGDB once, persist, serve from DB"
