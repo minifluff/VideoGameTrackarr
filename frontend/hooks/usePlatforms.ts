@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createPlatform, deletePlatform, listLibraryPlatforms, listPlatforms, massMoveGames, setPlatformSpineTemplate, updatePlatform } from "../api/platforms";
+import { createPlatform, deletePlatform, listLibraryPlatforms, listPlatforms, massMoveGames, setPlatformCaseSize, setPlatformSpineTemplate, updatePlatform } from "../api/platforms";
 
 export function usePlatforms() {
   return useQuery({ queryKey: ["platforms"], queryFn: listPlatforms });
@@ -77,6 +77,22 @@ export function useSetPlatformSpineTemplate() {
   return useMutation({
     mutationFn: ({ platformId, spineUrl }: { platformId: number; spineUrl: string | null }) =>
       setPlatformSpineTemplate(platformId, spineUrl),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["platforms"] }),
+  });
+}
+
+export function useSetPlatformCaseSize() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      platformId,
+      heightMm,
+      spineMm,
+    }: {
+      platformId: number;
+      heightMm: number | null;
+      spineMm: number | null;
+    }) => setPlatformCaseSize(platformId, heightMm, spineMm),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["platforms"] }),
   });
 }
