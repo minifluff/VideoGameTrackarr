@@ -11,6 +11,7 @@ const SUB_NAV_ITEMS = [
   { to: "/games/collections", labelKey: "games.subNav.collections" },
   { to: "/games/series", labelKey: "games.subNav.series" },
   { to: "/games/platforms", labelKey: "games.subNav.platforms" },
+  { to: "/games/bookshelf", labelKey: "games.subNav.bookshelf" },
 ] as const;
 
 // Route-driven segmented control shown atop Games/Collections/Series/Platforms — these pages form
