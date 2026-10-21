@@ -376,7 +376,9 @@ const BookshelfPage = () => {
                             inset: 0,
                             width: "100%",
                             height: "100%",
-                            objectFit: "cover",
+                            // Templates are never cropped — the whole image is
+                            // scaled to the case, like a printed spine wrap.
+                            objectFit: "fill",
                             display: "block",
                           }}
                         />
