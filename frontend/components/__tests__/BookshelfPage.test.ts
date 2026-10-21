@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GameSummary, LibraryListItem, PlatformResponse } from "../../api/types";
-import { buildCaseFormats, buildShelves, caseFormatsKey, caseSize, indexPlatformsByLabel, packRows, spineStyle } from "../BookshelfPage";
+import { buildCaseFormats, buildShelves, buildTemplateCaseSizes, caseFormatsKey, caseSize, indexPlatformsByLabel, isMostlyWhite, packRows, spineStyle } from "../BookshelfPage";
 
 const game = (overrides: Partial<GameSummary>): GameSummary => ({
   id: 1,
@@ -157,26 +157,46 @@ describe("caseSize", () => {
   it("uses the flat spine size when the platform has no template", () => {
     const flat = spineStyle("PlayStation 5", 10);
     expect(caseSize("PlayStation 5", 10)).toEqual({ width: flat.width, height: flat.height });
-    expect(caseSize("PlayStation 5", 10, undefined)).toEqual({ width: flat.width, height: flat.height });
   });
 
-  it("sizes a templated case to the template's aspect at shelf height", () => {
-    // PS cases are 176 tall; a 1:4 template makes the case 44 wide, 176 tall.
-    expect(caseSize("PlayStation 5", 10, 0.25)).toEqual({ width: 44, height: 176 });
-    // A squarer 1:2 template makes it 88 wide, regardless of the game id.
-    expect(caseSize("PlayStation 5", 99, 0.5)).toEqual({ width: 88, height: 176 });
+  it("uses the precomputed template size when the platform has one", () => {
+    expect(caseSize("Steam", 10, { width: 48, height: 190 })).toEqual({ width: 48, height: 190 });
+  });
+});
+
+describe("buildTemplateCaseSizes", () => {
+  it("scales every template proportionally to the largest one", () => {
+    const sizes = buildTemplateCaseSizes(
+      new Map([
+        ["Steam", { naturalWidth: 400, naturalHeight: 1600, light: false }],
+        ["Switch", { naturalWidth: 300, naturalHeight: 1200, light: false }],
+      ]),
+      190
+    );
+    // Steam is the largest: full target height, width by proportion.
+    expect(sizes.get("Steam")).toEqual({ width: 48, height: 190 });
+    // Switch's template is 3/4 the height, so its case is 3/4 the size.
+    expect(sizes.get("Switch")).toEqual({ width: 36, height: 143 });
   });
 
-  it("grows the HEIGHT for very tall thin templates instead of distorting", () => {
-    // At 176 tall a 1:20 template would be 9px wide — under the 28px floor,
-    // so the case grows taller: 28 wide, 28 / 0.05 = 560 tall, aspect intact.
-    expect(caseSize("PlayStation 5", 10, 0.05)).toEqual({ width: 28, height: 560 });
+  it("returns nothing when no template has been measured", () => {
+    expect(buildTemplateCaseSizes(new Map()).size).toBe(0);
+  });
+});
+
+describe("isMostlyWhite", () => {
+  const rgba = (r: number, g: number, b: number, pixels = 4) =>
+    Array.from({ length: pixels }, () => [r, g, b, 255]).flat();
+
+  it("detects a white template", () => {
+    expect(isMostlyWhite(rgba(255, 255, 255))).toBe(true);
+    expect(isMostlyWhite(rgba(240, 238, 235))).toBe(true);
   });
 
-  it("caps very wide templates by height, keeping the aspect exact", () => {
-    // A 3:1 template at shelf height would be 528 wide — capped at 200 wide,
-    // height follows the aspect down to 67. Never stretched.
-    expect(caseSize("PlayStation 5", 10, 3)).toEqual({ width: 200, height: 67 });
+  it("does not flag dark or mid-tone templates", () => {
+    expect(isMostlyWhite(rgba(20, 20, 20))).toBe(false);
+    expect(isMostlyWhite(rgba(128, 128, 128))).toBe(false);
+    expect(isMostlyWhite(rgba(27, 71, 161))).toBe(false);
   });
 });
 
