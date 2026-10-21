@@ -121,10 +121,11 @@ const CatalogBrowseGrid = ({
   const [matchAll, setMatchAll] = useSessionState<MatchAllFilters>(`${stateKey}.matchAll`, {});
   const [steelbookOnly, setSteelbookOnly] = useSessionState(`${stateKey}.steelbookOnly`, false);
   const [sort, setSort] = useSessionState<GameSortOption>(`${stateKey}.sort`, "name_asc");
-  // Off by default (unlike the Games page's default-on) — preserves the pre-existing "only
-  // games I've added" view; a Resync (see CatalogResyncButton) is what starts populating
-  // games that are neither owned nor wishlisted here at all.
-  const [showMissing, setShowMissing] = useSessionState(`${stateKey}.showMissing`, false);
+  // On by default: the "what's missing" discoveries a Resync (see CatalogResyncButton)
+  // catalogues are the point of these pages — hiding them behind an off-by-default
+  // switch buried in the filter dialog made them effectively invisible (and
+  // impossible to clean up). The switch stays available to hide them.
+  const [showMissing, setShowMissing] = useSessionState(`${stateKey}.showMissing`, true);
   const [includeAddons, setIncludeAddons] = useSessionState(`${stateKey}.includeAddons`, false);
 
   const trimmedKeyword = searchKeyword.trim();
