@@ -14,6 +14,7 @@ import InfoIcon from "@mui/icons-material/Info";
 import InsightsIcon from "@mui/icons-material/Insights";
 import LabelIcon from "@mui/icons-material/Label";
 import ListIcon from "@mui/icons-material/List";
+import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 import MemoryIcon from "@mui/icons-material/Memory";
 import RefreshIcon from "@mui/icons-material/Refresh";
@@ -61,6 +62,7 @@ export function getNavDestinations(t: TFunction, options?: NavDestinationOptions
       icon: <GamesIcon />,
       subItems: [
         { to: "/games/add", label: t("nav.addGame"), icon: <AddIcon /> },
+        { to: "/games/bookshelf", label: t("nav.bookshelf"), icon: <LibraryBooksIcon /> },
         { to: "/games/list", label: t("nav.gamesList"), icon: <ListIcon /> },
         { to: "/games/playing", label: t("nav.playing"), icon: <SportsEsportsIcon /> },
         { to: "/games/wishlist", label: t("nav.wishlist"), icon: <LabelIcon /> },
