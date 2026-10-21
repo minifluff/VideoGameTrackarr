@@ -13,6 +13,7 @@ const AddGame = lazy(() => import("./components/AddGame"));
 const IgdbGamePreviewPage = lazy(() => import("./components/IgdbGamePreviewPage"));
 const CollectionPage = lazy(() => import("./components/CollectionPage"));
 const CollectionsPage = lazy(() => import("./components/CollectionsPage"));
+const BookshelfPage = lazy(() => import("./components/BookshelfPage"));
 const ComparePage = lazy(() => import("./components/ComparePage"));
 const DashboardPage = lazy(() => import("./components/DashboardPage"));
 const DeviceDetails = lazy(() => import("./components/DeviceDetails"));
@@ -152,6 +153,7 @@ const router = createBrowserRouter([
           },
           { path: "/games", element: <GameList />, handle: { crumbs: gamesCrumbs } },
           { path: "/games/list", element: <GamesListPage />, handle: { crumbs: gamesCrumbs } },
+          { path: "/games/bookshelf", element: <BookshelfPage />, handle: { crumbs: gamesCrumbs } },
           { path: "/games/playing", element: <PlayingGamesPage />, handle: { crumbs: gamesCrumbs } },
           { path: "/games/wishlist", element: <WishlistGamesPage />, handle: { crumbs: gamesCrumbs } },
           { path: "/games/add", element: <AddGame />, handle: { crumbs: addGameCrumbs } },
