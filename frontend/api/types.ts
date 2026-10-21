@@ -23,6 +23,9 @@ export interface PlatformResponse {
   abbreviation: string | null;
   // Bookshelf mode: blank spine template image for this platform's cases.
   spineTemplateUrl: string | null;
+  // Bookshelf mode: user-chosen actual case size (mm) for this platform.
+  caseHeightMm: number | null;
+  caseSpineMm: number | null;
   gameCount: number;
 }
 

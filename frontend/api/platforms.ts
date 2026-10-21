@@ -82,3 +82,15 @@ export async function setPlatformSpineTemplate(
   );
   return response.data;
 }
+
+export async function setPlatformCaseSize(
+  platformId: number,
+  heightMm: number | null,
+  spineMm: number | null
+): Promise<PlatformResponse> {
+  const response = await apiClient.put<PlatformResponse>(`/api/platforms/${platformId}/case-size`, {
+    heightMm,
+    spineMm,
+  });
+  return response.data;
+}
