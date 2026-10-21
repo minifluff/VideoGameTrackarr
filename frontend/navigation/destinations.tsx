@@ -62,6 +62,7 @@ export function getNavDestinations(t: TFunction, options?: NavDestinationOptions
       icon: <GamesIcon />,
       subItems: [
         { to: "/games/add", label: t("nav.addGame"), icon: <AddIcon /> },
+        { to: "/games/bookshelf", label: t("nav.bookshelf"), icon: <LibraryBooksIcon /> },
         { to: "/games/list", label: t("nav.gamesList"), icon: <ListIcon /> },
         { to: "/games/playing", label: t("nav.playing"), icon: <SportsEsportsIcon /> },
         { to: "/games/wishlist", label: t("nav.wishlist"), icon: <LabelIcon /> },
@@ -70,7 +71,6 @@ export function getNavDestinations(t: TFunction, options?: NavDestinationOptions
         { to: "/games/platforms", label: t("nav.platforms"), icon: <SportsEsportsIcon /> },
       ],
     },
-    { to: "/games/bookshelf", label: t("nav.bookshelf"), icon: <LibraryBooksIcon /> },
     {
       to: "/hardware",
       label: t("nav.hardware"),
