@@ -1094,7 +1094,17 @@
       "title": "Bookshelf",
       "summary": "{{cases}} cases on the shelf",
       "searchPlaceholder": "Search the shelf…",
-      "empty": "Nothing on the shelf yet — own some games first."
+      "empty": "Nothing on the shelf yet — own some games first.",
+      "template": {
+        "title": "Spine template · {{platform}}",
+        "forPlatform": "Spine template for {{platform}}",
+        "hint": "This image becomes the blank spine behind every case of this platform on the shelf. Game titles print over it.",
+        "empty": "No template yet — this platform's cases use the plain platform colour.",
+        "upload": "Upload template",
+        "replace": "Replace",
+        "remove": "Remove",
+        "saveError": "That template couldn't be saved"
+      }
     }
   },
   "events": {
