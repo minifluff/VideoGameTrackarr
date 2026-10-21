@@ -15,12 +15,15 @@ def test_list_franchises_requires_auth(client):
     assert response.status_code == 401
 
 
-def test_list_franchises_returns_only_franchises_with_local_games(auth_client, db_session, seed_game):
+def test_list_franchises_returns_only_franchises_with_local_games(auth_client, db_session, seed_game, seed_platform):
     franchise = Franchise(igdb_id=979, name="The Sims", slug="the-sims")
     empty_franchise = Franchise(igdb_id=980, name="Nothing Synced Here")
     db_session.add_all([franchise, empty_franchise])
     db_session.commit()
     db_session.add(GameFranchise(game_id=seed_game.id, franchise_id=franchise.id))
+    db_session.add(
+        LibraryItem(game_id=seed_game.id, platform_id=seed_platform.id, status=LibraryStatus.OWNED)
+    )
     db_session.commit()
 
     response = auth_client.get("/api/franchises")
@@ -94,12 +97,15 @@ def test_list_collections_requires_auth(client):
     assert response.status_code == 401
 
 
-def test_list_collections_returns_only_collections_with_local_games(auth_client, db_session, seed_game):
+def test_list_collections_returns_only_collections_with_local_games(auth_client, db_session, seed_game, seed_platform):
     collection = Collection(igdb_id=61, name="The Sims Collection", slug="the-sims-collection")
     empty_collection = Collection(igdb_id=62, name="Nothing Synced Here")
     db_session.add_all([collection, empty_collection])
     db_session.commit()
     db_session.add(GameCollection(game_id=seed_game.id, collection_id=collection.id))
+    db_session.add(
+        LibraryItem(game_id=seed_game.id, platform_id=seed_platform.id, status=LibraryStatus.OWNED)
+    )
     db_session.commit()
 
     response = auth_client.get("/api/collections")
@@ -150,11 +156,12 @@ def test_get_collection_returns_locally_known_games(auth_client, db_session, see
     assert game["id"] == seed_game.id
 
 
-def test_get_franchise_excludes_addons_from_the_game_list(auth_client, db_session, seed_game):
+def test_get_franchise_excludes_addons_from_the_game_list(auth_client, db_session, seed_game, seed_platform):
     """A DLC/expansion/pack that happens to share a franchise with its parent game must not
     clutter the franchise's Details page — it's still reachable via the parent's own Addons
     tab. Regression test for the same _is_browsable_game/parent_game_id filter the main
-    Games list already applies."""
+    Games list already applies. (The index count is owned-only, so the seed game gets an
+    owned copy — that's what makes the asserted count 1.)"""
     addon = Game(
         igdb_id=5006,
         name="Test Game: Some DLC",
@@ -169,6 +176,9 @@ def test_get_franchise_excludes_addons_from_the_game_list(auth_client, db_sessio
     db_session.add(GameFranchise(game_id=seed_game.id, franchise_id=franchise.id))
     db_session.add(GameFranchise(game_id=addon.id, franchise_id=franchise.id))
     db_session.add(GameFranchise(game_id=non_hierarchical_excluded.id, franchise_id=franchise.id))
+    db_session.add(
+        LibraryItem(game_id=seed_game.id, platform_id=seed_platform.id, status=LibraryStatus.OWNED)
+    )
     db_session.commit()
 
     list_response = auth_client.get("/api/franchises")
@@ -185,7 +195,7 @@ def test_get_franchise_excludes_addons_from_the_game_list(auth_client, db_sessio
     assert franchise_addon["id"] == addon.id
 
 
-def test_get_collection_excludes_addons_from_the_game_list(auth_client, db_session, seed_game):
+def test_get_collection_excludes_addons_from_the_game_list(auth_client, db_session, seed_game, seed_platform):
     """Same regression as the franchise equivalent above, for collections."""
     addon = Game(
         igdb_id=5008,
@@ -199,6 +209,9 @@ def test_get_collection_excludes_addons_from_the_game_list(auth_client, db_sessi
     db_session.commit()
     db_session.add(GameCollection(game_id=seed_game.id, collection_id=collection.id))
     db_session.add(GameCollection(game_id=addon.id, collection_id=collection.id))
+    db_session.add(
+        LibraryItem(game_id=seed_game.id, platform_id=seed_platform.id, status=LibraryStatus.OWNED)
+    )
     db_session.commit()
 
     list_response = auth_client.get("/api/collections")
@@ -210,6 +223,43 @@ def test_get_collection_excludes_addons_from_the_game_list(auth_client, db_sessi
     assert game["id"] == seed_game.id
     [collection_addon] = body["addons"]
     assert collection_addon["id"] == addon.id
+
+
+def test_index_counts_owned_games_only(auth_client, db_session, seed_game, seed_platform):
+    """The number on the Collections/Series index is the OWNED count: wishlisted and
+    "what's missing" discovered members don't count, and an entry with no owned games
+    at all stays listed showing 0 rather than disappearing."""
+    wishlisted = Game(igdb_id=5010, name="Wishlisted Member", category=GameCategory.MAIN_GAME)
+    missing = Game(
+        igdb_id=5011, name="Missing Member", category=GameCategory.MAIN_GAME, auto_discovered=True
+    )
+    zero_owned_member = Game(igdb_id=5012, name="Only Member", category=GameCategory.MAIN_GAME)
+    db_session.add_all([wishlisted, missing, zero_owned_member])
+    collection = Collection(igdb_id=71, name="Mixed Collection", slug="mixed-collection")
+    empty_collection = Collection(igdb_id=72, name="Unowned Collection", slug="unowned-collection")
+    franchise = Franchise(igdb_id=980, name="Mixed Series", slug="mixed-series")
+    db_session.add_all([collection, empty_collection, franchise])
+    db_session.commit()
+    for game in (seed_game, wishlisted, missing):
+        db_session.add(GameCollection(game_id=game.id, collection_id=collection.id))
+        db_session.add(GameFranchise(game_id=game.id, franchise_id=franchise.id))
+    db_session.add(GameCollection(game_id=zero_owned_member.id, collection_id=empty_collection.id))
+    db_session.add_all(
+        [
+            LibraryItem(game_id=seed_game.id, platform_id=seed_platform.id, status=LibraryStatus.OWNED),
+            LibraryItem(
+                game_id=wishlisted.id, platform_id=seed_platform.id, status=LibraryStatus.WISHLIST
+            ),
+        ]
+    )
+    db_session.commit()
+
+    collections = {entry["slug"]: entry["gameCount"] for entry in auth_client.get("/api/collections").json()}
+    franchises = {entry["slug"]: entry["gameCount"] for entry in auth_client.get("/api/franchises").json()}
+
+    assert collections["mixed-collection"] == 1
+    assert franchises["mixed-series"] == 1
+    assert collections["unowned-collection"] == 0
 
 
 def test_collection_with_only_addon_members_is_excluded_entirely(auth_client, db_session, seed_game):
