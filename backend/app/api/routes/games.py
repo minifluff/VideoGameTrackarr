@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, File, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db, get_igdb_client, get_session_factory
@@ -14,6 +14,9 @@ from app.schemas.game import (
     GameDetailResponse,
     GameImportRequest,
     GameSummaryResponse,
+    SpineImportMatched,
+    SpineImportResponse,
+    SpineUpdateRequest,
     game_detail_from_orm,
     game_summary_from_orm,
 )
@@ -24,6 +27,7 @@ from app.services import (
     insight_service,
     manual_game_service,
     progress_service,
+    spine_import_service,
     tag_service,
 )
 from app.services.igdb_client import IGDBClient
@@ -157,6 +161,34 @@ def delete_game(game_id: int, db: Session = Depends(get_db)) -> None:
 def claim_discovered_game(game_id: int, db: Session = Depends(get_db)) -> GameDetailResponse:
     game = game_service.claim_discovered_game(db, game_id)
     return _game_detail_response(db, game)
+
+
+@router.put("/{game_id}/spine", response_model=GameDetailResponse)
+def set_game_spine(
+    game_id: int, body: SpineUpdateRequest, db: Session = Depends(get_db)
+) -> GameDetailResponse:
+    game = game_service.set_game_spine(db, game_id, body.spine_url)
+    return _game_detail_response(db, game)
+
+
+@router.post("/spine-import", response_model=SpineImportResponse)
+async def import_spines(
+    files: list[UploadFile] = File(...), db: Session = Depends(get_db)
+) -> SpineImportResponse:
+    """One batch of a Bookshelf spine-art folder import — the client chunks a
+    picked folder (LaunchBox 'Box - Spine' layout) into small batches and
+    accumulates the per-batch results. Filenames carry the folder path."""
+    payload = [(file.filename or "", await file.read()) for file in files]
+    result = spine_import_service.import_spine_files(db, payload)
+    return SpineImportResponse(
+        matched=[
+            SpineImportMatched(game_id=entry["gameId"], name=entry["name"], path=entry["path"])
+            for entry in result.matched
+        ],
+        unmatched=result.unmatched,
+        ambiguous=result.ambiguous,
+        invalid=result.invalid,
+    )
 
 
 class GameVisibilityUpdateRequest(CamelModel):
