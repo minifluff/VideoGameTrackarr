@@ -269,3 +269,33 @@ export async function updateManualGame(
   const response = await apiClient.patch<GameDetail>(`/api/games/${gameId}/manual`, input);
   return response.data;
 }
+
+
+export interface SpineImportMatched {
+  gameId: number;
+  name: string;
+  path: string;
+}
+
+export interface SpineImportResult {
+  matched: SpineImportMatched[];
+  unmatched: string[];
+  ambiguous: string[];
+  invalid: string[];
+}
+
+export async function setGameSpine(gameId: number, spineUrl: string | null): Promise<GameDetail> {
+  const response = await apiClient.put<GameDetail>(`/api/games/${gameId}/spine`, { spineUrl });
+  return response.data;
+}
+
+export async function importSpines(files: File[]): Promise<SpineImportResult> {
+  const formData = new FormData();
+  // The filename carries the folder path (webkitRelativePath from the folder
+  // picker) — the backend parses the LaunchBox "Box - Spine" layout from it.
+  for (const file of files) {
+    formData.append("files", file, file.webkitRelativePath || file.name);
+  }
+  const response = await apiClient.post<SpineImportResult>("/api/games/spine-import", formData);
+  return response.data;
+}

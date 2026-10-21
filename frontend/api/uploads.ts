@@ -11,6 +11,13 @@ export async function uploadCover(file: File): Promise<UploadResult> {
   return response.data;
 }
 
+export async function uploadSpine(file: File): Promise<UploadResult> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await apiClient.post<UploadResult>("/api/uploads/spines", formData);
+  return response.data;
+}
+
 export async function uploadAccessoryImage(file: File): Promise<UploadResult> {
   const formData = new FormData();
   formData.append("file", file);

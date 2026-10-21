@@ -51,6 +51,9 @@ export interface GameSummary {
   name: string;
   slug: string | null;
   coverUrl: string | null;
+  // Spine art for Bookshelf mode — an uploaded /uploads/spines/... URL or an
+  // external one; null renders a generated platform-coloured spine instead.
+  spineUrl: string | null;
   category: GameCategory | null;
   firstReleaseDate: number | null;
   owned: boolean;
