@@ -543,7 +543,10 @@
       "uploadIcon": "Upload custom icon",
       "customIcon": "Custom icon",
       "defaultIcon": "Default icon",
-      "iconTooLarge": "Image must be under 500KB"
+      "iconTooLarge": "Image must be under 500KB",
+      "navigationHeading": "Navigation",
+      "hideHardwareMenu": "Hide Hardware menu",
+      "hideHardwareMenuHelp": "Removes Hardware from the main menu (drawer, side rail, and bottom bar). Hardware pages stay reachable by direct link."
     },
     "displayMode": {
       "heading": "Display Mode",
