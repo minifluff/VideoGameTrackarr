@@ -71,3 +71,14 @@ export async function massMoveGames(sourceId: number, targetId: number): Promise
   );
   return response.data;
 }
+
+export async function setPlatformSpineTemplate(
+  platformId: number,
+  spineUrl: string | null
+): Promise<PlatformResponse> {
+  const response = await apiClient.put<PlatformResponse>(
+    `/api/platforms/${platformId}/spine-template`,
+    { spineUrl }
+  );
+  return response.data;
+}

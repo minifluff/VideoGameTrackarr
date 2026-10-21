@@ -21,6 +21,8 @@ export interface PlatformResponse {
   name: string;
   slug: string | null;
   abbreviation: string | null;
+  // Bookshelf mode: blank spine template image for this platform's cases.
+  spineTemplateUrl: string | null;
   gameCount: number;
 }
 
