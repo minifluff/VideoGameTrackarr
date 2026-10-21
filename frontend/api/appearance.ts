@@ -5,6 +5,7 @@ export interface AppearanceSettings {
   appTitle: string;
   appIcon: string;
   cardSize: number;
+  hideHardwareMenu: boolean;
 }
 
 export async function getAppearance(): Promise<AppearanceSettings> {
