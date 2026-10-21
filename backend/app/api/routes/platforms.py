@@ -7,6 +7,7 @@ from app.models.library import MediaFormat
 from app.schemas.game import GameSummaryResponse, game_summary_from_orm
 from app.schemas.platform import LibraryPlatformResponse
 from app.schemas.platform_detail import (
+    PlatformCaseSizeRequest,
     PlatformCreateRequest,
     PlatformDetailResponse,
     PlatformSpineTemplateRequest,
@@ -86,6 +87,14 @@ def set_platform_spine_template(
     platform_id: int, body: PlatformSpineTemplateRequest, db: Session = Depends(get_db)
 ) -> PlatformSummaryResponse:
     platform = platform_service.set_platform_spine_template(db, platform_id, body.spine_url)
+    return platform_summary_from_orm(platform, 0)
+
+
+@router.put("/{platform_id}/case-size", response_model=PlatformSummaryResponse)
+def set_platform_case_size(
+    platform_id: int, body: PlatformCaseSizeRequest, db: Session = Depends(get_db)
+) -> PlatformSummaryResponse:
+    platform = platform_service.set_platform_case_size(db, platform_id, body.height_mm, body.spine_mm)
     return platform_summary_from_orm(platform, 0)
 
 
