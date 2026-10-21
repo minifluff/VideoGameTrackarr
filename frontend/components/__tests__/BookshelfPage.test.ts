@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GameSummary, LibraryListItem, PlatformResponse } from "../../api/types";
-import { buildCaseFormats, buildShelves, caseFormatsKey, indexPlatformsByLabel, packRows, spineStyle } from "../BookshelfPage";
+import { buildCaseFormats, buildShelves, caseFormatsKey, caseWidth, indexPlatformsByLabel, packRows, spineStyle } from "../BookshelfPage";
 
 const game = (overrides: Partial<GameSummary>): GameSummary => ({
   id: 1,
@@ -150,6 +150,25 @@ describe("indexPlatformsByLabel", () => {
     expect(index.get("PS5")?.id).toBe(1);
     expect(index.get("Nintendo Switch")?.id).toBe(2);
     expect(index.get("PlayStation 5")).toBeUndefined();
+  });
+});
+
+describe("caseWidth", () => {
+  it("uses the flat spine width when the platform has no template", () => {
+    expect(caseWidth("PlayStation 5", 10)).toBe(spineStyle("PlayStation 5", 10).width);
+    expect(caseWidth("PlayStation 5", 10, undefined)).toBe(spineStyle("PlayStation 5", 10).width);
+  });
+
+  it("sizes a templated case to the template's aspect at shelf height", () => {
+    // PS cases are 176 tall; a 1:4 template makes the case 44 wide.
+    expect(caseWidth("PlayStation 5", 10, 0.25)).toBe(44);
+    // A squarer 1:2 template makes it 88 wide, regardless of the game id.
+    expect(caseWidth("PlayStation 5", 99, 0.5)).toBe(88);
+  });
+
+  it("clamps templated case widths to sane bounds", () => {
+    expect(caseWidth("PlayStation 5", 10, 0.05)).toBe(28);
+    expect(caseWidth("PlayStation 5", 10, 3)).toBe(200);
   });
 });
 
