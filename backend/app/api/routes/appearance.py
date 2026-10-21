@@ -27,5 +27,7 @@ def update_appearance(
         accent_color=body.accent_color,
         app_title=body.app_title,
         app_icon=body.app_icon,
+        card_size=body.card_size,
+        hide_hardware_menu=body.hide_hardware_menu,
     )
     return AppearanceSettingsResponse(**settings)
