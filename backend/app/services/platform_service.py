@@ -81,6 +81,23 @@ def update_platform(
     return platform
 
 
+def set_platform_spine_template(db: Session, platform_id: int, spine_url: str | None) -> Platform:
+    """Set (or clear, with None) the platform's Bookshelf spine template.
+
+    Replacing or clearing removes the previous local upload so orphaned
+    template files don't pile up in the uploads volume.
+    """
+    from app.services.upload_service import delete_spine_if_local
+
+    platform = _require_platform(db, platform_id)
+    if platform.spine_template_url and platform.spine_template_url != spine_url:
+        delete_spine_if_local(platform.spine_template_url)
+    platform.spine_template_url = spine_url
+    db.commit()
+    db.refresh(platform)
+    return platform
+
+
 def delete_platform(db: Session, platform_id: int) -> None:
     platform = _require_platform(db, platform_id)
     platform_repository.delete_platform(db, platform)
