@@ -115,35 +115,60 @@ export function spineStyle(platform: string, gameId: number) {
   };
 }
 
-// A case on a platform WITH a spine template is sized to the template's own
-// proportions: BOTH dimensions come from the image's aspect ratio, so the
-// template fills the case exactly — scaled, never cropped, never stretched,
-// no empty space. Starting from the platform's shelf height, the width
-// follows the aspect; if that width would be too thin, the case grows
-// TALLER instead (height is never frozen), and if it would be too wide the
-// height comes down — the aspect is sacred either way. Without a template,
-// the varied flat-spine size is used.
-export const TEMPLATE_CASE_MIN_WIDTH = 28;
-export const TEMPLATE_CASE_MAX_WIDTH = 200;
+// What the shelf measures from a template image when it loads: its natural
+// pixel size (cases are scaled from it) and whether it's mostly white (the
+// case title then prints black instead of white).
+export interface TemplateInfo {
+  naturalWidth: number;
+  naturalHeight: number;
+  light: boolean;
+}
+
+// Mean per-pixel luminance of an RGBA sample; "mostly white" is a bright
+// average, so a template that's white with a small dark logo still counts.
+export function isMostlyWhite(rgba: ArrayLike<number>): boolean {
+  let total = 0;
+  let pixels = 0;
+  for (let i = 0; i + 2 < rgba.length; i += 4) {
+    total += (rgba[i] + rgba[i + 1] + rgba[i + 2]) / 3;
+    pixels += 1;
+  }
+  return pixels > 0 && total / pixels >= 205;
+}
+
+// Templated cases share ONE scale, set by the largest template: the tallest
+// template image renders at TEMPLATE_TARGET_HEIGHT and every other template
+// scales proportionally to it — so templates keep their true relative sizes
+// on the shelf, fill their cases exactly, and are never cropped or stretched.
+export const TEMPLATE_TARGET_HEIGHT = 190;
+export function buildTemplateCaseSizes(
+  info: Map<string, TemplateInfo>,
+  targetHeight: number = TEMPLATE_TARGET_HEIGHT
+): Map<string, { width: number; height: number }> {
+  const sizes = new Map<string, { width: number; height: number }>();
+  let largest = 0;
+  for (const template of info.values()) {
+    largest = Math.max(largest, template.naturalHeight);
+  }
+  if (largest <= 0) return sizes;
+  const scale = targetHeight / largest;
+  for (const [label, template] of info) {
+    sizes.set(label, {
+      width: Math.max(1, Math.round(template.naturalWidth * scale)),
+      height: Math.max(1, Math.round(template.naturalHeight * scale)),
+    });
+  }
+  return sizes;
+}
+
 export function caseSize(
   platform: string,
   gameId: number,
-  templateAspect?: number
+  templateSize?: { width: number; height: number }
 ): { width: number; height: number } {
+  if (templateSize) return templateSize;
   const flat = spineStyle(platform, gameId);
-  if (!templateAspect || templateAspect <= 0) {
-    return { width: flat.width, height: flat.height };
-  }
-  let width = flat.height * templateAspect;
-  let height = flat.height;
-  if (width < TEMPLATE_CASE_MIN_WIDTH) {
-    width = TEMPLATE_CASE_MIN_WIDTH;
-    height = width / templateAspect;
-  } else if (width > TEMPLATE_CASE_MAX_WIDTH) {
-    width = TEMPLATE_CASE_MAX_WIDTH;
-    height = width / templateAspect;
-  }
-  return { width: Math.round(width), height: Math.round(height) };
+  return { width: flat.width, height: flat.height };
 }
 
 export interface ShelfRowItem {
@@ -165,7 +190,7 @@ const CASE_GAP = 3;
 export function packRows(
   shelves: Shelf[],
   maxWidth: number,
-  templateAspects?: Map<string, number>
+  templateSizes?: Map<string, { width: number; height: number }>
 ): ShelfRowItem[][] {
   const items: ShelfRowItem[] = [];
   for (const shelf of shelves) {
@@ -176,7 +201,7 @@ export function packRows(
       height: spineStyle(shelf.platform, 0).height,
     });
     for (const entry of shelf.cases) {
-      const size = caseSize(entry.platform, entry.game.id, templateAspects?.get(entry.platform));
+      const size = caseSize(entry.platform, entry.game.id, templateSizes?.get(entry.platform));
       items.push({
         kind: "case",
         platform: shelf.platform,
@@ -223,28 +248,47 @@ const BookshelfPage = () => {
   const { data: platforms } = usePlatforms();
   const caseFormats = useMemo(() => buildCaseFormats(items, platforms), [items, platforms]);
   const platformsByLabel = useMemo(() => indexPlatformsByLabel(platforms), [platforms]);
-  // Natural aspect (w/h) of each platform's template image, measured on load —
-  // cases are sized from it, so it has to be known before rows are packed.
-  const [templateAspects, setTemplateAspects] = useState<Map<string, number>>(new Map());
+  // Each template image is measured when it loads: natural size (cases are
+  // scaled proportionally from it, largest template sets the scale) and
+  // whiteness (a mostly-white template gets black title text).
+  const [templateInfo, setTemplateInfo] = useState<Map<string, TemplateInfo>>(new Map());
   useEffect(() => {
     for (const platform of platforms ?? []) {
       if (!platform.spineTemplateUrl) continue;
       const label = platform.abbreviation ?? platform.name;
-      if (templateAspects.has(label)) continue;
+      if (templateInfo.has(label)) continue;
       const image = new Image();
       image.onload = () => {
-        if (image.naturalHeight > 0) {
-          setTemplateAspects((previous) => {
-            if (previous.has(label)) return previous;
-            const next = new Map(previous);
-            next.set(label, image.naturalWidth / image.naturalHeight);
-            return next;
-          });
+        if (image.naturalHeight <= 0) return;
+        let light = false;
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = 16;
+          canvas.height = 16;
+          const context = canvas.getContext("2d");
+          if (context) {
+            context.drawImage(image, 0, 0, 16, 16);
+            light = isMostlyWhite(context.getImageData(0, 0, 16, 16).data);
+          }
+        } catch {
+          light = false;
         }
+        const info: TemplateInfo = {
+          naturalWidth: image.naturalWidth,
+          naturalHeight: image.naturalHeight,
+          light,
+        };
+        setTemplateInfo((previous) => {
+          if (previous.has(label)) return previous;
+          const next = new Map(previous);
+          next.set(label, info);
+          return next;
+        });
       };
       image.src = resolveAssetUrl(platform.spineTemplateUrl) ?? platform.spineTemplateUrl;
     }
-  }, [platforms, templateAspects]);
+  }, [platforms, templateInfo]);
+  const templateCaseSizes = useMemo(() => buildTemplateCaseSizes(templateInfo), [templateInfo]);
   const formatOptions = useMemo(
     () => [...new Set([...caseFormats.values()].flatMap((set) => [...set]))].sort(),
     [caseFormats]
@@ -289,8 +333,8 @@ const BookshelfPage = () => {
     return () => observer.disconnect();
   }, []);
   const rows = useMemo(
-    () => packRows(visibleShelves, Math.max(shelfWidth - 16, 200), templateAspects),
-    [visibleShelves, shelfWidth, templateAspects]
+    () => packRows(visibleShelves, Math.max(shelfWidth - 16, 200), templateCaseSizes),
+    [visibleShelves, shelfWidth, templateCaseSizes]
   );
 
   return (
@@ -411,6 +455,9 @@ const BookshelfPage = () => {
                   const entry = item.entry!;
                   const style = spineStyle(entry.platform, entry.game.id);
                   const templateUrl = platformsByLabel.get(entry.platform)?.spineTemplateUrl ?? null;
+                  const templateLight = templateUrl
+                    ? (templateInfo.get(entry.platform)?.light ?? false)
+                    : false;
                   return (
                     <Box
                       key={`${entry.game.id}-${entry.platform}`}
@@ -430,7 +477,7 @@ const BookshelfPage = () => {
                         transition: "transform 120ms ease",
                         "&:hover": { transform: "translateY(-6px)" },
                         backgroundColor: style.background,
-                        color: templateUrl ? "#ffffff" : style.color,
+                        color: templateUrl ? (templateLight ? "#161616" : "#ffffff") : style.color,
                         boxShadow: "inset -3px 0 5px rgba(0,0,0,0.35), inset 2px 0 3px rgba(255,255,255,0.15)",
                       }}
                     >
@@ -469,7 +516,11 @@ const BookshelfPage = () => {
                           height: "100%",
                           position: "relative",
                           ...(templateUrl
-                            ? { textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 0 7px rgba(0,0,0,0.75)" }
+                            ? {
+                                textShadow: templateLight
+                                  ? "0 1px 2px rgba(255,255,255,0.65), 0 0 5px rgba(255,255,255,0.5)"
+                                  : "0 1px 3px rgba(0,0,0,0.95), 0 0 7px rgba(0,0,0,0.75)",
+                              }
                             : {}),
                         }}
                       >
