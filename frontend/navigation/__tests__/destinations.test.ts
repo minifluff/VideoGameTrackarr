@@ -11,10 +11,14 @@ describe("getNavDestinations", () => {
     expect(tos).toContain("/hardware");
   });
 
-  it("puts Bookshelf in the Games menu right after Add Game", () => {
-    const games = getNavDestinations(t).find((destination) => destination.to === "/games");
-    const subTos = (games?.subItems ?? []).map((item) => item.to);
-    expect(subTos.indexOf("/games/bookshelf")).toBe(subTos.indexOf("/games/add") + 1);
+  it("puts Bookshelf in the main menu right after Games as a top-level destination", () => {
+    // Top-level (not a Games sub-item) so it renders on every nav surface —
+    // the mobile bottom bar and the rail only show top-level destinations.
+    const destinations = getNavDestinations(t);
+    const tos = destinations.map((destination) => destination.to);
+    expect(tos.indexOf("/games/bookshelf")).toBe(tos.indexOf("/games") + 1);
+    const games = destinations.find((destination) => destination.to === "/games");
+    expect((games?.subItems ?? []).map((item) => item.to)).not.toContain("/games/bookshelf");
   });
 
   it("omits only the Hardware destination when hideHardwareMenu is on", () => {
