@@ -115,6 +115,25 @@ export function spineStyle(platform: string, gameId: number) {
   };
 }
 
+// A case on a platform WITH a spine template is sized to the template's own
+// proportions: at the platform's shelf height, the width follows the image's
+// aspect ratio, so the template fills the case exactly — scaled, never
+// cropped, never stretched, no empty space. Cases grow as needed ("larger")
+// to fit the template properly. Without a template, the varied flat-spine
+// width is used.
+export const TEMPLATE_CASE_MIN_WIDTH = 28;
+export const TEMPLATE_CASE_MAX_WIDTH = 200;
+export function caseWidth(platform: string, gameId: number, templateAspect?: number): number {
+  if (templateAspect && templateAspect > 0) {
+    const height = spineStyle(platform, gameId).height;
+    return Math.min(
+      TEMPLATE_CASE_MAX_WIDTH,
+      Math.max(TEMPLATE_CASE_MIN_WIDTH, Math.round(height * templateAspect))
+    );
+  }
+  return spineStyle(platform, gameId).width;
+}
+
 export interface ShelfRowItem {
   kind: "bookend" | "case";
   platform: string;
@@ -130,7 +149,11 @@ const CASE_GAP = 3;
 // packed greedily against the measured shelf width so EVERY row sits on its
 // own shelf board. A platform's bookend tile leads its first case and is
 // never left orphaned at a row's end.
-export function packRows(shelves: Shelf[], maxWidth: number): ShelfRowItem[][] {
+export function packRows(
+  shelves: Shelf[],
+  maxWidth: number,
+  templateAspects?: Map<string, number>
+): ShelfRowItem[][] {
   const items: ShelfRowItem[] = [];
   for (const shelf of shelves) {
     items.push({ kind: "bookend", platform: shelf.platform, width: BOOKEND_WIDTH });
@@ -139,7 +162,7 @@ export function packRows(shelves: Shelf[], maxWidth: number): ShelfRowItem[][] {
         kind: "case",
         platform: shelf.platform,
         entry,
-        width: spineStyle(entry.platform, entry.game.id).width,
+        width: caseWidth(entry.platform, entry.game.id, templateAspects?.get(entry.platform)),
       });
     }
   }
@@ -180,6 +203,28 @@ const BookshelfPage = () => {
   const { data: platforms } = usePlatforms();
   const caseFormats = useMemo(() => buildCaseFormats(items, platforms), [items, platforms]);
   const platformsByLabel = useMemo(() => indexPlatformsByLabel(platforms), [platforms]);
+  // Natural aspect (w/h) of each platform's template image, measured on load —
+  // cases are sized from it, so it has to be known before rows are packed.
+  const [templateAspects, setTemplateAspects] = useState<Map<string, number>>(new Map());
+  useEffect(() => {
+    for (const platform of platforms ?? []) {
+      if (!platform.spineTemplateUrl) continue;
+      const label = platform.abbreviation ?? platform.name;
+      if (templateAspects.has(label)) continue;
+      const image = new Image();
+      image.onload = () => {
+        if (image.naturalHeight > 0) {
+          setTemplateAspects((previous) => {
+            if (previous.has(label)) return previous;
+            const next = new Map(previous);
+            next.set(label, image.naturalWidth / image.naturalHeight);
+            return next;
+          });
+        }
+      };
+      image.src = resolveAssetUrl(platform.spineTemplateUrl) ?? platform.spineTemplateUrl;
+    }
+  }, [platforms, templateAspects]);
   const formatOptions = useMemo(
     () => [...new Set([...caseFormats.values()].flatMap((set) => [...set]))].sort(),
     [caseFormats]
@@ -224,8 +269,8 @@ const BookshelfPage = () => {
     return () => observer.disconnect();
   }, []);
   const rows = useMemo(
-    () => packRows(visibleShelves, Math.max(shelfWidth - 16, 200)),
-    [visibleShelves, shelfWidth]
+    () => packRows(visibleShelves, Math.max(shelfWidth - 16, 200), templateAspects),
+    [visibleShelves, shelfWidth, templateAspects]
   );
 
   return (
@@ -244,43 +289,46 @@ const BookshelfPage = () => {
             {t("games.bookshelf.summary", { cases: totalCases })}
           </Typography>
         </Box>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+        <Stack spacing={1.5} sx={{ width: "100%", flex: { sm: 1 }, maxWidth: { sm: 620 } }}>
           <TextField
             size="small"
+            fullWidth
             placeholder={t("games.bookshelf.searchPlaceholder")}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
-          <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel>{t("games.listPage.platformColumn")}</InputLabel>
-            <Select
-              value={platformFilter}
-              label={t("games.listPage.platformColumn")}
-              onChange={(event) => setPlatformFilter(event.target.value)}
-            >
-              <MenuItem value="all">{t("common.all")}</MenuItem>
-              {shelves.map((shelf) => (
-                <MenuItem key={shelf.platform} value={shelf.platform}>
-                  {shelf.platform}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel>{t("games.listPage.formatColumn")}</InputLabel>
-            <Select
-              value={formatFilter}
-              label={t("games.listPage.formatColumn")}
-              onChange={(event) => setFormatFilter(event.target.value)}
-            >
-              <MenuItem value="all">{t("common.all")}</MenuItem>
-              {formatOptions.map((format) => (
-                <MenuItem key={format} value={format}>
-                  {format}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Stack direction="row" spacing={1.5}>
+            <FormControl size="small" sx={{ flex: 1, minWidth: 0 }}>
+              <InputLabel>{t("games.listPage.platformColumn")}</InputLabel>
+              <Select
+                value={platformFilter}
+                label={t("games.listPage.platformColumn")}
+                onChange={(event) => setPlatformFilter(event.target.value)}
+              >
+                <MenuItem value="all">{t("common.all")}</MenuItem>
+                {shelves.map((shelf) => (
+                  <MenuItem key={shelf.platform} value={shelf.platform}>
+                    {shelf.platform}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ flex: 1, minWidth: 0 }}>
+              <InputLabel>{t("games.listPage.formatColumn")}</InputLabel>
+              <Select
+                value={formatFilter}
+                label={t("games.listPage.formatColumn")}
+                onChange={(event) => setFormatFilter(event.target.value)}
+              >
+                <MenuItem value="all">{t("common.all")}</MenuItem>
+                {formatOptions.map((format) => (
+                  <MenuItem key={format} value={format}>
+                    {format}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Stack>
         </Stack>
       </Stack>
       {isLoading ? (
@@ -350,7 +398,7 @@ const BookshelfPage = () => {
                       title={`${entry.game.name} — ${entry.platform}`}
                       onClick={() => navigate(`/game/${gameIdentifier(entry.game)}`)}
                       sx={{
-                        width: style.width,
+                        width: item.width,
                         height: style.height,
                         p: 0,
                         border: "none",
@@ -376,11 +424,10 @@ const BookshelfPage = () => {
                             inset: 0,
                             width: "100%",
                             height: "100%",
-                            // Templates are only ever scaled proportionally —
-                            // never cropped, never stretched. The platform
-                            // colour fills whatever space the scaled image
-                            // doesn't cover.
-                            objectFit: "contain",
+                            // The case is sized to the template's aspect
+                            // (see caseWidth), so the image fills it exactly —
+                            // scaled, never cropped, never stretched.
+                            objectFit: "fill",
                             display: "block",
                           }}
                         />
