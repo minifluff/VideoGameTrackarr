@@ -16,6 +16,7 @@ def test_list_platforms_returns_seeded_platform(auth_client, seed_platform):
             "name": "PlayStation 5",
             "slug": "ps5",
             "abbreviation": None,
+            "spineTemplateUrl": None,
             "gameCount": 0,
         }
     ]
