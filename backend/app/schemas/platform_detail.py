@@ -21,6 +21,7 @@ class PlatformSummaryResponse(CamelModel):
     name: str
     slug: str | None
     abbreviation: str | None
+    spine_template_url: str | None
     game_count: int
 
 
@@ -47,8 +48,13 @@ def platform_summary_from_orm(platform: Platform, game_count: int) -> PlatformSu
         name=platform.name,
         slug=platform.slug,
         abbreviation=platform.abbreviation,
+        spine_template_url=platform.spine_template_url,
         game_count=game_count,
     )
+
+
+class PlatformSpineTemplateRequest(CamelModel):
+    spine_url: str | None = Field(default=None, max_length=1024)
 
 
 class PlatformCreateRequest(CamelModel):
