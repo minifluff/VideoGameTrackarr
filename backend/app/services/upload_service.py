@@ -35,7 +35,7 @@ def _save_optimized_image(raw: bytes, directory: Path, url_prefix: str, target_s
         raise ValueError("Not a valid image file") from exc
 
     image = image.convert("RGB")
-    image = ImageOps.fit(image, target_size, resample=Image.Resampling.LANCZOS)
+    image = ImageOps.fit(image, target_size, method=Image.Resampling.LANCZOS)
 
     directory.mkdir(parents=True, exist_ok=True)
     filename = f"{uuid.uuid4()}.jpg"
