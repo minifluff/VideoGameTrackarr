@@ -9,6 +9,7 @@ from app.schemas.platform import LibraryPlatformResponse
 from app.schemas.platform_detail import (
     PlatformCreateRequest,
     PlatformDetailResponse,
+    PlatformSpineTemplateRequest,
     PlatformSummaryResponse,
     PlatformUpdateRequest,
     platform_detail_from_orm,
@@ -77,6 +78,14 @@ def update_platform(
     platform_id: int, body: PlatformUpdateRequest, db: Session = Depends(get_db)
 ) -> PlatformSummaryResponse:
     platform = platform_service.update_platform(db, platform_id, body.name, body.abbreviation, body.slug, body.igdb_id)
+    return platform_summary_from_orm(platform, 0)
+
+
+@router.put("/{platform_id}/spine-template", response_model=PlatformSummaryResponse)
+def set_platform_spine_template(
+    platform_id: int, body: PlatformSpineTemplateRequest, db: Session = Depends(get_db)
+) -> PlatformSummaryResponse:
+    platform = platform_service.set_platform_spine_template(db, platform_id, body.spine_url)
     return platform_summary_from_orm(platform, 0)
 
 
