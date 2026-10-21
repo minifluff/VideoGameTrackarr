@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GameSummary, LibraryListItem, PlatformResponse } from "../../api/types";
-import { buildCaseFormats, buildShelves, buildTemplateCaseSizes, caseFormatsKey, caseSize, indexPlatformsByLabel, isMostlyWhite, packRows, spineStyle } from "../BookshelfPage";
+import { buildCaseFormats, buildShelves, buildTemplateCaseSizes, caseFormatsKey, caseSize, indexPlatformsByLabel, isMostlyWhite, packRows, resolvePlatformCaseSizes, spineStyle } from "../BookshelfPage";
 
 const game = (overrides: Partial<GameSummary>): GameSummary => ({
   id: 1,
@@ -64,6 +64,8 @@ describe("buildCaseFormats", () => {
     slug: "ps5",
     abbreviation: "PS5",
     spineTemplateUrl: null,
+    caseHeightMm: null,
+    caseSpineMm: null,
     gameCount: 0,
     ...overrides,
   });
@@ -138,6 +140,8 @@ describe("indexPlatformsByLabel", () => {
     slug: "ps5",
     abbreviation: "PS5",
     spineTemplateUrl: null,
+    caseHeightMm: null,
+    caseSpineMm: null,
     gameCount: 0,
     ...overrides,
   });
@@ -225,6 +229,46 @@ describe("isMostlyWhite", () => {
     expect(isMostlyWhite(rgba(20, 20, 20))).toBe(false);
     expect(isMostlyWhite(rgba(128, 128, 128))).toBe(false);
     expect(isMostlyWhite(rgba(27, 71, 161))).toBe(false);
+  });
+});
+
+describe("resolvePlatformCaseSizes", () => {
+  const record = (overrides: Partial<PlatformResponse>): PlatformResponse => ({
+    id: 1,
+    igdbId: null,
+    name: "Steam",
+    slug: "steam",
+    abbreviation: null,
+    spineTemplateUrl: null,
+    caseHeightMm: null,
+    caseSpineMm: null,
+    gameCount: 0,
+    ...overrides,
+  });
+
+  it("renders a chosen actual size at 40%, ahead of any template size", () => {
+    const byLabel = new Map([
+      ["Steam", record({ caseHeightMm: 184, caseSpineMm: 14 })],
+    ]);
+    const sizes = resolvePlatformCaseSizes(["Steam"], byLabel, new Map([["Steam", { width: 48, height: 190 }]]));
+    expect(sizes.get("Steam")).toEqual({ width: 21, height: 278 });
+  });
+
+  it("applies the known system size when nothing was chosen", () => {
+    const byLabel = new Map([["PS5", record({ name: "PlayStation 5", abbreviation: "PS5" })]]);
+    const sizes = resolvePlatformCaseSizes(["PS5"], byLabel, new Map());
+    expect(sizes.get("PS5")).toEqual({ width: 18, height: 259 });
+  });
+
+  it("falls back to the template size, then to no fixed size", () => {
+    const byLabel = new Map([["Steam", record({})]]);
+    const withTemplate = resolvePlatformCaseSizes(
+      ["Steam"],
+      byLabel,
+      new Map([["Steam", { width: 48, height: 190 }]])
+    );
+    expect(withTemplate.get("Steam")).toEqual({ width: 48, height: 190 });
+    expect(resolvePlatformCaseSizes(["Steam"], byLabel, new Map()).has("Steam")).toBe(false);
   });
 });
 
