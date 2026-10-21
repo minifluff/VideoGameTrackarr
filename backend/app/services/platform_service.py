@@ -98,6 +98,19 @@ def set_platform_spine_template(db: Session, platform_id: int, spine_url: str | 
     return platform
 
 
+def set_platform_case_size(
+    db: Session, platform_id: int, height_mm: float | None, spine_mm: float | None
+) -> Platform:
+    """Set (or clear, with Nones) the platform's actual physical case size —
+    Bookshelf renders its cases at a fixed 40% of this."""
+    platform = _require_platform(db, platform_id)
+    platform.case_height_mm = height_mm
+    platform.case_spine_mm = spine_mm
+    db.commit()
+    db.refresh(platform)
+    return platform
+
+
 def delete_platform(db: Session, platform_id: int) -> None:
     platform = _require_platform(db, platform_id)
     platform_repository.delete_platform(db, platform)
