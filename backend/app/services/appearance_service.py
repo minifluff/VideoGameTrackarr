@@ -11,6 +11,7 @@ ACCENT_KEY = "appearance.accent_color"
 TITLE_KEY = "appearance.app_title"
 ICON_KEY = "appearance.app_icon"
 CARD_SIZE_KEY = "appearance.card_size"
+HIDE_HARDWARE_KEY = "appearance.hide_hardware_menu"
 
 
 def _get_value(db: Session, key: str, default: str) -> str:
@@ -27,7 +28,7 @@ def _set_value(db: Session, key: str, value: str) -> None:
     db.commit()
 
 
-def get_appearance(db: Session) -> dict[str, str | float]:
+def get_appearance(db: Session) -> dict[str, str | float | bool]:
     card_size_raw = _get_value(db, CARD_SIZE_KEY, str(DEFAULT_CARD_SIZE))
     try:
         card_size = float(card_size_raw)
@@ -39,6 +40,7 @@ def get_appearance(db: Session) -> dict[str, str | float]:
         "app_title": _get_value(db, TITLE_KEY, DEFAULT_APP_TITLE),
         "app_icon": _get_value(db, ICON_KEY, DEFAULT_APP_ICON),
         "card_size": card_size,
+        "hide_hardware_menu": _get_value(db, HIDE_HARDWARE_KEY, "false") == "true",
     }
 
 
@@ -48,7 +50,8 @@ def update_appearance(
     app_title: str | None = None,
     app_icon: str | None = None,
     card_size: float | None = None,
-) -> dict[str, str | float]:
+    hide_hardware_menu: bool | None = None,
+) -> dict[str, str | float | bool]:
     if accent_color is not None:
         _set_value(db, ACCENT_KEY, accent_color)
     if app_title is not None:
@@ -58,4 +61,6 @@ def update_appearance(
     if card_size is not None:
         clamped = max(0.5, min(2.0, card_size))
         _set_value(db, CARD_SIZE_KEY, str(clamped))
+    if hide_hardware_menu is not None:
+        _set_value(db, HIDE_HARDWARE_KEY, "true" if hide_hardware_menu else "false")
     return get_appearance(db)
