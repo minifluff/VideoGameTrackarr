@@ -1,8 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
-import { uploadAccessoryImage, uploadCover } from "../api/uploads";
+import { uploadAccessoryImage, uploadCover, uploadSpine } from "../api/uploads";
 
 export function useUploadCover() {
   return useMutation({ mutationFn: uploadCover });
+}
+
+export function useUploadSpine() {
+  return useMutation({ mutationFn: uploadSpine });
 }
 
 export function useUploadAccessoryImage() {

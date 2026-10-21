@@ -15,6 +15,7 @@ import {
   listGames,
   mergeGameIntoIgdb,
   resyncGame,
+  setGameSpine,
   startBulkImport,
   updateGameVisibility,
   updateManualGame,
@@ -31,6 +32,17 @@ export function useGames(filters: GameListFilters = {}, options?: { enabled?: bo
     // ["games"], so a longer window is safe.
     staleTime: 5 * 60_000,
     enabled: options?.enabled ?? true,
+  });
+}
+
+export function useSetGameSpine() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ gameId, spineUrl }: { gameId: number; spineUrl: string | null }) =>
+      setGameSpine(gameId, spineUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["games"] });
+    },
   });
 }
 
