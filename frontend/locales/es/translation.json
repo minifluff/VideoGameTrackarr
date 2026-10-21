@@ -1091,22 +1091,9 @@
     },
     "bookshelf": {
       "title": "Bookshelf",
-      "summary": "{{cases}} cases on the shelf · {{spines}} with real spine art",
+      "summary": "{{cases}} cases on the shelf",
       "searchPlaceholder": "Search the shelf…",
-      "importButton": "Import spine art",
-      "importHint": "Pick your LaunchBox Images folder (or any folder tree with \"<Platform> / Box - Spine\" folders) and spine art is matched to your games by title + platform. Everything else gets a generated spine.",
-      "importing": "Importing spine art… {{done}} / {{total}} files",
-      "importResult": "Imported {{matched}} spines · {{unmatched}} files unmatched · {{ambiguous}} ambiguous",
       "empty": "Nothing on the shelf yet — own some games first."
-    },
-    "spineArt": {
-      "heading": "Spine art (Bookshelf)",
-      "empty": "No spine art yet — Bookshelf mode shows a generated spine for this game.",
-      "upload": "Upload spine",
-      "replace": "Replace",
-      "remove": "Remove",
-      "saved": "Spine art saved",
-      "uploadError": "That spine image couldn't be saved"
     }
   },
   "events": {
