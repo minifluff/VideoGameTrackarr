@@ -42,8 +42,11 @@ vi.mock("../../api/library", () => ({
 
 vi.mock("../../hooks/usePlatforms", () => ({ usePlatforms: () => ({ data: [] }) }));
 vi.mock("../../hooks/useRegions", () => ({ useRegions: () => ({ data: [] }) }));
+const bulkDeleteMutate = vi.fn().mockResolvedValue({ deleted: 1 });
+
 vi.mock("../../hooks/useLibrary", () => ({
   useBulkUpdateLibraryItems: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useBulkDeleteLibraryItems: () => ({ mutateAsync: bulkDeleteMutate, isPending: false }),
 }));
 
 function renderPage() {
@@ -72,6 +75,24 @@ describe("GamesListPage selection", () => {
 
     await user.click(screen.getByRole("button", { name: "Clear selection" }));
     expect(screen.queryByText("2 selected")).not.toBeInTheDocument();
+  });
+
+  it("deletes the selection only after confirming the warning dialog", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("checkbox", { name: "Astro Bot" }));
+    expect(await screen.findByText("1 selected")).toBeInTheDocument();
+
+    // The red Delete button sits in the selection bar...
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+    // ...and nothing is deleted until the warning dialog is confirmed.
+    expect(await screen.findByText("Delete 1 items?")).toBeInTheDocument();
+    expect(bulkDeleteMutate).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+    expect(bulkDeleteMutate).toHaveBeenCalledWith([1]);
+    expect(screen.queryByText("1 selected")).not.toBeInTheDocument();
   });
 
   it("does not navigate when clicking a row checkbox", async () => {
