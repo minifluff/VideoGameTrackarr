@@ -1111,7 +1111,12 @@
           "notes": "Notes"
         },
         "statusOwned": "Owned",
-        "statusWishlist": "Wishlist"
+        "statusWishlist": "Wishlist",
+        "deleteButton": "Delete",
+        "deleteTitle": "Delete {{count}} items?",
+        "deleteWarning": "This permanently removes the selected copies from your library, including any uploaded ROM files. This can't be undone.",
+        "deleteConfirm": "Delete",
+        "deleteError": "Couldn't delete the selected items."
       }
     },
     "bookshelf": {
