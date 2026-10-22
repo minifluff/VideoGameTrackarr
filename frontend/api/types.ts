@@ -29,6 +29,7 @@ export interface PlatformResponse {
   // Bookshelf mode: generic-spine colour override and icon key.
   spineColor: string | null;
   spineIcon: string | null;
+  spineIconUrl: string | null;
   gameCount: number;
 }
 

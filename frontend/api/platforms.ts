@@ -98,11 +98,13 @@ export async function setPlatformCaseSize(
 export async function setPlatformSpineStyle(
   platformId: number,
   color: string | null,
-  icon: string | null
+  icon: string | null,
+  iconUrl: string | null = null
 ): Promise<PlatformResponse> {
   const response = await apiClient.put<PlatformResponse>(`/api/platforms/${platformId}/spine-style`, {
     color,
     icon,
+    iconUrl,
   });
   return response.data;
 }
