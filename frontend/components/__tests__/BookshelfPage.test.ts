@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GameSummary, LibraryListItem, PlatformResponse } from "../../api/types";
-import { buildCaseFormats, buildShelves, buildTemplateCaseSizes, caseFormatsKey, caseSize, indexPlatformsByLabel, isMostlyWhite, packRows, resolvePlatformCaseSizes, spineStyle } from "../BookshelfPage";
+import { buildCaseFormats, buildShelves, buildTemplateCaseSizes, caseFormatsKey, caseSize, contrastTextColor, indexPlatformsByLabel, isMostlyWhite, packRows, resolvePlatformCaseSizes, spineStyle } from "../BookshelfPage";
 
 const game = (overrides: Partial<GameSummary>): GameSummary => ({
   id: 1,
@@ -66,6 +66,8 @@ describe("buildCaseFormats", () => {
     spineTemplateUrl: null,
     caseHeightMm: null,
     caseSpineMm: null,
+    spineColor: null,
+    spineIcon: null,
     gameCount: 0,
     ...overrides,
   });
@@ -142,6 +144,8 @@ describe("indexPlatformsByLabel", () => {
     spineTemplateUrl: null,
     caseHeightMm: null,
     caseSpineMm: null,
+    spineColor: null,
+    spineIcon: null,
     gameCount: 0,
     ...overrides,
   });
@@ -242,6 +246,8 @@ describe("resolvePlatformCaseSizes", () => {
     spineTemplateUrl: null,
     caseHeightMm: null,
     caseSpineMm: null,
+    spineColor: null,
+    spineIcon: null,
     gameCount: 0,
     ...overrides,
   });
@@ -269,6 +275,19 @@ describe("resolvePlatformCaseSizes", () => {
     );
     expect(withTemplate.get("Steam")).toEqual({ width: 48, height: 190 });
     expect(resolvePlatformCaseSizes(["Steam"], byLabel, new Map()).has("Steam")).toBe(false);
+  });
+});
+
+describe("contrastTextColor", () => {
+  it("puts dark text on light colours and white on dark ones", () => {
+    expect(contrastTextColor("#f2f2f2")).toBe("#161616");
+    expect(contrastTextColor("#e60012")).toBe("#ffffff");
+    expect(contrastTextColor("#111111")).toBe("#ffffff");
+    expect(contrastTextColor("#f5a623")).toBe("#161616");
+  });
+
+  it("falls back to white for unparseable values", () => {
+    expect(contrastTextColor("red")).toBe("#ffffff");
   });
 });
 

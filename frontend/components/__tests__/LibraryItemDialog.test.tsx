@@ -45,9 +45,9 @@ const nesRom: RomFileSummary = {
 const noChanges = { added: [], replaced: [], relabelled: [], removed: [] };
 
 const platforms: PlatformResponse[] = [
-  { id: 1, igdbId: 6, name: "PC (Microsoft Windows)", slug: "win", abbreviation: "PC", gameCount: 0, spineTemplateUrl: null, caseHeightMm: null, caseSpineMm: null },
-  { id: 2, igdbId: 48, name: "Sony PlayStation 4", slug: "ps4", abbreviation: "PS4", gameCount: 0, spineTemplateUrl: null, caseHeightMm: null, caseSpineMm: null },
-  { id: 3, igdbId: 18, name: "Nintendo Entertainment System", slug: "nes", abbreviation: "NES", gameCount: 0, spineTemplateUrl: null, caseHeightMm: null, caseSpineMm: null },
+  { id: 1, igdbId: 6, name: "PC (Microsoft Windows)", slug: "win", abbreviation: "PC", gameCount: 0, spineTemplateUrl: null, caseHeightMm: null, caseSpineMm: null, spineColor: null, spineIcon: null },
+  { id: 2, igdbId: 48, name: "Sony PlayStation 4", slug: "ps4", abbreviation: "PS4", gameCount: 0, spineTemplateUrl: null, caseHeightMm: null, caseSpineMm: null, spineColor: null, spineIcon: null },
+  { id: 3, igdbId: 18, name: "Nintendo Entertainment System", slug: "nes", abbreviation: "NES", gameCount: 0, spineTemplateUrl: null, caseHeightMm: null, caseSpineMm: null, spineColor: null, spineIcon: null },
 ];
 
 const regions: RegionResponse[] = [{ id: 1, name: "Worldwide" }];
