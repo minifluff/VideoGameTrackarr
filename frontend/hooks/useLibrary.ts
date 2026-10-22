@@ -11,6 +11,7 @@ import {
   listSaveStates,
   listLibraryItems,
   replaceRom,
+  bulkDeleteLibraryItems,
   bulkUpdateLibraryItems,
   type BulkLibraryField,
   updateLibraryItem,
@@ -67,6 +68,19 @@ export function useBulkUpdateLibraryItems() {
       field: BulkLibraryField;
       value: string | number | null;
     }) => bulkUpdateLibraryItems(itemIds, field, value),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["library"] });
+      queryClient.invalidateQueries({ queryKey: ["games"] });
+      queryClient.invalidateQueries({ queryKey: ["insights"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+export function useBulkDeleteLibraryItems() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (itemIds: number[]) => bulkDeleteLibraryItems(itemIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["library"] });
       queryClient.invalidateQueries({ queryKey: ["games"] });
