@@ -599,8 +599,12 @@ const BookshelfPage = () => {
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
                           mx: "auto",
-                          pt: showSpineIcon ? 4.75 : 0.75,
-                          pb: 0.75,
+                          // The title stays clear of the logo zones at both
+                          // ends of the spine: the icon at the top (generic
+                          // spines) / the art's own logos (templates), and a
+                          // matching inset at the bottom.
+                          pt: templateUrl ? 3 : showSpineIcon ? 4.75 : 2.5,
+                          pb: templateUrl ? 3 : 2.5,
                           height: "100%",
                           position: "relative",
                           ...(templateUrl
