@@ -26,6 +26,7 @@ class PlatformSummaryResponse(CamelModel):
     case_spine_mm: float | None
     spine_color: str | None
     spine_icon: str | None
+    spine_icon_url: str | None
     game_count: int
 
 
@@ -57,6 +58,7 @@ def platform_summary_from_orm(platform: Platform, game_count: int) -> PlatformSu
         case_spine_mm=platform.case_spine_mm,
         spine_color=platform.spine_color,
         spine_icon=platform.spine_icon,
+        spine_icon_url=platform.spine_icon_url,
         game_count=game_count,
     )
 
@@ -73,6 +75,7 @@ class PlatformCaseSizeRequest(CamelModel):
 class PlatformSpineStyleRequest(CamelModel):
     color: str | None = Field(default=None, pattern=r"^#[0-9a-fA-F]{6}$")
     icon: str | None = Field(default=None, max_length=32)
+    icon_url: str | None = Field(default=None, max_length=1024)
 
 
 class PlatformCreateRequest(CamelModel):
