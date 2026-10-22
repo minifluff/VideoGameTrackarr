@@ -15,6 +15,7 @@ const PublicSubNav = () => {
 
   const items = [
     { to: `/public/${token}/games`, labelKey: "public.nav.games" },
+    { to: `/public/${token}/bookshelf`, labelKey: "public.nav.bookshelf" },
     { to: `/public/${token}/games/list`, labelKey: "public.nav.list" },
     { to: `/public/${token}/hardware`, labelKey: "public.nav.hardware" },
   ] as const;
