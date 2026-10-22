@@ -111,6 +111,18 @@ def set_platform_case_size(
     return platform
 
 
+def set_platform_spine_style(
+    db: Session, platform_id: int, color: str | None, icon: str | None
+) -> Platform:
+    """Set (or clear) the platform's generic-spine colour and icon."""
+    platform = _require_platform(db, platform_id)
+    platform.spine_color = color
+    platform.spine_icon = icon
+    db.commit()
+    db.refresh(platform)
+    return platform
+
+
 def delete_platform(db: Session, platform_id: int) -> None:
     platform = _require_platform(db, platform_id)
     platform_repository.delete_platform(db, platform)
