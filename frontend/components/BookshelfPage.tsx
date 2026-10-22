@@ -19,6 +19,7 @@ import { usePlatforms } from "../hooks/usePlatforms";
 import { gameIdentifier } from "../utils/identifiers";
 import GamesSubNav from "./GamesSubNav";
 import PlatformTemplateDialog from "./PlatformTemplateDialog";
+import SpineIconGlyph from "./SpineIcon";
 import { caseSizeToPixels, effectiveCaseSizeMm } from "../utils/caseSizes";
 
 export interface ShelfCase {
@@ -168,6 +169,17 @@ export function buildTemplateCaseSizes(
     });
   }
   return sizes;
+}
+
+// Readable title/icon colour over a user-picked spine colour: dark text on
+// light colours, white on dark ones.
+export function contrastTextColor(hex: string): string {
+  const match = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim());
+  if (!match) return "#ffffff";
+  const value = parseInt(match[1], 16);
+  const luminance =
+    0.2126 * ((value >> 16) & 255) + 0.7152 * ((value >> 8) & 255) + 0.0722 * (value & 255);
+  return luminance >= 150 ? "#161616" : "#ffffff";
 }
 
 export function caseSize(
@@ -497,7 +509,13 @@ const BookshelfPage = () => {
                   }
                   const entry = item.entry!;
                   const style = spineStyle(entry.platform, entry.game.id);
-                  const templateUrl = platformsByLabel.get(entry.platform)?.spineTemplateUrl ?? null;
+                  const platformRecord = platformsByLabel.get(entry.platform);
+                  const templateUrl = platformRecord?.spineTemplateUrl ?? null;
+                  // Generic-spine styling: the platform's chosen colour wins
+                  // over the brand colour, and its icon sits at the top.
+                  const genericColor = !templateUrl ? platformRecord?.spineColor ?? null : null;
+                  const showSpineIcon = !templateUrl;
+                  const spineIconKey = platformRecord?.spineIcon ?? "logo";
                   const templateLight = templateUrl
                     ? (templateInfo.get(entry.platform)?.light ?? false)
                     : false;
@@ -519,8 +537,14 @@ const BookshelfPage = () => {
                         flexShrink: 0,
                         transition: "transform 120ms ease",
                         "&:hover": { transform: "translateY(-6px)" },
-                        backgroundColor: style.background,
-                        color: templateUrl ? (templateLight ? "#161616" : "#ffffff") : style.color,
+                        backgroundColor: genericColor ?? style.background,
+                        color: templateUrl
+                          ? templateLight
+                            ? "#161616"
+                            : "#ffffff"
+                          : genericColor
+                            ? contrastTextColor(genericColor)
+                            : style.color,
                         boxShadow: "inset -3px 0 5px rgba(0,0,0,0.35), inset 2px 0 3px rgba(255,255,255,0.15)",
                       }}
                     >
@@ -542,6 +566,25 @@ const BookshelfPage = () => {
                           }}
                         />
                       )}
+                      {showSpineIcon && (
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            top: 4,
+                            left: 0,
+                            right: 0,
+                            display: "flex",
+                            justifyContent: "center",
+                            pointerEvents: "none",
+                          }}
+                        >
+                          <SpineIconGlyph
+                            iconKey={spineIconKey}
+                            slug={platformRecord?.slug}
+                            size={Math.max(12, Math.min(22, Math.round(item.width * 0.72)))}
+                          />
+                        </Box>
+                      )}
                       <Box
                         sx={{
                           writingMode: "vertical-rl",
@@ -555,7 +598,8 @@ const BookshelfPage = () => {
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
                           mx: "auto",
-                          py: 0.75,
+                          pt: showSpineIcon ? 3.25 : 0.75,
+                          pb: 0.75,
                           height: "100%",
                           position: "relative",
                           ...(templateUrl

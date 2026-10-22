@@ -13,12 +13,18 @@ import FormHelperText from "@mui/material/FormHelperText";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
+import BlockIcon from "@mui/icons-material/Block";
 import DeleteIcon from "@mui/icons-material/Delete";
+import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 import UploadIcon from "@mui/icons-material/Upload";
 import { useTranslation } from "react-i18next";
 import { resolveAssetUrl } from "../api/client";
 import type { PlatformResponse } from "../api/types";
-import { useSetPlatformCaseSize, useSetPlatformSpineTemplate } from "../hooks/usePlatforms";
+import { useSetPlatformCaseSize, useSetPlatformSpineStyle, useSetPlatformSpineTemplate } from "../hooks/usePlatforms";
+import SpineIconGlyph, { SPINE_ICON_OPTIONS, spineIconGlyph } from "./SpineIcon";
+import { platformLogoUrl } from "../utils/platformLogos";
 import {
   CASE_SIZE_PRESETS,
   caseSizeToPixels,
@@ -27,6 +33,11 @@ import {
   presetForDimensions,
 } from "../utils/caseSizes";
 import { useUploadSpine } from "../hooks/useUploads";
+
+const SPINE_COLOR_SWATCHES = [
+  "#e60012", "#17569b", "#107c10", "#1b3a8f", "#5b3ea8", "#8f1d22", "#f2f2f2",
+  "#111111", "#f5a623", "#ff7bac", "#3aa6dd", "#2a475e", "#5a4632", "#7ac142",
+];
 
 interface PlatformTemplateDialogProps {
   platform: PlatformResponse | null;
@@ -40,6 +51,7 @@ const PlatformTemplateDialog = ({ platform, onClose }: PlatformTemplateDialogPro
   const uploadSpine = useUploadSpine();
   const setTemplate = useSetPlatformSpineTemplate();
   const setCaseSize = useSetPlatformCaseSize();
+  const setSpineStyle = useSetPlatformSpineStyle();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState(false);
 
@@ -65,6 +77,16 @@ const PlatformTemplateDialog = ({ platform, onClose }: PlatformTemplateDialogPro
   const renderedSize = effectiveMm
     ? caseSizeToPixels(effectiveMm.heightMm, effectiveMm.spineMm)
     : { width: 0, height: 0 };
+
+  const saveSpineStyle = async (color: string | null, icon: string | null) => {
+    if (!platform) return;
+    setError(false);
+    try {
+      await setSpineStyle.mutateAsync({ platformId: platform.id, color, icon });
+    } catch {
+      setError(true);
+    }
+  };
 
   const handleCaseSizeChange = async (value: string) => {
     if (!platform || value === "custom") return;
@@ -184,7 +206,86 @@ const PlatformTemplateDialog = ({ platform, onClose }: PlatformTemplateDialogPro
             </FormHelperText>
           )}
         </FormControl>
-        <Stack direction="row" spacing={1}>
+        <Divider sx={{ my: 2 }} />
+        <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+          {t("games.bookshelf.spineStyle.section")}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+          {t("games.bookshelf.spineStyle.hint")}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {t("games.bookshelf.spineStyle.colorLabel")}
+        </Typography>
+        <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", mb: 1.5, mt: 0.5 }}>
+          <Button
+            size="small"
+            variant={platform?.spineColor == null ? "contained" : "outlined"}
+            onClick={() => saveSpineStyle(null, platform?.spineIcon ?? "logo")}
+            disabled={busy || setSpineStyle.isPending}
+          >
+            {t("games.bookshelf.spineStyle.colorAuto")}
+          </Button>
+          {SPINE_COLOR_SWATCHES.map((swatch) => (
+            <Box
+              key={swatch}
+              component="button"
+              title={swatch}
+              onClick={() => saveSpineStyle(swatch, platform?.spineIcon ?? "logo")}
+              disabled={busy || setSpineStyle.isPending}
+              sx={{
+                width: 30,
+                height: 30,
+                borderRadius: "50%",
+                backgroundColor: swatch,
+                cursor: "pointer",
+                border:
+                  platform?.spineColor === swatch ? "3px solid #1976d2" : "1px solid rgba(0,0,0,0.3)",
+                p: 0,
+              }}
+            />
+          ))}
+          <Tooltip title={t("games.bookshelf.spineStyle.customColor")}>
+            <Box
+              component="input"
+              type="color"
+              defaultValue={platform?.spineColor ?? "#888888"}
+              key={platform?.spineColor ?? "auto"}
+              onBlur={(event: React.FocusEvent<HTMLInputElement>) =>
+                saveSpineStyle(event.target.value, platform?.spineIcon ?? "logo")
+              }
+              sx={{ width: 34, height: 30, border: "none", background: "none", cursor: "pointer", p: 0 }}
+            />
+          </Tooltip>
+        </Stack>
+        <Typography variant="caption" color="text.secondary">
+          {t("games.bookshelf.spineStyle.iconLabel")}
+        </Typography>
+        <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap", mt: 0.5 }}>
+          {SPINE_ICON_OPTIONS.map(({ key }) => {
+            const selected = (platform?.spineIcon ?? "logo") === key;
+            const Glyph = key === "none" ? BlockIcon : spineIconGlyph(key);
+            return (
+              <Tooltip key={key} title={t(`games.bookshelf.spineStyle.icon.${key}`)}>
+                <IconButton
+                  size="small"
+                  onClick={() => saveSpineStyle(platform?.spineColor ?? null, key)}
+                  disabled={busy || setSpineStyle.isPending}
+                  sx={{
+                    border: selected ? "2px solid #1976d2" : "1px solid rgba(128,128,128,0.4)",
+                    borderRadius: 1.5,
+                  }}
+                >
+                  {key === "logo" && platformLogoUrl(platform?.slug) ? (
+                    <SpineIconGlyph iconKey="logo" slug={platform?.slug} size={20} />
+                  ) : (
+                    <Glyph sx={{ fontSize: 20 }} />
+                  )}
+                </IconButton>
+              </Tooltip>
+            );
+          })}
+        </Stack>
+        <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
           <Button
             variant="contained"
             startIcon={busy ? <CircularProgress size={16} /> : <UploadIcon />}
