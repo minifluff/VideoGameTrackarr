@@ -1131,7 +1131,9 @@
           "heart": "Heart",
           "bolt": "Bolt",
           "none": "No icon"
-        }
+        },
+        "uploadIcon": "Upload custom icon",
+        "replaceIcon": "Replace custom icon"
       }
     }
   },
