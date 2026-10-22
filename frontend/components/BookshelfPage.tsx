@@ -129,10 +129,11 @@ export interface TemplateInfo {
 // Universal title band for EVERY spine, measured from a real Nintendo
 // GameCube spine (Matthew's reference): the header block (console logo +
 // wordmark + stripe) ends at 27.3% of the height, and the maker logo at the
-// bottom starts at 95.1%. Titles print only between those zones — 28% clear
-// at the top, 6% at the bottom — on generic and template spines alike.
-export const TITLE_TOP_INSET = 0.28;
-export const TITLE_BOTTOM_INSET = 0.06;
+// bottom starts at 95.1%. Titles print only between those zones — Matthew
+// set the clearance to 30% at the top and 8% at the bottom — on generic and
+// template spines alike.
+export const TITLE_TOP_INSET = 0.3;
+export const TITLE_BOTTOM_INSET = 0.08;
 
 // Text-colour decision for template spines: sample ONLY the title band
 // (the middle stretch where the title actually prints) and take the MEDIAN
@@ -608,7 +609,6 @@ const BookshelfPage = () => {
                       <Box
                         sx={{
                           writingMode: "vertical-rl",
-                          transform: "rotate(180deg)",
                           fontSize: 10.5,
                           fontWeight: 600,
                           letterSpacing: 0.4,
@@ -621,12 +621,8 @@ const BookshelfPage = () => {
                           // The title prints only inside the universal
                           // title band (GameCube-reference spacing): clear
                           // of the logo zones at both ends of the spine.
-                          // The box is rotated 180deg (bottom-to-top text),
-                          // so its padding-top lands at the VISUAL bottom:
-                          // the visual-top clearance is applied as pb and
-                          // the visual-bottom clearance as pt.
-                          pt: `${Math.round(item.height * TITLE_BOTTOM_INSET)}px`,
-                          pb: `${Math.round(item.height * TITLE_TOP_INSET)}px`,
+                          pt: `${Math.round(item.height * TITLE_TOP_INSET)}px`,
+                          pb: `${Math.round(item.height * TITLE_BOTTOM_INSET)}px`,
                           height: "100%",
                           position: "relative",
                           ...(templateUrl
