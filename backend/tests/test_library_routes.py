@@ -436,3 +436,36 @@ def test_bulk_update_rejects_bad_field_and_empty_ids(auth_client, seed_game, see
         json={"item_ids": [item_id], "field": "format", "value": "cartridge"},
     )
     assert bad_format.status_code == 422
+
+
+def test_bulk_delete_removes_selected_items(auth_client, seed_game, seed_platform):
+    first = _add_item(auth_client, seed_game.id, seed_platform.id)
+    second = _add_item(auth_client, seed_game.id, seed_platform.id)
+    keep = _add_item(auth_client, seed_game.id, seed_platform.id)
+
+    response = auth_client.post(
+        "/api/library/bulk-delete", json={"item_ids": [first, second]}
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"deleted": 2}
+    items = auth_client.get(f"/api/games/{seed_game.id}/library").json()
+    assert [item["id"] for item in items] == [keep]
+
+
+def test_bulk_delete_missing_item_deletes_nothing(auth_client, seed_game, seed_platform):
+    item_id = _add_item(auth_client, seed_game.id, seed_platform.id)
+
+    response = auth_client.post(
+        "/api/library/bulk-delete", json={"item_ids": [item_id, 999999]}
+    )
+
+    assert response.status_code == 404
+    items = auth_client.get(f"/api/games/{seed_game.id}/library").json()
+    assert [item["id"] for item in items] == [item_id]
+
+
+def test_bulk_delete_rejects_empty_ids(auth_client):
+    response = auth_client.post("/api/library/bulk-delete", json={"item_ids": []})
+
+    assert response.status_code == 422
