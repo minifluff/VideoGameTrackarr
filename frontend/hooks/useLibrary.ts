@@ -11,6 +11,8 @@ import {
   listSaveStates,
   listLibraryItems,
   replaceRom,
+  bulkUpdateLibraryItems,
+  type BulkLibraryField,
   updateLibraryItem,
   updateRomLabel,
   uploadBios,
@@ -46,6 +48,27 @@ export function useUpdateLibraryItem(gameId: number) {
       updateLibraryItem(itemId, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["library", gameId] });
+      queryClient.invalidateQueries({ queryKey: ["games"] });
+      queryClient.invalidateQueries({ queryKey: ["insights"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+export function useBulkUpdateLibraryItems() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      itemIds,
+      field,
+      value,
+    }: {
+      itemIds: number[];
+      field: BulkLibraryField;
+      value: string | number | null;
+    }) => bulkUpdateLibraryItems(itemIds, field, value),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["library"] });
       queryClient.invalidateQueries({ queryKey: ["games"] });
       queryClient.invalidateQueries({ queryKey: ["insights"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
