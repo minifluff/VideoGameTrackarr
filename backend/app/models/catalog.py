@@ -65,6 +65,8 @@ class Platform(TimestampMixin, Base):
     # colour override and an icon key rendered at the top of the spine.
     spine_color: Mapped[str | None] = mapped_column(String(9))
     spine_icon: Mapped[str | None] = mapped_column(String(32))
+    # Uploaded custom spine icon image (when spine_icon == "custom").
+    spine_icon_url: Mapped[str | None] = mapped_column(String(1024))
 
 
 class Region(TimestampMixin, Base):
