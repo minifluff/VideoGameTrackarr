@@ -26,6 +26,9 @@ export interface PlatformResponse {
   // Bookshelf mode: user-chosen actual case size (mm) for this platform.
   caseHeightMm: number | null;
   caseSpineMm: number | null;
+  // Bookshelf mode: generic-spine colour override and icon key.
+  spineColor: string | null;
+  spineIcon: string | null;
   gameCount: number;
 }
 
