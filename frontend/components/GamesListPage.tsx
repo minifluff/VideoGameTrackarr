@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
 import Collapse from "@mui/material/Collapse";
 import FormControl from "@mui/material/FormControl";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -22,6 +25,7 @@ import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { listAllLibraryItems } from "../api/library";
+import BulkEditLibraryItemsDialog from "./BulkEditLibraryItemsDialog";
 import GamesSubNav from "./GamesSubNav";
 import type { LibraryListItem } from "../api/types";
 import { useScrollDirection } from "../hooks/useScrollCollapse";
@@ -40,6 +44,8 @@ const GamesListPage = () => {
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [platformFilter, setPlatformFilter] = useState<string>("all");
   const [formatFilter, setFormatFilter] = useState<string>("all");
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<number>>(new Set());
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const debouncedSearch = useDebouncedValue(search.trim().toLowerCase(), 300);
 
   // Hide search bar on scroll down, reappear on scroll up.
@@ -140,12 +146,34 @@ const GamesListPage = () => {
 
   useEffect(() => {
     setPage(0);
+    setSelectedIds(new Set());
   }, [debouncedSearch, platformFilter, formatFilter]);
+
 
   const paginatedItems = useMemo(() => {
     const start = page * rowsPerPage;
     return filteredAndSorted.slice(start, start + rowsPerPage);
   }, [filteredAndSorted, page, rowsPerPage]);
+
+  const pageIds = paginatedItems.map((item) => item.id);
+  const selectedOnPage = pageIds.filter((id) => selectedIds.has(id)).length;
+
+  const togglePageSelection = (checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      pageIds.forEach((id) => (checked ? next.add(id) : next.delete(id)));
+      return next;
+    });
+  };
+
+  const toggleItemSelection = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -250,11 +278,38 @@ const GamesListPage = () => {
         <Paper sx={{ p: 3, textAlign: "center", mt: 2 }}>{t("games.listPage.emptyState")}</Paper>
       ) : (
         <>
+          {selectedIds.size > 0 && (
+            <Paper
+              sx={{ mt: 2, px: 2, py: 1, display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}
+            >
+              <Typography variant="body2">
+                {t("games.listPage.selectedCount", { count: selectedIds.size })}
+              </Typography>
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<EditIcon />}
+                onClick={() => setBulkEditOpen(true)}
+              >
+                {t("games.listPage.bulkEdit.editButton")}
+              </Button>
+              <Button size="small" onClick={() => setSelectedIds(new Set())}>
+                {t("games.listPage.bulkEdit.clearButton")}
+              </Button>
+            </Paper>
+          )}
           <TableContainer component={Paper} sx={{ mt: 2, overflowX: "auto" }}>
           <Table stickyHeader sx={{ minWidth: 600 }}>
             <TableHead>
               <TableRow>
-
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    checked={pageIds.length > 0 && selectedOnPage === pageIds.length}
+                    indeterminate={selectedOnPage > 0 && selectedOnPage < pageIds.length}
+                    onChange={(event) => togglePageSelection(event.target.checked)}
+                    slotProps={{ input: { "aria-label": t("games.listPage.bulkEdit.selectPage") } }}
+                  />
+                </TableCell>
                 {columns.map((col) => (
                   <TableCell key={col.key}>
                     <TableSortLabel
@@ -278,6 +333,13 @@ const GamesListPage = () => {
                   onClick={() => navigate(`/game/${item.gameUuid}`)}
                 >
 
+                  <TableCell padding="checkbox" onClick={(event) => event.stopPropagation()}>
+                    <Checkbox
+                      checked={selectedIds.has(item.id)}
+                      onChange={() => toggleItemSelection(item.id)}
+                      slotProps={{ input: { "aria-label": item.gameName } }}
+                    />
+                  </TableCell>
                   <TableCell>{item.gameName}</TableCell>
                   <TableCell>{item.platformName ?? "—"}</TableCell>
                   <TableCell>{item.format ?? "—"}</TableCell>
@@ -302,6 +364,15 @@ const GamesListPage = () => {
         />
         </>
       )}
+      <BulkEditLibraryItemsDialog
+        open={bulkEditOpen}
+        itemIds={[...selectedIds]}
+        onClose={() => setBulkEditOpen(false)}
+        onApplied={() => {
+          setBulkEditOpen(false);
+          setSelectedIds(new Set());
+        }}
+      />
     </>
   );
 };
