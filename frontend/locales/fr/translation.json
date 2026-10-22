@@ -1090,7 +1090,29 @@
       "tagsColumn": "Tags",
       "emptyState": "No games found",
       "selectedCount": "{{count}} selected",
-      "notesColumn": "Notes"
+      "notesColumn": "Notes",
+      "bulkEdit": {
+        "editButton": "Edit",
+        "clearButton": "Clear selection",
+        "selectPage": "Select page",
+        "title": "Edit {{count}} items",
+        "fieldLabel": "Field",
+        "valueLabel": "New value",
+        "apply": "Apply",
+        "error": "Couldn't update the selected items.",
+        "blankClears": "Leave blank to clear this field.",
+        "romWarning": "Copies that stop being ROM, Abandonware or ISO lose their uploaded ROM files.",
+        "fields": {
+          "format": "Format",
+          "platform": "Platform",
+          "region": "Region",
+          "status": "Status",
+          "edition": "Edition",
+          "notes": "Notes"
+        },
+        "statusOwned": "Owned",
+        "statusWishlist": "Wishlist"
+      }
     },
     "bookshelf": {
       "title": "Bookshelf",
