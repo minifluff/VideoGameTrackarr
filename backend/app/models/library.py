@@ -19,6 +19,7 @@ class MediaFormat(enum.Enum):
     ISO = "iso"
     ROM = "rom"
     ABANDONWARE = "abandonware"
+    SUBSCRIPTION = "subscription"
     OTHER = "other"
 
 
