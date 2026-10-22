@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GameSummary, LibraryListItem, PlatformResponse } from "../../api/types";
-import { buildCaseFormats, buildShelves, buildTemplateCaseSizes, caseFormatsKey, caseSize, contrastTextColor, indexPlatformsByLabel, isMostlyWhite, packRows, resolvePlatformCaseSizes, spineStyle } from "../BookshelfPage";
+import { buildCaseFormats, buildShelves, buildTemplateCaseSizes, caseFormatsKey, caseSize, contrastTextColor, detectLogoInsets, indexPlatformsByLabel, isMostlyWhite, packRows, resolvePlatformCaseSizes, rowDetailScores, spineStyle } from "../BookshelfPage";
 
 const game = (overrides: Partial<GameSummary>): GameSummary => ({
   id: 1,
@@ -178,8 +178,8 @@ describe("buildTemplateCaseSizes", () => {
   it("scales every template proportionally to the largest one", () => {
     const sizes = buildTemplateCaseSizes(
       new Map([
-        ["Steam", { naturalWidth: 400, naturalHeight: 1600, light: false }],
-        ["Switch", { naturalWidth: 300, naturalHeight: 1200, light: false }],
+        ["Steam", { naturalWidth: 400, naturalHeight: 1600, light: false, topInset: 0.12, bottomInset: 0.12 }],
+        ["Switch", { naturalWidth: 300, naturalHeight: 1200, light: false, topInset: 0.12, bottomInset: 0.12 }],
       ]),
       190
     );
@@ -196,8 +196,8 @@ describe("buildTemplateCaseSizes", () => {
   it("floors the proportional shrink so a small template never renders tiny", () => {
     const sizes = buildTemplateCaseSizes(
       new Map([
-        ["Huge", { naturalWidth: 400, naturalHeight: 3200, light: false }],
-        ["Tiny", { naturalWidth: 50, naturalHeight: 200, light: false }],
+        ["Huge", { naturalWidth: 400, naturalHeight: 3200, light: false, topInset: 0.12, bottomInset: 0.12 }],
+        ["Tiny", { naturalWidth: 50, naturalHeight: 200, light: false, topInset: 0.12, bottomInset: 0.12 }],
       ]),
       190
     );
@@ -210,8 +210,8 @@ describe("buildTemplateCaseSizes", () => {
   it("ignores templates for platforms that are not on the shelf", () => {
     const sizes = buildTemplateCaseSizes(
       new Map([
-        ["Steam", { naturalWidth: 400, naturalHeight: 1600, light: false }],
-        ["Stray", { naturalWidth: 900, naturalHeight: 9000, light: false }],
+        ["Steam", { naturalWidth: 400, naturalHeight: 1600, light: false, topInset: 0.12, bottomInset: 0.12 }],
+        ["Stray", { naturalWidth: 900, naturalHeight: 9000, light: false, topInset: 0.12, bottomInset: 0.12 }],
       ]),
       190,
       new Set(["Steam"])
@@ -278,6 +278,57 @@ describe("resolvePlatformCaseSizes", () => {
     );
     expect(withTemplate.get("Steam")).toEqual({ width: 48, height: 190 });
     expect(resolvePlatformCaseSizes(["Steam"], byLabel, new Map()).has("Steam")).toBe(false);
+  });
+});
+
+describe("detectLogoInsets", () => {
+  const quiet = (rows: number, value = 2) => Array.from({ length: rows }, () => value);
+
+  it("keeps the floor insets when the art is quiet at both ends", () => {
+    expect(detectLogoInsets(quiet(64))).toEqual({ top: 0.12, bottom: 0.12 });
+  });
+
+  it("grows the bottom inset past a logo block at the bottom", () => {
+    const detail = quiet(64);
+    for (let y = 54; y < 64; y++) detail[y] = 90;
+    const insets = detectLogoInsets(detail);
+    expect(insets.top).toBe(0.12);
+    // 10 logo rows scanned + the 2-row buffer lands at 12 of 64.
+    expect(insets.bottom).toBeCloseTo(12 / 64, 5);
+  });
+
+  it("grows the top inset past a logo block at the top", () => {
+    const detail = quiet(64);
+    for (let y = 0; y < 8; y++) detail[y] = 90;
+    const insets = detectLogoInsets(detail);
+    expect(insets.top).toBeCloseTo(10 / 64, 5);
+    expect(insets.bottom).toBe(0.12);
+  });
+
+  it("falls back to the floors when the art is busy everywhere", () => {
+    expect(detectLogoInsets(quiet(64, 90))).toEqual({ top: 0.12, bottom: 0.12 });
+  });
+
+  it("caps the inset so the title always keeps the middle band", () => {
+    const detail = quiet(64);
+    for (let y = 30; y < 64; y++) detail[y] = 90;
+    expect(detectLogoInsets(detail).bottom).toBeLessThanOrEqual(0.4);
+  });
+});
+
+describe("rowDetailScores", () => {
+  it("scores flat rows low and contrast rows high", () => {
+    const width = 4;
+    const height = 2;
+    const rgba = new Uint8ClampedArray(width * height * 4);
+    // Row 0: flat white. Row 1: half black, half white.
+    for (let x = 0; x < width; x++) {
+      rgba.set([255, 255, 255, 255], x * 4);
+      rgba.set(x < 2 ? [0, 0, 0, 255] : [255, 255, 255, 255], (width + x) * 4);
+    }
+    const scores = rowDetailScores(rgba, width, height);
+    expect(scores[0]).toBe(0);
+    expect(scores[1]).toBeGreaterThan(100);
   });
 });
 
