@@ -610,8 +610,12 @@ const BookshelfPage = () => {
                           // The title prints only inside the universal
                           // title band (GameCube-reference spacing): clear
                           // of the logo zones at both ends of the spine.
-                          pt: `${Math.round(item.height * TITLE_TOP_INSET)}px`,
-                          pb: `${Math.round(item.height * TITLE_BOTTOM_INSET)}px`,
+                          // The box is rotated 180deg (bottom-to-top text),
+                          // so its padding-top lands at the VISUAL bottom:
+                          // the visual-top clearance is applied as pb and
+                          // the visual-bottom clearance as pt.
+                          pt: `${Math.round(item.height * TITLE_BOTTOM_INSET)}px`,
+                          pb: `${Math.round(item.height * TITLE_TOP_INSET)}px`,
                           height: "100%",
                           position: "relative",
                           ...(templateUrl
