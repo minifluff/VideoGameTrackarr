@@ -334,3 +334,105 @@ def test_add_library_item_with_subscription_format(auth_client, seed_game, seed_
 
     assert response.status_code == 201
     assert response.json()["format"] == "subscription"
+
+
+def _add_item(auth_client, game_id, platform_id, fmt="physical"):
+    response = auth_client.post(
+        f"/api/games/{game_id}/library",
+        json={"status": "owned", "platformId": platform_id, "format": fmt},
+    )
+    assert response.status_code == 201
+    return response.json()["id"]
+
+
+def test_bulk_update_format_across_items(auth_client, seed_game, seed_platform, seed_region):
+    first = _add_item(auth_client, seed_game.id, seed_platform.id, "physical")
+    second = _add_item(auth_client, seed_game.id, seed_platform.id, "digital")
+
+    response = auth_client.post(
+        "/api/library/bulk-update",
+        json={"item_ids": [first, second], "field": "format", "value": "subscription"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"updated": 2}
+    items = auth_client.get(f"/api/games/{seed_game.id}/library").json()
+    assert {item["format"] for item in items} == {"subscription"}
+
+
+def test_bulk_update_platform_and_status(auth_client, seed_game, seed_platform, db_session):
+    from app.models.catalog import Platform
+
+    other_platform = Platform(name="Xbox Series X", slug="xbox-series", abbreviation="XSX")
+    db_session.add(other_platform)
+    db_session.commit()
+    item_id = _add_item(auth_client, seed_game.id, seed_platform.id)
+
+    response = auth_client.post(
+        "/api/library/bulk-update",
+        json={"item_ids": [item_id], "field": "platform", "value": other_platform.id},
+    )
+    assert response.status_code == 200
+
+    response = auth_client.post(
+        "/api/library/bulk-update",
+        json={"item_ids": [item_id], "field": "status", "value": "wishlist"},
+    )
+    assert response.status_code == 200
+
+    items = auth_client.get(f"/api/games/{seed_game.id}/library").json()
+    assert items[0]["platformName"] == "Xbox Series X"
+    assert items[0]["status"] == "wishlist"
+
+
+def test_bulk_update_edition_blank_clears(auth_client, seed_game, seed_platform):
+    item_id = _add_item(auth_client, seed_game.id, seed_platform.id)
+
+    response = auth_client.post(
+        "/api/library/bulk-update",
+        json={"item_ids": [item_id], "field": "edition", "value": "Collector's"},
+    )
+    assert response.status_code == 200
+    response = auth_client.post(
+        "/api/library/bulk-update",
+        json={"item_ids": [item_id], "field": "edition", "value": "  "},
+    )
+    assert response.status_code == 200
+
+    items = auth_client.get(f"/api/games/{seed_game.id}/library").json()
+    assert items[0]["edition"] is None
+
+
+def test_bulk_update_missing_item_updates_nothing(auth_client, seed_game, seed_platform):
+    item_id = _add_item(auth_client, seed_game.id, seed_platform.id)
+
+    response = auth_client.post(
+        "/api/library/bulk-update",
+        json={"item_ids": [item_id, 999999], "field": "format", "value": "rom"},
+    )
+
+    assert response.status_code == 404
+    items = auth_client.get(f"/api/games/{seed_game.id}/library").json()
+    assert items[0]["format"] == "physical"
+
+
+def test_bulk_update_rejects_bad_field_and_empty_ids(auth_client, seed_game, seed_platform):
+    item_id = _add_item(auth_client, seed_game.id, seed_platform.id)
+
+    bad_field = auth_client.post(
+        "/api/library/bulk-update",
+        json={"item_ids": [item_id], "field": "steelbook", "value": True},
+    )
+    assert bad_field.status_code == 422
+
+    empty = auth_client.post(
+        "/api/library/bulk-update",
+        json={"item_ids": [], "field": "format", "value": "rom"},
+    )
+    assert empty.status_code == 422
+
+    bad_format = auth_client.post(
+        "/api/library/bulk-update",
+        json={"item_ids": [item_id], "field": "format", "value": "cartridge"},
+    )
+    assert bad_format.status_code == 422
