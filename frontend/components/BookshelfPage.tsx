@@ -124,6 +124,11 @@ export interface TemplateInfo {
   naturalWidth: number;
   naturalHeight: number;
   light: boolean;
+  // Fractions of the spine height the title must stay clear of at the top
+  // and bottom, auto-detected from logo blocks in the art (see
+  // detectLogoInsets); the render insets the title by these.
+  topInset: number;
+  bottomInset: number;
 }
 
 // Mean per-pixel luminance of an RGBA sample; "mostly white" is a bright
@@ -136,6 +141,71 @@ export function isMostlyWhite(rgba: ArrayLike<number>): boolean {
     pixels += 1;
   }
   return pixels > 0 && total / pixels >= 205;
+}
+
+// Per-row "detail": how much a sampled row's pixels vary from the row's own
+// mean colour. Flat or evenly-patterned art scores low everywhere; a logo
+// block (a compact area of strong contrast) scores high on its rows.
+export function rowDetailScores(rgba: ArrayLike<number>, width: number, height: number): number[] {
+  const scores: number[] = [];
+  for (let y = 0; y < height; y++) {
+    let r = 0;
+    let g = 0;
+    let b = 0;
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      r += rgba[i];
+      g += rgba[i + 1];
+      b += rgba[i + 2];
+    }
+    const meanR = r / width;
+    const meanG = g / width;
+    const meanB = b / width;
+    let deviation = 0;
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      deviation +=
+        (Math.abs(rgba[i] - meanR) + Math.abs(rgba[i + 1] - meanG) + Math.abs(rgba[i + 2] - meanB)) / 3;
+    }
+    scores.push(deviation / width);
+  }
+  return scores;
+}
+
+// Auto-detect the logo zones at the ends of a template so the printed title
+// avoids them: scan in from each end for rows with clearly more detail than
+// the art's quiet middle, and inset past the last such row (plus a small
+// buffer). Both insets are fractions of the height, floored so the title
+// always gets some clearance and capped so it always keeps the middle band.
+// Art that's busy everywhere is inconclusive — fall back to the floors.
+export const MIN_LOGO_INSET = 0.12;
+export const MAX_LOGO_INSET = 0.4;
+export function detectLogoInsets(detail: number[]): { top: number; bottom: number } {
+  const floors = { top: MIN_LOGO_INSET, bottom: MIN_LOGO_INSET };
+  const rows = detail.length;
+  if (rows < 8) return floors;
+  const middle = detail.slice(Math.floor(rows * 0.25), Math.ceil(rows * 0.75)).sort((a, b) => a - b);
+  const median = middle[Math.floor(middle.length / 2)] ?? 0;
+  const threshold = Math.max(median * 2.2, median + 8);
+  const active = detail.map((score) => score > threshold);
+  if (active.filter(Boolean).length > rows * 0.7) return floors;
+  const scan = (fromStart: boolean): number => {
+    let lastActive = -1;
+    let gap = 0;
+    const limit = Math.floor(rows * MAX_LOGO_INSET);
+    for (let step = 0; step < limit; step++) {
+      const index = fromStart ? step : rows - 1 - step;
+      if (active[index]) {
+        lastActive = step;
+        gap = 0;
+      } else if (lastActive >= 0 && ++gap > 3) {
+        break;
+      }
+    }
+    if (lastActive < 0) return MIN_LOGO_INSET;
+    return Math.min(MAX_LOGO_INSET, Math.max(MIN_LOGO_INSET, (lastActive + 3) / rows));
+  };
+  return { top: scan(true), bottom: scan(false) };
 }
 
 // Templated cases share ONE scale, set by the largest template ON THE SHELF:
@@ -304,14 +374,17 @@ const BookshelfPage = () => {
       image.onload = () => {
         if (image.naturalHeight <= 0) return;
         let light = false;
+        let insets = { top: MIN_LOGO_INSET, bottom: MIN_LOGO_INSET };
         try {
           const canvas = document.createElement("canvas");
           canvas.width = 16;
-          canvas.height = 16;
+          canvas.height = 64;
           const context = canvas.getContext("2d");
           if (context) {
-            context.drawImage(image, 0, 0, 16, 16);
-            light = isMostlyWhite(context.getImageData(0, 0, 16, 16).data);
+            context.drawImage(image, 0, 0, 16, 64);
+            const data = context.getImageData(0, 0, 16, 64).data;
+            light = isMostlyWhite(data);
+            insets = detectLogoInsets(rowDetailScores(data, 16, 64));
           }
         } catch {
           light = false;
@@ -320,6 +393,8 @@ const BookshelfPage = () => {
           naturalWidth: image.naturalWidth,
           naturalHeight: image.naturalHeight,
           light,
+          topInset: insets.top,
+          bottomInset: insets.bottom,
         };
         setTemplateInfo((previous) => {
           if (previous.has(label)) return previous;
@@ -601,10 +676,16 @@ const BookshelfPage = () => {
                           mx: "auto",
                           // The title stays clear of the logo zones at both
                           // ends of the spine: the icon at the top (generic
-                          // spines) / the art's own logos (templates), and a
-                          // matching inset at the bottom.
-                          pt: templateUrl ? 3 : showSpineIcon ? 4.75 : 2.5,
-                          pb: templateUrl ? 3 : 2.5,
+                          // spines) / the art's own logos — auto-detected
+                          // per template — plus a matching bottom inset.
+                          pt: templateUrl
+                            ? `${Math.round(item.height * (templateInfo.get(entry.platform)?.topInset ?? MIN_LOGO_INSET))}px`
+                            : showSpineIcon
+                              ? 4.75
+                              : 3,
+                          pb: templateUrl
+                            ? `${Math.round(item.height * (templateInfo.get(entry.platform)?.bottomInset ?? MIN_LOGO_INSET))}px`
+                            : 3,
                           height: "100%",
                           position: "relative",
                           ...(templateUrl
