@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, Query, status
-from pydantic import BaseModel
+from typing import Literal
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db
-from app.models.library import LibraryStatus
+from app.models.library import LibraryStatus, MediaFormat
 from app.repositories import game_repository, genre_repository, itad_repository, platprices_repository
 from app.schemas.catalog import CatalogRefResponse, genre_ref_from_orm
 from app.schemas.library import (
@@ -71,6 +73,41 @@ def update_library_item(
     itad_cache = itad_repository.get_cache(db, item.game_id)
     platprices_cache = platprices_repository.get_cache(db, item.game_id)
     return library_item_from_orm(item, itad_cache, platprices_cache)
+
+
+class BulkUpdateLibraryItemsRequest(BaseModel):
+    item_ids: list[int] = Field(min_length=1, max_length=1000)
+    field: Literal["format", "platform", "region", "status", "edition", "notes"]
+    # format/status arrive as their enum value strings, platform/region as
+    # integer ids, edition/notes as free text (blank clears the field).
+    value: str | int | None = None
+
+
+class BulkUpdateResponse(BaseModel):
+    updated: int
+
+
+@router.post("/api/library/bulk-update", response_model=BulkUpdateResponse)
+def bulk_update_library_items(
+    body: BulkUpdateLibraryItemsRequest, db: Session = Depends(get_db)
+) -> BulkUpdateResponse:
+    """Set a single field on many library items at once (List page bulk edit)."""
+    value: object = body.value
+    if body.field == "format":
+        try:
+            value = MediaFormat(body.value) if body.value is not None else None
+        except ValueError:
+            raise HTTPException(status_code=422, detail=f"Invalid format: {body.value}") from None
+    elif body.field == "status":
+        try:
+            value = LibraryStatus(body.value)  # type: ignore[arg-type]
+        except ValueError:
+            raise HTTPException(status_code=422, detail=f"Invalid status: {body.value}") from None
+    elif body.field in ("platform", "region"):
+        if not isinstance(body.value, int):
+            raise HTTPException(status_code=422, detail=f"{body.field} value must be an id")
+    updated = library_service.bulk_update_library_items(db, body.item_ids, body.field, value)
+    return BulkUpdateResponse(updated=updated)
 
 
 @router.delete("/api/library/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
