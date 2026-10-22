@@ -19,6 +19,8 @@ def test_list_platforms_returns_seeded_platform(auth_client, seed_platform):
             "spineTemplateUrl": None,
             "caseHeightMm": None,
             "caseSpineMm": None,
+            "spineColor": None,
+            "spineIcon": None,
             "gameCount": 0,
         }
     ]
