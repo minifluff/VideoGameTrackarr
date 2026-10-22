@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import Collapse from "@mui/material/Collapse";
 import FormControl from "@mui/material/FormControl";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -25,6 +31,7 @@ import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { listAllLibraryItems } from "../api/library";
+import { useBulkDeleteLibraryItems } from "../hooks/useLibrary";
 import BulkEditLibraryItemsDialog from "./BulkEditLibraryItemsDialog";
 import GamesSubNav from "./GamesSubNav";
 import type { LibraryListItem } from "../api/types";
@@ -46,6 +53,20 @@ const GamesListPage = () => {
   const [formatFilter, setFormatFilter] = useState<string>("all");
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<number>>(new Set());
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleteError, setBulkDeleteError] = useState<string | null>(null);
+  const bulkDelete = useBulkDeleteLibraryItems();
+
+  const handleBulkDelete = async () => {
+    try {
+      await bulkDelete.mutateAsync([...selectedIds]);
+      setBulkDeleteOpen(false);
+      setBulkDeleteError(null);
+      setSelectedIds(new Set());
+    } catch {
+      setBulkDeleteError(t("games.listPage.bulkEdit.deleteError"));
+    }
+  };
   const debouncedSearch = useDebouncedValue(search.trim().toLowerCase(), 300);
 
   // Hide search bar on scroll down, reappear on scroll up.
@@ -296,6 +317,19 @@ const GamesListPage = () => {
               <Button size="small" onClick={() => setSelectedIds(new Set())}>
                 {t("games.listPage.bulkEdit.clearButton")}
               </Button>
+              <Button
+                size="small"
+                variant="contained"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={() => {
+                  setBulkDeleteError(null);
+                  setBulkDeleteOpen(true);
+                }}
+                sx={{ marginLeft: "auto" }}
+              >
+                {t("games.listPage.bulkEdit.deleteButton")}
+              </Button>
             </Paper>
           )}
           <TableContainer component={Paper} sx={{ mt: 2, overflowX: "auto" }}>
@@ -364,6 +398,26 @@ const GamesListPage = () => {
         />
         </>
       )}
+      <Dialog open={bulkDeleteOpen} onClose={() => setBulkDeleteOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>
+          {t("games.listPage.bulkEdit.deleteTitle", { count: selectedIds.size })}
+        </DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {bulkDeleteError && <Alert severity="error">{bulkDeleteError}</Alert>}
+          <Typography>{t("games.listPage.bulkEdit.deleteWarning")}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBulkDeleteOpen(false)}>{t("common.cancel")}</Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleBulkDelete}
+            disabled={bulkDelete.isPending}
+          >
+            {t("games.listPage.bulkEdit.deleteConfirm")}
+          </Button>
+        </DialogActions>
+      </Dialog>
       <BulkEditLibraryItemsDialog
         open={bulkEditOpen}
         itemIds={[...selectedIds]}
