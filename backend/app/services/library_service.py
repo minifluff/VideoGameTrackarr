@@ -128,6 +128,22 @@ def bulk_update_library_items(
     return len(unique_ids)
 
 
+def bulk_delete_library_items(db: Session, item_ids: list[int]) -> int:
+    """Delete many library items at once; returns how many were deleted.
+
+    Every id is validated BEFORE anything is deleted, so a bad id fails the
+    whole call instead of leaving a half-deleted selection behind. Each item
+    goes through delete_library_item, so ROM files are detached and removed
+    exactly as for a single delete.
+    """
+    unique_ids = list(dict.fromkeys(item_ids))
+    for item_id in unique_ids:
+        _require_library_item(db, item_id)
+    for item_id in unique_ids:
+        delete_library_item(db, item_id)
+    return len(unique_ids)
+
+
 def delete_library_item(db: Session, item_id: int) -> None:
     item = _require_library_item(db, item_id)
     orphaned_files = rom_service.detach_roms(db, item)
