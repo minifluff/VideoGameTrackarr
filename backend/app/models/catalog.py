@@ -61,6 +61,10 @@ class Platform(TimestampMixin, Base):
     # has no known size for the system. Cases render at a fixed 40% of this.
     case_height_mm: Mapped[float | None] = mapped_column()
     case_spine_mm: Mapped[float | None] = mapped_column()
+    # Bookshelf mode: generic-spine styling chosen per platform — a hex
+    # colour override and an icon key rendered at the top of the spine.
+    spine_color: Mapped[str | None] = mapped_column(String(9))
+    spine_icon: Mapped[str | None] = mapped_column(String(32))
 
 
 class Region(TimestampMixin, Base):
