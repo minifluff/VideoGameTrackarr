@@ -1,96 +1,43 @@
 import { describe, expect, it } from "vitest";
-import type { GameSummary, LibraryListItem, PlatformResponse } from "../../api/types";
-import { buildCaseFormats, buildShelves, buildTemplateCaseSizes, caseFormatsKey, caseSize, contrastTextColor, indexPlatformsByLabel, packRows, resolvePlatformCaseSizes, spineStyle, TITLE_BOTTOM_INSET, TITLE_TOP_INSET, titleBandLight } from "../BookshelfPage";
+import type { BookshelfEntry, PlatformResponse } from "../../api/types";
+import { buildCaseFormatsFromEntries, buildShelvesFromEntries, buildTemplateCaseSizes, caseFormatsKey, caseSize, contrastTextColor, indexPlatformsByLabel, packRows, resolvePlatformCaseSizes, spineStyle, TITLE_BOTTOM_INSET, TITLE_TOP_INSET, titleBandLight } from "../BookshelfPage";
 
-const game = (overrides: Partial<GameSummary>): GameSummary => ({
-  id: 1,
-  uuid: "uuid-1",
-  igdbId: 1,
+const entry = (overrides: Partial<BookshelfEntry>): BookshelfEntry => ({
+  gameId: 1,
+  gameSlug: "a-game",
+  gameUuid: "uuid-1",
   name: "A Game",
-  slug: "a-game",
-  coverUrl: null,
-  spineUrl: null,
-  category: "main_game",
-  firstReleaseDate: null,
-  owned: true,
-  wishlisted: false,
-  playStatus: null,
-  rating: null,
-  isOnSale: false,
-  autoDiscovered: false,
-  hideFromPublic: false,
-  ownedPlatforms: ["Nintendo Switch"],
+  platformLabel: "Nintendo Switch",
+  formats: ["physical"],
   ...overrides,
 });
 
-describe("buildShelves", () => {
-  it("creates one case per owned platform and skips unowned games", () => {
-    const shelves = buildShelves([
-      game({ id: 1, name: "Zelda", ownedPlatforms: ["Nintendo Switch", "Wii U"] }),
-      game({ id: 2, name: "Not Owned", owned: false }),
-      game({ id: 3, name: "Mario", ownedPlatforms: ["Nintendo Switch"] }),
+describe("buildShelvesFromEntries", () => {
+  it("creates one case per owned (game x platform) entry, sorted", () => {
+    const shelves = buildShelvesFromEntries([
+      entry({ gameId: 1, name: "Zelda", platformLabel: "Nintendo Switch" }),
+      entry({ gameId: 1, name: "Zelda", platformLabel: "Wii U" }),
+      entry({ gameId: 3, name: "Mario", platformLabel: "Nintendo Switch" }),
     ]);
 
     expect(shelves.map((shelf) => shelf.platform)).toEqual(["Nintendo Switch", "Wii U"]);
     const switchShelf = shelves[0];
-    expect(switchShelf.cases.map((entry) => entry.game.name)).toEqual(["Mario", "Zelda"]);
+    expect(switchShelf.cases.map((c) => c.game.name)).toEqual(["Mario", "Zelda"]);
+    expect(switchShelf.cases[0].game).toEqual({ id: 3, name: "Mario", slug: "a-game", uuid: "uuid-1" });
   });
 
   it("handles an empty library", () => {
-    expect(buildShelves(undefined)).toEqual([]);
-    expect(buildShelves([])).toEqual([]);
+    expect(buildShelvesFromEntries(undefined)).toEqual([]);
+    expect(buildShelvesFromEntries([])).toEqual([]);
   });
 });
 
-describe("buildCaseFormats", () => {
-  const item = (overrides: Partial<LibraryListItem>): LibraryListItem => ({
-    id: 1,
-    gameId: 1,
-    gameName: "A Game",
-    gameUuid: "uuid-1",
-    platformName: "PlayStation 5",
-    edition: null,
-    format: "physical",
-    firstReleaseDate: null,
-    dateAdded: null,
-    tagNames: [],
-    notes: null,
-    ...overrides,
-  });
-  const platform = (overrides: Partial<PlatformResponse>): PlatformResponse => ({
-    id: 1,
-    igdbId: null,
-    name: "PlayStation 5",
-    slug: "ps5",
-    abbreviation: "PS5",
-    spineTemplateUrl: null,
-    caseHeightMm: null,
-    caseSpineMm: null,
-    spineColor: null,
-    spineIcon: null,
-    spineIconUrl: null,
-    gameCount: 0,
-    ...overrides,
-  });
-
-  it("keys formats by the summary's abbreviated platform label", () => {
-    const formats = buildCaseFormats([item({})], [platform({})]);
-    expect(formats.get(caseFormatsKey(1, "PS5"))).toEqual(new Set(["physical"]));
-  });
-
-  it("falls back to the full name when the platform has no abbreviation", () => {
-    const formats = buildCaseFormats(
-      [item({ platformName: "Nintendo Switch" })],
-      [platform({ name: "Nintendo Switch", abbreviation: null })]
-    );
-    expect(formats.get(caseFormatsKey(1, "Nintendo Switch"))).toEqual(new Set(["physical"]));
-  });
-
-  it("collects multiple formats per case and skips format-less items", () => {
-    const formats = buildCaseFormats(
-      [item({}), item({ id: 2, format: "digital" }), item({ id: 3, format: null })],
-      [platform({})]
-    );
+describe("buildCaseFormatsFromEntries", () => {
+  it("keys formats by game and platform label", () => {
+    const formats = buildCaseFormatsFromEntries([
+      entry({ gameId: 1, platformLabel: "PS5", formats: ["physical", "digital"] }),
+      entry({ gameId: 2, platformLabel: "PS5", formats: [] }),
+    ]);
     expect(formats.get(caseFormatsKey(1, "PS5"))).toEqual(new Set(["physical", "digital"]));
     expect(formats.size).toBe(1);
   });
@@ -98,10 +45,10 @@ describe("buildCaseFormats", () => {
 
 describe("packRows", () => {
   it("flows platforms continuously in one row when everything fits", () => {
-    const shelves = buildShelves([
-      game({ id: 14, name: "A One", ownedPlatforms: ["Alpha"] }),
-      game({ id: 28, name: "A Two", ownedPlatforms: ["Alpha"] }),
-      game({ id: 42, name: "B One", ownedPlatforms: ["Beta"] }),
+    const shelves = buildShelvesFromEntries([
+      entry({ gameId: 14, name: "A One", platformLabel: "Alpha" }),
+      entry({ gameId: 28, name: "A Two", platformLabel: "Alpha" }),
+      entry({ gameId: 42, name: "B One", platformLabel: "Beta" }),
     ]);
     const rows = packRows(shelves, 1000);
     expect(rows).toHaveLength(1);
@@ -110,10 +57,10 @@ describe("packRows", () => {
   });
 
   it("starts a new row when the next case would overflow, losing nothing", () => {
-    const shelves = buildShelves([
-      game({ id: 14, name: "A One", ownedPlatforms: ["Alpha"] }),
-      game({ id: 28, name: "A Two", ownedPlatforms: ["Alpha"] }),
-      game({ id: 42, name: "A Three", ownedPlatforms: ["Alpha"] }),
+    const shelves = buildShelvesFromEntries([
+      entry({ gameId: 14, name: "A One", platformLabel: "Alpha" }),
+      entry({ gameId: 28, name: "A Two", platformLabel: "Alpha" }),
+      entry({ gameId: 42, name: "A Three", platformLabel: "Alpha" }),
     ]);
     // Bookend (38) + two cases (24 each) + gaps = 92; the third case overflows.
     const rows = packRows(shelves, 92);
@@ -122,9 +69,9 @@ describe("packRows", () => {
   });
 
   it("never leaves a bookend orphaned at a row's end", () => {
-    const shelves = buildShelves([
-      game({ id: 14, name: "A One", ownedPlatforms: ["Alpha"] }),
-      game({ id: 28, name: "B One", ownedPlatforms: ["Beta"] }),
+    const shelves = buildShelvesFromEntries([
+      entry({ gameId: 14, name: "A One", platformLabel: "Alpha" }),
+      entry({ gameId: 28, name: "B One", platformLabel: "Beta" }),
     ]);
     // Alpha bookend + case = 65; Beta's bookend alone would fit in 106, but
     // bookend + its first case (130) does not — so it moves to the next row.
