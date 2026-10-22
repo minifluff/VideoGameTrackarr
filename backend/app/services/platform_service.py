@@ -112,14 +112,26 @@ def set_platform_case_size(
 
 
 def set_platform_spine_style(
-    db: Session, platform_id: int, color: str | None, icon: str | None
+    db: Session,
+    platform_id: int,
+    color: str | None,
+    icon: str | None,
+    icon_url: str | None = None,
 ) -> Platform:
-    """Set (or clear) the platform's generic-spine colour and icon."""
+    """Set (or clear) the platform's generic-spine colour and icon. A custom
+    uploaded icon image lives in spine_icon_url (icon == "custom"); changing
+    or clearing it deletes the previous local upload."""
+    from app.services.upload_service import delete_spine_if_local
+
     platform = _require_platform(db, platform_id)
+    previous_icon_url = platform.spine_icon_url
     platform.spine_color = color
     platform.spine_icon = icon
+    platform.spine_icon_url = icon_url if icon == "custom" else None
     db.commit()
     db.refresh(platform)
+    if previous_icon_url and previous_icon_url != platform.spine_icon_url:
+        delete_spine_if_local(previous_icon_url)
     return platform
 
 
