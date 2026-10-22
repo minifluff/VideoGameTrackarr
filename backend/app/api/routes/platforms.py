@@ -10,6 +10,7 @@ from app.schemas.platform_detail import (
     PlatformCaseSizeRequest,
     PlatformCreateRequest,
     PlatformDetailResponse,
+    PlatformSpineStyleRequest,
     PlatformSpineTemplateRequest,
     PlatformSummaryResponse,
     PlatformUpdateRequest,
@@ -95,6 +96,14 @@ def set_platform_case_size(
     platform_id: int, body: PlatformCaseSizeRequest, db: Session = Depends(get_db)
 ) -> PlatformSummaryResponse:
     platform = platform_service.set_platform_case_size(db, platform_id, body.height_mm, body.spine_mm)
+    return platform_summary_from_orm(platform, 0)
+
+
+@router.put("/{platform_id}/spine-style", response_model=PlatformSummaryResponse)
+def set_platform_spine_style(
+    platform_id: int, body: PlatformSpineStyleRequest, db: Session = Depends(get_db)
+) -> PlatformSummaryResponse:
+    platform = platform_service.set_platform_spine_style(db, platform_id, body.color, body.icon)
     return platform_summary_from_orm(platform, 0)
 
 
