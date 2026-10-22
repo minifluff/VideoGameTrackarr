@@ -11,6 +11,7 @@ from app.repositories.game_repository import GameWithStatus
 from app.schemas.base import CamelModel
 from app.schemas.bulk_import import BulkImportRequest, BulkImportStatusResponse
 from app.schemas.game import (
+    BookshelfEntryResponse,
     GameDetailResponse,
     GameImportRequest,
     GameSummaryResponse,
@@ -121,6 +122,21 @@ def _to_bulk_import_response(state: bulk_import_job.BulkImportJobState) -> BulkI
 # Registered before the /{identifier} wildcard route below on purpose — "bulk-import" would
 # otherwise be swallowed by it as if it were an identifier, and this endpoint would never be
 # reached.
+@router.get("/bookshelf", response_model=list[BookshelfEntryResponse])
+def list_bookshelf_entries(db: Session = Depends(get_db)) -> list[BookshelfEntryResponse]:
+    return [
+        BookshelfEntryResponse(
+            game_id=entry.game_id,
+            game_slug=entry.game_slug,
+            game_uuid=entry.game_uuid,
+            name=entry.name,
+            platform_label=entry.platform_label,
+            formats=entry.formats,
+        )
+        for entry in game_service.list_bookshelf_entries(db)
+    ]
+
+
 @router.post("/bulk-import", response_model=BulkImportStatusResponse, status_code=status.HTTP_202_ACCEPTED)
 def start_bulk_import(
     body: BulkImportRequest,
