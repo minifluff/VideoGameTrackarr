@@ -47,6 +47,7 @@ const JobsPage = lazy(() => import("./components/JobsPage"));
 const PublicGameDetailsPage = lazy(() => import("./components/PublicGameDetailsPage"));
 const PublicGamesListPage = lazy(() => import("./components/PublicGamesListPage"));
 const PublicGamesPage = lazy(() => import("./components/PublicGamesPage"));
+const PublicBookshelfPage = lazy(() => import("./components/PublicBookshelfPage"));
 const PublicHardwarePage = lazy(() => import("./components/PublicHardwarePage"));
 const Settings = lazy(() => import("./components/Settings"));
 const SalesIgnoredListPage = lazy(() => import("./components/SalesIgnoredListPage"));
@@ -131,6 +132,7 @@ const router = createBrowserRouter([
     errorElement: <RouteErrorBoundary />,
     children: [
       { path: "/public/:token/games", element: <PublicGamesPage /> },
+      { path: "/public/:token/bookshelf", element: <PublicBookshelfPage /> },
       { path: "/public/:token/games/list", element: <PublicGamesListPage /> },
       { path: "/public/:token/games/:gameId", element: <PublicGameDetailsPage /> },
       { path: "/public/:token/hardware", element: <PublicHardwarePage /> },
