@@ -305,10 +305,10 @@ describe("resolvePlatformCaseSizes", () => {
 
 describe("title band (GameCube reference spacing)", () => {
   it("keeps titles out of the header and maker-logo zones on every spine", () => {
-    // Measured from a real GameCube spine: header block ends at 27.3% of the
-    // height, the bottom maker logo starts at 95.1%.
-    expect(TITLE_TOP_INSET).toBe(0.28);
-    expect(TITLE_BOTTOM_INSET).toBe(0.06);
+    // Measured from a real GameCube spine (header ends 27.3%, bottom logo
+    // starts 95.1%); Matthew set the clearance to 30% top / 8% bottom.
+    expect(TITLE_TOP_INSET).toBe(0.3);
+    expect(TITLE_BOTTOM_INSET).toBe(0.08);
     expect(TITLE_TOP_INSET + TITLE_BOTTOM_INSET).toBeLessThan(0.5);
   });
 });
