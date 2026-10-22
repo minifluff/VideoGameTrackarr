@@ -34,6 +34,23 @@ export async function deleteLibraryItem(itemId: number): Promise<void> {
   await apiClient.delete(`/api/library/${itemId}`);
 }
 
+export type BulkLibraryField = "format" | "platform" | "region" | "status" | "edition" | "notes";
+
+// Sets ONE field on many library items at once (List page bulk edit). The
+// backend validates every id before writing, so a bad id fails the whole call.
+export async function bulkUpdateLibraryItems(
+  itemIds: number[],
+  field: BulkLibraryField,
+  value: string | number | null
+): Promise<{ updated: number }> {
+  const response = await apiClient.post<{ updated: number }>("/api/library/bulk-update", {
+    item_ids: itemIds,
+    field,
+    value,
+  });
+  return response.data;
+}
+
 function progressHandler(onProgress?: (fraction: number) => void) {
   return {
     onUploadProgress: (event: { loaded: number; total?: number }) => {
