@@ -1722,7 +1722,8 @@
     "nav": {
       "games": "Juegos",
       "hardware": "Hardware",
-      "list": "List"
+      "list": "List",
+      "bookshelf": "Bookshelf"
     },
     "games": {
       "title": "Juegos",
