@@ -12,9 +12,8 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { resolveAssetUrl } from "../api/client";
-import { listAllLibraryItems } from "../api/library";
-import type { GameSummary, LibraryListItem, PlatformResponse } from "../api/types";
-import { useGames } from "../hooks/useGames";
+import { fetchBookshelfEntries } from "../api/games";
+import type { BookshelfEntry, PlatformResponse } from "../api/types";
 import { usePlatforms } from "../hooks/usePlatforms";
 import { gameIdentifier } from "../utils/identifiers";
 import GamesSubNav from "./GamesSubNav";
@@ -22,8 +21,15 @@ import PlatformTemplateDialog from "./PlatformTemplateDialog";
 import SpineIconGlyph from "./SpineIcon";
 import { caseSizeToPixels, effectiveCaseSizeMm } from "../utils/caseSizes";
 
+export interface ShelfGame {
+  id: number;
+  name: string;
+  slug: string | null;
+  uuid: string;
+}
+
 export interface ShelfCase {
-  game: GameSummary;
+  game: ShelfGame;
   platform: string;
 }
 
@@ -32,17 +38,20 @@ export interface Shelf {
   cases: ShelfCase[];
 }
 
-// One case per owned copy (game × owned platform) — the bookshelf shows what
+// One case per owned (game x platform) entry — the bookshelf shows what
 // physically sits on the shelf, so a game owned on two platforms appears twice.
-export function buildShelves(games: GameSummary[] | undefined): Shelf[] {
+export function buildShelvesFromEntries(entries: BookshelfEntry[] | undefined): Shelf[] {
   const byPlatform = new Map<string, ShelfCase[]>();
-  for (const game of games ?? []) {
-    if (!game.owned) continue;
-    for (const platform of game.ownedPlatforms) {
-      const list = byPlatform.get(platform) ?? [];
-      list.push({ game, platform });
-      byPlatform.set(platform, list);
-    }
+  for (const entry of entries ?? []) {
+    const game: ShelfGame = {
+      id: entry.gameId,
+      name: entry.name,
+      slug: entry.gameSlug,
+      uuid: entry.gameUuid,
+    };
+    const list = byPlatform.get(entry.platformLabel) ?? [];
+    list.push({ game, platform: entry.platformLabel });
+    byPlatform.set(entry.platformLabel, list);
   }
   return [...byPlatform.entries()]
     .map(([platform, cases]) => ({
@@ -61,27 +70,19 @@ export function indexPlatformsByLabel(
   return new Map((platforms ?? []).map((p) => [p.abbreviation ?? p.name, p]));
 }
 
-// Shelf cases are keyed by the game summary's platform label (the IGDB
-// abbreviation when there is one, e.g. "PS5"), while library items carry the
-// full platform name ("PlayStation 5") — bridge the two through the platform
-// catalogue so a case can find its copies' formats for the Format filter.
+// Each case's copy formats, for the Format filter — the slim endpoint
+// already resolved the platform label and merged duplicate copies' formats.
 export function caseFormatsKey(gameId: number, platform: string) {
   return `${gameId}|${platform}`;
 }
 
-export function buildCaseFormats(
-  items: LibraryListItem[] | undefined,
-  platforms: PlatformResponse[] | undefined
+export function buildCaseFormatsFromEntries(
+  entries: BookshelfEntry[] | undefined
 ): Map<string, Set<string>> {
-  const keyByName = new Map((platforms ?? []).map((p) => [p.name, p.abbreviation ?? p.name]));
   const formats = new Map<string, Set<string>>();
-  for (const item of items ?? []) {
-    if (!item.format || !item.platformName) continue;
-    const platform = keyByName.get(item.platformName) ?? item.platformName;
-    const key = caseFormatsKey(item.gameId, platform);
-    const set = formats.get(key) ?? new Set<string>();
-    set.add(item.format);
-    formats.set(key, set);
+  for (const entry of entries ?? []) {
+    if (entry.formats.length === 0) continue;
+    formats.set(caseFormatsKey(entry.gameId, entry.platformLabel), new Set(entry.formats));
   }
   return formats;
 }
@@ -299,17 +300,20 @@ export function packRows(
 const BookshelfPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data: games, isLoading } = useGames();
+  // One slim request (owned game x platform rows) instead of the full games
+  // list + every library item — the shelf was the slowest page to load.
+  const { data: entries, isLoading } = useQuery({
+    queryKey: ["bookshelf-entries"],
+    queryFn: fetchBookshelfEntries,
+    staleTime: 5 * 60 * 1000,
+  });
   const [search, setSearch] = useState("");
   const [platformFilter, setPlatformFilter] = useState("all");
   const [formatFilter, setFormatFilter] = useState("all");
   const [templatePlatform, setTemplatePlatform] = useState<PlatformResponse | null>(null);
 
-  // Same data the Games List page's Platform/Format filters run on (shared
-  // query cache with that page).
-  const { data: items } = useQuery({ queryKey: ["library", "all-items"], queryFn: listAllLibraryItems });
   const { data: platforms } = usePlatforms();
-  const caseFormats = useMemo(() => buildCaseFormats(items, platforms), [items, platforms]);
+  const caseFormats = useMemo(() => buildCaseFormatsFromEntries(entries), [entries]);
   const platformsByLabel = useMemo(() => indexPlatformsByLabel(platforms), [platforms]);
   // Each template image is measured when it loads: natural size (cases are
   // scaled proportionally from it, largest template sets the scale) and
@@ -356,7 +360,7 @@ const BookshelfPage = () => {
     [caseFormats]
   );
 
-  const shelves = useMemo(() => buildShelves(games), [games]);
+  const shelves = useMemo(() => buildShelvesFromEntries(entries), [entries]);
   const keyword = search.trim().toLowerCase();
   const templateCaseSizes = useMemo(
     () => buildTemplateCaseSizes(templateInfo, TEMPLATE_TARGET_HEIGHT, new Set(shelves.map((s) => s.platform))),
@@ -411,6 +415,31 @@ const BookshelfPage = () => {
     () => packRows(visibleShelves, Math.max(shelfWidth - 16, 200), platformCaseSizes),
     [visibleShelves, shelfWidth, platformCaseSizes]
   );
+
+  // Rows render progressively: painting ~7,000 cases at once was the other
+  // half of the slow load. Start with a screenful and grow as the sentinel
+  // approaches; a new filter/search starts over from the top.
+  const ROWS_PER_CHUNK = 10;
+  const [visibleRowCount, setVisibleRowCount] = useState(ROWS_PER_CHUNK);
+  useEffect(() => {
+    setVisibleRowCount(ROWS_PER_CHUNK);
+  }, [visibleShelves]);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = sentinelRef.current;
+    if (!element || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (observed) => {
+        if (observed.some((entry) => entry.isIntersecting)) {
+          setVisibleRowCount((count) => Math.min(count + ROWS_PER_CHUNK, rows.length));
+        }
+      },
+      { rootMargin: "900px" }
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [rows.length, visibleRowCount]);
+  const visibleRows = rows.slice(0, visibleRowCount);
 
   return (
     <Box>
@@ -476,7 +505,7 @@ const BookshelfPage = () => {
         <Paper sx={{ p: 3, textAlign: "center" }}>{t("games.bookshelf.empty")}</Paper>
       ) : (
         <Box ref={shelfRef}>
-          {rows.map((row, rowIndex) => (
+          {visibleRows.map((row, rowIndex) => (
             <Box key={rowIndex} sx={{ mb: 3 }}>
               <Box sx={{ display: "flex", alignItems: "flex-end", gap: "3px", px: 1 }}>
                 {row.map((item) => {
@@ -650,6 +679,7 @@ const BookshelfPage = () => {
               />
             </Box>
           ))}
+          {visibleRowCount < rows.length && <Box ref={sentinelRef} sx={{ height: 1 }} />}
         </Box>
       )}
       <PlatformTemplateDialog platform={templatePlatform} onClose={() => setTemplatePlatform(null)} />
