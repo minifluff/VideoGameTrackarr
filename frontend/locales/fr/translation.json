@@ -148,7 +148,8 @@
       "romDownloadButton": "Télécharger la ROM",
       "romDownloadError": "Impossible de télécharger la ROM. Veuillez réessayer.",
       "romUnsupportedPlatformNote": "Les ROM ne sont pas prises en charge pour {{platform}} — elle ne peut pas être jouée dans le navigateur, donc aucun fichier ROM ne peut être envoyé pour elle.",
-      "romChoosePlatformNote": "Choisissez une plateforme pour envoyer des ROM. Seules les plateformes jouables dans le navigateur les acceptent."
+      "romChoosePlatformNote": "Choisissez une plateforme pour envoyer des ROM. Seules les plateformes jouables dans le navigateur les acceptent.",
+      "formatSubscription": "Subscription"
     },
     "manageTags": {
       "title": "Tags",
@@ -279,7 +280,7 @@
       "includeFilesHelp": "Télécharge un .zip au lieu du fichier JSON — il peut être aussi volumineux que toutes vos ROM réunies. Restaurer un .zip remplace aussi les ROM, sauvegardes et fichiers BIOS.",
       "importHeading": "Importer",
       "importCsvDescription": "Ajoutez des jeux à votre bibliothèque depuis un fichier CSV — pratique pour les imports en masse depuis des tableurs ou d'autres outils. Les colonnes doivent apparaître dans cet ordre :",
-      "importCsvValuesHelp": "Une ligne d'en-tête avec ces noms exacts est facultative. name est requis pour chaque ligne ; category accepte main_game, dlc_addon, expansion, bundle, standalone_expansion, mod, episode, season, remake, remaster, expanded_game, port, fork, pack ou update (vide = main_game) ; status accepte owned ou wishlist (vide = owned) ; format accepte physical, digital, iso, rom, abandonware ou other ; acquired_at utilise AAAA-MM-JJ. Les lignes problématiques sont ignorées et signalées, les autres sont importées. Les jeux déjà dans votre bibliothèque sont ignorés, pas dupliqués.",
+      "importCsvValuesHelp": "Une ligne d'en-tête avec ces noms exacts est facultative. name est requis pour chaque ligne ; category accepte main_game, dlc_addon, expansion, bundle, standalone_expansion, mod, episode, season, remake, remaster, expanded_game, port, fork, pack ou update (vide = main_game) ; status accepte owned ou wishlist (vide = owned) ; format accepte physical, digital, iso, rom, abandonware, subscription ou other ; acquired_at utilise AAAA-MM-JJ. Les lignes problématiques sont ignorées et signalées, les autres sont importées. Les jeux déjà dans votre bibliothèque sont ignorés, pas dupliqués.",
       "downloadCsvTemplate": "Télécharger le modèle CSV",
       "importCsvButton": "Importer depuis CSV",
       "importCsvError": "Impossible d'importer le CSV. Veuillez réessayer.",
@@ -995,7 +996,8 @@
       "moveWithRomDescription_other": "Cette copie contient {{count}} ROM ({{name}}). Les copies de la liste de souhaits ne peuvent pas contenir de ROM, elles seront donc supprimées.",
       "moveWithRomAndSavesDescription_one": "Cette copie contient une ROM ({{name}}), avec ses sauvegardes d'état et/ou sa sauvegarde en jeu. Les copies de la liste de souhaits ne peuvent pas contenir de ROM, la ROM et toutes ses sauvegardes seront donc supprimées.",
       "moveWithRomAndSavesDescription_other": "Cette copie contient {{count}} ROM ({{name}}), avec des sauvegardes d'état et/ou en jeu. Les copies de la liste de souhaits ne peuvent pas contenir de ROM, les ROM et toutes leurs sauvegardes seront donc supprimées.",
-      "hideFromPublicLabel": "Hide"
+      "hideFromPublicLabel": "Hide",
+      "formatSubscription": "Subscription"
     },
     "stats": {
       "playStatusNotStarted": "Pas commencé",
@@ -1772,7 +1774,8 @@
       "iso": "ISO",
       "rom": "ROM",
       "abandonware": "Abandonware",
-      "other": "Other"
+      "other": "Other",
+      "subscription": "Subscription"
     }
   }
 }
