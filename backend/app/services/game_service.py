@@ -71,18 +71,21 @@ class BookshelfEntry:
     formats: list[str]
 
 
-def list_bookshelf_entries(db: Session) -> list[BookshelfEntry]:
+def list_bookshelf_entries(db: Session, *, public: bool = False) -> list[BookshelfEntry]:
     """Slim Bookshelf payload: one entry per owned (game x platform), with
     the platform label resolved (abbreviation ?? name) and the copy formats
     merged — replaces the full games list + full library-items download the
-    Bookshelf page used to need."""
-    rows = db.execute(
+    Bookshelf page used to need. The public variant also drops games the
+    owner hid from public pages."""
+    query = (
         select(LibraryItem, Game, Platform)
         .join(Game, LibraryItem.game_id == Game.id)
         .join(Platform, LibraryItem.platform_id == Platform.id)
         .where(LibraryItem.status == LibraryStatus.OWNED, LibraryItem.platform_id.is_not(None))
-        .order_by(Game.name, Platform.name)
-    ).all()
+    )
+    if public:
+        query = query.where(Game.hide_from_public.is_(False))
+    rows = db.execute(query.order_by(Game.name, Platform.name)).all()
     merged: dict[tuple[int, int], BookshelfEntry] = {}
     for item, game, platform in rows:
         key = (game.id, platform.id)
