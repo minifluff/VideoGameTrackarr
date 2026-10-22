@@ -1,5 +1,6 @@
 import { apiClient } from "./client";
 import type {
+  BookshelfEntry,
   BulkImportRequest,
   BulkImportStatusResponse,
   GameCategory,
@@ -165,6 +166,11 @@ export async function listGames(
     paramsSerializer: { indexes: null },
     signal,
   });
+  return response.data;
+}
+
+export async function fetchBookshelfEntries(): Promise<BookshelfEntry[]> {
+  const response = await apiClient.get<BookshelfEntry[]>("/api/games/bookshelf");
   return response.data;
 }
 

@@ -53,6 +53,18 @@ export interface RegionResponse {
 
 export type PlayStatus = "none" | "backlog" | "playing" | "completed" | "abandoned";
 
+// One slim Bookshelf row per owned (game x platform) from
+// GET /api/games/bookshelf — the shelf page loads only this, not the full
+// games list plus every library item.
+export interface BookshelfEntry {
+  gameId: number;
+  gameSlug: string | null;
+  gameUuid: string;
+  name: string;
+  platformLabel: string;
+  formats: string[];
+}
+
 export interface GameSummary {
   id: number;
   uuid: string;
