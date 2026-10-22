@@ -56,6 +56,19 @@ class GameSummaryResponse(CamelModel):
     owned_platforms: list[str] = []
 
 
+class BookshelfEntryResponse(CamelModel):
+    """One slim row per owned (game x platform) for the Bookshelf page —
+    just what the shelf renders, instead of the full games list plus the
+    full library-items payload."""
+
+    game_id: int
+    game_slug: str | None
+    game_uuid: str
+    name: str
+    platform_label: str
+    formats: list[str]
+
+
 class GameDetailResponse(GameSummaryResponse):
     # Store URLs live only on the detail — the summary is shipped by the thousand on
     # list pages and no card/list reads them (see the perf audit, 2026-10-20).
