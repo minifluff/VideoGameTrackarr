@@ -2,6 +2,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from app.models.catalog import Platform, Region
 from app.models.library import LibraryItem, LibraryStatus
 from app.repositories import game_repository, library_item_repository
 from app.services import rom_service
@@ -84,6 +85,47 @@ def update_library_item(db: Session, item_id: int, **fields: Any) -> LibraryItem
     rom_service.delete_files(orphaned_files)
     db.refresh(item)
     return item
+
+
+# Fields the List page's bulk edit may set on many items at once — exactly one
+# field per call, applied through update_library_item so its invariants (ROM
+# detach when a copy stops being ROM-capable, etc.) hold for bulk edits too.
+BULK_UPDATE_FIELDS = ("format", "platform", "region", "status", "edition", "notes")
+
+
+def bulk_update_library_items(
+    db: Session, item_ids: list[int], field: str, value: Any
+) -> int:
+    """Set one field on many library items; returns how many were updated.
+
+    Every id (and the platform/region target, when relevant) is validated
+    BEFORE anything is written, so a bad id fails the whole call instead of
+    leaving a half-applied bulk edit behind.
+    """
+    if field == "format":
+        fields: dict[str, Any] = {"format": value}
+    elif field == "platform":
+        if db.get(Platform, value) is None:
+            raise NotFoundError(f"Platform {value} not found")
+        fields = {"platform_id": value}
+    elif field == "region":
+        if db.get(Region, value) is None:
+            raise NotFoundError(f"Region {value} not found")
+        fields = {"region_id": value}
+    elif field == "status":
+        fields = {"status": value}
+    elif field in ("edition", "notes"):
+        text = str(value).strip() if value is not None else None
+        fields = {field: text or None}
+    else:  # pragma: no cover - the route's Literal type already restricts this
+        raise ValueError(f"Unsupported bulk-update field: {field}")
+
+    unique_ids = list(dict.fromkeys(item_ids))
+    for item_id in unique_ids:
+        _require_library_item(db, item_id)
+    for item_id in unique_ids:
+        update_library_item(db, item_id, **fields)
+    return len(unique_ids)
 
 
 def delete_library_item(db: Session, item_id: int) -> None:
