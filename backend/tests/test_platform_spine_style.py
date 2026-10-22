@@ -46,3 +46,22 @@ def test_set_platform_spine_style_404_for_missing_platform(auth_client):
         "/api/platforms/999999/spine-style", json={"color": "#000000", "icon": "disc"}
     )
     assert response.status_code == 404
+
+
+def test_custom_uploaded_icon_url_round_trips_and_clears(auth_client):
+    platform = _create_platform(auth_client, name="CustomIconStation")
+    response = auth_client.put(
+        f"/api/platforms/{platform['id']}/spine-style",
+        json={"color": None, "icon": "custom", "iconUrl": "/uploads/spines/icon.png"},
+    )
+    assert response.status_code == 200
+    assert response.json()["spineIcon"] == "custom"
+    assert response.json()["spineIconUrl"] == "/uploads/spines/icon.png"
+
+    # Picking a built-in icon clears the uploaded image reference.
+    response = auth_client.put(
+        f"/api/platforms/{platform['id']}/spine-style",
+        json={"color": None, "icon": "disc", "iconUrl": "/uploads/spines/icon.png"},
+    )
+    assert response.status_code == 200
+    assert response.json()["spineIconUrl"] is None
