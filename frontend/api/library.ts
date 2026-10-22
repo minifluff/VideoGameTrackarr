@@ -34,6 +34,15 @@ export async function deleteLibraryItem(itemId: number): Promise<void> {
   await apiClient.delete(`/api/library/${itemId}`);
 }
 
+// Deletes many library items at once (List page bulk delete). The backend
+// validates every id before deleting, so a bad id fails the whole call.
+export async function bulkDeleteLibraryItems(itemIds: number[]): Promise<{ deleted: number }> {
+  const response = await apiClient.post<{ deleted: number }>("/api/library/bulk-delete", {
+    item_ids: itemIds,
+  });
+  return response.data;
+}
+
 export type BulkLibraryField = "format" | "platform" | "region" | "status" | "edition" | "notes";
 
 // Sets ONE field on many library items at once (List page bulk edit). The
