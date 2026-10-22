@@ -581,6 +581,7 @@ const BookshelfPage = () => {
                           <SpineIconGlyph
                             iconKey={spineIconKey}
                             slug={platformRecord?.slug}
+                            iconUrl={platformRecord?.spineIconUrl}
                             size={Math.max(12, Math.min(22, Math.round(item.width * 0.72)))}
                           />
                         </Box>
@@ -598,7 +599,7 @@ const BookshelfPage = () => {
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
                           mx: "auto",
-                          pt: showSpineIcon ? 3.25 : 0.75,
+                          pt: showSpineIcon ? 4.75 : 0.75,
                           pb: 0.75,
                           height: "100%",
                           position: "relative",

@@ -14,6 +14,7 @@ import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import BlockIcon from "@mui/icons-material/Block";
+import FileUploadIcon from "@mui/icons-material/FileUpload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
@@ -78,11 +79,36 @@ const PlatformTemplateDialog = ({ platform, onClose }: PlatformTemplateDialogPro
     ? caseSizeToPixels(effectiveMm.heightMm, effectiveMm.spineMm)
     : { width: 0, height: 0 };
 
-  const saveSpineStyle = async (color: string | null, icon: string | null) => {
+  const saveSpineStyle = async (color: string | null, icon: string | null, iconUrl?: string | null) => {
     if (!platform) return;
     setError(false);
     try {
-      await setSpineStyle.mutateAsync({ platformId: platform.id, color, icon });
+      await setSpineStyle.mutateAsync({
+        platformId: platform.id,
+        color,
+        icon,
+        iconUrl: iconUrl !== undefined ? iconUrl : icon === "custom" ? platform.spineIconUrl : null,
+      });
+    } catch {
+      setError(true);
+    }
+  };
+
+  const iconInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleIconFilePicked = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !platform) return;
+    setError(false);
+    try {
+      const { url } = await uploadSpine.mutateAsync(file);
+      await setSpineStyle.mutateAsync({
+        platformId: platform.id,
+        color: platform.spineColor,
+        icon: "custom",
+        iconUrl: url,
+      });
     } catch {
       setError(true);
     }
@@ -216,7 +242,7 @@ const PlatformTemplateDialog = ({ platform, onClose }: PlatformTemplateDialogPro
         <Typography variant="caption" color="text.secondary">
           {t("games.bookshelf.spineStyle.colorLabel")}
         </Typography>
-        <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", mb: 1.5, mt: 0.5 }}>
+        <Stack direction="row" spacing={1.25} sx={{ flexWrap: "wrap", mb: 2, mt: 1, rowGap: 1.25 }}>
           <Button
             size="small"
             variant={platform?.spineColor == null ? "contained" : "outlined"}
@@ -233,8 +259,8 @@ const PlatformTemplateDialog = ({ platform, onClose }: PlatformTemplateDialogPro
               onClick={() => saveSpineStyle(swatch, platform?.spineIcon ?? "logo")}
               disabled={busy || setSpineStyle.isPending}
               sx={{
-                width: 30,
-                height: 30,
+                width: 34,
+                height: 34,
                 borderRadius: "50%",
                 backgroundColor: swatch,
                 cursor: "pointer",
@@ -253,7 +279,7 @@ const PlatformTemplateDialog = ({ platform, onClose }: PlatformTemplateDialogPro
               onBlur={(event: React.FocusEvent<HTMLInputElement>) =>
                 saveSpineStyle(event.target.value, platform?.spineIcon ?? "logo")
               }
-              sx={{ width: 34, height: 30, border: "none", background: "none", cursor: "pointer", p: 0 }}
+              sx={{ width: 44, height: 34, border: "none", background: "none", cursor: "pointer", p: 0 }}
             />
           </Tooltip>
         </Stack>
@@ -284,6 +310,39 @@ const PlatformTemplateDialog = ({ platform, onClose }: PlatformTemplateDialogPro
               </Tooltip>
             );
           })}
+          <Tooltip
+            title={t(
+              platform?.spineIcon === "custom"
+                ? "games.bookshelf.spineStyle.replaceIcon"
+                : "games.bookshelf.spineStyle.uploadIcon"
+            )}
+          >
+            <IconButton
+              size="small"
+              onClick={() => iconInputRef.current?.click()}
+              disabled={busy || setSpineStyle.isPending || uploadSpine.isPending}
+              sx={{
+                border:
+                  platform?.spineIcon === "custom"
+                    ? "2px solid #1976d2"
+                    : "1px dashed rgba(128,128,128,0.6)",
+                borderRadius: 1.5,
+              }}
+            >
+              {platform?.spineIcon === "custom" && platform?.spineIconUrl ? (
+                <SpineIconGlyph iconKey="custom" slug={platform?.slug} iconUrl={platform.spineIconUrl} size={20} />
+              ) : (
+                <FileUploadIcon sx={{ fontSize: 20 }} />
+              )}
+            </IconButton>
+          </Tooltip>
+          <input
+            ref={iconInputRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={handleIconFilePicked}
+          />
         </Stack>
         <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
           <Button

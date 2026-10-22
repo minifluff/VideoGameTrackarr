@@ -9,6 +9,7 @@ import StarIcon from "@mui/icons-material/Star";
 import VideogameAssetIcon from "@mui/icons-material/VideogameAsset";
 import type { ComponentType } from "react";
 import { platformLogoUrl } from "../utils/platformLogos";
+import { resolveAssetUrl } from "../api/client";
 
 // The icons a platform's generic spine can wear at its top. "logo" is the
 // default: the platform's own logo image when one is bundled, else a gamepad
@@ -35,11 +36,22 @@ interface SpineIconGlyphProps {
   iconKey: string | null | undefined;
   slug: string | null | undefined;
   size: number;
+  iconUrl?: string | null;
 }
 
-export default function SpineIconGlyph({ iconKey, slug, size }: SpineIconGlyphProps) {
+export default function SpineIconGlyph({ iconKey, slug, size, iconUrl }: SpineIconGlyphProps) {
   const key = iconKey ?? "logo";
   if (key === "none") return null;
+  if (key === "custom" && iconUrl) {
+    return (
+      <Box
+        component="img"
+        src={resolveAssetUrl(iconUrl) ?? undefined}
+        alt=""
+        sx={{ width: size, height: size, objectFit: "contain", display: "block" }}
+      />
+    );
+  }
   if (key === "logo") {
     const logoUrl = platformLogoUrl(slug);
     if (logoUrl) {
