@@ -65,6 +65,25 @@ export interface BookshelfEntry {
   formats: string[];
 }
 
+// Public (share-link) Bookshelf payload: the same slim entries as the
+// private endpoint, plus the platform display records the cases render with.
+export interface PublicBookshelfPlatform {
+  label: string;
+  name: string;
+  abbreviation: string | null;
+  spineTemplateUrl: string | null;
+  caseHeightMm: number | null;
+  caseSpineMm: number | null;
+  spineColor: string | null;
+  spineIcon: string | null;
+  spineIconUrl: string | null;
+}
+
+export interface PublicBookshelf {
+  entries: BookshelfEntry[];
+  platforms: PublicBookshelfPlatform[];
+}
+
 export interface GameSummary {
   id: number;
   uuid: string;
