@@ -1112,6 +1112,26 @@
         "preset": "{{name}} ({{height}} × {{spine}} mm)",
         "custom": "Custom ({{height}} × {{spine}} mm)",
         "renders": "Cases render at 40% of actual: {{height}} px tall, {{width}} px spine"
+      },
+      "spineStyle": {
+        "section": "Generic spine",
+        "hint": "Colour and icon for this platform's default spines (used when there is no template image).",
+        "colorLabel": "Spine colour",
+        "colorAuto": "Auto",
+        "customColor": "Custom colour",
+        "iconLabel": "Spine icon",
+        "icon": {
+          "logo": "Platform logo",
+          "gamepad": "Gamepad",
+          "disc": "Disc",
+          "cartridge": "Cartridge",
+          "arcade": "Arcade cabinet",
+          "star": "Star",
+          "trophy": "Trophy",
+          "heart": "Heart",
+          "bolt": "Bolt",
+          "none": "No icon"
+        }
       }
     }
   },
