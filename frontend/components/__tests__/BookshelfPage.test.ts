@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GameSummary, LibraryListItem, PlatformResponse } from "../../api/types";
-import { buildCaseFormats, buildShelves, buildTemplateCaseSizes, caseFormatsKey, caseSize, contrastTextColor, indexPlatformsByLabel, isMostlyWhite, packRows, resolvePlatformCaseSizes, spineStyle, TITLE_BOTTOM_INSET, TITLE_TOP_INSET } from "../BookshelfPage";
+import { buildCaseFormats, buildShelves, buildTemplateCaseSizes, caseFormatsKey, caseSize, contrastTextColor, indexPlatformsByLabel, packRows, resolvePlatformCaseSizes, spineStyle, TITLE_BOTTOM_INSET, TITLE_TOP_INSET, titleBandLight } from "../BookshelfPage";
 
 const game = (overrides: Partial<GameSummary>): GameSummary => ({
   id: 1,
@@ -222,19 +222,41 @@ describe("buildTemplateCaseSizes", () => {
   });
 });
 
-describe("isMostlyWhite", () => {
-  const rgba = (r: number, g: number, b: number, pixels = 4) =>
-    Array.from({ length: pixels }, () => [r, g, b, 255]).flat();
+describe("titleBandLight", () => {
+  // Build a 4-wide, 100-tall sample whose title band rows (30..92) are one
+  // colour and everything outside the band is another, to prove only the
+  // band decides the text colour.
+  const sample = (band: number, outside: number) => {
+    const width = 4;
+    const height = 100;
+    const data: number[] = [];
+    for (let y = 0; y < height; y++) {
+      const value = y >= 30 && y < 92 ? band : outside;
+      for (let x = 0; x < width; x++) data.push(value, value, value, 255);
+    }
+    return { data, width, height };
+  };
 
-  it("detects a white template", () => {
-    expect(isMostlyWhite(rgba(255, 255, 255))).toBe(true);
-    expect(isMostlyWhite(rgba(240, 238, 235))).toBe(true);
+  it("flags a light title band for black text", () => {
+    const { data, width, height } = sample(235, 235);
+    expect(titleBandLight(data, width, height)).toBe(true);
   });
 
-  it("does not flag dark or mid-tone templates", () => {
-    expect(isMostlyWhite(rgba(20, 20, 20))).toBe(false);
-    expect(isMostlyWhite(rgba(128, 128, 128))).toBe(false);
-    expect(isMostlyWhite(rgba(27, 71, 161))).toBe(false);
+  it("keeps white text for a mid-grey band (the PS4-template case)", () => {
+    const { data, width, height } = sample(118, 30);
+    expect(titleBandLight(data, width, height)).toBe(false);
+  });
+
+  it("ignores a bright banner and logo outside the band", () => {
+    // White header/footer around a dark band: whole-image averaging used to
+    // call this light and print black on dark grey.
+    const { data, width, height } = sample(105, 255);
+    expect(titleBandLight(data, width, height)).toBe(false);
+  });
+
+  it("ignores a dark banner over a white band", () => {
+    const { data, width, height } = sample(240, 10);
+    expect(titleBandLight(data, width, height)).toBe(true);
   });
 });
 
