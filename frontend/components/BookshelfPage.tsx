@@ -134,16 +134,27 @@ export interface TemplateInfo {
 export const TITLE_TOP_INSET = 0.28;
 export const TITLE_BOTTOM_INSET = 0.06;
 
-// Mean per-pixel luminance of an RGBA sample; "mostly white" is a bright
-// average, so a template that's white with a small dark logo still counts.
-export function isMostlyWhite(rgba: ArrayLike<number>): boolean {
-  let total = 0;
-  let pixels = 0;
-  for (let i = 0; i + 2 < rgba.length; i += 4) {
-    total += (rgba[i] + rgba[i + 1] + rgba[i + 2]) / 3;
-    pixels += 1;
+// Text-colour decision for template spines: sample ONLY the title band
+// (the middle stretch where the title actually prints) and take the MEDIAN
+// per-pixel luminance there. The old whole-image mean failed both ways — a
+// bright banner/logo could drag a dark template to black text, and a dark
+// banner could drag a white template under the threshold and leave white
+// text on white. The median ignores the logo zones entirely, and 150 is
+// the point where black text starts reading better than white.
+export const LIGHT_TEXT_THRESHOLD = 150;
+export function titleBandLight(rgba: ArrayLike<number>, width: number, height: number): boolean {
+  const bandTop = Math.floor(height * 0.3);
+  const bandBottom = Math.ceil(height * 0.92);
+  const luminances: number[] = [];
+  for (let y = bandTop; y < bandBottom; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      luminances.push((rgba[i] + rgba[i + 1] + rgba[i + 2]) / 3);
+    }
   }
-  return pixels > 0 && total / pixels >= 205;
+  if (luminances.length === 0) return false;
+  luminances.sort((a, b) => a - b);
+  return luminances[Math.floor(luminances.length / 2)] >= LIGHT_TEXT_THRESHOLD;
 }
 
 // Templated cases share ONE scale, set by the largest template ON THE SHELF:
@@ -315,11 +326,11 @@ const BookshelfPage = () => {
         try {
           const canvas = document.createElement("canvas");
           canvas.width = 16;
-          canvas.height = 16;
+          canvas.height = 64;
           const context = canvas.getContext("2d");
           if (context) {
-            context.drawImage(image, 0, 0, 16, 16);
-            light = isMostlyWhite(context.getImageData(0, 0, 16, 16).data);
+            context.drawImage(image, 0, 0, 16, 64);
+            light = titleBandLight(context.getImageData(0, 0, 16, 64).data, 16, 64);
           }
         } catch {
           light = false;
