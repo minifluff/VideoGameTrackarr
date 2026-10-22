@@ -104,11 +104,13 @@ export function useSetPlatformSpineStyle() {
       platformId,
       color,
       icon,
+      iconUrl,
     }: {
       platformId: number;
       color: string | null;
       icon: string | null;
-    }) => setPlatformSpineStyle(platformId, color, icon),
+      iconUrl?: string | null;
+    }) => setPlatformSpineStyle(platformId, color, icon, iconUrl ?? null),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["platforms"] }),
   });
 }
