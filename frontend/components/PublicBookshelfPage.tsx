@@ -23,7 +23,6 @@ import {
   TEMPLATE_TARGET_HEIGHT,
 } from "./BookshelfPage";
 import BookshelfGrid, { packRows, useTemplateInfo } from "./BookshelfGrid";
-import PublicSubNav from "./PublicSubNav";
 
 // The share-link Bookshelf: same shelf as the private page (shared grid,
 // builders, and sizing), fed by the public endpoint — hidden games never
@@ -150,7 +149,6 @@ const PublicBookshelfPage = () => {
 
   return (
     <Box>
-      <PublicSubNav />
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={2}
