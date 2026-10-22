@@ -324,3 +324,13 @@ def test_adding_library_item_does_not_create_game_progress(auth_client, db_sessi
     auth_client.post(f"/api/games/{seed_game.id}/library", json={"status": "owned"})
 
     assert db_session.query(GameProgress).filter_by(game_id=seed_game.id).count() == 0
+
+
+def test_add_library_item_with_subscription_format(auth_client, seed_game, seed_platform):
+    response = auth_client.post(
+        f"/api/games/{seed_game.id}/library",
+        json={"status": "owned", "platformId": seed_platform.id, "format": "subscription"},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["format"] == "subscription"
