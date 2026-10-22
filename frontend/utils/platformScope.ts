@@ -18,6 +18,7 @@ const FORMAT_LABEL_KEYS: Record<MediaFormat, string> = {
   iso: "games.library.formatIso",
   rom: "games.library.formatRom",
   abandonware: "games.library.formatAbandonware",
+  subscription: "games.library.formatSubscription",
   other: "games.library.formatOther",
 };
 
