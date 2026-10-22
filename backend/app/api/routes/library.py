@@ -110,6 +110,23 @@ def bulk_update_library_items(
     return BulkUpdateResponse(updated=updated)
 
 
+class BulkDeleteLibraryItemsRequest(BaseModel):
+    item_ids: list[int] = Field(min_length=1, max_length=1000)
+
+
+class BulkDeleteResponse(BaseModel):
+    deleted: int
+
+
+@router.post("/api/library/bulk-delete", response_model=BulkDeleteResponse)
+def bulk_delete_library_items(
+    body: BulkDeleteLibraryItemsRequest, db: Session = Depends(get_db)
+) -> BulkDeleteResponse:
+    """Delete many library items at once (List page bulk delete)."""
+    deleted = library_service.bulk_delete_library_items(db, body.item_ids)
+    return BulkDeleteResponse(deleted=deleted)
+
+
 @router.delete("/api/library/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_library_item(item_id: int, db: Session = Depends(get_db)) -> None:
     library_service.delete_library_item(db, item_id)
