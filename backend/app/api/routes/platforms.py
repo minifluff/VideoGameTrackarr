@@ -103,7 +103,9 @@ def set_platform_case_size(
 def set_platform_spine_style(
     platform_id: int, body: PlatformSpineStyleRequest, db: Session = Depends(get_db)
 ) -> PlatformSummaryResponse:
-    platform = platform_service.set_platform_spine_style(db, platform_id, body.color, body.icon)
+    platform = platform_service.set_platform_spine_style(
+        db, platform_id, body.color, body.icon, body.icon_url
+    )
     return platform_summary_from_orm(platform, 0)
 
 
