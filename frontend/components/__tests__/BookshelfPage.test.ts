@@ -68,6 +68,7 @@ describe("buildCaseFormats", () => {
     caseSpineMm: null,
     spineColor: null,
     spineIcon: null,
+    spineIconUrl: null,
     gameCount: 0,
     ...overrides,
   });
@@ -146,6 +147,7 @@ describe("indexPlatformsByLabel", () => {
     caseSpineMm: null,
     spineColor: null,
     spineIcon: null,
+    spineIconUrl: null,
     gameCount: 0,
     ...overrides,
   });
@@ -248,6 +250,7 @@ describe("resolvePlatformCaseSizes", () => {
     caseSpineMm: null,
     spineColor: null,
     spineIcon: null,
+    spineIconUrl: null,
     gameCount: 0,
     ...overrides,
   });
