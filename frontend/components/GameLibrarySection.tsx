@@ -105,6 +105,7 @@ const GameLibrarySection = ({
     iso: t("games.library.formatIso"),
     rom: t("games.library.formatRom"),
     abandonware: t("games.library.formatAbandonware"),
+    subscription: t("games.library.formatSubscription"),
     other: t("games.library.formatOther"),
   };
 

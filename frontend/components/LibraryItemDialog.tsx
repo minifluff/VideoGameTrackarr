@@ -54,7 +54,7 @@ import { TOAST_OPTIONS } from "../utils/toastOptions";
 const formSchema = z.object({
   platformId: z.number({ message: "Platform is required" }),
   regionId: z.number().optional(),
-  format: z.enum(["physical", "digital", "iso", "rom", "abandonware", "other"]),
+  format: z.enum(["physical", "digital", "iso", "rom", "abandonware", "subscription", "other"]),
   digitalStorefront: z.string().optional(),
   ratingBoard: z
     .enum(["esrb", "pegi", "cero", "usk", "grac", "classind", "acb", "iarc"])
@@ -110,6 +110,7 @@ const FORMAT_OPTIONS: { value: MediaFormat; labelKey: string }[] = [
   { value: "iso", labelKey: "dialogs.libraryItem.formatIso" },
   { value: "rom", labelKey: "dialogs.libraryItem.formatRom" },
   { value: "abandonware", labelKey: "dialogs.libraryItem.formatAbandonware" },
+  { value: "subscription", labelKey: "dialogs.libraryItem.formatSubscription" },
   { value: "other", labelKey: "dialogs.libraryItem.formatOther" },
 ];
 

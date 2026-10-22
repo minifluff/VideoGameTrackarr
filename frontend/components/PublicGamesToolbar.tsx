@@ -66,7 +66,7 @@ interface PublicGamesToolbarProps {
   onClearFilters: () => void;
 }
 
-const FORMAT_OPTIONS = ["physical", "digital", "iso", "rom", "abandonware", "other"];
+const FORMAT_OPTIONS = ["physical", "digital", "iso", "rom", "abandonware", "subscription", "other"];
 const PLAY_STATUS_OPTIONS = ["unplayed", "playing", "beaten", "completed", "dropped", "on_hold"];
 
 // Full filter set matching the normal Games page — for the read-only public share page.

@@ -39,6 +39,7 @@ const FORMAT_OPTIONS: { value: MediaFormat; labelKey: string }[] = [
   { value: "iso", labelKey: "dialogs.libraryItem.formatIso" },
   { value: "rom", labelKey: "dialogs.libraryItem.formatRom" },
   { value: "abandonware", labelKey: "dialogs.libraryItem.formatAbandonware" },
+  { value: "subscription", labelKey: "dialogs.libraryItem.formatSubscription" },
   { value: "other", labelKey: "dialogs.libraryItem.formatOther" },
 ];
 

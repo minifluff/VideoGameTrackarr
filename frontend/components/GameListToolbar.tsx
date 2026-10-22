@@ -120,6 +120,7 @@ const FORMAT_OPTIONS: FormatOption[] = [
   { value: "iso", label: "ISO" },
   { value: "rom", label: "ROM" },
   { value: "abandonware", label: "Abandonware" },
+  { value: "subscription", label: "Subscription" },
   { value: "other", label: "Other" },
 ];
 
