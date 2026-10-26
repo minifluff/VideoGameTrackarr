@@ -20,6 +20,10 @@ class AuthError(Exception):
     """Raised for any auth failure that should surface as 401 to the API client."""
 
 
+class WrongPasswordError(Exception):
+    """The current password given to change it is wrong — 400."""
+
+
 def authenticate_user(db: Session, username: str, password: str) -> User:
     user = db.query(User).filter(User.username == username).first()
     if user is None or not verify_password(password, user.password_hash):
@@ -40,6 +44,24 @@ def create_initial_admin(db: Session, username: str, password: str) -> User:
     db.commit()
     db.refresh(user)
     return user
+
+
+def change_password(db: Session, user: User, current_password: str, new_password: str) -> None:
+    """Sets a new password and revokes every refresh token the user has, so other browsers
+    and devices are signed out once their short-lived access token runs out. The caller
+    issues fresh tokens for the session that made the change."""
+    if not verify_password(current_password, user.password_hash):
+        raise WrongPasswordError("The current password is incorrect.")
+
+    user.password_hash = hash_password(new_password)
+    _revoke_all(db, user.id)
+
+
+def _revoke_all(db: Session, user_id: int) -> None:
+    db.query(RefreshToken).filter(RefreshToken.user_id == user_id, RefreshToken.revoked_at.is_(None)).update(
+        {RefreshToken.revoked_at: datetime.now(UTC)}, synchronize_session=False
+    )
+    db.commit()
 
 
 def issue_tokens(db: Session, user: User, remember_me: bool = False) -> tuple[str, str]:
