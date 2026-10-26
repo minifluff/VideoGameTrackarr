@@ -233,7 +233,18 @@
     "account": {
       "heading": "Account",
       "signedInAs": "Signed in as <1>{{username}}</1>.",
-      "downloadApp": "Download Android app"
+      "downloadApp": "Download Android app",
+      "password": "Password",
+      "passwordHelp": "Change the password you sign in with. Other browsers and devices are signed out; this one stays signed in.",
+      "changePassword": "Change password",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "passwordsDontMatch": "The passwords don't match.",
+      "wrongPassword": "The current password is incorrect.",
+      "changePasswordError": "Couldn't change the password. Please try again.",
+      "passwordChanged": "Password changed. Other devices have been signed out.",
+      "changing": "Changing..."
     },
     "display": {
       "heading": "Display",
@@ -649,7 +660,8 @@
       "passwordsMismatch": "Passwords don't match",
       "creatingAccount": "Creating account...",
       "createAccount": "Create admin account"
-    }
+    },
+    "tooManyAttempts": "Too many attempts. Wait a few minutes and try again."
   },
   "games": {
     "gameForm": {
