@@ -254,6 +254,7 @@ const DeviceDetails = () => {
         confirmColor="error"
         onClose={() => setDeleteConfirmOpen(false)}
         onConfirm={handleDelete}
+        busy={deleteDevice.isPending}
       />
     </Grid>
   );

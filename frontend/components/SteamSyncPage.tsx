@@ -1033,7 +1033,7 @@ const SteamSyncPage = () => {
         }
         description={confirmDescription}
         confirmLabel={t("insights.steamSync.syncButton")}
-        confirmDisabled={syncEntries.isPending || syncWishlistEntries.isPending}
+        busy={syncEntries.isPending || syncWishlistEntries.isPending}
         onClose={() => setConfirmTarget(null)}
         onConfirm={() => void handleConfirmSync()}
       />
@@ -1045,7 +1045,7 @@ const SteamSyncPage = () => {
         title={t("insights.steamSync.ignoreConfirmTitle", { count: ignoreTarget?.length ?? 0 })}
         description={t("insights.steamSync.ignoreConfirmDescription")}
         confirmLabel={t("insights.steamSync.ignoreButton")}
-        confirmDisabled={ignoreEntries.isPending || ignoreWishlistEntries.isPending}
+        busy={ignoreEntries.isPending || ignoreWishlistEntries.isPending}
         onClose={() => setIgnoreTarget(null)}
         onConfirm={() => void handleConfirmBulkIgnore()}
       />

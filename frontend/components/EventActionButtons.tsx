@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { isAxiosError } from "axios";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import Backdrop from "@mui/material/Backdrop";
 import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
@@ -39,14 +37,6 @@ const EventActionButtons = ({ eventId }: EventActionButtonsProps) => {
 
   return (
     <>
-      {resyncEventMutation.isPending && (
-        <Backdrop
-          sx={{ color: "#fff", zIndex: (t) => t.zIndex.modal + 1 }}
-          open={resyncEventMutation.isPending}
-        >
-          <CircularProgress color="inherit" />
-        </Backdrop>
-      )}
       <Stack spacing={1.5}>
         <Button
           variant="contained"
@@ -64,6 +54,7 @@ const EventActionButtons = ({ eventId }: EventActionButtonsProps) => {
           confirmLabel={t("events.actions.resyncConfirmLabel")}
           onClose={() => setResyncDialogOpen(false)}
           onConfirm={() => void handleResync()}
+          busy={resyncEventMutation.isPending}
         />
       </Stack>
     </>

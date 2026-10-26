@@ -7,9 +7,7 @@ import LinkIcon from "@mui/icons-material/Link";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import RemoveIcon from "@mui/icons-material/Remove";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
-import Backdrop from "@mui/material/Backdrop";
 import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -138,11 +136,6 @@ const GameActionButtons = ({
 
   return (
     <>
-      {resyncGameMutation.isPending && (
-        <Backdrop sx={{ color: "#fff", zIndex: (t) => t.zIndex.modal + 1 }} open={resyncGameMutation.isPending}>
-          <CircularProgress color="inherit" />
-        </Backdrop>
-      )}
       <Stack spacing={1.5}>
         {isAutoDiscovered ? (
           <Button
@@ -211,6 +204,7 @@ const GameActionButtons = ({
               confirmLabel={t("games.actions.resyncConfirmLabel")}
               onClose={() => setResyncGameDialogOpen(false)}
               onConfirm={handleResyncGame}
+              busy={resyncGameMutation.isPending}
             />
             <LinkToIgdbDialog
               open={changeLinkDialogOpen}
