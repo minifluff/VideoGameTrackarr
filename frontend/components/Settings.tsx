@@ -1,4 +1,6 @@
+import { useState } from "react";
 import AndroidIcon from "@mui/icons-material/Android";
+import KeyIcon from "@mui/icons-material/Key";
 import LogoutIcon from "@mui/icons-material/Logout";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -19,6 +21,7 @@ import { SUPPORTED_LANGUAGES, type LanguageOption } from "../utils/language";
 import { STORE_REGION_AUTO, STORE_REGION_OFF, STORE_REGIONS } from "../utils/storeRegion";
 import AutocompleteSelect from "./AutocompleteSelect";
 import AppearanceSection from "./AppearanceSection";
+import ChangePasswordDialog from "./ChangePasswordDialog";
 import DataManagementSection from "./DataManagementSection";
 import DisplayModeSection from "./DisplayModeSection";
 import SettingsSubNav from "./SettingsSubNav";
@@ -30,6 +33,7 @@ const Settings = () => {
   const { t } = useTranslation();
   const { data: currentUser } = useCurrentUser();
   const logoutMutation = useLogout();
+  const [passwordOpen, setPasswordOpen] = useState(false);
   const { mode, contrast, toggleColorMode, toggleContrast } = useColorMode();
   const { currency, setCurrency } = useCurrency();
   const { language, setLanguage } = useLanguage();
@@ -93,6 +97,15 @@ const Settings = () => {
           >
             {t("common.logOut")}
           </Button>
+          <Button
+            variant="outlined"
+            startIcon={<KeyIcon />}
+            sx={{ mt: 2, ml: 2 }}
+            onClick={() => setPasswordOpen(true)}
+          >
+            {t("settings.account.changePassword")}
+          </Button>
+          <ChangePasswordDialog open={passwordOpen} onClose={() => setPasswordOpen(false)} />
 
           <Divider sx={{ my: 3 }} />
 
