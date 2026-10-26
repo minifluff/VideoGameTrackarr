@@ -49,3 +49,12 @@ export async function fetchCurrentUser(): Promise<CurrentUser> {
 export function isAuthenticated(): boolean {
   return Boolean(tokenStorage.getAccessToken());
 }
+
+// Other sessions are signed out; this one gets fresh tokens and stays signed in.
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  const response = await apiClient.post<AuthTokens>("/api/auth/change-password", {
+    currentPassword,
+    newPassword,
+  });
+  tokenStorage.setTokens(response.data.accessToken, response.data.refreshToken);
+}
