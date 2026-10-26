@@ -5,6 +5,7 @@ from app.api.deps import get_current_user, get_db
 from app.core.limiter import limiter
 from app.models.system import User
 from app.schemas.auth import (
+    ChangePasswordRequest,
     LoginRequest,
     RefreshRequest,
     SetupRequest,
@@ -13,7 +14,7 @@ from app.schemas.auth import (
     UserResponse,
 )
 from app.services import auth_service
-from app.services.auth_service import AuthError
+from app.services.auth_service import AuthError, WrongPasswordError
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -67,3 +68,23 @@ def logout(body: RefreshRequest, db: Session = Depends(get_db)) -> None:
 @router.get("/me", response_model=UserResponse)
 def me(current_user: User = Depends(get_current_user)) -> UserResponse:
     return UserResponse(id=current_user.id, username=current_user.username)
+
+
+@router.post("/change-password", response_model=TokenResponse)
+@limiter.limit("5/minute")
+def change_password(
+    request: Request,
+    body: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> TokenResponse:
+    """Changes the signed-in user's password. Every existing session is signed out (their
+    refresh tokens revoked); this one gets fresh tokens so it stays signed in. Rate limited
+    like login, so a stolen session can't guess the current password either."""
+    try:
+        auth_service.change_password(db, current_user, body.current_password, body.new_password)
+    except WrongPasswordError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    access_token, refresh_token = auth_service.issue_tokens(db, current_user)
+    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
