@@ -203,3 +203,58 @@ def test_refresh_preserves_remember_me_lifetime(client, test_user):
 
     assert response.status_code == 200
     assert _refresh_token_lifetime_days(response.json()["refreshToken"]) > 360
+
+
+def test_change_password_signs_other_sessions_out_and_keeps_this_one(client, test_user):
+    first = client.post("/api/auth/login", json={"username": test_user.username, "password": "correct-password"}).json()
+    other = client.post("/api/auth/login", json={"username": test_user.username, "password": "correct-password"}).json()
+
+    response = client.post(
+        "/api/auth/change-password",
+        json={"currentPassword": "correct-password", "newPassword": "a-brand-new-password"},
+        headers={"Authorization": f"Bearer {first['accessToken']}"},
+    )
+
+    assert response.status_code == 200
+    assert client.post("/api/auth/refresh", json={"refreshToken": other["refreshToken"]}).status_code == 401
+    assert client.post("/api/auth/refresh", json={"refreshToken": response.json()["refreshToken"]}).status_code == 200
+    login = client.post("/api/auth/login", json={"username": test_user.username, "password": "a-brand-new-password"})
+    assert login.status_code == 200
+
+
+def test_change_password_rejects_a_wrong_current_password(client, test_user):
+    tokens = client.post(
+        "/api/auth/login", json={"username": test_user.username, "password": "correct-password"}
+    ).json()
+
+    response = client.post(
+        "/api/auth/change-password",
+        json={"currentPassword": "not-it", "newPassword": "a-brand-new-password"},
+        headers={"Authorization": f"Bearer {tokens['accessToken']}"},
+    )
+
+    assert response.status_code == 400
+
+
+def test_change_password_rejects_a_short_new_password(auth_client):
+    response = auth_client.post(
+        "/api/auth/change-password", json={"currentPassword": "correct-password", "newPassword": "short"}
+    )
+
+    assert response.status_code == 422
+
+
+def test_change_password_requires_auth(client):
+    response = client.post(
+        "/api/auth/change-password", json={"currentPassword": "x", "newPassword": "a-brand-new-password"}
+    )
+
+    assert response.status_code == 401
+
+
+def test_change_password_rejects_a_password_longer_than_72_bytes(auth_client):
+    response = auth_client.post(
+        "/api/auth/change-password", json={"currentPassword": "correct-password", "newPassword": "x" * 73}
+    )
+
+    assert response.status_code == 422
