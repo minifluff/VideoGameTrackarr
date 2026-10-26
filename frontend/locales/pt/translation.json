@@ -233,7 +233,18 @@
     "account": {
       "heading": "Conta",
       "signedInAs": "Sessão iniciada como <1>{{username}}</1>.",
-      "downloadApp": "Download Android app"
+      "downloadApp": "Download Android app",
+      "password": "Palavra-passe",
+      "passwordHelp": "Altere a palavra-passe com que inicia sessão. Os outros navegadores e dispositivos terminam a sessão; este continua com sessão iniciada.",
+      "changePassword": "Alterar palavra-passe",
+      "currentPassword": "Palavra-passe atual",
+      "newPassword": "Nova palavra-passe",
+      "confirmPassword": "Confirmar a nova palavra-passe",
+      "passwordsDontMatch": "As palavras-passe não coincidem.",
+      "wrongPassword": "A palavra-passe atual está incorreta.",
+      "changePasswordError": "Não foi possível alterar a palavra-passe. Tente novamente.",
+      "passwordChanged": "Palavra-passe alterada. Os outros dispositivos terminaram a sessão.",
+      "changing": "A alterar..."
     },
     "display": {
       "heading": "Visualização",
@@ -649,7 +660,8 @@
       "passwordsMismatch": "As palavras-passe não coincidem",
       "creatingAccount": "A criar conta...",
       "createAccount": "Criar conta de administrador"
-    }
+    },
+    "tooManyAttempts": "Demasiadas tentativas. Aguarde alguns minutos e tente novamente."
   },
   "games": {
     "gameForm": {
