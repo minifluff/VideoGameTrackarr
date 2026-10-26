@@ -1,4 +1,4 @@
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from app.schemas.base import CamelModel
 
@@ -8,6 +8,28 @@ class LoginRequest(CamelModel):
     password: str
     remember_me: bool = False
 
+
+# bcrypt only uses a password's first 72 bytes, so a longer one would be silently cut short.
+BCRYPT_MAX_BYTES = 72
+
+
+def _check_bcrypt_length(value: str) -> str:
+    if len(value.encode("utf-8")) > BCRYPT_MAX_BYTES:
+        raise ValueError(f"Password must be at most {BCRYPT_MAX_BYTES} bytes")
+    return value
+
+
+class ChangePasswordRequest(CamelModel):
+    """The new password gets the same minimum as the first-run form (SetupRequest); the
+    current one is checked as stored, like login."""
+
+    current_password: str
+    new_password: str = Field(min_length=8)
+
+    @field_validator("new_password")
+    @classmethod
+    def _fits_bcrypt(cls, value: str) -> str:
+        return _check_bcrypt_length(value)
 
 class RefreshRequest(CamelModel):
     refresh_token: str
