@@ -60,6 +60,14 @@ const ComparePage = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           {t("games.compare.title")}
         </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {t(
+            loadedGames.length === 1
+              ? "catalog.refCard.gameCountSingular"
+              : "catalog.refCard.gameCountPlural",
+            { count: loadedGames.length }
+          )}
+        </Typography>
       </Box>
       <TableContainer component={Paper}>
         <Table size="small">

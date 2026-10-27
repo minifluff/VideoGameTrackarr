@@ -5,6 +5,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Collapse from "@mui/material/Collapse";
 import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import type { GameListFilters, MatchAllFilters } from "../api/games";
@@ -347,7 +348,7 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
           zIndex: 1,
           bgcolor: "background.default",
           pt: 0.5,
-          pb: 1,
+          pb: 2,
           // Once scrolled content locks under this sticky header, the bottom edge needs to
           // read as an intentional floating panel rather than content abruptly disappearing.
           boxShadow: "0 4px 8px -4px rgba(0, 0, 0, 0.2)",
@@ -373,15 +374,35 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
             <Typography variant="h4" component="h1" gutterBottom>
               {t("games.list.pageTitle")}
             </Typography>
+            {games !== undefined ? (
+              <Typography variant="body2" color="text.secondary">
+                {t(
+                  visibleGames.length === 1
+                    ? "catalog.refCard.gameCountSingular"
+                    : "catalog.refCard.gameCountPlural",
+                  { count: visibleGames.length }
+                )}
+              </Typography>
+            ) : null}
           </Box>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => navigate("/games/add")}
-            sx={{ flexShrink: 0 }}
-          >
-            {t("games.list.addGameButton")}
-          </Button>
+          <Stack direction="column" spacing={1} sx={{ flexShrink: 0 }}>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => navigate("/games/add")}
+            >
+              {t("games.list.addGameButton")}
+            </Button>
+            <Button
+              variant={sort === "date_added_desc" ? "contained" : "outlined"}
+              color={sort === "date_added_desc" ? "secondary" : "primary"}
+              onClick={() =>
+                setSort(sort === "date_added_desc" ? "name_asc" : "date_added_desc")
+              }
+            >
+              {t("games.list.newestButton")}
+            </Button>
+          </Stack>
         </Box>
         )}
         </Collapse>

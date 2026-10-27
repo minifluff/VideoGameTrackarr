@@ -71,6 +71,7 @@ const PublicBookshelfPage = () => {
   );
 
   const shelves = useMemo(() => buildShelvesFromEntries(entries), [entries]);
+  const totalCases = shelves.reduce((sum, shelf) => sum + shelf.cases.length, 0);
   const keyword = search.trim().toLowerCase();
   const templateCaseSizes = useMemo(
     () => buildTemplateCaseSizes(templateInfo, TEMPLATE_TARGET_HEIGHT, new Set(shelves.map((s) => s.platform))),
@@ -148,6 +149,9 @@ const PublicBookshelfPage = () => {
         <Box>
           <Typography variant="h4" component="h1">
             {t("games.bookshelf.title")}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {t("games.bookshelf.summary", { cases: totalCases })}
           </Typography>
         </Box>
         <Stack spacing={1.5} sx={{ width: "100%", flex: { sm: 1 }, maxWidth: { sm: 620 } }}>

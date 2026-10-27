@@ -634,7 +634,7 @@ const GameListToolbar = ({
   }
 
   return (
-    <Stack spacing={1.5}>
+    <Stack spacing={1.5} sx={{ pt: 2 }}>
       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
         {onEnterSelectionMode ? (
           <Tooltip title={t("games.listToolbar.selectGames")}>

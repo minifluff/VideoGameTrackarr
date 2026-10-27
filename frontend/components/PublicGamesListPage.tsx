@@ -180,6 +180,16 @@ const PublicGamesListPage = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           {t("public.gamesList.title")}
         </Typography>
+        {!isLoading ? (
+          <Typography variant="body2" color="text.secondary">
+            {t(
+              games.length === 1
+                ? "catalog.refCard.gameCountSingular"
+                : "catalog.refCard.gameCountPlural",
+              { count: games.length }
+            )}
+          </Typography>
+        ) : null}
         <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
           <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
             <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>

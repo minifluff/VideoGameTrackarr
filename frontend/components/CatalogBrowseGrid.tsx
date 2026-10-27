@@ -288,6 +288,16 @@ const CatalogBrowseGrid = ({
               <Typography variant="h4" component="h1" gutterBottom>
                 {name ?? t("common.loading")}
               </Typography>
+              {games !== undefined ? (
+                <Typography variant="body2" color="text.secondary">
+                  {t(
+                    games.length === 1
+                      ? "catalog.refCard.gameCountSingular"
+                      : "catalog.refCard.gameCountPlural",
+                    { count: games.length }
+                  )}
+                </Typography>
+              ) : null}
             </Box>
             {slug && resyncKind && resyncLabel ? (
               <CatalogResyncButton kind={resyncKind} slug={slug} label={resyncLabel} />

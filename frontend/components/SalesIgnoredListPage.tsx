@@ -72,6 +72,16 @@ const SalesIgnoredListPage = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           {t("insights.salesIgnored.heading")}
         </Typography>
+        {items !== undefined ? (
+          <Typography variant="body2" color="text.secondary">
+            {t(
+              rows.length === 1
+                ? "catalog.refCard.gameCountSingular"
+                : "catalog.refCard.gameCountPlural",
+              { count: rows.length }
+            )}
+          </Typography>
+        ) : null}
       </Box>
 
       <Paper sx={{ width: "100%", overflow: "hidden", borderRadius: 2 }}>

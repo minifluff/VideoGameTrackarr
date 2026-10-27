@@ -231,6 +231,16 @@ const GamesListPage = () => {
           <Typography variant="h4" component="h1" gutterBottom sx={{ mt: 2 }}>
             {t("games.listPage.title")}
           </Typography>
+          {!isLoading ? (
+            <Typography variant="body2" color="text.secondary">
+              {t(
+                filteredAndSorted.length === 1
+                  ? "catalog.refCard.gameCountSingular"
+                  : "catalog.refCard.gameCountPlural",
+                { count: filteredAndSorted.length }
+              )}
+            </Typography>
+          ) : null}
         </Collapse>
         <Collapse in={!hideSearchBar}>
           <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>

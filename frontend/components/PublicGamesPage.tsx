@@ -92,9 +92,21 @@ const PublicGamesPage = () => {
         }}
       >
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          {t("public.games.title")}
-        </Typography>
+        <Box>
+          <Typography variant="h4" component="h1" gutterBottom>
+            {t("public.games.title")}
+          </Typography>
+          {games !== undefined ? (
+            <Typography variant="body2" color="text.secondary">
+              {t(
+                games.length === 1
+                  ? "catalog.refCard.gameCountSingular"
+                  : "catalog.refCard.gameCountPlural",
+                { count: games.length }
+              )}
+            </Typography>
+          ) : null}
+        </Box>
         <Button
           variant={sort === "date_added_desc" ? "contained" : "outlined"}
           color={sort === "date_added_desc" ? "secondary" : "primary"}
