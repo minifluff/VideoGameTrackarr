@@ -79,74 +79,88 @@ const AppShell = () => {
         {t("appShell.skipToMainContent")}
       </Link>
       <AppBar position="fixed" sx={{ zIndex: (t) => t.zIndex.drawer + 1 }}>
-        <Toolbar>
-          <Box
-            onClick={() => navigate("/")}
-            role="button"
-            tabIndex={0}
-            title={t("nav.dashboard")}
-            aria-label={t("nav.dashboard")}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                navigate("/");
-              }
-            }}
-            sx={{
-              mr: 1.5,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              "&:focus-visible": { outline: "2px solid white", borderRadius: 1 },
-            }}
-          >
-            {appIcon === "default" || isCustomIconDataUrl(appIcon) ? (
-              <Box
-                component="img"
-                src={resolveIconSrc(appIcon)}
-                alt=""
-                sx={{ height: 44, width: 44 }}
-              />
-            ) : (
-              <Box
-                sx={{
-                  height: 44,
-                  width: 44,
-                  fontSize: 36,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {appIcon}
-              </Box>
-            )}
+        <Toolbar
+          sx={{
+            // Three grid cells — logo/title | search | controls — so the search sits
+            // centred on the screen, not just in the space left over by the title.
+            // On phone widths the title drops out so the search stays visible.
+            display: "grid",
+            gridTemplateColumns: { xs: "auto 1fr auto", sm: "1fr auto 1fr" },
+            alignItems: "center",
+            gap: 1,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", minWidth: 0 }}>
+            <Box
+              onClick={() => navigate("/")}
+              role="button"
+              tabIndex={0}
+              title={t("nav.dashboard")}
+              aria-label={t("nav.dashboard")}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  navigate("/");
+                }
+              }}
+              sx={{
+                mr: 1.5,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                "&:focus-visible": { outline: "2px solid white", borderRadius: 1 },
+              }}
+            >
+              {appIcon === "default" || isCustomIconDataUrl(appIcon) ? (
+                <Box
+                  component="img"
+                  src={resolveIconSrc(appIcon)}
+                  alt=""
+                  sx={{ height: 44, width: 44 }}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    height: 44,
+                    width: 44,
+                    fontSize: 36,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {appIcon}
+                </Box>
+              )}
+            </Box>
+            <Typography
+              variant="h6"
+              component="div"
+              noWrap
+              sx={{ minWidth: 0, flexGrow: 1, display: { xs: "none", sm: "block" } }}
+            >
+              {appTitle}
+            </Typography>
           </Box>
-          <Typography variant="h6" component="div" noWrap sx={{ minWidth: 0, flexGrow: 1 }}>
-            {appTitle}
-          </Typography>
-          <Box
-            sx={{
-              flexGrow: 1,
-              minWidth: 0,
-              display: { xs: "none", sm: "flex" },
-              justifyContent: "center",
-            }}
-          >
+          <Box sx={{ minWidth: 0, width: { xs: "100%", sm: "min(520px, 50vw)" }, mx: "auto" }}>
             <GlobalSearch />
           </Box>
-          <OfflineStatusIndicator />
-          <FormControlLabel
-            control={<Switch checked={mode === "dark"} onChange={toggleColorMode} />}
-            label={t("appShell.darkMode")}
-            sx={{
-              mr: 1,
-              ".MuiFormControlLabel-label": { display: { xs: "none", sm: "block" } },
-            }}
-          />
-          <IconButton color="inherit" onClick={handleLogout} title={t("common.logOut")} aria-label={t("common.logOut")}>
-            <LogoutIcon />
-          </IconButton>
+          <Box
+            sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", minWidth: 0 }}
+          >
+            <OfflineStatusIndicator />
+            <FormControlLabel
+              control={<Switch checked={mode === "dark"} onChange={toggleColorMode} />}
+              label={t("appShell.darkMode")}
+              sx={{
+                mr: 1,
+                ".MuiFormControlLabel-label": { display: { xs: "none", sm: "block" } },
+              }}
+            />
+            <IconButton color="inherit" onClick={handleLogout} title={t("common.logOut")} aria-label={t("common.logOut")}>
+              <LogoutIcon />
+            </IconButton>
+          </Box>
         </Toolbar>
       </AppBar>
 

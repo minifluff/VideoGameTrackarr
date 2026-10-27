@@ -252,24 +252,6 @@ const GlobalSearch = () => {
                   <SearchIcon fontSize="small" sx={{ color: "rgba(0, 0, 0, 0.54)" }} />
                 </InputAdornment>
               ),
-              endAdornment: (
-                <Box
-                  component="kbd"
-                  sx={{
-                    display: { xs: "none", md: "block" },
-                    fontFamily: "inherit",
-                    fontSize: 11,
-                    color: "rgba(0, 0, 0, 0.54)",
-                    border: 1,
-                    borderColor: "rgba(0, 0, 0, 0.23)",
-                    borderRadius: 1,
-                    px: 0.75,
-                    mr: 0.5,
-                  }}
-                >
-                  /
-                </Box>
-              ),
             },
           }}
         />
