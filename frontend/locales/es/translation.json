@@ -819,6 +819,7 @@
       "noCover": "Sin portada",
       "unknownYear": "Año desconocido",
       "addedButton": "Añadido",
+      "customLabel": "Personalizado",
       "selectAriaLabel": "Seleccionar {{name}}",
       "deselectAriaLabel": "Deseleccionar {{name}}",
       "nameYearTooltip": "{{name}} ({{year}})",

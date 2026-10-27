@@ -819,6 +819,7 @@
       "noCover": "Pas de jaquette",
       "unknownYear": "Année inconnue",
       "addedButton": "Ajouté",
+      "customLabel": "Personnalisé",
       "selectAriaLabel": "Sélectionner {{name}}",
       "deselectAriaLabel": "Désélectionner {{name}}",
       "nameYearTooltip": "{{name}} ({{year}})",

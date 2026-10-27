@@ -819,6 +819,7 @@
       "noCover": "No cover",
       "unknownYear": "Unknown year",
       "addedButton": "Added",
+      "customLabel": "Custom",
       "selectAriaLabel": "Select {{name}}",
       "deselectAriaLabel": "Deselect {{name}}",
       "nameYearTooltip": "{{name}} ({{year}})",

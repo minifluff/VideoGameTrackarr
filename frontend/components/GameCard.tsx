@@ -1,16 +1,12 @@
 import { useState, type ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import CardMedia from "@mui/material/CardMedia";
 import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import { green } from "@mui/material/colors";
 import Skeleton from "@mui/material/Skeleton";
 import { styled, useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
 import AddIcon from "@mui/icons-material/Add";
 import DoneIcon from "@mui/icons-material/Done";
 import { useTranslation } from "react-i18next";
@@ -43,6 +39,10 @@ const AddedGameButton = styled(Button)(({ theme }) => ({
   },
 }));
 
+// Below this card width the badges shrink and the hover actions drop their labels. Measured
+// on the card itself (a CSS container query), so it holds at any column count or card size.
+const SMALL_CARD = "@container (max-width: 170px)";
+
 export type GameCardContext = "list" | "addon" | "added" | "add" | "public";
 
 export interface GameCardGame {
@@ -63,6 +63,9 @@ export interface GameCardGame {
   // Dashboard's On Sale sections, built from OnSaleItem rather than a full GameSummary)
   // need to set it explicitly.
   isOnSale?: boolean;
+  // Null for a manually-added (non-IGDB) game, which gets the "Custom" chip. Left undefined
+  // by hand-built card objects (e.g. the Dashboard's On Sale sections), which never show it.
+  igdbId?: number | null;
 }
 
 interface GameCardProps {
@@ -81,11 +84,19 @@ interface GameCardProps {
   // "add" context only: opens the result when its cover is clicked (Add Game's IGDB
   // preview page), separately from contextFunction, which stays the Add button's action.
   onOpen?: () => void;
-  // Platform names rendered as chips at the bottom of the card's paper (public games
-  // grid passes the owned platforms; no other context passes this).
+  // Shortcut buttons shown over the cover on hover (the Games list's Edit/Play), hidden while
+  // selecting. See GameCardHoverAction. No call site passes these yet — the rendering is
+  // here so the card matches upstream, wiring them up is a separate step.
+  hoverActions?: ReactNode;
+  // Platform names rendered as chips below the card's text block (the Games list and the
+  // public games grid pass the owned platforms). Fork-only: upstream's card has no
+  // platform row, but dropping it would hide owned-platform info the grids show today.
   ownedPlatforms?: string[];
 }
 
+// The 2026 card: the cover carries it. A 3:4 cover with today's badges and chips on it, then
+// the name, the year (and add-on type), and a reserved play-status slot so a row's cards
+// always line up.
 const GameCard = ({
   game,
   context,
@@ -96,10 +107,16 @@ const GameCard = ({
   actionLabel,
   actionIcon,
   onOpen,
+  hoverActions,
   ownedPlatforms,
 }: GameCardProps) => {
   const theme = useTheme();
   const { t } = useTranslation();
+  // Upstream's vgt tokens, as literals: the fork's M3 theme has no equivalents for the
+  // muted meta text or the strong hover border, and these two are the look.
+  const isDark = theme.palette.mode === "dark";
+  const metaColor = isDark ? "#7d8794" : "#7c8593";
+  const hoverOutlineColor = isDark ? "#3b434f" : "#cfd5de";
   // Resets on every mount, including the virtualized grid recycling a card as it scrolls
   // back into view (e.g. after a fast scroll + browser back-navigation) — a cached image
   // still resolves near-instantly, so the skeleton is only visible for genuinely-loading
@@ -109,6 +126,8 @@ const GameCard = ({
   // placeholder instead of the browser's broken-image icon. Compared against the
   // current URL (not a bare boolean) so a different cover for the same card — e.g.
   // after an edit — loads normally instead of inheriting the old failure.
+  // Fork-only: upstream just marks the cover loaded on error and leaves the broken
+  // image showing; the fallback shipped with the cover-images fix stays.
   const [failedCoverUrl, setFailedCoverUrl] = useState<string | null>(null);
   const coverFailed = failedCoverUrl !== null && failedCoverUrl === game.coverUrl;
   const showsBadges =
@@ -121,6 +140,10 @@ const GameCard = ({
   // greyscaled the same way, but showing "Missing" on it would be wrong (nothing's missing;
   // the user added it on purpose and just hasn't marked ownership yet).
   const showMissingChip = isGreyscale && Boolean(game.autoDiscovered);
+  // Shares the bottom-right corner with the Missing chip — never both in practice (a
+  // discovered game always comes from IGDB), but Missing wins if they ever did.
+  const showCustomChip = showsBadges && game.igdbId === null && !showMissingChip;
+  const showSaleChip = showsBadges && Boolean(game.isOnSale);
   const opensSeparately = context === "add" && onOpen !== undefined;
   const isClickable =
     context === "list" ||
@@ -128,7 +151,9 @@ const GameCard = ({
     context === "added" ||
     (context === "public" && contextFunction !== undefined) ||
     opensSeparately;
+  const isInteractive = isClickable || Boolean(selectable);
   const releaseYear = getReleaseYear(game.firstReleaseDate);
+  const playStatus = game.playStatus && game.playStatus !== "none" ? game.playStatus : null;
 
   const handleCardActivate = () => {
     if (selectable) {
@@ -142,22 +167,39 @@ const GameCard = ({
     }
   };
 
+  const coverChip = (label: string, bgcolor: string, color = "#fff") => (
+    <Box
+      component="span"
+      sx={{
+        height: 22,
+        px: 1,
+        borderRadius: 999,
+        bgcolor,
+        color,
+        fontSize: 11.5,
+        fontWeight: 650,
+        lineHeight: "22px",
+        whiteSpace: "nowrap",
+        maxWidth: "100%",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        boxShadow: "0 0 0 1px rgba(255, 255, 255, 0.16)",
+        [SMALL_CARD]: { height: 19, lineHeight: "19px", fontSize: 10.5, px: 0.875 },
+      }}
+    >
+      {label}
+    </Box>
+  );
+
   return (
-    <Card
+    <Box
       sx={{
         position: "relative",
-        borderRadius: 2,
-        border: selected
-          ? `2px solid ${theme.palette.primary.main}`
-          : `1px solid ${theme.palette.divider}`,
         width: "100%",
         height: "100%",
-        overflow: "hidden",
-        transition: "transform 150ms ease, box-shadow 150ms ease",
-        "&:hover": {
-          transform: isClickable || selectable ? "translateY(-2px)" : "none",
-          boxShadow: isClickable || selectable ? theme.shadows[6] : theme.shadows[1],
-        },
+        containerType: "inline-size",
+        "&:hover .vgt-card-cover": isInteractive ? { outlineColor: hoverOutlineColor } : undefined,
+        "&:hover .vgt-card-actions, &:focus-within .vgt-card-actions": { opacity: 1 },
       }}
     >
       {selectable ? (
@@ -182,7 +224,7 @@ const GameCard = ({
             position: "absolute",
             top: 4,
             left: 4,
-            zIndex: 1,
+            zIndex: 3,
             bgcolor: "background.paper",
             borderRadius: "50%",
             p: 0.25,
@@ -191,17 +233,31 @@ const GameCard = ({
         />
       ) : null}
 
-      <Tooltip
-        title={t("games.card.nameYearTooltip", { name: game.name, year: releaseYear ?? "?" })}
-      >
+      <Tooltip title={t("games.card.nameYearTooltip", { name: game.name, year: releaseYear ?? "?" })}>
         <Box
+          className="vgt-card-cover"
           onClick={handleCardActivate}
+          role={isInteractive ? "button" : undefined}
+          tabIndex={isInteractive ? 0 : undefined}
+          aria-label={isInteractive ? game.name : undefined}
+          onKeyDown={(event) => {
+            if (isInteractive && (event.key === "Enter" || event.key === " ")) {
+              event.preventDefault();
+              handleCardActivate();
+            }
+          }}
           sx={{
             position: "relative",
             aspectRatio: "3 / 4",
             overflow: "hidden",
-            borderBottom: `1px solid ${theme.palette.divider}`,
-            cursor: isClickable || selectable ? "pointer" : "default",
+            borderRadius: 2,
+            bgcolor: "background.paper",
+            outline: selected ? "2px solid" : "1px solid",
+            outlineColor: selected ? "primary.main" : "divider",
+            outlineOffset: selected ? "-2px" : "-1px",
+            cursor: isInteractive ? "pointer" : "default",
+            transition: "outline-color 120ms ease",
+            "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
           }}
         >
           {game.coverUrl && !coverFailed ? (
@@ -213,10 +269,10 @@ const GameCard = ({
                   sx={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
                 />
               )}
-              <CardMedia
+              <Box
                 component="img"
                 alt={game.name}
-                image={resolveAssetUrl(game.coverUrl) ?? undefined}
+                src={resolveAssetUrl(game.coverUrl) ?? undefined}
                 loading="lazy"
                 onLoad={() => setCoverLoaded(true)}
                 onError={() => setFailedCoverUrl(game.coverUrl)}
@@ -237,108 +293,138 @@ const GameCard = ({
               sx={{
                 position: "absolute",
                 inset: 0,
-                bgcolor: "action.hover",
                 color: "text.secondary",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 p: 2,
                 textAlign: "center",
+                typography: "caption",
               }}
             >
-              <Typography variant="caption">{t("games.card.noCover")}</Typography>
+              {t("games.card.noCover")}
             </Box>
           )}
-          {showsBadges && game.isOnSale ? (
-            <Chip
-              label={t("games.card.onSaleLabel")}
-              color="success"
-              size="small"
+
+          <Box
+            sx={{
+              "& > div": { [SMALL_CARD]: { width: 24, height: 24, top: 6 } },
+              "& > div:first-of-type:not(:last-of-type)": { [SMALL_CARD]: { left: 6 } },
+              "& svg": { [SMALL_CARD]: { fontSize: "15px !important" } },
+            }}
+          >
+            <OwnershipBadges
+              owned={showsBadges && Boolean(game.owned)}
+              wishlisted={showsBadges && Boolean(game.wishlisted)}
+            />
+          </Box>
+
+          {showSaleChip || showMissingChip || showCustomChip ? (
+            <Box
               sx={{
                 position: "absolute",
-                bottom: 8,
-                left: 8,
+                left: 7,
+                right: 7,
+                bottom: 7,
                 zIndex: 1,
-                fontWeight: 600,
-                boxShadow: theme.shadows[3],
+                display: "flex",
+                // Wraps instead of overlapping whenever both chips don't fit side by side
+                // (longer translations, small cards): the right-hand chip drops onto its own
+                // line.
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+                alignItems: "flex-end",
+                gap: "3px 4px",
+                pointerEvents: "none",
+                [SMALL_CARD]: { left: 6, right: 6, bottom: 6 },
               }}
-            />
+            >
+              {showSaleChip ? coverChip(t("games.card.onSaleLabel"), "#2f9e6c") : null}
+              {showMissingChip || showCustomChip ? (
+                <Box component="span" sx={{ ml: "auto", maxWidth: "100%", display: "flex" }}>
+                  {showMissingChip
+                    ? coverChip(t("games.card.missingLabel"), "primary.dark")
+                    : coverChip(t("games.card.customLabel"), "#5d6673")}
+                </Box>
+              ) : null}
+            </Box>
           ) : null}
-          {showMissingChip ? (
-            <Chip
-              label={t("games.card.missingLabel")}
-              color="info"
-              size="small"
+
+          {hoverActions && !selectable ? (
+            <Box
+              className="vgt-card-actions"
+              onClick={(event) => event.stopPropagation()}
               sx={{
                 position: "absolute",
-                bottom: 8,
-                right: 8,
-                zIndex: 1,
-                fontWeight: 600,
-                boxShadow: theme.shadows[3],
+                left: 7,
+                right: 7,
+                top: 44,
+                zIndex: 2,
+                display: "flex",
+                gap: 0.75,
+                justifyContent: "center",
+                opacity: 0,
+                transition: "opacity 150ms ease",
+                // Touch screens have no hover; the card itself opens the game page, where
+                // the same actions are.
+                "@media (hover: none)": { display: "none" },
+                [SMALL_CARD]: { top: 36, "& .vgt-card-action-label": { display: "none" } },
               }}
-            />
+            >
+              {hoverActions}
+            </Box>
           ) : null}
         </Box>
       </Tooltip>
 
-      <OwnershipBadges
-        owned={showsBadges && Boolean(game.owned)}
-        wishlisted={showsBadges && Boolean(game.wishlisted)}
-      />
-
-      <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>
-        <Tooltip
-          title={t("games.card.nameYearTooltip", { name: game.name, year: releaseYear ?? "?" })}
+      <Box sx={{ pt: 1 }}>
+        <Box
+          sx={{
+            fontWeight: 600,
+            fontSize: 13.5,
+            lineHeight: 1.35,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            [SMALL_CARD]: { fontSize: 12.5 },
+          }}
         >
-          <Typography
-            variant="subtitle2"
-            component="div"
-            sx={{
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              lineHeight: 1.35,
-            }}
-          >
-            <strong>{game.name}</strong>
-          </Typography>
-        </Tooltip>
-        <Typography variant="caption" color="text.secondary" component="div">
-          {releaseYear ?? t("games.card.unknownYear")}
-        </Typography>
-        {/* Always rendered, even for plain main games — keeping every card's text block the
-            same height is what keeps a mixed-category row's bottom edges lined up (the
-            virtualized grid sizes each row to its tallest card, but shorter cards don't
-            stretch to match, so a card that skips this line visibly falls short). */}
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          component="div"
-          sx={{ visibility: isAddon(game) ? "visible" : "hidden" }}
+          {game.name}
+        </Box>
+        {/* Year and add-on type on one line, so every card's text block is the same height
+            and a row of mixed categories lines up. */}
+        <Box
+          sx={{
+            color: metaColor,
+            fontSize: 12,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            minHeight: 17,
+          }}
         >
-          {getAddonType(game) ?? " "}
-        </Typography>
-        {showsBadges ? (
-          // Same fix as the addon-type line above: always reserve the chip's slot (just
-          // invisible when there's no play status) instead of mounting it conditionally,
-          // which is what broke row alignment again as soon as a "Completed"/etc. chip
-          // showed up on only some cards in a row.
+          <span>{releaseYear ?? t("games.card.unknownYear")}</span>
+          {isAddon(game) ? (
+            <>
+              <span aria-hidden> · </span>
+              <span>{getAddonType(game)}</span>
+            </>
+          ) : null}
+        </Box>
+        {context === "list" || context === "addon" || context === "public" ? (
+          // Always reserves the chip's slot (just invisible when there's no play status, and
+          // while selecting), so a "Completed" chip on only some cards can't break a row's
+          // alignment and entering selection mode doesn't shift the grid.
           <Chip
-            label={
-              game.playStatus && game.playStatus !== "none"
-                ? t(PLAY_STATUS_LABEL_KEYS[game.playStatus])
-                : " "
-            }
-            color={
-              game.playStatus && game.playStatus !== "none"
-                ? PLAY_STATUS_COLORS[game.playStatus]
-                : "default"
-            }
+            label={playStatus ? t(PLAY_STATUS_LABEL_KEYS[playStatus]) : " "}
+            color={playStatus ? PLAY_STATUS_COLORS[playStatus] : "default"}
             size="small"
             sx={{
               mt: 0.75,
-              visibility: game.playStatus && game.playStatus !== "none" ? "visible" : "hidden",
+              height: 20,
+              fontSize: 11,
+              fontWeight: 600,
+              visibility: showsBadges && playStatus ? "visible" : "hidden",
             }}
           />
         ) : null}
@@ -384,9 +470,48 @@ const GameCard = ({
             ))}
           </Box>
         ) : null}
-      </CardContent>
-    </Card>
+      </Box>
+    </Box>
   );
 };
 
 export default GameCard;
+
+interface GameCardHoverActionProps {
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+}
+
+// One of a card's hover shortcuts (see GameCard's hoverActions): dark glass so it reads on
+// any cover, the accent on hover, icon-only on small cards.
+export const GameCardHoverAction = ({ icon, label, onClick }: GameCardHoverActionProps) => (
+  <Box
+    component="button"
+    type="button"
+    aria-label={label}
+    onClick={onClick}
+    sx={{
+      flex: 1,
+      minWidth: 0,
+      height: 30,
+      border: 0,
+      borderRadius: 1.5,
+      bgcolor: "rgba(10, 12, 16, 0.84)",
+      color: "#fff",
+      cursor: "pointer",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 0.625,
+      fontSize: 12,
+      fontWeight: 600,
+      fontFamily: "inherit",
+      "& svg": { fontSize: 17 },
+      "&:hover, &:focus-visible": { bgcolor: "primary.main", color: "primary.contrastText" },
+    }}
+  >
+    {icon}
+    <span className="vgt-card-action-label">{label}</span>
+  </Box>
+);

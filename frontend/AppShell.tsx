@@ -13,7 +13,6 @@ import Link from "@mui/material/Link";
 import { useTheme } from "@mui/material/styles";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTranslation } from "react-i18next";
 import { ToastContainer } from "react-toastify";
@@ -26,7 +25,6 @@ import { useScrollResetOnNavigate } from "./hooks/useScrollResetOnNavigate";
 import GlobalSearch from "./navigation/GlobalSearch";
 import Sidebar, { SIDEBAR_WIDTH } from "./navigation/Sidebar";
 import { useColorMode } from "./theme/ColorModeProvider";
-import { isCustomIconDataUrl, resolveIconSrc, useAppearance } from "./theme/AppearanceProvider";
 
 // Upstream's model: one Sidebar, permanent on desktop and a hamburger drawer below
 // md — replacing the old M3 trio (bottom bar on phones, icons-only rail on tablets,
@@ -35,7 +33,6 @@ const AppShell = () => {
   const { t } = useTranslation();
   const { mode, toggleColorMode } = useColorMode();
   const themeLabel = mode === "dark" ? t("appShell.lightMode") : t("appShell.darkMode");
-  const { appTitle, appIcon } = useAppearance();
   const theme = useTheme();
   const isCompact = useMediaQuery(theme.breakpoints.down("sm"));
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
@@ -103,61 +100,12 @@ const AppShell = () => {
                 onClick={() => setDrawerOpen(true)}
                 aria-label={t("appShell.openMenu")}
                 title={t("appShell.openMenu")}
+                color="inherit"
                 sx={{ mr: 1 }}
               >
                 <MenuIcon />
               </IconButton>
             )}
-            <Box
-              onClick={() => navigate("/")}
-              role="button"
-              tabIndex={0}
-              title={t("nav.dashboard")}
-              aria-label={t("nav.dashboard")}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  navigate("/");
-                }
-              }}
-              sx={{
-                mr: 1.5,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                "&:focus-visible": { outline: "2px solid white", borderRadius: 1 },
-              }}
-            >
-              {appIcon === "default" || isCustomIconDataUrl(appIcon) ? (
-                <Box
-                  component="img"
-                  src={resolveIconSrc(appIcon)}
-                  alt=""
-                  sx={{ height: 44, width: 44 }}
-                />
-              ) : (
-                <Box
-                  sx={{
-                    height: 44,
-                    width: 44,
-                    fontSize: 36,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  {appIcon}
-                </Box>
-              )}
-            </Box>
-            <Typography
-              variant="h6"
-              component="div"
-              noWrap
-              sx={{ minWidth: 0, flexGrow: 1, display: { xs: "none", sm: "block" } }}
-            >
-              {appTitle}
-            </Typography>
           </Box>
           <Box sx={{ minWidth: 0, width: { xs: "100%", sm: "min(520px, 50vw)" }, mx: "auto" }}>
             <GlobalSearch />
@@ -167,7 +115,7 @@ const AppShell = () => {
           >
             <OfflineStatusIndicator />
             <Tooltip title={themeLabel}>
-              <IconButton onClick={toggleColorMode} aria-label={themeLabel}>
+              <IconButton onClick={toggleColorMode} aria-label={themeLabel} color="inherit">
                 {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
               </IconButton>
             </Tooltip>

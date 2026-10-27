@@ -238,6 +238,43 @@ describe("GameCard", () => {
     expect(screen.queryByText("Missing")).not.toBeInTheDocument();
   });
 
+  it("shows a Custom chip for a manually-added game with no IGDB id", () => {
+    renderWithTheme(
+      <GameCard
+        game={{ ...baseGame, owned: false, wishlisted: false, autoDiscovered: false, igdbId: null }}
+        context="list"
+        contextFunction={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("Custom")).toBeInTheDocument();
+  });
+
+  it("does not show a Custom chip when the game has an IGDB id", () => {
+    renderWithTheme(
+      <GameCard
+        game={{ ...baseGame, owned: false, wishlisted: false, autoDiscovered: false, igdbId: 123 }}
+        context="list"
+        contextFunction={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByText("Custom")).not.toBeInTheDocument();
+  });
+
+  it("shows Missing, not Custom, for an unclaimed discovery even without an IGDB id", () => {
+    renderWithTheme(
+      <GameCard
+        game={{ ...baseGame, owned: false, wishlisted: false, autoDiscovered: true, igdbId: null }}
+        context="list"
+        contextFunction={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("Missing")).toBeInTheDocument();
+    expect(screen.queryByText("Custom")).not.toBeInTheDocument();
+  });
+
   it("shows the addon type label for non-main_game categories", () => {
     renderWithTheme(
       <GameCard
