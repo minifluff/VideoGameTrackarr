@@ -292,7 +292,7 @@ const DashboardPage = () => {
         variant="contained"
         fullWidth
         size="large"
-        sx={{ mt: 3, py: 1.5, fontSize: "1.1rem" }}
+        sx={{ mt: 3, mb: 3, py: 1.5, fontSize: "1.1rem" }}
         onClick={() => navigate("/display-mode")}
       >
         {t("insights.dashboard.displayModeButton")}
@@ -303,7 +303,7 @@ const DashboardPage = () => {
         variant="contained"
         fullWidth
         size="large"
-        sx={{ mt: 3, py: 1.5, fontSize: "1.1rem" }}
+        sx={{ mt: 3, mb: 3, py: 1.5, fontSize: "1.1rem" }}
         onClick={() => navigate(`/public/${shareToken}/games`)}
       >
         {t("insights.dashboard.publicCollectionButton")}
