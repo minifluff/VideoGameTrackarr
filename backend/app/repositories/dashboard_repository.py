@@ -5,6 +5,7 @@ from typing import Literal
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.elements import ColumnElement
 
 from app.models.catalog import Game, GameGenre, Genre, Platform
 from app.models.hardware import Accessory, Device, HardwareReferenceEntry
@@ -31,6 +32,16 @@ from app.repositories.game_repository import (
 
 RECENT_LIMIT = 8
 BREAKDOWN_LIMIT = 10
+
+
+def _is_missing_game(game_id_column: ColumnElement[int]) -> ColumnElement[bool]:
+    """A Collection/Series 'what's missing' discovery that hasn't been claimed yet:
+    auto-discovered with neither an owned nor a wishlisted copy. Missing games count
+    toward no metric — the Games list never shows them either — so every count in
+    get_stats excludes them the same way. (total_owned/total_wishlisted and the
+    platform breakdown need no exclusion: they count LibraryItem rows, and a missing
+    game has none by definition.)"""
+    return Game.auto_discovered & ~_owned_exists(game_id_column) & ~_wishlisted_exists(game_id_column)
 
 
 @dataclass
@@ -67,7 +78,13 @@ def get_stats(db: Session) -> DashboardStatsData:
         or 0
     )
     total_tracked = (
-        db.scalar(select(func.count(Game.id)).where(Game.parent_game_id.is_(None), _is_browsable_game(Game.category)))
+        db.scalar(
+            select(func.count(Game.id)).where(
+                Game.parent_game_id.is_(None),
+                _is_browsable_game(Game.category),
+                ~_is_missing_game(Game.id),
+            )
+        )
         or 0
     )
     total_playtime_minutes = db.scalar(select(func.coalesce(func.sum(GameProgress.playtime_minutes), 0))) or 0
@@ -82,7 +99,9 @@ def get_stats(db: Session) -> DashboardStatsData:
         (status or PlayStatus.NONE)
         for (status,) in db.execute(
             select(_play_status_subquery(Game.id)).where(
-                Game.parent_game_id.is_(None), _is_browsable_game(Game.category)
+                Game.parent_game_id.is_(None),
+                _is_browsable_game(Game.category),
+                ~_is_missing_game(Game.id),
             )
         )
     )
@@ -104,6 +123,8 @@ def get_stats(db: Session) -> DashboardStatsData:
         for name, count in db.execute(
             select(Genre.name, func.count(func.distinct(GameGenre.game_id)))
             .join(GameGenre, GameGenre.genre_id == Genre.id)
+            .join(Game, Game.id == GameGenre.game_id)
+            .where(~_is_missing_game(Game.id))
             .group_by(Genre.name)
             .order_by(func.count(func.distinct(GameGenre.game_id)).desc())
             .limit(BREAKDOWN_LIMIT)
@@ -118,7 +139,11 @@ def get_stats(db: Session) -> DashboardStatsData:
             _play_status_subquery(Game.id),
             _rating_subquery(Game.id),
         )
-        .where(Game.parent_game_id.is_(None), _is_browsable_game(Game.category))
+        .where(
+            Game.parent_game_id.is_(None),
+            _is_browsable_game(Game.category),
+            ~_is_missing_game(Game.id),
+        )
         .order_by(Game.created_at.desc())
         .limit(RECENT_LIMIT)
     )
@@ -137,7 +162,7 @@ def get_stats(db: Session) -> DashboardStatsData:
             _play_status_subquery(Game.id),
             _rating_subquery(Game.id),
         )
-        .where(last_played_subquery.is_not(None))
+        .where(last_played_subquery.is_not(None), ~_is_missing_game(Game.id))
         .order_by(last_played_subquery.desc())
         .limit(RECENT_LIMIT)
     )

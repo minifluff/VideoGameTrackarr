@@ -82,6 +82,43 @@ def test_stats_counts_and_breakdowns(auth_client, db_session, seed_game, seed_pl
     assert {p["name"]: p["count"] for p in body["platformBreakdown"]} == {seed_platform.name: 1}
 
 
+def test_stats_exclude_missing_games(auth_client, db_session, seed_game, seed_platform):
+    from app.models.catalog import GameGenre, Genre
+
+    # Owned: counts. Manually added and unowned: counts (greyscale, but not
+    # "missing" — it was never auto-discovered). Wishlisted discovery: counts.
+    db_session.add(LibraryItem(game_id=seed_game.id, platform_id=seed_platform.id, status=LibraryStatus.OWNED))
+    manual_game = Game(name="Manual Game", category=GameCategory.MAIN_GAME)
+    db_session.add(manual_game)
+    discovered = Game(igdb_id=6006, name="Discovered Game", category=GameCategory.MAIN_GAME)
+    db_session.add(discovered)
+    db_session.commit()
+    db_session.add(LibraryItem(game_id=discovered.id, status=LibraryStatus.WISHLIST))
+    # Unclaimed discovery: auto-discovered, no owned/wishlisted copy — missing,
+    # so it must count toward no metric at all.
+    missing_game = Game(
+        igdb_id=7007, name="Missing Game", category=GameCategory.MAIN_GAME, auto_discovered=True
+    )
+    db_session.add(missing_game)
+    db_session.commit()
+    # A genre only the missing game carries: it must not appear in the breakdown.
+    genre = Genre(name="Missing Only Genre")
+    db_session.add(genre)
+    db_session.flush()
+    db_session.add(GameGenre(game_id=missing_game.id, genre_id=genre.id))
+    db_session.commit()
+
+    response = auth_client.get("/api/dashboard/stats")
+
+    body = response.json()
+    assert body["totalOwned"] == 1
+    assert body["totalWishlisted"] == 1
+    assert body["totalTracked"] == 3
+    assert body["playStatusBreakdown"] == {"none": 3}
+    assert "Missing Only Genre" not in {g["name"] for g in body["genreBreakdown"]}
+    assert missing_game.id not in [g["id"] for g in body["recentlyAdded"]]
+
+
 def test_stats_recently_added_and_recently_played(auth_client, db_session, seed_game, seed_platform):
     db_session.add(
         GameProgress(game_id=seed_game.id, platform_id=seed_platform.id, last_played_at=datetime.now(UTC).date())
