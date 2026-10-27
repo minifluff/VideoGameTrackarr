@@ -86,6 +86,30 @@
     "wishlist": "Wishlist",
     "gamesList": "Individual Games"
   },
+  "overview": {
+    "tiles": {
+      "gamesOwned": "Games owned",
+      "tracked_one": "{{count}} tracked",
+      "tracked_other": "{{count}} tracked",
+      "wishlist": "Wishlist",
+      "hardwareOwned": "Hardware owned",
+      "hardwareHint": "{{devices}} devices · {{accessories}} accessories"
+    },
+    "quickAdd": "Quick add",
+    "nowPlaying": "Now playing",
+    "backlogLink_one": "Backlog · {{count}}",
+    "backlogLink_other": "Backlog · {{count}}",
+    "nothingPlaying": "Nothing marked Playing yet.",
+    "recentlyPlayed": "Recently played",
+    "recentlyAddedGames": "Recently added games",
+    "recentlyAddedHardware": "Recently added hardware",
+    "needsAttention": "Needs attention",
+    "attention": {
+      "custom": "Custom games",
+      "duplicates": "Duplicate copies",
+      "orphans": "Accessories without hardware"
+    }
+  },
   "breadcrumbs": {
     "edit": "Edit",
     "compareGames": "Compare Games"

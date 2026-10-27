@@ -86,6 +86,30 @@
     "wishlist": "Wishlist",
     "gamesList": "Jeux individuels"
   },
+  "overview": {
+    "tiles": {
+      "gamesOwned": "Jeux possédés",
+      "tracked_one": "{{count}} suivi",
+      "tracked_other": "{{count}} suivis",
+      "wishlist": "Liste de souhaits",
+      "hardwareOwned": "Matériel possédé",
+      "hardwareHint": "{{devices}} appareils · {{accessories}} accessoires"
+    },
+    "quickAdd": "Ajout rapide",
+    "nowPlaying": "En cours de jeu",
+    "backlogLink_one": "En attente · {{count}}",
+    "backlogLink_other": "En attente · {{count}}",
+    "nothingPlaying": "Rien marqué En cours pour le moment.",
+    "recentlyPlayed": "Joués récemment",
+    "recentlyAddedGames": "Jeux ajoutés récemment",
+    "recentlyAddedHardware": "Matériel ajouté récemment",
+    "needsAttention": "À surveiller",
+    "attention": {
+      "custom": "Jeux personnalisés",
+      "duplicates": "Copies en double",
+      "orphans": "Accessoires sans matériel"
+    }
+  },
   "breadcrumbs": {
     "edit": "Modifier",
     "compareGames": "Comparer les jeux"

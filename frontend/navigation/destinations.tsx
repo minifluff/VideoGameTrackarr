@@ -20,7 +20,7 @@ import MemoryIcon from "@mui/icons-material/Memory";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SellIcon from "@mui/icons-material/Sell";
 import LinkIcon from "@mui/icons-material/Link";
-import SettingsIcon from "@mui/icons-material/Settings";
+import SettingsIcon from "@mui/icons-material/SettingsOutlined";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import SteamIcon from "../icons/SteamIcon";
