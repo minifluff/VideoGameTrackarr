@@ -267,7 +267,7 @@ const GamesListPage = () => {
                 }}
               />
               <Box sx={{ display: "flex", gap: 2, flex: { xs: "1 1 100%", sm: "0 1 auto" } }}>
-              <FormControl sx={{ minWidth: 140, flex: 1 }}>
+              <FormControl size="small" sx={{ minWidth: 140, flex: 1 }}>
                 <InputLabel>{t("games.listPage.platformColumn")}</InputLabel>
                 <Select
                   value={platformFilter}
@@ -280,7 +280,7 @@ const GamesListPage = () => {
                   ))}
                 </Select>
               </FormControl>
-              <FormControl sx={{ minWidth: 140, flex: 1 }}>
+              <FormControl size="small" sx={{ minWidth: 140, flex: 1 }}>
                 <InputLabel>{t("games.listPage.formatColumn")}</InputLabel>
                 <Select
                   value={formatFilter}

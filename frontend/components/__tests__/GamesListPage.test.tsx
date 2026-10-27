@@ -120,6 +120,21 @@ describe("GamesListPage selection", () => {
   });
 });
 
+describe("GamesListPage filter sizes", () => {
+  it("renders the Platform and Format dropdowns at the search bar's small height", async () => {
+    renderPage();
+
+    // The page's only two comboboxes are the Platform and Format dropdowns
+    // (the search field itself is a plain text input).
+    const selects = await screen.findAllByRole("combobox");
+    expect(selects).toHaveLength(2);
+    const search = screen.getByLabelText("Search games");
+    for (const input of [...selects, search]) {
+      expect(input.closest(".MuiInputBase-root")).toHaveClass("MuiInputBase-sizeSmall");
+    }
+  });
+});
+
 describe("GamesListPage move action", () => {
   it("shows a Move button on every row and opens the move dialog for that row", async () => {
     const user = userEvent.setup();
