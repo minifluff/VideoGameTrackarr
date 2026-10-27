@@ -104,9 +104,10 @@ const CatalogIndexGrid = <T extends CatalogIndexEntry>({
           top: { xs: 56, sm: 64 },
           zIndex: (theme) => theme.zIndex.appBar - 1,
           backgroundColor: (theme) => theme.palette.background.default,
-          pt: 1,
-          pb: 1,
-          mb: 2,
+          // Same rhythm as the games page: 4px here + 16px on the toolbar = 20px
+          // above the search field, 16px below it to the first row.
+          pt: 0.5,
+          pb: 2,
         }}
       >
         <Collapse in={!collapsed}>

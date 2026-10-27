@@ -8,10 +8,8 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
-import Collapse from "@mui/material/Collapse";
 import Tooltip from "@mui/material/Tooltip";
 import { useTranslation } from "react-i18next";
-import { useScrollCollapse } from "../hooks/useScrollCollapse";
 import type { CatalogSortOption } from "../api/types";
 
 interface SortOption {
@@ -47,16 +45,17 @@ const CatalogIndexToolbar = ({
   onSortChange,
 }: CatalogIndexToolbarProps) => {
   const { t } = useTranslation();
-  const collapsed = useScrollCollapse(80);
   const [sortMenuAnchor, setSortMenuAnchor] = useState<HTMLElement | null>(null);
   const currentSortOption = SORT_OPTIONS.find((option) => option.value === sort);
   const sortTooltip = currentSortOption
     ? t(currentSortOption.labelKey)
     : t("games.listToolbar.sortByLabel");
 
+  // Like the games toolbar, the search bar stays visible on scroll — only the
+  // page title above it collapses (see CatalogIndexGrid).
   return (
-    <Collapse in={!collapsed} timeout={200}>
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 3 }}>
+    <>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", pt: 2 }}>
         <TextField
           label={searchLabel}
           variant="outlined"
@@ -117,7 +116,7 @@ const CatalogIndexToolbar = ({
           </MenuItem>
         ))}
       </Menu>
-    </Collapse>
+    </>
   );
 };
 

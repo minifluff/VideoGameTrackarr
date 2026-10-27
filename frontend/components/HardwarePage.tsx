@@ -7,7 +7,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
-import { useScrollCollapse, useScrollDirection } from "../hooks/useScrollCollapse";
+import { useScrollCollapse } from "../hooks/useScrollCollapse";
 import AccessoryList from "./AccessoryList";
 import DeviceList from "./DeviceList";
 import HardwareSearchBar from "./HardwareSearchBar";
@@ -27,21 +27,24 @@ const HardwarePage = () => {
 
   const debouncedKeyword = useDebouncedValue(searchKeyword.trim(), 500);
   // Sub-nav and title: hidden once scrolled, only return when back at the very top.
+  // The search bar itself stays visible, like the games page.
   const hideHeader = useScrollCollapse(10);
-  // Search bar: hides on scroll down, reappears on scroll up.
-  const hideSearchBar = useScrollDirection(80);
 
   return (
     <>
       <Box
         sx={{
           position: "sticky",
-          top: (theme) => theme.mixins.toolbar.minHeight,
+          // Dock exactly under the fixed AppBar like the games page: the old flat
+          // mixins.toolbar.minHeight resolved to 56 at every width, so on desktop
+          // the stuck bar slid 8px underneath the 64px AppBar.
+          top: { xs: 56, sm: 64 },
           zIndex: 1,
           bgcolor: "background.default",
-          // When the search bar is hidden, collapse the container completely.
-          pt: hideSearchBar ? 0 : 0.5,
-          pb: hideSearchBar ? 0 : 1,
+          // Same rhythm as the games page: 4px here + 16px of card padding = 20px
+          // above the search field, 16px of card padding below it to the content.
+          pt: 0.5,
+          pb: 0,
           // Once scrolled content locks under this sticky header, the bottom edge needs to
           // read as an intentional floating panel — otherwise half-covered floating labels
           // (Manufacturer/Device type/etc.) look like clipped/broken text rather than
@@ -67,8 +70,7 @@ const HardwarePage = () => {
         </Box>
         </Collapse>
 
-        <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
-          <HardwareSearchBar
+        <HardwareSearchBar
           searchKeyword={searchKeyword}
           onSearchKeywordChange={setSearchKeyword}
           status={status}
@@ -84,13 +86,14 @@ const HardwarePage = () => {
           platformIds={platformIds}
           onPlatformIdsChange={setPlatformIds}
         />
-        </Box>
       </Box>
 
       <Stack
         spacing={3}
         sx={{
-          mt: 3,
+          // No top margin: the 16px gap to the search card comes from the card's
+          // own padding, matching the games page's 16px below its search bar.
+          mt: 0,
           // Contains z-index in here to its own stacking context — otherwise MUI's
           // shrunk-label z-index (1, same as the sticky header above) ties with the sticky
           // box's and falls back to DOM order, letting floating labels paint on top of the
