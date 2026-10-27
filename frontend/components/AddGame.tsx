@@ -42,6 +42,7 @@ import ManualGameForm from "./ManualGameForm";
 import SimpleTabPanel from "./SimpleTabPanel";
 import VirtualGameGrid from "./VirtualGameGrid";
 import { useSessionState } from "../hooks/useSessionState";
+import { useSearchHandoff } from "../navigation/GlobalSearch";
 
 const MIN_SEARCH_LENGTH = 3;
 
@@ -87,6 +88,11 @@ const AddGame = () => {
   // Keyword and tab are remembered for the session (see hooks/useSessionState.ts).
   const [searchKeyword, setSearchKeyword] = useSessionState("addGame.searchKeyword", "");
   const [rememberedMode, setMode] = useSessionState<AddMode>("addGame.mode", "igdb");
+  // The header search's "Search IGDB for …" lands here with its text, on the IGDB tab.
+  useSearchHandoff("igdbSearch", (text) => {
+    setSearchKeyword(text);
+    setMode("igdb");
+  });
   // Landing here from Settings → Steam Sync's "Add as custom game" (see SteamSyncPage.tsx)
   // skips straight to the manual form, pre-filled — there's no IGDB entry to search for —
   // whatever tab was remembered, until the user switches tabs themselves.

@@ -1820,5 +1820,18 @@
       "other": "Other",
       "subscription": "Subscription"
     }
+  },
+  "search": {
+    "placeholder": "Search games, hardware, series…",
+    "label": "Search",
+    "igdb": "Search IGDB for “{{query}}”",
+    "groups": {
+      "game": "Games",
+      "device": "Devices",
+      "accessory": "Accessories",
+      "series": "Series",
+      "collection": "Collections",
+      "igdb": "IGDB"
+    }
   }
 }

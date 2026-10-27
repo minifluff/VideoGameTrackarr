@@ -21,6 +21,7 @@ import RestoreGuard from "./components/RestoreGuard";
 import { useLogout } from "./hooks/useAuth";
 import { useScrollResetOnNavigate } from "./hooks/useScrollResetOnNavigate";
 import BottomNavBar, { BOTTOM_NAV_HEIGHT } from "./navigation/BottomNavBar";
+import GlobalSearch from "./navigation/GlobalSearch";
 import NavDrawer, { NAV_DRAWER_WIDTH } from "./navigation/NavDrawer";
 import NavRail, { NAV_RAIL_WIDTH } from "./navigation/NavRail";
 import { useColorMode } from "./theme/ColorModeProvider";
@@ -124,6 +125,16 @@ const AppShell = () => {
           <Typography variant="h6" component="div" noWrap sx={{ minWidth: 0, flexGrow: 1 }}>
             {appTitle}
           </Typography>
+          <Box
+            sx={{
+              flexGrow: 1,
+              minWidth: 0,
+              display: { xs: "none", sm: "flex" },
+              justifyContent: "center",
+            }}
+          >
+            <GlobalSearch />
+          </Box>
           <OfflineStatusIndicator />
           <FormControlLabel
             control={<Switch checked={mode === "dark"} onChange={toggleColorMode} />}

@@ -32,6 +32,7 @@ import ManageTagsDialog from "./ManageTagsDialog";
 import VirtualGameGrid from "./VirtualGameGrid";
 import { usePruneStaleIds, useSessionState } from "../hooks/useSessionState";
 import { useScrollCollapse } from "../hooks/useScrollCollapse";
+import { useSearchHandoff } from "../navigation/GlobalSearch";
 
 const MIN_SEARCH_LENGTH = 3;
 
@@ -51,6 +52,8 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
 
   const sp = sessionPrefix;
   const [searchKeyword, setSearchKeyword] = useSessionState(`${sp}.searchKeyword`, "");
+  // The header search's Enter lands here with its text.
+  useSearchHandoff("search", setSearchKeyword);
   const [ownershipStatuses, setOwnershipStatuses] = useSessionState<OwnershipStatus[]>(
     `${sp}.ownershipStatuses`,
     initialOwnershipStatuses ?? []
