@@ -228,6 +228,7 @@ const GlobalSearch = () => {
       renderInput={(params) => (
         <TextField
           {...params}
+          size="small"
           inputRef={inputRef}
           placeholder={t("search.placeholder")}
           slotProps={{
