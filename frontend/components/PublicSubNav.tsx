@@ -5,9 +5,12 @@ import Collapse from "@mui/material/Collapse";
 import { useTranslation } from "react-i18next";
 import { useScrollCollapse } from "../hooks/useScrollCollapse";
 
-// Mirrors GamesSubNav.tsx's chip-row pattern — just 2 destinations here, so no need for
-// the full responsive nav rail/drawer/bottom-bar the authenticated app uses.
-const PublicSubNav = () => {
+// Mirrors GamesSubNav.tsx's chip-row pattern — no need for the full responsive nav
+// rail/drawer/bottom-bar the authenticated app uses. In the header (inHeader) the row
+// sits on the AppBar's primary background, so the chips use contrast text instead of
+// the default palette — a filled primary chip would vanish into the bar — and the row
+// scrolls horizontally instead of wrapping, so it fits phone widths.
+const PublicSubNav = ({ inHeader = false }: { inHeader?: boolean }) => {
   const { token } = useParams<{ token: string }>();
   const location = useLocation();
   const { t } = useTranslation();
@@ -20,9 +23,21 @@ const PublicSubNav = () => {
     { to: `/public/${token}/hardware`, labelKey: "public.nav.hardware" },
   ] as const;
 
-  return (
-    <Collapse in={!collapsed} timeout={200}>
-      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 3 }}>
+  const row = (
+    <Box
+      sx={
+        inHeader
+          ? {
+              display: "flex",
+              gap: 1,
+              flexWrap: "nowrap",
+              overflowX: "auto",
+              scrollbarWidth: "none",
+              "&::-webkit-scrollbar": { display: "none" },
+            }
+          : { display: "flex", gap: 1, flexWrap: "wrap", mb: 3 }
+      }
+    >
       {items.map((item) => {
         // Exact match for List; Games also stays selected on a game's own detail page
         // (/public/:token/games/:gameId) but not on the List page.
@@ -40,10 +55,32 @@ const PublicSubNav = () => {
             clickable
             color={isSelected ? "primary" : "default"}
             variant={isSelected ? "filled" : "outlined"}
+            sx={
+              inHeader
+                ? {
+                    flexShrink: 0,
+                    color: "primary.contrastText",
+                    borderColor: "primary.contrastText",
+                    ...(isSelected
+                      ? {
+                          backgroundColor: "primary.contrastText",
+                          color: "primary.main",
+                          "&:hover": { backgroundColor: "primary.contrastText" },
+                        }
+                      : {}),
+                  }
+                : undefined
+            }
           />
         );
       })}
-      </Box>
+    </Box>
+  );
+
+  if (inHeader) return row;
+  return (
+    <Collapse in={!collapsed} timeout={200}>
+      {row}
     </Collapse>
   );
 };
