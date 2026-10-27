@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import ImageNotSupportedOutlinedIcon from "@mui/icons-material/ImageNotSupportedOutlined";
 import Box from "@mui/material/Box";
@@ -39,6 +39,101 @@ const GameCoverCard = ({ game }: GameCoverCardProps) => {
   const coverFailed = failedCoverUrl !== null && failedCoverUrl === game.coverUrl;
   const [fullscreen, setFullscreen] = useState(false);
   const coverSrc = resolveAssetUrl(game.coverUrl) ?? undefined;
+  // Pinch-to-zoom state for the fullscreen viewer: a scale plus a pan offset. Pinching
+  // back to 1x snaps the image back to centered; closing resets both.
+  const [zoom, setZoom] = useState({ scale: 1, x: 0, y: 0 });
+  const gestureRef = useRef<{
+    startDist: number;
+    startScale: number;
+    startX: number;
+    startY: number;
+    prev: { id: number; x: number; y: number }[];
+    pinching: boolean;
+  } | null>(null);
+  // Some browsers synthesize a click after a pinch ends; swallowing it briefly keeps a
+  // pinch from instantly dismissing the viewer it just zoomed.
+  const suppressClickUntilRef = useRef(0);
+
+  const closeViewer = () => {
+    setFullscreen(false);
+    setZoom({ scale: 1, x: 0, y: 0 });
+  };
+
+  // TouchList is array-like but not iterable in this TS DOM lib, so index into it.
+  const touchPoints = (touches: React.TouchList) =>
+    Array.from({ length: touches.length }, (_, index) => {
+      const touch = touches[index];
+      return { id: touch.identifier, x: touch.clientX, y: touch.clientY };
+    });
+
+  const handleViewerTouchStart = (event: React.TouchEvent) => {
+    const touches = touchPoints(event.touches);
+    gestureRef.current = {
+      startDist:
+        touches.length === 2
+          ? Math.hypot(touches[0].x - touches[1].x, touches[0].y - touches[1].y)
+          : 0,
+      startScale: zoom.scale,
+      startX: zoom.x,
+      startY: zoom.y,
+      prev: touches,
+      pinching: touches.length === 2,
+    };
+  };
+
+  const handleViewerTouchMove = (event: React.TouchEvent) => {
+    const gesture = gestureRef.current;
+    if (!gesture) return;
+    const touches = touchPoints(event.touches);
+    const rect = event.currentTarget.getBoundingClientRect();
+    if (touches.length === 2 && gesture.pinching && gesture.startDist > 0) {
+      // Scale about the midpoint between the fingers, so the point under the pinch
+      // stays put instead of the image zooming away from it.
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const midX = (touches[0].x + touches[1].x) / 2 - centerX;
+      const midY = (touches[0].y + touches[1].y) / 2 - centerY;
+      const next =
+        gesture.startScale *
+        (Math.hypot(touches[0].x - touches[1].x, touches[0].y - touches[1].y) /
+          gesture.startDist);
+      if (next <= 1) {
+        setZoom({ scale: 1, x: 0, y: 0 });
+      } else {
+        const scale = Math.min(next, 4);
+        setZoom({
+          scale,
+          x: midX - (midX - gesture.startX) * (scale / gesture.startScale),
+          y: midY - (midY - gesture.startY) * (scale / gesture.startScale),
+        });
+      }
+    } else if (touches.length === 1 && zoom.scale > 1 && gesture.prev.length === 1) {
+      // One finger drags a zoomed image around; the offset is clamped so the image
+      // can't be panned clean out of view.
+      const maxX = (rect.width * zoom.scale) / 2;
+      const maxY = (rect.height * zoom.scale) / 2;
+      const dx = touches[0].x - gesture.prev[0].x;
+      const dy = touches[0].y - gesture.prev[0].y;
+      setZoom((current) => ({
+        ...current,
+        x: Math.max(-maxX, Math.min(maxX, current.x + dx)),
+        y: Math.max(-maxY, Math.min(maxY, current.y + dy)),
+      }));
+    }
+    gestureRef.current = { ...gesture, prev: touches };
+  };
+
+  const handleViewerTouchEnd = (event: React.TouchEvent) => {
+    const gesture = gestureRef.current;
+    if (gesture?.pinching) suppressClickUntilRef.current = Date.now() + 350;
+    const touches = touchPoints(event.touches);
+    gestureRef.current = touches.length > 0 && gesture ? { ...gesture, prev: touches, pinching: false } : null;
+  };
+
+  const handleViewerClick = () => {
+    if (Date.now() < suppressClickUntilRef.current) return;
+    closeViewer();
+  };
   // See GameCard.tsx's identical split — only a still-unclaimed "what's missing" discovery
   // gets the chip, not every greyscaled (not-yet-owned) cover.
   const showMissingChip = isGreyscale && game.autoDiscovered;
@@ -140,14 +235,18 @@ const GameCoverCard = ({ game }: GameCoverCardProps) => {
     <Dialog
       fullScreen
       open={fullscreen}
-      onClose={() => setFullscreen(false)}
+      onClose={closeViewer}
       sx={{ "& .MuiDialog-paper": { bgcolor: "black" } }}
     >
       {/* Clicking anywhere dismisses, as does Esc and the close button. The artwork
       itself renders in full color: the card's greyscale is an ownership signal, and
-      the viewer is for looking at the art. */}
+      the viewer is for looking at the art. touchAction none keeps the browser from
+      hijacking the pinch for its own page zoom, so the gesture reaches the handlers. */}
       <Box
-        onClick={() => setFullscreen(false)}
+        onClick={handleViewerClick}
+        onTouchStart={handleViewerTouchStart}
+        onTouchMove={handleViewerTouchMove}
+        onTouchEnd={handleViewerTouchEnd}
         sx={{
           position: "relative",
           width: "100%",
@@ -155,11 +254,16 @@ const GameCoverCard = ({ game }: GameCoverCardProps) => {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          touchAction: "none",
+          overflow: "hidden",
         }}
       >
         <IconButton
           aria-label={t("common.close")}
-          onClick={() => setFullscreen(false)}
+          onClick={(event) => {
+            event.stopPropagation();
+            closeViewer();
+          }}
           sx={{ position: "absolute", top: 8, right: 8, color: "white", zIndex: 1 }}
         >
           <CloseIcon />
@@ -169,7 +273,15 @@ const GameCoverCard = ({ game }: GameCoverCardProps) => {
             component="img"
             alt={game.name}
             src={fullSizeCoverUrl(coverSrc) ?? undefined}
-            sx={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+            // Inline, not sx: the transform changes every touchmove, and an inline
+            // style is also what the tests can read back.
+            style={{ transform: `translate(${zoom.x}px, ${zoom.y}px) scale(${zoom.scale})` }}
+            sx={{
+              maxWidth: "100%",
+              maxHeight: "100%",
+              objectFit: "contain",
+              touchAction: "none",
+            }}
           />
         ) : null}
       </Box>

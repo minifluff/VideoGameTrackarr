@@ -68,6 +68,44 @@ describe("GameCoverCard", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 
+  it("pinch-zooms the fullscreen image and resets when pinched back", () => {
+    renderWithTheme(<GameCoverCard game={game} />);
+    fireEvent.click(screen.getByRole("img", { name: "Hollow Knight" }));
+    const dialog = screen.getByRole("dialog");
+    const image = within(dialog).getByRole("img", { name: "Hollow Knight" });
+
+    // Two fingers 100px apart, spreading to 200px: 2x zoom.
+    fireEvent.touchStart(image, {
+      touches: [
+        { identifier: 0, clientX: 0, clientY: 0 },
+        { identifier: 1, clientX: 100, clientY: 0 },
+      ],
+    });
+    fireEvent.touchMove(image, {
+      touches: [
+        { identifier: 0, clientX: 0, clientY: 0 },
+        { identifier: 1, clientX: 200, clientY: 0 },
+      ],
+    });
+    expect(image.style.transform).toContain("scale(2)");
+
+    // Pinch back to the original spread: back to 1x, centered.
+    fireEvent.touchEnd(image, { touches: [] });
+    fireEvent.touchStart(image, {
+      touches: [
+        { identifier: 0, clientX: 0, clientY: 0 },
+        { identifier: 1, clientX: 200, clientY: 0 },
+      ],
+    });
+    fireEvent.touchMove(image, {
+      touches: [
+        { identifier: 0, clientX: 0, clientY: 0 },
+        { identifier: 1, clientX: 100, clientY: 0 },
+      ],
+    });
+    expect(image.style.transform).toContain("scale(1)");
+  });
+
   it("does not open a fullscreen view when there is no cover", () => {
     renderWithTheme(<GameCoverCard game={{ ...game, coverUrl: null }} />);
 
