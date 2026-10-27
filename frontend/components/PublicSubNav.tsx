@@ -1,4 +1,5 @@
 import { Link, useLocation, useParams } from "react-router-dom";
+import { useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Collapse from "@mui/material/Collapse";
@@ -17,6 +18,12 @@ const PublicSubNav = ({ inHeader = false }: { inHeader?: boolean }) => {
   const { t } = useTranslation();
   const collapsed = useScrollCollapse(80);
   const { hideHardwareMenu } = useAppearance();
+  // In dark mode the header bar is dark, but primary.contrastText is the dark
+  // on-primary colour meant to sit on the bright accent — dark-on-dark, so the
+  // header chips nearly vanish. Force white there; light mode keeps the
+  // contrast-text treatment. (useTheme, not the colour-mode context, so this
+  // still renders with the default light theme outside a provider, e.g. tests.)
+  const isDark = useTheme().palette.mode === "dark";
 
   const allItems = [
     { to: `/public/${token}/games`, labelKey: "public.nav.games" },
@@ -67,12 +74,12 @@ const PublicSubNav = ({ inHeader = false }: { inHeader?: boolean }) => {
               inHeader
                 ? {
                     flexShrink: 0,
-                    color: "primary.contrastText",
-                    borderColor: "primary.contrastText",
+                    color: isDark ? "common.white" : "primary.contrastText",
+                    borderColor: isDark ? "common.white" : "primary.contrastText",
                     ...(isSelected
                       ? {
                           backgroundColor: "primary.contrastText",
-                          color: "primary.main",
+                          color: isDark ? "common.white" : "primary.main",
                           "&:hover": { backgroundColor: "primary.contrastText" },
                         }
                       : {}),

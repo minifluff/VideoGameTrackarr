@@ -76,7 +76,13 @@ const PublicShell = () => {
             sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", minWidth: 0 }}
           >
             <Tooltip title={themeLabel}>
-              <IconButton onClick={toggleColorMode} aria-label={themeLabel}>
+              <IconButton
+                onClick={toggleColorMode}
+                aria-label={themeLabel}
+                // In dark mode the bar is dark, so the default muted icon colour
+                // reads dim — force white there; light mode keeps the default.
+                sx={mode === "dark" ? { color: "common.white" } : undefined}
+              >
                 {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
               </IconButton>
             </Tooltip>
