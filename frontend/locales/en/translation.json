@@ -87,6 +87,7 @@
   "appShell": {
     "skipToMainContent": "Skip to main content",
     "darkMode": "Dark Mode",
+    "lightMode": "Light Mode",
     "updateAvailable": "New version available: {{version}}"
   },
   "dialogs": {

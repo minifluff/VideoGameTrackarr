@@ -1,15 +1,16 @@
 import { Suspense } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
+import DarkModeIcon from "@mui/icons-material/DarkModeOutlined";
+import LightModeIcon from "@mui/icons-material/LightModeOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
-import Switch from "@mui/material/Switch";
 import { useTheme } from "@mui/material/styles";
 import Toolbar from "@mui/material/Toolbar";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTranslation } from "react-i18next";
@@ -34,6 +35,7 @@ import { isCustomIconDataUrl, resolveIconSrc, useAppearance } from "./theme/Appe
 const AppShell = () => {
   const { t } = useTranslation();
   const { mode, toggleColorMode } = useColorMode();
+  const themeLabel = mode === "dark" ? t("appShell.lightMode") : t("appShell.darkMode");
   const { appTitle, appIcon } = useAppearance();
   const theme = useTheme();
   const isCompact = useMediaQuery(theme.breakpoints.down("sm"));
@@ -149,14 +151,11 @@ const AppShell = () => {
             sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", minWidth: 0 }}
           >
             <OfflineStatusIndicator />
-            <FormControlLabel
-              control={<Switch checked={mode === "dark"} onChange={toggleColorMode} />}
-              label={t("appShell.darkMode")}
-              sx={{
-                mr: 1,
-                ".MuiFormControlLabel-label": { display: { xs: "none", sm: "block" } },
-              }}
-            />
+            <Tooltip title={themeLabel}>
+              <IconButton onClick={toggleColorMode} aria-label={themeLabel}>
+                {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
+              </IconButton>
+            </Tooltip>
             <IconButton color="inherit" onClick={handleLogout} title={t("common.logOut")} aria-label={t("common.logOut")}>
               <LogoutIcon />
             </IconButton>

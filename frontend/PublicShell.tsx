@@ -1,11 +1,13 @@
 import { Suspense } from "react";
 import { Outlet } from "react-router-dom";
+import DarkModeIcon from "@mui/icons-material/DarkModeOutlined";
+import LightModeIcon from "@mui/icons-material/LightModeOutlined";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Switch from "@mui/material/Switch";
+import IconButton from "@mui/material/IconButton";
 import Toolbar from "@mui/material/Toolbar";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import PublicSubNav from "./components/PublicSubNav";
@@ -19,6 +21,7 @@ import { isCustomIconDataUrl, resolveIconSrc, useAppearance } from "./theme/Appe
 const PublicShell = () => {
   const { t } = useTranslation();
   const { mode, toggleColorMode } = useColorMode();
+  const themeLabel = mode === "dark" ? t("appShell.lightMode") : t("appShell.darkMode");
   const { appTitle, appIcon } = useAppearance();
   useScrollResetOnNavigate();
 
@@ -72,11 +75,11 @@ const PublicShell = () => {
           <Box
             sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", minWidth: 0 }}
           >
-            <FormControlLabel
-              control={<Switch checked={mode === "dark"} onChange={toggleColorMode} />}
-              label={t("appShell.darkMode")}
-              sx={{ ".MuiFormControlLabel-label": { display: { xs: "none", sm: "block" } } }}
-            />
+            <Tooltip title={themeLabel}>
+              <IconButton onClick={toggleColorMode} aria-label={themeLabel}>
+                {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
+              </IconButton>
+            </Tooltip>
           </Box>
         </Toolbar>
       </AppBar>
