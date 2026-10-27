@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_db
 from app.api.routes.game_filters import GameFilterParams
 from app.models.library import LibraryStatus
+from app.repositories.game_repository import PRIVATE_SORTS, GameSortOption
 from app.schemas.game import BookshelfEntryResponse
 from app.schemas.public import (
     PublicAccessorySummaryResponse,
@@ -76,6 +77,10 @@ def list_public_games(
     db: Session = Depends(get_db),
 ) -> list[PublicGameSummaryResponse]:
     auth_service.get_user_by_share_token(db, token)
+    # The share page doesn't show copies, progress, ratings or sales, so those sorts
+    # are meaningless here — fall back to name order instead of leaking them through.
+    if params.sort in PRIVATE_SORTS:
+        params.sort = GameSortOption.NAME_ASC
     games = game_service.search_local_games(db, **vars(params))
     # Hidden games never appear on public pages.
     games = [g for g in games if not g.game.hide_from_public]

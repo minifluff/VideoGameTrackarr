@@ -18,7 +18,7 @@ import Tooltip from "@mui/material/Tooltip";
 import { useTranslation } from "react-i18next";
 import { useScrollDirection } from "../hooks/useScrollCollapse";
 import type { GameSortOption } from "../api/types";
-import { GAME_SORT_OPTIONS, type GameSortOptionItem } from "../utils/gameSortOptions";
+import { GAME_SORT_FIELDS, makeGameSort, PUBLIC_SORT_FIELDS } from "../utils/gameSortOptions";
 import AutocompleteMultiSelect from "./AutocompleteMultiSelect";
 import AutocompleteSelect from "./AutocompleteSelect";
 
@@ -101,8 +101,16 @@ const PublicGamesToolbar = ({
   const hideSearchBar = useScrollDirection(80);
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  // The share page offers only the fields it shows; each comes in both directions,
+  // labelled "Field (Ascending)" like the main toolbar's tooltip.
+  const publicSortOptions = PUBLIC_SORT_FIELDS.flatMap((field) =>
+    (["asc", "desc"] as const).map((direction) => ({
+      value: makeGameSort(field, direction),
+      label: `${t(GAME_SORT_FIELDS.find((option) => option.field === field)?.labelKey ?? "games.listToolbar.sortByLabel")} (${t(direction === "asc" ? "games.listView.sortAscending" : "games.listView.sortDescending")})`,
+    }))
+  );
   const selectedSortOption =
-    GAME_SORT_OPTIONS.find((option) => option.value === sort) ?? GAME_SORT_OPTIONS[0];
+    publicSortOptions.find((option) => option.value === sort) ?? publicSortOptions[0];
 
   const formatOptions = FORMAT_OPTIONS.map((f) => ({ id: f, name: t(`games.listToolbar.format${f.charAt(0).toUpperCase() + f.slice(1)}`, f) }));
   const playStatusOptions = PLAY_STATUS_OPTIONS.map((s) => ({ id: s, name: t(`games.listToolbar.playStatus${s.charAt(0).toUpperCase() + s.slice(1)}`, s) }));
@@ -226,12 +234,12 @@ const PublicGamesToolbar = ({
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
-                <AutocompleteSelect<GameSortOptionItem>
+                <AutocompleteSelect<{ value: GameSortOption; label: string }>
                   label={t("games.listToolbar.sortByLabel")}
-                  options={GAME_SORT_OPTIONS}
+                  options={publicSortOptions}
                   value={selectedSortOption}
                   onChange={(newValue) => onSortChange(newValue?.value ?? "name_asc")}
-                  getOptionLabel={(option) => t(option.labelKey)}
+                  getOptionLabel={(option) => option.label}
                   isOptionEqualToValue={(option, val) => option.value === val.value}
                   disableClearable
                   fullWidth

@@ -172,9 +172,19 @@ describe("GameListToolbar top-row controls", () => {
     const user = userEvent.setup();
 
     await user.click(screen.getByRole("button", { name: "Sort By" }));
-    await user.click(screen.getByRole("menuitem", { name: "Name (DESC)" }));
+    await user.click(screen.getByRole("menuitem", { name: "Descending" }));
 
     expect(props.onSortChange).toHaveBeenCalledWith("name_desc");
+  });
+
+  it("picks a new field in its default direction from the Sort menu", async () => {
+    const props = renderToolbar();
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "Sort By" }));
+    await user.click(screen.getByRole("menuitem", { name: "Year" }));
+
+    expect(props.onSortChange).toHaveBeenCalledWith("release_date_asc");
   });
 
   it("shows no Options button without per-page card size", () => {

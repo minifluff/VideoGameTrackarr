@@ -312,3 +312,23 @@ def test_public_games_include_wishlisted_auto_discovered(auth_client, client, db
     names = [game["name"] for game in client.get(f"/api/public/{share}/games").json()]
     assert "Wishlisted Discovery" in names
     assert client.get(f"/api/public/{share}/games/{discovered.id}").status_code == 200
+
+
+def test_public_games_clamps_private_sorts_to_name(auth_client, client, db_session):
+    from app.models.catalog import Game, GameCategory
+
+    db_session.add_all(
+        [
+            Game(igdb_id=2400, name="Zelda", category=GameCategory.MAIN_GAME),
+            Game(igdb_id=2401, name="Astro Bot", category=GameCategory.MAIN_GAME),
+        ]
+    )
+    db_session.commit()
+    share = _get_token(auth_client)
+
+    # The share page doesn't show copies, progress, ratings or sales, so those sorts
+    # fall back to name order instead of leaking through.
+    response = client.get(f"/api/public/{share}/games", params={"sort": "play_status_asc"})
+
+    assert response.status_code == 200
+    assert [game["name"] for game in response.json()] == ["Astro Bot", "Zelda"]

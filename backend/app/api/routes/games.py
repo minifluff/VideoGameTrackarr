@@ -76,6 +76,7 @@ def list_games(
         required_platform_storefront=required_platform_storefront,
     )
     on_sale_game_ids = insight_service.get_on_sale_game_ids(db)
+    games = game_service.sort_by_labels(games, params.sort, on_sale_game_ids)
     # One query for every game on the page: which platforms each is owned on (drives
     # the platform chips on game cards). Same pattern as the public list route.
     platforms_by_game: dict[int, set[str]] = {}

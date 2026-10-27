@@ -17,7 +17,7 @@ from app.schemas.platform_detail import (
     platform_detail_from_orm,
     platform_summary_from_orm,
 )
-from app.services import insight_service, platform_service
+from app.services import game_service, insight_service, platform_service
 
 router = APIRouter(prefix="/api/platforms", tags=["platforms"], dependencies=[Depends(get_current_user)])
 
@@ -66,6 +66,7 @@ def list_platform_addons(
         db, slug_or_id, required_platform_format, required_platform_storefront, **vars(params)
     )
     on_sale_game_ids = insight_service.get_on_sale_game_ids(db)
+    addons = game_service.sort_by_labels(addons, params.sort, on_sale_game_ids)
     return [game_summary_from_orm(addon, on_sale_game_ids) for addon in addons]
 
 

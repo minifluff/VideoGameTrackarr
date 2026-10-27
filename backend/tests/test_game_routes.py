@@ -682,6 +682,140 @@ def test_list_games_sort_by_release_date(auth_client, db_session):
     assert [g["name"] for g in response.json()] == ["Newer Game", "Older Game"]
 
 
+def test_list_games_sort_by_type(auth_client, db_session):
+    # Only browsable categories appear on the top-level list, so the test uses three
+    # of those (DLC/expansions are add-ons, listed under their parent instead).
+    db_session.add_all(
+        [
+            Game(igdb_id=2310, name="Port Game", category=GameCategory.PORT),
+            Game(igdb_id=2311, name="Main Game", category=GameCategory.MAIN_GAME),
+            Game(igdb_id=2312, name="Remake Game", category=GameCategory.REMAKE),
+        ]
+    )
+    db_session.commit()
+
+    response = auth_client.get("/api/games", params={"sort": "type_asc"})
+    assert [g["name"] for g in response.json()] == ["Main Game", "Remake Game", "Port Game"]
+
+    response = auth_client.get("/api/games", params={"sort": "type_desc"})
+    assert [g["name"] for g in response.json()] == ["Port Game", "Remake Game", "Main Game"]
+
+
+def test_list_games_sort_by_platforms(auth_client, db_session):
+    zzz = Platform(name="Zed Platform", abbreviation="ZZZ")
+    aaa = Platform(name="Aye Platform", abbreviation="AAA")
+    db_session.add_all([zzz, aaa])
+    db_session.flush()
+    zed_game = Game(igdb_id=2313, name="Zed Game", category=GameCategory.MAIN_GAME)
+    aye_game = Game(igdb_id=2314, name="Aye Game", category=GameCategory.MAIN_GAME)
+    no_copy = Game(igdb_id=2315, name="No Copy Game", category=GameCategory.MAIN_GAME)
+    db_session.add_all([zed_game, aye_game, no_copy])
+    db_session.flush()
+    db_session.add_all(
+        [
+            LibraryItem(game_id=zed_game.id, platform_id=zzz.id, status=LibraryStatus.OWNED),
+            LibraryItem(game_id=aye_game.id, platform_id=aaa.id, status=LibraryStatus.OWNED),
+        ]
+    )
+    db_session.commit()
+
+    response = auth_client.get("/api/games", params={"sort": "platforms_asc"})
+    # No copies sorts last in either direction.
+    assert [g["name"] for g in response.json()] == ["Aye Game", "Zed Game", "No Copy Game"]
+
+    response = auth_client.get("/api/games", params={"sort": "platforms_desc"})
+    assert [g["name"] for g in response.json()] == ["Zed Game", "Aye Game", "No Copy Game"]
+
+
+def test_list_games_sort_by_play_status(auth_client, db_session):
+    platform = Platform(name="Test Platform")
+    db_session.add(platform)
+    db_session.flush()
+    playing = Game(igdb_id=2316, name="Playing Game", category=GameCategory.MAIN_GAME)
+    completed = Game(igdb_id=2317, name="Completed Game", category=GameCategory.MAIN_GAME)
+    backlog = Game(igdb_id=2318, name="Backlog Game", category=GameCategory.MAIN_GAME)
+    unstarted = Game(igdb_id=2319, name="Unstarted Game", category=GameCategory.MAIN_GAME)
+    db_session.add_all([playing, completed, backlog, unstarted])
+    db_session.flush()
+    db_session.add_all(
+        [
+            GameProgress(game_id=playing.id, platform_id=platform.id, play_status=PlayStatus.PLAYING),
+            GameProgress(game_id=completed.id, platform_id=platform.id, play_status=PlayStatus.COMPLETED),
+            GameProgress(game_id=backlog.id, platform_id=platform.id, play_status=PlayStatus.BACKLOG),
+        ]
+    )
+    db_session.commit()
+
+    response = auth_client.get("/api/games", params={"sort": "play_status_asc"})
+    assert [g["name"] for g in response.json()] == [
+        "Playing Game",
+        "Completed Game",
+        "Backlog Game",
+        "Unstarted Game",
+    ]
+
+
+def test_list_games_sort_by_rating(auth_client, db_session):
+    platform = Platform(name="Test Platform")
+    db_session.add(platform)
+    db_session.flush()
+    high = Game(igdb_id=2320, name="High Game", category=GameCategory.MAIN_GAME)
+    low = Game(igdb_id=2321, name="Low Game", category=GameCategory.MAIN_GAME)
+    unrated = Game(igdb_id=2322, name="Unrated Game", category=GameCategory.MAIN_GAME)
+    db_session.add_all([high, low, unrated])
+    db_session.flush()
+    db_session.add_all(
+        [
+            GameProgress(game_id=high.id, platform_id=platform.id, play_status=PlayStatus.COMPLETED, rating=8),
+            GameProgress(game_id=low.id, platform_id=platform.id, play_status=PlayStatus.COMPLETED, rating=3),
+        ]
+    )
+    db_session.commit()
+
+    response = auth_client.get("/api/games", params={"sort": "rating_desc"})
+    assert [g["name"] for g in response.json()] == ["High Game", "Low Game", "Unrated Game"]
+
+    response = auth_client.get("/api/games", params={"sort": "rating_asc"})
+    assert [g["name"] for g in response.json()] == ["Low Game", "High Game", "Unrated Game"]
+
+
+def test_list_games_sort_by_library(auth_client, db_session):
+    both = Game(igdb_id=2323, name="Both Game", category=GameCategory.MAIN_GAME)
+    owned = Game(igdb_id=2324, name="Owned Game", category=GameCategory.MAIN_GAME)
+    wished = Game(igdb_id=2325, name="Wished Game", category=GameCategory.MAIN_GAME)
+    neither = Game(igdb_id=2326, name="Neither Game", category=GameCategory.MAIN_GAME)
+    db_session.add_all([both, owned, wished, neither])
+    db_session.flush()
+    db_session.add_all(
+        [
+            LibraryItem(game_id=both.id, status=LibraryStatus.OWNED),
+            LibraryItem(game_id=both.id, status=LibraryStatus.WISHLIST),
+            LibraryItem(game_id=owned.id, status=LibraryStatus.OWNED),
+            LibraryItem(game_id=wished.id, status=LibraryStatus.WISHLIST),
+        ]
+    )
+    db_session.commit()
+
+    response = auth_client.get("/api/games", params={"sort": "library_asc"})
+    assert [g["name"] for g in response.json()] == ["Both Game", "Owned Game", "Wished Game", "Neither Game"]
+
+
+def test_list_games_sort_by_labels(auth_client, db_session):
+    missing = Game(
+        igdb_id=2327, name="Missing Game", category=GameCategory.MAIN_GAME, auto_discovered=True
+    )
+    custom = Game(igdb_id=None, name="Custom Game", category=GameCategory.MAIN_GAME)
+    plain = Game(igdb_id=2328, name="Plain Game", category=GameCategory.MAIN_GAME)
+    db_session.add_all([missing, custom, plain])
+    db_session.commit()
+
+    response = auth_client.get("/api/games", params={"sort": "labels_asc"})
+    assert [g["name"] for g in response.json()] == ["Missing Game", "Custom Game", "Plain Game"]
+
+    response = auth_client.get("/api/games", params={"sort": "labels_desc"})
+    assert [g["name"] for g in response.json()] == ["Custom Game", "Missing Game", "Plain Game"]
+
+
 def test_get_game_detail_includes_parent_name(auth_client, db_session, seed_game):
     addon = Game(igdb_id=2002, name="Test Game DLC", category=GameCategory.DLC_ADDON, parent_game_id=seed_game.id)
     db_session.add(addon)

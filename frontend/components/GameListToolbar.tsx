@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
+import CheckIcon from "@mui/icons-material/Check";
 import ClearIcon from "@mui/icons-material/Clear";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -22,6 +23,7 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
@@ -51,7 +53,13 @@ import type {
   PlayStatus,
   Tag,
 } from "../api/types";
-import { GAME_SORT_OPTIONS } from "../utils/gameSortOptions";
+import {
+  GAME_SORT_FIELDS,
+  gameSortDirection,
+  gameSortField,
+  makeGameSort,
+  pickGameSortField,
+} from "../utils/gameSortOptions";
 import AutocompleteMultiSelect from "./AutocompleteMultiSelect";
 import AutocompleteSelect from "./AutocompleteSelect";
 import TagChip from "./TagChip";
@@ -450,9 +458,10 @@ const GameListToolbar = ({
   // Icon-only Sort button, so its tooltip carries the current sort instead of a
   // generic label — otherwise there's no way to tell what the list is sorted by
   // without opening the menu.
-  const currentSortOption = GAME_SORT_OPTIONS.find((option) => option.value === sort);
-  const sortTooltip = currentSortOption
-    ? t(currentSortOption.labelKey)
+  const currentSortField = GAME_SORT_FIELDS.find((option) => option.field === gameSortField(sort));
+  const sortDirection = gameSortDirection(sort);
+  const sortTooltip = currentSortField
+    ? `${t(currentSortField.labelKey)} (${t(sortDirection === "asc" ? "games.listView.sortAscending" : "games.listView.sortDescending")})`
     : t("games.listToolbar.sortByLabel");
 
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -725,18 +734,43 @@ const GameListToolbar = ({
           open={sortMenuAnchor !== null}
           onClose={() => setSortMenuAnchor(null)}
         >
-          {GAME_SORT_OPTIONS.map((option) => (
-            <MenuItem
-              key={option.value}
-              selected={sort === option.value}
-              onClick={() => {
-                onSortChange(option.value);
-                setSortMenuAnchor(null);
-              }}
-            >
-              {t(option.labelKey)}
-            </MenuItem>
-          ))}
+          {GAME_SORT_FIELDS.map((option) => {
+            const selected = option.field === gameSortField(sort);
+            return (
+              <MenuItem
+                key={option.field}
+                selected={selected}
+                onClick={() => {
+                  onSortChange(pickGameSortField(sort, option.field));
+                  setSortMenuAnchor(null);
+                }}
+              >
+                <ListItemText>{t(option.labelKey)}</ListItemText>
+                {selected ? <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} /> : null}
+              </MenuItem>
+            );
+          })}
+          <Divider />
+          <MenuItem
+            selected={sortDirection === "asc"}
+            onClick={() => {
+              onSortChange(makeGameSort(gameSortField(sort), "asc"));
+              setSortMenuAnchor(null);
+            }}
+          >
+            <ListItemText>{t("games.listView.sortAscending")}</ListItemText>
+            {sortDirection === "asc" ? <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} /> : null}
+          </MenuItem>
+          <MenuItem
+            selected={sortDirection === "desc"}
+            onClick={() => {
+              onSortChange(makeGameSort(gameSortField(sort), "desc"));
+              setSortMenuAnchor(null);
+            }}
+          >
+            <ListItemText>{t("games.listView.sortDescending")}</ListItemText>
+            {sortDirection === "desc" ? <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} /> : null}
+          </MenuItem>
         </Menu>
         <Menu
           anchorEl={optionsMenuAnchor}
