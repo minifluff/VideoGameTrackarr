@@ -1168,6 +1168,7 @@
       "title": "Juegos individuales",
       "searchLabel": "Search games",
       "nameColumn": "Name",
+      "statusColumn": "Status",
       "platformColumn": "Platform",
       "editionColumn": "Edition",
       "formatColumn": "Format",

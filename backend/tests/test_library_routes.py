@@ -1,5 +1,6 @@
+from app.models.catalog import Game, GameCategory
 from app.models.itad import ItadPriceCache
-from app.models.library import GameProgress
+from app.models.library import GameProgress, LibraryItem, LibraryStatus
 from app.models.platprices import PlatPricesCache
 
 
@@ -504,3 +505,19 @@ def test_bulk_delete_rejects_empty_ids(auth_client):
     response = auth_client.post("/api/library/bulk-delete", json={"item_ids": []})
 
     assert response.status_code == 422
+
+
+def test_list_all_library_items_includes_status(auth_client, db_session, seed_game, seed_platform):
+    db_session.add(LibraryItem(game_id=seed_game.id, platform_id=seed_platform.id, status=LibraryStatus.OWNED))
+    wishlisted_game = Game(igdb_id=5005, name="Wishlisted Game", category=GameCategory.MAIN_GAME)
+    db_session.add(wishlisted_game)
+    db_session.commit()
+    db_session.add(LibraryItem(game_id=wishlisted_game.id, status=LibraryStatus.WISHLIST))
+    db_session.commit()
+
+    response = auth_client.get("/api/library/items")
+
+    assert response.status_code == 200
+    by_name = {item["gameName"]: item for item in response.json()}
+    assert by_name["Test Game"]["status"] == "owned"
+    assert by_name["Wishlisted Game"]["status"] == "wishlist"

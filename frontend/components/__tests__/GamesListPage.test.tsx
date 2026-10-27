@@ -12,6 +12,7 @@ const items: LibraryListItem[] = [
     gameId: 10,
     gameName: "Astro Bot",
     gameUuid: "uuid-1",
+    status: "wishlist",
     platformName: "PlayStation 5",
     edition: null,
     format: "physical",
@@ -25,6 +26,7 @@ const items: LibraryListItem[] = [
     gameId: 11,
     gameName: "Zelda: Tears of the Kingdom",
     gameUuid: "uuid-2",
+    status: "owned",
     platformName: "Nintendo Switch",
     edition: null,
     format: "digital",
@@ -132,6 +134,30 @@ describe("GamesListPage filter sizes", () => {
     for (const input of [...selects, search]) {
       expect(input.closest(".MuiInputBase-root")).toHaveClass("MuiInputBase-sizeSmall");
     }
+  });
+});
+
+describe("GamesListPage status column", () => {
+  it("shows an Owned pill and a Wishlist pill", async () => {
+    renderPage();
+
+    expect(await screen.findByText("Owned")).toBeInTheDocument();
+    expect(screen.getByText("Wishlist")).toBeInTheDocument();
+  });
+
+  it("sorts by status when the Status header is clicked", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    // Default sort is Name ascending: Astro Bot (wishlist) first.
+    const rowsBefore = await screen.findAllByRole("row");
+    expect(rowsBefore[1]).toHaveTextContent("Astro Bot");
+
+    await user.click(screen.getByRole("button", { name: "Status" }));
+    // Status ascending puts owned first, so Zelda jumps ahead of Astro Bot.
+    const rowsAfter = screen.getAllByRole("row");
+    expect(rowsAfter[1]).toHaveTextContent("Zelda: Tears of the Kingdom");
+    expect(rowsAfter[2]).toHaveTextContent("Astro Bot");
   });
 });
 

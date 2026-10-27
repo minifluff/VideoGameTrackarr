@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import CheckIcon from "@mui/icons-material/Check";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DriveFileMoveIcon from "@mui/icons-material/DriveFileMove";
 import EditIcon from "@mui/icons-material/Edit";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 import SearchIcon from "@mui/icons-material/Search";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -36,11 +38,12 @@ import { useQuery } from "@tanstack/react-query";
 import { listAllLibraryItems } from "../api/library";
 import { useBulkDeleteLibraryItems } from "../hooks/useLibrary";
 import BulkEditLibraryItemsDialog from "./BulkEditLibraryItemsDialog";
+import { Pill } from "./Detail";
 import MoveLibraryItemDialog from "./MoveLibraryItemDialog";
 import type { LibraryListItem } from "../api/types";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 
-type SortColumn = "gameName" | "platformName" | "edition" | "format" | "notes";
+type SortColumn = "gameName" | "status" | "platformName" | "edition" | "format" | "notes";
 type SortDirection = "asc" | "desc";
 
 const GamesListPage = () => {
@@ -140,6 +143,10 @@ const GamesListPage = () => {
           aVal = a.gameName;
           bVal = b.gameName;
           break;
+        case "status":
+          aVal = a.status;
+          bVal = b.status;
+          break;
         case "platformName":
           aVal = a.platformName;
           bVal = b.platformName;
@@ -210,6 +217,7 @@ const GamesListPage = () => {
 
   const columns: { key: SortColumn; label: string }[] = [
     { key: "gameName", label: t("games.listPage.nameColumn") },
+    { key: "status", label: t("games.listPage.statusColumn") },
     { key: "platformName", label: t("games.listPage.platformColumn") },
     { key: "format", label: t("games.listPage.formatColumn") },
     { key: "edition", label: t("games.listPage.editionColumn") },
@@ -393,6 +401,17 @@ const GamesListPage = () => {
                     />
                   </TableCell>
                   <TableCell>{item.gameName}</TableCell>
+                  <TableCell>
+                    <Pill
+                      small
+                      tone={item.status === "owned" ? "owned" : "wishlist"}
+                      icon={item.status === "owned" ? <CheckIcon /> : <FavoriteIcon />}
+                    >
+                      {item.status === "owned"
+                        ? t("games.library.ownedChip")
+                        : t("games.library.wishlistChip")}
+                    </Pill>
+                  </TableCell>
                   <TableCell>{item.platformName ?? "—"}</TableCell>
                   <TableCell>{item.format ?? "—"}</TableCell>
                   <TableCell>{item.edition ?? "—"}</TableCell>

@@ -20,7 +20,7 @@ def list_tracked_items(db: Session) -> list[LibraryItem]:
 
 def list_all_library_items(db: Session) -> list[dict]:
     """All library items with game name, platform name, edition, and format.
-    Returns dicts for the Games List page table (one row per owned copy)."""
+    Returns dicts for the Games List page table (one row per library copy)."""
     from sqlalchemy.orm import joinedload
 
     from app.models.catalog import Game
@@ -48,6 +48,7 @@ def list_all_library_items(db: Session) -> list[dict]:
                 "game_id": game.id,
                 "game_name": game.name or "Unknown",
                 "game_uuid": game.uuid or "",
+                "status": item.status.value,
                 "platform_name": platform_name,
                 "edition": item.edition,
                 "format": format_value,

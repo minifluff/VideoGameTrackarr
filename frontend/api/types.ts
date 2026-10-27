@@ -608,6 +608,7 @@ export interface LibraryListItem {
   gameId: number;
   gameName: string;
   gameUuid: string;
+  status: LibraryStatus;
   platformName: string | null;
   edition: string | null;
   format: string | null;

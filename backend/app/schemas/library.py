@@ -85,12 +85,13 @@ class LibraryItemResponse(CamelModel):
 
 
 class LibraryListItemResponse(CamelModel):
-    """Flat library item for the Games List page table — one row per owned copy."""
+    """Flat library item for the Games List page table — one row per library copy."""
 
     id: int
     game_id: int
     game_name: str
     game_uuid: str
+    status: LibraryStatus
     platform_name: str | None
     edition: str | None
     format: str | None
