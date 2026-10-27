@@ -33,7 +33,6 @@ import { useQuery } from "@tanstack/react-query";
 import { listAllLibraryItems } from "../api/library";
 import { useBulkDeleteLibraryItems } from "../hooks/useLibrary";
 import BulkEditLibraryItemsDialog from "./BulkEditLibraryItemsDialog";
-import GamesSubNav from "./GamesSubNav";
 import type { LibraryListItem } from "../api/types";
 import { useScrollDirection } from "../hooks/useScrollCollapse";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
@@ -229,9 +228,6 @@ const GamesListPage = () => {
         }}
       >
         <Collapse in={isAtTop}>
-          <GamesSubNav />
-        </Collapse>
-        <Collapse in={isAtTop}>
           <Typography variant="h4" component="h1" gutterBottom sx={{ mt: 2 }}>
             {t("games.listPage.title")}
           </Typography>
@@ -241,6 +237,7 @@ const GamesListPage = () => {
             <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", flexDirection: { xs: "column", sm: "row" } }}>
               <TextField
                 label={t("games.listPage.searchLabel")}
+                size="small"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 sx={{ flexGrow: 1, minWidth: 200 }}

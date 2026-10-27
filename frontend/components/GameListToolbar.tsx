@@ -8,6 +8,8 @@ import DoneAllIcon from "@mui/icons-material/DoneAll";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import LabelIcon from "@mui/icons-material/Label";
 import SearchIcon from "@mui/icons-material/Search";
+import SortIcon from "@mui/icons-material/Sort";
+import TuneIcon from "@mui/icons-material/Tune";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ConfirmDialog from "./ConfirmDialog";
@@ -29,6 +31,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
+import Slider from "@mui/material/Slider";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import ToggleButton from "@mui/material/ToggleButton";
@@ -49,7 +52,7 @@ import type {
   PlayStatus,
   Tag,
 } from "../api/types";
-import { GAME_SORT_OPTIONS, type GameSortOptionItem } from "../utils/gameSortOptions";
+import { GAME_SORT_OPTIONS } from "../utils/gameSortOptions";
 import AutocompleteMultiSelect from "./AutocompleteMultiSelect";
 import AutocompleteSelect from "./AutocompleteSelect";
 import TagChip from "./TagChip";
@@ -303,6 +306,11 @@ interface GameListToolbarProps {
   onMatchAllChange: (value: MatchAllFilters) => void;
   sort: GameSortOption;
   onSortChange: (value: GameSortOption) => void;
+  // Per-page card size — GameList and CatalogBrowseGrid pass their own session-scoped
+  // value. When absent (e.g. Missing Addons), no Options button renders and grids keep
+  // the global size.
+  cardSize?: number;
+  onCardSizeChange?: (size: number) => void;
   // Optional like includeAddons below — the Games page never shows a still-undiscovered
   // "what's missing" game at all (see GameList.tsx), so it has no use for this toggle either;
   // same for the Missing Addons page (it's already inherently "what's missing"). Either
@@ -394,6 +402,8 @@ const GameListToolbar = ({
   onMatchAllChange,
   sort,
   onSortChange,
+  cardSize,
+  onCardSizeChange,
   showMissing,
   onShowMissingChange,
   includeAddons,
@@ -425,8 +435,6 @@ const GameListToolbar = ({
     matchAll: Boolean(matchAll[field]),
     onMatchAllChange: (value: boolean) => onMatchAllChange({ ...matchAll, [field]: value }),
   });
-  const selectedSortOption =
-    GAME_SORT_OPTIONS.find((option) => option.value === sort) ?? GAME_SORT_OPTIONS[0];
   const showStorefrontFilter = formats.includes("digital");
   const activeFilterCount =
     ownershipStatuses.length +
@@ -444,6 +452,8 @@ const GameListToolbar = ({
   const hasActiveFilters = activeFilterCount > 0;
 
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [sortMenuAnchor, setSortMenuAnchor] = useState<HTMLElement | null>(null);
+  const [optionsMenuAnchor, setOptionsMenuAnchor] = useState<HTMLElement | null>(null);
 
   // The Remove split button's dropdown (currently just "Tags") — anchored to the whole
   // ButtonGroup (via buttonGroupRef), not just the small arrow segment, so the menu below
@@ -621,12 +631,12 @@ const GameListToolbar = ({
 
   return (
     <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
-      <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
       <Stack spacing={1.5}>
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
           <TextField
             label={t("games.listToolbar.searchLabel")}
             variant="outlined"
+            size="small"
             value={searchKeyword}
             onChange={(event) => onSearchKeywordChange(event.target.value)}
             onKeyDown={(event) => {
@@ -659,6 +669,26 @@ const GameListToolbar = ({
             }}
             fullWidth
           />
+          {onCardSizeChange !== undefined && cardSize !== undefined ? (
+            <Button
+              startIcon={<TuneIcon />}
+              onClick={(event) => setOptionsMenuAnchor(event.currentTarget)}
+              aria-haspopup="menu"
+              aria-expanded={optionsMenuAnchor !== null}
+              sx={{ flexShrink: 0 }}
+            >
+              {t("games.listToolbar.optionsButton")}
+            </Button>
+          ) : null}
+          <Button
+            startIcon={<SortIcon />}
+            onClick={(event) => setSortMenuAnchor(event.currentTarget)}
+            aria-haspopup="menu"
+            aria-expanded={sortMenuAnchor !== null}
+            sx={{ flexShrink: 0 }}
+          >
+            {t("games.listToolbar.sortByLabel")}
+          </Button>
           <Tooltip title={t("games.listToolbar.filtersButtonLabel")}>
             <IconButton
               onClick={() => setFiltersOpen(true)}
@@ -683,22 +713,59 @@ const GameListToolbar = ({
             </Tooltip>
           ) : null}
         </Stack>
+        <Menu
+          anchorEl={sortMenuAnchor}
+          open={sortMenuAnchor !== null}
+          onClose={() => setSortMenuAnchor(null)}
+        >
+          {GAME_SORT_OPTIONS.map((option) => (
+            <MenuItem
+              key={option.value}
+              selected={sort === option.value}
+              onClick={() => {
+                onSortChange(option.value);
+                setSortMenuAnchor(null);
+              }}
+            >
+              {t(option.labelKey)}
+            </MenuItem>
+          ))}
+        </Menu>
+        <Menu
+          anchorEl={optionsMenuAnchor}
+          open={optionsMenuAnchor !== null}
+          onClose={() => setOptionsMenuAnchor(null)}
+        >
+          <Box sx={{ px: 2, py: 1.5, width: 240 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              {t("settings.appearance.cardSize")}
+            </Typography>
+            <Box sx={{ px: 1 }}>
+              <Slider
+                value={cardSize ?? 1.0}
+                onChange={(_event, value) => onCardSizeChange?.(value as number)}
+                min={0.5}
+                max={2.0}
+                step={0.1}
+                marks={[
+                  { value: 0.5, label: t("settings.appearance.cardSizeSmall") },
+                  { value: 1.0, label: t("settings.appearance.cardSizeMedium") },
+                  { value: 2.0, label: t("settings.appearance.cardSizeLarge") },
+                ]}
+                valueLabelDisplay="auto"
+                valueLabelFormat={(value) => `${Math.round(value * 100)}%`}
+                aria-label={t("settings.appearance.cardSize")}
+              />
+            </Box>
+            <Typography variant="caption" color="text.secondary">
+              {t("games.listToolbar.cardSizePageNote")}
+            </Typography>
+          </Box>
+        </Menu>
         <Dialog open={filtersOpen} onClose={() => setFiltersOpen(false)} fullWidth maxWidth="md">
           <DialogTitle>{t("games.listToolbar.filtersButtonLabel")}</DialogTitle>
           <DialogContent sx={{ pt: 3 }}>
               <Grid container spacing={2} sx={{ mt: 0.5, pt: 0.5 }}>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <AutocompleteSelect<GameSortOptionItem>
-                    label={t("games.listToolbar.sortByLabel")}
-                    options={GAME_SORT_OPTIONS}
-                    value={selectedSortOption}
-                    onChange={(newValue) => onSortChange(newValue?.value ?? "name_asc")}
-                    getOptionLabel={(option) => t(option.labelKey)}
-                    isOptionEqualToValue={(option, val) => option.value === val.value}
-                    disableClearable
-                    fullWidth
-                  />
-                </Grid>
                 {onShowMissingChange || onIncludeAddonsChange ? (
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Stack spacing={0.5}>
@@ -1003,7 +1070,6 @@ const GameListToolbar = ({
           </DialogActions>
         </Dialog>
       </Stack>
-      </Paper>
     </Box>
   );
 };

@@ -5,7 +5,6 @@ import { useLibraryPlatforms } from "../hooks/usePlatforms";
 import { platformIdentifier } from "../utils/platformLogos";
 import { platformDisplayName, platformScopeQuery, type PlatformScope } from "../utils/platformScope";
 import CatalogIndexGrid from "./CatalogIndexGrid";
-import GamesSubNav from "./GamesSubNav";
 import PlatformCard from "./PlatformCard";
 
 // Taller than a CatalogRefCard: each card has a logo area above the name and counts.
@@ -47,7 +46,6 @@ const PlatformsPage = () => {
 
   return (
     <>
-      <GamesSubNav />
       <CatalogIndexGrid
         stateKey="platforms"
         title={t("games.platformsPage.title")}

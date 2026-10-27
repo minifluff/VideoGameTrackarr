@@ -17,7 +17,6 @@ import { usePlatforms } from "../hooks/usePlatforms";
 import { gameIdentifier } from "../utils/identifiers";
 import BookshelfGrid, { packRows, useShelfWidth, useTemplateInfo } from "./BookshelfGrid";
 import type { Shelf, ShelfCase, ShelfGame, TemplateInfo } from "./BookshelfGrid";
-import GamesSubNav from "./GamesSubNav";
 import PlatformTemplateDialog from "./PlatformTemplateDialog";
 import { caseSizeToPixels, effectiveCaseSizeMm } from "../utils/caseSizes";
 
@@ -237,7 +236,6 @@ const BookshelfPage = () => {
 
   return (
     <Box>
-      <GamesSubNav />
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={2}

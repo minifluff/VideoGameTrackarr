@@ -37,7 +37,6 @@ import { gameIdentifier } from "../utils/identifiers";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import BulkAddDialog from "./BulkAddDialog";
 import GameCard from "./GameCard";
-import GamesSubNav from "./GamesSubNav";
 import ManualGameForm from "./ManualGameForm";
 import SimpleTabPanel from "./SimpleTabPanel";
 import VirtualGameGrid from "./VirtualGameGrid";
@@ -227,7 +226,6 @@ const AddGame = () => {
           <CircularProgress color="inherit" />
         </Backdrop>
       )}
-      <GamesSubNav />
       <Box sx={{ mb: 3 }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Typography variant="h4" component="h1" gutterBottom>

@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useFranchises } from "../hooks/useCatalogBrowse";
 import CatalogIndexGrid from "./CatalogIndexGrid";
-import GamesSubNav from "./GamesSubNav";
 
 const SeriesPage = () => {
   const { t } = useTranslation();
@@ -9,7 +8,6 @@ const SeriesPage = () => {
 
   return (
     <>
-      <GamesSubNav />
       <CatalogIndexGrid
         stateKey="series"
         title={t("games.seriesPage.title")}

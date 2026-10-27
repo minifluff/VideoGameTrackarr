@@ -36,14 +36,16 @@ interface VirtualGameGridProps<T> {
   // Overrides the cover-art-card height guess below — for grids of shorter, imageless
   // tiles (e.g. catalog ref cards) where that estimate would be way too tall.
   estimateRowHeight?: (columns: number) => number;
+  // Per-page card size (see useResponsiveColumns) — when absent, the global size applies.
+  cardSize?: number;
 }
 
 // A responsive, windowed grid for the game card layout. Renders only the rows near the
 // viewport (via the page's own scroll, not an inner scroll pane — see useWindowVirtualizer)
 // regardless of how many games are in the library, so a collection of a few thousand games
 // costs the same DOM size as one of a few dozen.
-function VirtualGameGrid<T>({ items, getKey, renderItem, estimateRowHeight }: VirtualGameGridProps<T>) {
-  const columns = useResponsiveColumns();
+function VirtualGameGrid<T>({ items, getKey, renderItem, estimateRowHeight, cardSize }: VirtualGameGridProps<T>) {
+  const columns = useResponsiveColumns(cardSize);
   const containerRef = useRef<HTMLDivElement>(null);
   // null (not 0) while not yet measured — 0 is a legitimate real value (a grid with nothing
   // above it), so the POP-restore effect below needs to tell "not measured yet" apart from

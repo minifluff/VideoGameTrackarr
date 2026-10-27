@@ -6,9 +6,12 @@ import { useAppearance } from "../theme/AppearanceProvider";
 // (Grid size={{ xs: 6, sm: 4, md: 3, lg: 2, xl: 2 }} => 2/3/4/6/6 columns).
 const COLUMNS_BY_BREAKPOINT = { xs: 2, sm: 3, md: 4, lg: 6, xl: 6 } as const;
 
-export function useResponsiveColumns(): number {
+// When a page passes its own card size (its Options menu), that wins for this grid;
+// otherwise the global appearance size applies.
+export function useResponsiveColumns(cardSizeOverride?: number): number {
   const theme = useTheme();
-  const { cardSize } = useAppearance();
+  const { cardSize: globalCardSize } = useAppearance();
+  const cardSize = cardSizeOverride ?? globalCardSize;
   const isSm = useMediaQuery(theme.breakpoints.up("sm"));
   const isMd = useMediaQuery(theme.breakpoints.up("md"));
   const isLg = useMediaQuery(theme.breakpoints.up("lg"));

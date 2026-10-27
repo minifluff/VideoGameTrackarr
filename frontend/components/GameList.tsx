@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import Box from "@mui/material/Box";
-import Stack from "@mui/material/Stack";
 import Button from "@mui/material/Button";
 import Collapse from "@mui/material/Collapse";
 import Paper from "@mui/material/Paper";
@@ -27,11 +26,11 @@ import { ALL_KNOWN_STOREFRONTS } from "../utils/storefronts";
 import { showUndoToast } from "./UndoToast";
 import GameCard from "./GameCard";
 import GameListToolbar, { type OwnershipStatus } from "./GameListToolbar";
-import GamesSubNav from "./GamesSubNav";
 import ManageTagsDialog from "./ManageTagsDialog";
 import VirtualGameGrid from "./VirtualGameGrid";
 import { usePruneStaleIds, useSessionState } from "../hooks/useSessionState";
 import { useScrollCollapse } from "../hooks/useScrollCollapse";
+import { useAppearance } from "../theme/AppearanceProvider";
 import { useSearchHandoff } from "../navigation/GlobalSearch";
 
 const MIN_SEARCH_LENGTH = 3;
@@ -41,6 +40,8 @@ interface GameListProps {
   forcedFilters?: Partial<GameListFilters>;
   initialOwnershipStatuses?: OwnershipStatus[];
   header?: React.ReactNode;
+  // Optional section nav slot — only Unlinked Games uses it (InsightsSubNav). The
+  // Games subnav itself is gone; passing nothing renders no subnav row.
   subNav?: React.ReactNode;
 }
 
@@ -82,6 +83,10 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
   const [matchAll, setMatchAll] = useSessionState<MatchAllFilters>(`${sp}.matchAll`, {});
   const [steelbookOnly, setSteelbookOnly] = useSessionState(`${sp}.steelbookOnly`, false);
   const [sort, setSort] = useSessionState<GameSortOption>(`${sp}.sort`, "name_asc");
+  // Card size is per page (Options menu) — seeded from the global appearance size on
+  // first visit, then remembered for this page's session key only.
+  const { cardSize: globalCardSize } = useAppearance();
+  const [cardSize, setCardSize] = useSessionState(`${sp}.cardSize`, globalCardSize);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<number>>(new Set());
   const [manageTagsOpen, setManageTagsOpen] = useState(false);
@@ -345,9 +350,11 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
           boxShadow: "0 4px 8px -4px rgba(0, 0, 0, 0.2)",
         }}
       >
-        <Collapse in={!hideHeader}>
-          {subNav ?? <GamesSubNav />}
-        </Collapse>
+        {subNav ? (
+          <Collapse in={!hideHeader}>
+            {subNav}
+          </Collapse>
+        ) : null}
         <Collapse in={!hideHeader}>
         {header ?? (
         <Box
@@ -367,22 +374,14 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
               {t("games.list.pageSubtitle")}
             </Typography>
           </Box>
-          <Stack direction="column" spacing={1} sx={{ flexShrink: 0 }}>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => navigate("/games/add")}
-            >
-              {t("games.list.addGameButton")}
-            </Button>
-            <Button
-              variant={sort === "date_added_desc" ? "contained" : "outlined"}
-              color={sort === "date_added_desc" ? "secondary" : "primary"}
-              onClick={() => setSort(sort === "date_added_desc" ? "name_asc" : "date_added_desc")}
-            >
-              {t("games.list.newestButton")}
-            </Button>
-          </Stack>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate("/games/add")}
+            sx={{ flexShrink: 0 }}
+          >
+            {t("games.list.addGameButton")}
+          </Button>
         </Box>
         )}
         </Collapse>
@@ -452,6 +451,8 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
             onSteelbookOnlyChange={setSteelbookOnly}
             sort={sort}
             onSortChange={setSort}
+            cardSize={cardSize}
+            onCardSizeChange={setCardSize}
             playStatuses={playStatuses}
             onPlayStatusesChange={setPlayStatuses}
             playStatusExclude={playStatusExclude}
@@ -496,6 +497,7 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
           </Paper>
         ) : (
           <VirtualGameGrid
+            cardSize={cardSize}
             items={visibleGames}
             getKey={(game) => game.id}
             renderItem={(game) => (

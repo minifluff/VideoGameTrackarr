@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import PublicSubNav from "../PublicSubNav";
+import { AppearanceProvider } from "../../theme/AppearanceProvider";
 
 function renderNav(initialPath: string, inHeader = false) {
   const router = createMemoryRouter(
@@ -15,6 +16,10 @@ function renderNav(initialPath: string, inHeader = false) {
   );
   render(<RouterProvider router={router} />);
 }
+
+afterEach(() => {
+  localStorage.removeItem("vgt.hideHardwareMenu");
+});
 
 describe("PublicSubNav", () => {
   it("links all four destinations with the share token", () => {
@@ -49,5 +54,26 @@ describe("PublicSubNav", () => {
       "href",
       "/public/abc/hardware"
     );
+  });
+
+  it("hides the Hardware link when the hide-hardware toggle is on", () => {
+    localStorage.setItem("vgt.hideHardwareMenu", "true");
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/public/:token/*",
+          element: (
+            <AppearanceProvider>
+              <PublicSubNav />
+            </AppearanceProvider>
+          ),
+        },
+      ],
+      { initialEntries: ["/public/abc/games"] }
+    );
+    render(<RouterProvider router={router} />);
+
+    expect(screen.getByRole("link", { name: "Games" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Hardware" })).not.toBeInTheDocument();
   });
 });

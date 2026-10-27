@@ -784,6 +784,8 @@
       "filterTabLabel": "Filtro",
       "moreTabLabel": "Más",
       "sortByLabel": "Ordenar por",
+      "optionsButton": "Opciones",
+      "cardSizePageNote": "Se aplica solo a esta página",
       "sortNameAsc": "Nombre (ASC)",
       "sortNameDesc": "Nombre (DESC)",
       "sortMostGames": "Most games",
@@ -1571,7 +1573,7 @@
     "searchBar": {
       "statusAll": "Todos",
       "searchPlaceholder": "Introduce el nombre del dispositivo o accesorio",
-      "filtersButtonLabel": "Filters & Sort"
+      "filtersButtonLabel": "Filtros"
     },
     "stats": {
       "ownedConsoles": "Consolas en propiedad",

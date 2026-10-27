@@ -11,7 +11,6 @@ import { useScrollCollapse, useScrollDirection } from "../hooks/useScrollCollaps
 import AccessoryList from "./AccessoryList";
 import DeviceList from "./DeviceList";
 import HardwareSearchBar from "./HardwareSearchBar";
-import HardwareSubNav from "./HardwareSubNav";
 import type { HardwareSort, HardwareStatusFilter } from "./HardwareListToolbar";
 import { useSessionState } from "../hooks/useSessionState";
 
@@ -50,10 +49,6 @@ const HardwarePage = () => {
           boxShadow: "0 4px 8px -4px rgba(0, 0, 0, 0.2)",
         }}
       >
-        <Collapse in={!hideHeader}>
-          <HardwareSubNav />
-        </Collapse>
-
         <Collapse in={!hideHeader}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2, mb: 3, flexWrap: "wrap", mt: 2 }}>
           <Box sx={{ minWidth: 0 }}>

@@ -166,6 +166,38 @@ describe("buildGameFilterParams", () => {
   });
 });
 
+describe("GameListToolbar top-row controls", () => {
+  it("changes sort from the Sort menu", async () => {
+    const props = renderToolbar();
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "Sort By" }));
+    await user.click(screen.getByRole("menuitem", { name: "Name (DESC)" }));
+
+    expect(props.onSortChange).toHaveBeenCalledWith("name_desc");
+  });
+
+  it("shows no Options button without per-page card size", () => {
+    renderToolbar();
+
+    expect(screen.queryByRole("button", { name: "Options" })).not.toBeInTheDocument();
+  });
+
+  it("changes the page card size from the Options menu", async () => {
+    const props = renderToolbar({ cardSize: 1.0, onCardSizeChange: vi.fn() });
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "Options" }));
+    const slider = screen.getByRole("slider", { name: "Game card size" });
+    // Focus without a pointer click — jsdom has no hasPointerCapture, and MUI's
+    // slider pointer handlers throw on it.
+    slider.focus();
+    await user.keyboard("{ArrowLeft}");
+
+    expect(props.onCardSizeChange).toHaveBeenCalledWith(0.9);
+  });
+});
+
 describe("GameListToolbar on a Platform page", () => {
   it("hides the Platforms field when hidePlatformsField is set", async () => {
     renderToolbar({ hidePlatformsField: true });

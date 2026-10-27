@@ -4,6 +4,7 @@ import Chip from "@mui/material/Chip";
 import Collapse from "@mui/material/Collapse";
 import { useTranslation } from "react-i18next";
 import { useScrollCollapse } from "../hooks/useScrollCollapse";
+import { useAppearance } from "../theme/AppearanceProvider";
 
 // Mirrors GamesSubNav.tsx's chip-row pattern — no need for the full responsive nav
 // rail/drawer/bottom-bar the authenticated app uses. In the header (inHeader) the row
@@ -15,13 +16,20 @@ const PublicSubNav = ({ inHeader = false }: { inHeader?: boolean }) => {
   const location = useLocation();
   const { t } = useTranslation();
   const collapsed = useScrollCollapse(80);
+  const { hideHardwareMenu } = useAppearance();
 
-  const items = [
+  const allItems = [
     { to: `/public/${token}/games`, labelKey: "public.nav.games" },
     { to: `/public/${token}/bookshelf`, labelKey: "public.nav.bookshelf" },
     { to: `/public/${token}/games/list`, labelKey: "public.nav.list" },
     { to: `/public/${token}/hardware`, labelKey: "public.nav.hardware" },
   ] as const;
+
+  // Same toggle as the main nav's hide-hardware setting — when it's on, the
+  // Hardware destination drops out of the public submenu too.
+  const items = hideHardwareMenu
+    ? allItems.filter((item) => item.labelKey !== "public.nav.hardware")
+    : allItems;
 
   const row = (
     <Box

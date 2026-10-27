@@ -1,24 +1,18 @@
 import { useState } from "react";
 import ClearIcon from "@mui/icons-material/Clear";
-import FilterListIcon from "@mui/icons-material/FilterList";
 import SearchIcon from "@mui/icons-material/Search";
+import SortIcon from "@mui/icons-material/Sort";
 import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
-import Paper from "@mui/material/Paper";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
-import Tooltip from "@mui/material/Tooltip";
 import Collapse from "@mui/material/Collapse";
 import { useTranslation } from "react-i18next";
 import { useScrollCollapse } from "../hooks/useScrollCollapse";
 import type { CatalogSortOption } from "../api/types";
-import AutocompleteSelect from "./AutocompleteSelect";
 
 interface SortOption {
   value: CatalogSortOption;
@@ -40,10 +34,10 @@ interface CatalogIndexToolbarProps {
   onSortChange: (value: CatalogSortOption) => void;
 }
 
-// Trimmed sibling of GameListToolbar's Filters & Sort dialog — Collections/Series/Platforms are
-// just a name + game count each, so there's nothing to filter (the Filter tab says so plainly)
-// and Sort only offers Name ASC/DESC and Most games. No selection-mode toggle either, since these index
-// pages have no bulk actions.
+// Trimmed sibling of GameListToolbar — Collections/Series/Platforms are just a name +
+// game count each, so there's nothing to filter and Sort only offers Name ASC/DESC and
+// Most games, as a top-row menu like the games toolbar. No selection-mode toggle either,
+// since these index pages have no bulk actions.
 const CatalogIndexToolbar = ({
   searchLabel,
   searchPlaceholder,
@@ -54,17 +48,15 @@ const CatalogIndexToolbar = ({
 }: CatalogIndexToolbarProps) => {
   const { t } = useTranslation();
   const collapsed = useScrollCollapse(80);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const selectedSortOption =
-    SORT_OPTIONS.find((option) => option.value === sort) ?? SORT_OPTIONS[0];
+  const [sortMenuAnchor, setSortMenuAnchor] = useState<HTMLElement | null>(null);
 
   return (
     <Collapse in={!collapsed} timeout={200}>
-      <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2, mb: 3 }}>
-      <Stack direction="row" spacing={1}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 3 }}>
         <TextField
           label={searchLabel}
           variant="outlined"
+          size="small"
           value={searchKeyword}
           onChange={(event) => onSearchKeywordChange(event.target.value)}
           placeholder={searchPlaceholder}
@@ -91,41 +83,34 @@ const CatalogIndexToolbar = ({
           }}
           fullWidth
         />
-        <Tooltip title={t("games.listToolbar.filtersButtonLabel")}>
-          <IconButton
-            onClick={() => setDialogOpen(true)}
-            aria-label={t("games.listToolbar.filtersButtonLabel")}
-            sx={{ alignSelf: "center" }}
-          >
-            <FilterListIcon />
-          </IconButton>
-        </Tooltip>
+        <Button
+          startIcon={<SortIcon />}
+          onClick={(event) => setSortMenuAnchor(event.currentTarget)}
+          aria-haspopup="menu"
+          aria-expanded={sortMenuAnchor !== null}
+          sx={{ flexShrink: 0 }}
+        >
+          {t("games.listToolbar.sortByLabel")}
+        </Button>
       </Stack>
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="md">
-        <DialogTitle>{t("games.listToolbar.filtersButtonLabel")}</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <AutocompleteSelect<SortOption>
-                label={t("games.listToolbar.sortByLabel")}
-                options={SORT_OPTIONS}
-                value={selectedSortOption}
-                onChange={(newValue) => onSortChange(newValue?.value ?? "name_asc")}
-                getOptionLabel={(option) => t(option.labelKey)}
-                isOptionEqualToValue={(option, val) => option.value === val.value}
-                disableClearable
-                fullWidth
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogOpen(false)} variant="contained">
-            {t("common.close")}
-          </Button>
-        </DialogActions>
-      </Dialog>
-      </Paper>
+      <Menu
+        anchorEl={sortMenuAnchor}
+        open={sortMenuAnchor !== null}
+        onClose={() => setSortMenuAnchor(null)}
+      >
+        {SORT_OPTIONS.map((option) => (
+          <MenuItem
+            key={option.value}
+            selected={sort === option.value}
+            onClick={() => {
+              onSortChange(option.value);
+              setSortMenuAnchor(null);
+            }}
+          >
+            {t(option.labelKey)}
+          </MenuItem>
+        ))}
+      </Menu>
     </Collapse>
   );
 };

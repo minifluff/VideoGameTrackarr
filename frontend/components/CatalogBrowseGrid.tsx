@@ -33,6 +33,7 @@ import GameListToolbar, { type OwnershipStatus } from "./GameListToolbar";
 import VirtualGameGrid from "./VirtualGameGrid";
 import { usePruneStaleIds, useSessionState } from "../hooks/useSessionState";
 import { useScrollCollapse } from "../hooks/useScrollCollapse";
+import { useAppearance } from "../theme/AppearanceProvider";
 
 const MIN_SEARCH_LENGTH = 3;
 
@@ -121,6 +122,9 @@ const CatalogBrowseGrid = ({
   const [matchAll, setMatchAll] = useSessionState<MatchAllFilters>(`${stateKey}.matchAll`, {});
   const [steelbookOnly, setSteelbookOnly] = useSessionState(`${stateKey}.steelbookOnly`, false);
   const [sort, setSort] = useSessionState<GameSortOption>(`${stateKey}.sort`, "name_asc");
+  // Per-page card size (Options menu) — seeded from the global appearance size.
+  const { cardSize: globalCardSize } = useAppearance();
+  const [cardSize, setCardSize] = useSessionState(`${stateKey}.cardSize`, globalCardSize);
   // On by default: the "what's missing" discoveries a Resync (see CatalogResyncButton)
   // catalogues are the point of these pages — hiding them behind an off-by-default
   // switch buried in the filter dialog made them effectively invisible (and
@@ -352,6 +356,8 @@ const CatalogBrowseGrid = ({
             onSteelbookOnlyChange={setSteelbookOnly}
             sort={sort}
             onSortChange={setSort}
+            cardSize={cardSize}
+            onCardSizeChange={setCardSize}
             playStatuses={playStatuses}
             onPlayStatusesChange={setPlayStatuses}
             playStatusExclude={playStatusExclude}
@@ -381,6 +387,7 @@ const CatalogBrowseGrid = ({
               </Paper>
             ) : (
               <VirtualGameGrid
+                cardSize={cardSize}
                 items={visibleGames}
                 getKey={(game) => game.id}
                 renderItem={(game) => (
@@ -399,6 +406,7 @@ const CatalogBrowseGrid = ({
               <Paper sx={{ p: 3, textAlign: "center" }}>{t("games.listToolbar.noSearchMatches")}</Paper>
             ) : (
               <VirtualGameGrid
+                cardSize={cardSize}
                 items={visibleAddons}
                 getKey={(addon) => addon.id}
                 renderItem={(addon) => (
@@ -414,6 +422,7 @@ const CatalogBrowseGrid = ({
         </Paper>
       ) : (
         <VirtualGameGrid
+          cardSize={cardSize}
           items={visibleGames}
           getKey={(game) => game.id}
           renderItem={(game) => (

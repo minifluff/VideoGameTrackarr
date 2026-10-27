@@ -2,8 +2,10 @@ import { useState } from "react";
 import ClearIcon from "@mui/icons-material/Clear";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import SearchIcon from "@mui/icons-material/Search";
+import SortIcon from "@mui/icons-material/Sort";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
@@ -11,6 +13,8 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
@@ -86,6 +90,7 @@ const HardwareSearchBar = ({
 }: HardwareSearchBarProps) => {
   const { t } = useTranslation();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [sortMenuAnchor, setSortMenuAnchor] = useState<HTMLElement | null>(null);
 
   const { data: manufacturers } = useManufacturers();
   const { data: deviceTypes } = useDeviceTypes();
@@ -114,6 +119,7 @@ const HardwareSearchBar = ({
           <TextField
             label={t("common.search")}
             variant="outlined"
+            size="small"
             value={searchKeyword}
             onChange={(event) => onSearchKeywordChange(event.target.value)}
             placeholder={t("hardware.searchBar.searchPlaceholder")}
@@ -133,6 +139,15 @@ const HardwareSearchBar = ({
             }}
             fullWidth
           />
+          <Button
+            startIcon={<SortIcon />}
+            onClick={(event) => setSortMenuAnchor(event.currentTarget)}
+            aria-haspopup="menu"
+            aria-expanded={sortMenuAnchor !== null}
+            sx={{ flexShrink: 0, alignSelf: "center" }}
+          >
+            {t("hardware.listToolbar.sortByLabel")}
+          </Button>
           <Tooltip title={t("hardware.searchBar.filtersButtonLabel")}>
             <IconButton
               onClick={() => setFiltersOpen(true)}
@@ -145,6 +160,24 @@ const HardwareSearchBar = ({
             </IconButton>
           </Tooltip>
         </Stack>
+        <Menu
+          anchorEl={sortMenuAnchor}
+          open={sortMenuAnchor !== null}
+          onClose={() => setSortMenuAnchor(null)}
+        >
+          {sortOptions.map((option) => (
+            <MenuItem
+              key={option.value}
+              selected={sort === option.value}
+              onClick={() => {
+                onSortChange(option.value);
+                setSortMenuAnchor(null);
+              }}
+            >
+              {option.label}
+            </MenuItem>
+          ))}
+        </Menu>
         <Dialog
           open={filtersOpen}
           onClose={() => setFiltersOpen(false)}
@@ -200,18 +233,6 @@ const HardwareSearchBar = ({
                   value={platformIds}
                   onChange={onPlatformIdsChange}
                   placeholder={allPlaceholder}
-                />
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <AutocompleteSelect<SortOption>
-                  label={t("hardware.listToolbar.sortByLabel")}
-                  options={sortOptions}
-                  value={sortOptions.find((option) => option.value === sort) ?? null}
-                  onChange={(newValue) => onSortChange(newValue!.value)}
-                  getOptionLabel={(option) => option.label}
-                  isOptionEqualToValue={(option, val) => option.value === val.value}
-                  disableClearable
-                  fullWidth
                 />
               </Grid>
             </Grid>
