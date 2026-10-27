@@ -196,6 +196,7 @@ const GameDetails = () => {
                 gameId={gameId}
                 libraryItems={libraryItems}
                 platforms={platforms}
+                playStatus={game.playStatus}
               />
             </Card>
           ) : null}

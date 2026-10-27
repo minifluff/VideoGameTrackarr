@@ -1069,6 +1069,13 @@
       "moveWithRomAndSavesDescription_one": "This copy has a ROM attached ({{name}}), along with its save states and/or in-game save. Wishlist copies can't hold a ROM, so the ROM and all of its saves will be deleted.",
       "moveWithRomAndSavesDescription_other": "This copy has {{count}} ROMs attached ({{name}}), with save states and/or in-game saves. Wishlist copies can't hold ROMs, so the ROMs and all of their saves will be deleted.",
       "hideFromPublicLabel": "Hide",
+      "addCopy": "Add copy",
+      "addToCollection": "To your collection",
+      "addToWishlist": "To your wishlist",
+      "empty": "Not in your library yet.",
+      "ownedChip": "Owned",
+      "wishlistChip": "Wishlist",
+      "onSaleLine": "On sale: {{price}} at {{shop}} (-{{cut}}%)",
       "formatSubscription": "Subscription"
     },
     "stats": {
@@ -1780,7 +1787,10 @@
     "updateErrorToast": "Error updating play session. Please try again.",
     "deleteErrorToast": "Error deleting play session. Please try again.",
     "removedToast_one": "Play session removed",
-    "removedToast_other": "Play sessions removed"
+    "removedToast_other": "Play sessions removed",
+    "addAction": "Log session",
+    "empty": "No sessions logged yet.",
+    "endedAt": "ended {{date}}"
   },
   "progress": {
     "title": "Progress",
@@ -1820,7 +1830,10 @@
       "playing": "Playing",
       "completed": "Completed",
       "abandoned": "Abandoned"
-    }
+    },
+    "addAction": "Add",
+    "notSet": "Not set",
+    "lastPlayedOn": "last played {{date}}"
   },
   "public": {
     "nav": {

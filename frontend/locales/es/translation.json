@@ -1069,6 +1069,13 @@
       "moveWithRomAndSavesDescription_one": "Esta copia tiene una ROM ({{name}}), con sus estados guardados y/o partida guardada. Las copias de la lista de deseos no pueden tener ROM, así que se eliminarán la ROM y todas sus partidas.",
       "moveWithRomAndSavesDescription_other": "Esta copia tiene {{count}} ROM ({{name}}), con estados guardados y/o partidas guardadas. Las copias de la lista de deseos no pueden tener ROM, así que se eliminarán las ROM y todas sus partidas.",
       "hideFromPublicLabel": "Hide",
+      "addCopy": "Añadir una copia",
+      "addToCollection": "A su colección",
+      "addToWishlist": "A su lista de deseos",
+      "empty": "Todavía no está en tu biblioteca.",
+      "ownedChip": "Poseído",
+      "wishlistChip": "Lista de deseos",
+      "onSaleLine": "En oferta: {{price}} en {{shop}} (-{{cut}}%)",
       "formatSubscription": "Subscription"
     },
     "stats": {
@@ -1780,7 +1787,10 @@
     "updateErrorToast": "Error al actualizar la sesión de juego. Inténtalo de nuevo.",
     "deleteErrorToast": "Error al eliminar la sesión de juego. Inténtalo de nuevo.",
     "removedToast_one": "Sesión de juego eliminada",
-    "removedToast_other": "Sesiones de juego eliminadas"
+    "removedToast_other": "Sesiones de juego eliminadas",
+    "addAction": "Registrar sesión",
+    "empty": "No hay sesiones registradas.",
+    "endedAt": "terminada {{date}}"
   },
   "progress": {
     "title": "Progreso",
@@ -1820,7 +1830,10 @@
       "playing": "Jugando",
       "completed": "Completado",
       "abandoned": "Abandonado"
-    }
+    },
+    "addAction": "Añadir",
+    "notSet": "Sin definir",
+    "lastPlayedOn": "última partida {{date}}"
   },
   "public": {
     "nav": {
