@@ -1,11 +1,13 @@
-import { Suspense } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Suspense, useEffect, useState } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import DarkModeIcon from "@mui/icons-material/DarkModeOutlined";
 import LightModeIcon from "@mui/icons-material/LightModeOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
+import MenuIcon from "@mui/icons-material/Menu";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
+import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import { useTheme } from "@mui/material/styles";
@@ -21,17 +23,14 @@ import RestoreGuard from "./components/RestoreGuard";
 
 import { useLogout } from "./hooks/useAuth";
 import { useScrollResetOnNavigate } from "./hooks/useScrollResetOnNavigate";
-import BottomNavBar, { BOTTOM_NAV_HEIGHT } from "./navigation/BottomNavBar";
 import GlobalSearch from "./navigation/GlobalSearch";
-import NavDrawer, { NAV_DRAWER_WIDTH } from "./navigation/NavDrawer";
-import NavRail, { NAV_RAIL_WIDTH } from "./navigation/NavRail";
+import Sidebar, { SIDEBAR_WIDTH } from "./navigation/Sidebar";
 import { useColorMode } from "./theme/ColorModeProvider";
 import { isCustomIconDataUrl, resolveIconSrc, useAppearance } from "./theme/AppearanceProvider";
 
-// M3's three responsive navigation patterns: Navigation Bar (compact/mobile, bottom),
-// Navigation Rail (medium/tablet, icons-only side rail), Navigation Drawer
-// (expanded/desktop, icons+labels side panel) — picked by breakpoint, not a user toggle.
-// The old mini-variant collapsible drawer (M2-style, manually opened/closed) is gone.
+// Upstream's model: one Sidebar, permanent on desktop and a hamburger drawer below
+// md — replacing the old M3 trio (bottom bar on phones, icons-only rail on tablets,
+// full drawer on desktop).
 const AppShell = () => {
   const { t } = useTranslation();
   const { mode, toggleColorMode } = useColorMode();
@@ -39,10 +38,17 @@ const AppShell = () => {
   const { appTitle, appIcon } = useAppearance();
   const theme = useTheme();
   const isCompact = useMediaQuery(theme.breakpoints.down("sm"));
-  const isExpanded = useMediaQuery(theme.breakpoints.up("lg"));
+  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const { pathname } = useLocation();
   const navigate = useNavigate();
   const logoutMutation = useLogout();
   useScrollResetOnNavigate();
+
+  // A drawer left open on a small screen closes when the page changes.
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
 
   const handleLogout = () => {
     // Clearing tokens/cache alone doesn't move the user off the current (now-stale)
@@ -53,7 +59,6 @@ const AppShell = () => {
     logoutMutation.mutate(undefined, { onSuccess: () => navigate("/login") });
   };
 
-  const sideNavWidth = isCompact ? 0 : isExpanded ? NAV_DRAWER_WIDTH : NAV_RAIL_WIDTH;
   // Mirrors MUI's default Toolbar breakpoint (56px below `sm`, 64px at `sm` and up) so the
   // breadcrumb bar docks flush under the fixed AppBar with no gap or overlap.
   const appBarHeight = isCompact ? 56 : 64;
@@ -93,6 +98,16 @@ const AppShell = () => {
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", minWidth: 0 }}>
+            {isDesktop ? null : (
+              <IconButton
+                onClick={() => setDrawerOpen(true)}
+                aria-label={t("appShell.openMenu")}
+                title={t("appShell.openMenu")}
+                sx={{ mr: 1 }}
+              >
+                <MenuIcon />
+              </IconButton>
+            )}
             <Box
               onClick={() => navigate("/")}
               role="button"
@@ -163,7 +178,36 @@ const AppShell = () => {
         </Toolbar>
       </AppBar>
 
-      {isCompact ? null : isExpanded ? <NavDrawer /> : <NavRail />}
+      {isDesktop ? (
+        <Drawer
+          variant="permanent"
+          sx={{
+            width: SIDEBAR_WIDTH,
+            flexShrink: 0,
+            "& .MuiDrawer-paper": {
+              width: SIDEBAR_WIDTH,
+              boxSizing: "border-box",
+              border: "none",
+              // Start below the fixed AppBar and cap height to the rest of the viewport,
+              // so overflowing nav gets its own scrollbar confined to this region.
+              top: 64,
+              height: "calc(100% - 64px)",
+            },
+          }}
+        >
+          <Sidebar />
+        </Drawer>
+      ) : (
+        <Drawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          slotProps={{
+            paper: { sx: { width: SIDEBAR_WIDTH + 24, borderRight: 1, borderColor: "divider" } },
+          }}
+        >
+          <Sidebar onNavigate={() => setDrawerOpen(false)} />
+        </Drawer>
+      )}
 
       <Box
         component="main"
@@ -171,12 +215,8 @@ const AppShell = () => {
         sx={{
           flexGrow: 1,
           minWidth: 0,
-          width: { sm: `calc(100% - ${sideNavWidth}px)` },
+          width: { md: `calc(100% - ${SIDEBAR_WIDTH}px)` },
           p: { xs: 1.5, sm: 2, md: 3 },
-          // Bottom nav is 64px + safe-area for phones with home indicator — keep
-          // page content (incl. Save buttons at the bottom) well clear of it.
-          // 140px gives comfortable clearance even with Android's gesture nav bar.
-          pb: isCompact ? `calc(140px + env(safe-area-inset-bottom, 0px))` : undefined,
         }}
       >
         <Toolbar />
@@ -191,7 +231,6 @@ const AppShell = () => {
         </Suspense>
       </Box>
 
-      {isCompact ? <BottomNavBar /> : null}
       <ToastContainer theme="colored" />
     </Box>
   );

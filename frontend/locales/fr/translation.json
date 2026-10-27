@@ -47,6 +47,12 @@
     "platformNotFoundTitle": "Plateforme introuvable"
   },
   "nav": {
+    "groups": {
+      "library": "Bibliothèque",
+      "insights": "Statistiques",
+      "system": "Système"
+    },
+    "primary": "Navigation principale",
     "dashboard": "Tableau de bord",
     "events": "Événements",
     "games": "Jeux",
@@ -78,7 +84,7 @@
     "unlinkedGames": "Unlinked Games",
     "playing": "Playing",
     "wishlist": "Wishlist",
-    "gamesList": "List"
+    "gamesList": "Jeux individuels"
   },
   "breadcrumbs": {
     "edit": "Modifier",
@@ -88,6 +94,7 @@
     "skipToMainContent": "Passer au contenu principal",
     "darkMode": "Mode sombre",
     "lightMode": "Mode clair",
+    "openMenu": "Ouvrir le menu",
     "updateAvailable": "Nouvelle version disponible : {{version}}"
   },
   "dialogs": {
@@ -1095,7 +1102,7 @@
       "kindLabel": "Plateforme"
     },
     "listPage": {
-      "title": "Games List",
+      "title": "Jeux individuels",
       "searchLabel": "Search games",
       "nameColumn": "Name",
       "platformColumn": "Platform",

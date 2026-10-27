@@ -34,7 +34,6 @@ import { listAllLibraryItems } from "../api/library";
 import { useBulkDeleteLibraryItems } from "../hooks/useLibrary";
 import BulkEditLibraryItemsDialog from "./BulkEditLibraryItemsDialog";
 import type { LibraryListItem } from "../api/types";
-import { useScrollDirection } from "../hooks/useScrollCollapse";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 
 type SortColumn = "gameName" | "platformName" | "edition" | "format" | "notes";
@@ -68,9 +67,7 @@ const GamesListPage = () => {
   };
   const debouncedSearch = useDebouncedValue(search.trim().toLowerCase(), 300);
 
-  // Hide search bar on scroll down, reappear on scroll up.
-  const hideSearchBar = useScrollDirection(80);
-  // Subnav only visible at the very top of the page
+  // Title only visible at the very top of the page
   const [isAtTop, setIsAtTop] = useState(true);
   useEffect(() => {
     const onScroll = () => setIsAtTop(window.scrollY < 10);
@@ -219,12 +216,16 @@ const GamesListPage = () => {
       <Box
         sx={{
           position: "sticky",
-          top: (theme) => theme.mixins.toolbar.minHeight,
+          // Same header treatment as the collection pages: dock exactly under the
+          // fixed AppBar (56px on phones, 64px on wider screens), flat, and the
+          // search stays visible on scroll while only the title scrolls away.
+          // Same rhythm as the games page: 4px here + the Paper's padding = 20px
+          // above the search field, 16px below it to the first row.
+          top: { xs: 56, sm: 64 },
           zIndex: 1,
           bgcolor: "background.default",
-          pt: hideSearchBar ? 0 : 0.5,
-          pb: hideSearchBar ? 0 : 1,
-          boxShadow: hideSearchBar ? "none" : "0 4px 8px -4px rgba(0, 0, 0, 0.2)",
+          pt: 0.5,
+          pb: 2,
         }}
       >
         <Collapse in={isAtTop}>
@@ -242,8 +243,7 @@ const GamesListPage = () => {
             </Typography>
           ) : null}
         </Collapse>
-        <Collapse in={!hideSearchBar}>
-          <Paper sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
+        <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
             <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", flexDirection: { xs: "column", sm: "row" } }}>
               <TextField
                 label={t("games.listPage.searchLabel")}
@@ -291,7 +291,6 @@ const GamesListPage = () => {
               </Box>
             </Box>
           </Paper>
-        </Collapse>
       </Box>
 
       {error ? (
@@ -301,14 +300,14 @@ const GamesListPage = () => {
           </Typography>
         </Paper>
       ) : isLoading ? (
-        <Paper sx={{ p: 3, textAlign: "center", mt: 2 }}>{t("common.loading")}</Paper>
+        <Paper sx={{ p: 3, textAlign: "center" }}>{t("common.loading")}</Paper>
       ) : filteredAndSorted.length === 0 ? (
-        <Paper sx={{ p: 3, textAlign: "center", mt: 2 }}>{t("games.listPage.emptyState")}</Paper>
+        <Paper sx={{ p: 3, textAlign: "center" }}>{t("games.listPage.emptyState")}</Paper>
       ) : (
         <>
           {selectedIds.size > 0 && (
             <Paper
-              sx={{ mt: 2, px: 2, py: 1, display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}
+              sx={{ px: 2, py: 1, display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}
             >
               <Typography variant="body2">
                 {t("games.listPage.selectedCount", { count: selectedIds.size })}
@@ -339,7 +338,13 @@ const GamesListPage = () => {
               </Button>
             </Paper>
           )}
-          <TableContainer component={Paper} sx={{ mt: 2, overflowX: "auto" }}>
+          <TableContainer
+            component={Paper}
+            // The 16px gap below the search comes from the sticky header's padding
+            // when nothing is selected; with the selection bar showing, the bar
+            // carries it instead (it sits between the search and this table).
+            sx={{ mt: selectedIds.size > 0 ? 2 : 0, overflowX: "auto" }}
+          >
           <Table stickyHeader sx={{ minWidth: 600 }}>
             <TableHead>
               <TableRow>

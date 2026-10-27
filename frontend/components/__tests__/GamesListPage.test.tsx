@@ -60,6 +60,14 @@ function renderPage() {
   );
 }
 
+describe("GamesListPage title", () => {
+  it("shows the Individual Games heading", async () => {
+    renderPage();
+
+    expect(await screen.findByRole("heading", { name: "Individual Games" })).toBeInTheDocument();
+  });
+});
+
 describe("GamesListPage selection", () => {
   it("selects rows individually and via the header checkbox, showing the Edit action", async () => {
     const user = userEvent.setup();
