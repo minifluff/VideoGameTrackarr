@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import type { Modifier } from "@popperjs/core";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import CableIcon from "@mui/icons-material/Cable";
 import CollectionsBookmarkIcon from "@mui/icons-material/CollectionsBookmark";
@@ -69,6 +70,26 @@ export function useSearchHandoff(key: keyof SearchHandoffState, apply: (text: st
     });
   }, [text, key, location.pathname, location.search, location.state, navigate]);
 }
+
+// MUI sizes the result popup to the search input, which on a phone leaves long game
+// titles truncated (the input only spans the header's middle cell). Below 600px this
+// modifier pins the popup to the viewport edges instead — 16px margins, nearly the
+// full screen — so results get room to breathe; wider screens keep the input's width.
+// It runs after popper.js has placed the popup (afterMain), so the offset override
+// survives its own placement pass and the width survives computeStyles, which spreads
+// the existing styles rather than replacing them. (popper.js v2 keeps the computed
+// offset in modifiersData.popperOffsets, not on state itself.)
+export const phoneWidePopupModifier: Modifier<"phoneWidePopup", Record<string, never>> = {
+  name: "phoneWidePopup",
+  enabled: true,
+  phase: "afterMain",
+  fn: ({ state }) => {
+    if (window.innerWidth >= 600) return;
+    const offsets = state.modifiersData.popperOffsets;
+    if (offsets) offsets.x = 16;
+    state.styles.popper = { ...state.styles.popper, width: `${window.innerWidth - 32}px` };
+  },
+};
 
 // The header's search box: jumps straight to a game, device, accessory, series or
 // collection, and Enter on free text opens the Games list filtered by it. The last option
@@ -179,6 +200,7 @@ const GlobalSearch = () => {
       }}
       onChange={(_event, option) => choose(option)}
       filterOptions={(list) => list}
+      slotProps={{ popper: { modifiers: [phoneWidePopupModifier] } }}
       groupBy={(option) => t(`search.groups.${option.kind}`)}
       getOptionLabel={(option) => (typeof option === "string" ? option : option.label)}
       isOptionEqualToValue={(a, b) =>

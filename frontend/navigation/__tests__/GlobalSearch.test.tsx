@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider, useLocation } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
-import GlobalSearch, { useSearchHandoff } from "../GlobalSearch";
+import GlobalSearch, { phoneWidePopupModifier, useSearchHandoff } from "../GlobalSearch";
 import { useState } from "react";
 
 vi.mock("../../hooks/useDebouncedValue", () => ({
@@ -94,6 +94,45 @@ describe("GlobalSearch", () => {
 
     expect(router.state.location.pathname).toBe("/games/add");
     expect(router.state.location.state).toEqual({ igdbSearch: "hades" });
+  });
+
+  it("pins the popup to the viewport edges on phone widths", () => {
+    const run = phoneWidePopupModifier.fn as unknown as (arg: {
+      state: {
+        modifiersData: { popperOffsets: { x: number; y: number } };
+        styles: { popper: Record<string, string> };
+      };
+    }) => void;
+    const state = {
+      modifiersData: { popperOffsets: { x: 64, y: 200 } },
+      styles: { popper: {} as Record<string, string> },
+    };
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
+
+    run({ state });
+
+    expect(state.modifiersData.popperOffsets.x).toBe(16);
+    expect(state.modifiersData.popperOffsets.y).toBe(200);
+    expect(state.styles.popper.width).toBe("358px");
+  });
+
+  it("leaves the popup alone on wider screens", () => {
+    const run = phoneWidePopupModifier.fn as unknown as (arg: {
+      state: {
+        modifiersData: { popperOffsets: { x: number; y: number } };
+        styles: { popper: Record<string, string> };
+      };
+    }) => void;
+    const state = {
+      modifiersData: { popperOffsets: { x: 64, y: 200 } },
+      styles: { popper: {} as Record<string, string> },
+    };
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 1280 });
+
+    run({ state });
+
+    expect(state.modifiersData.popperOffsets.x).toBe(64);
+    expect(state.styles.popper.width).toBeUndefined();
   });
 
   it("focuses on / from anywhere but a text field", async () => {
