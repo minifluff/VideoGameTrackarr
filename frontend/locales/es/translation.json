@@ -957,6 +957,7 @@
       "forConnector": " para ",
       "externalParentTooltip": "No está en tu biblioteca — abre la página de IGDB del original",
       "availableOnLabel": "Disponible en: {{platforms}}",
+      "availablePlatformsTitle": "Plataformas disponibles",
       "seriesLabel": "Serie: {{name}}",
       "collectionLabel": "Colección: {{name}}",
       "unknownPlatform": "Plataforma desconocida",

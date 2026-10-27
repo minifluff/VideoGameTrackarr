@@ -4,6 +4,7 @@ import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined
 import Backdrop from "@mui/material/Backdrop";
 import Box from "@mui/material/Box";
 import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useTranslation } from "react-i18next";
@@ -41,7 +42,6 @@ import {
 } from "./Detail";
 import PlaySessionDialog, { type PlaySessionFormValues } from "./PlaySessionDialog";
 import ProgressDialog, { type ProgressFormValues } from "./ProgressDialog";
-import { Section } from "./Section";
 import { showUndoToast } from "./UndoToast";
 
 interface GameProgressSectionProps {
@@ -255,123 +255,128 @@ const GameProgressSection = ({
           <CircularProgress color="inherit" />
         </Backdrop>
       )}
-      <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
-        {/* No id here: the wrapping Card in GameDetails already carries id="progress", so
-            an id on this Section would duplicate it in the DOM. */}
-        <Section
-          title={t("progress.title")}
-          action={
-            <SectionAction
-              icon={<AddIcon />}
-              label={t("progress.addAction")}
-              onClick={handleAddProgressClick}
-            />
-          }
-        >
-          <Facts
-            facts={[
-              [
-                t("progress.statusLabel"),
-                playStatus && playStatus !== "none" ? statusLabels[playStatus] : t("progress.notSet"),
-              ],
-              [t("progress.playtimeColumn"), totalMinutes ? formatDuration(totalMinutes) : "—"],
-              [t("progress.lastPlayedColumn"), formatDay(lastPlayed ?? null) ?? "—"],
-            ]}
+      {/* The wrapping Card in GameDetails already carries id="progress". Both headers
+          match the other detail sections (Tags, Addons, Notes): CardHeader title +
+          subheader, with the actions in the action slot. The Play Sessions header keeps
+          the play-sessions anchor the Section wrapper used to carry. */}
+      <CardHeader
+        title={t("progress.title")}
+        subheader={t("progress.subheader")}
+        action={
+          <SectionAction
+            icon={<AddIcon />}
+            label={t("progress.addAction")}
+            onClick={handleAddProgressClick}
           />
-          {visibleProgress.length ? (
-            <Box sx={{ mt: 1.25 }}>
-              <Panel>
-                {visibleProgress.map((row) => (
-                  <ListRow
-                    key={row.id}
-                    label={row.platformName ?? t("games.about.unknownPlatform")}
-                    onClick={() => handleEditProgressClick(row)}
-                    leading={
-                      <PlatformBadge>{badgeFor(row.platformId, row.platformName)}</PlatformBadge>
-                    }
-                    title={row.platformName ?? t("games.about.unknownPlatform")}
-                    subtitle={
-                      [
-                        row.playtimeMinutes ? formatDuration(row.playtimeMinutes) : null,
-                        row.lastPlayedAt
-                          ? t("progress.lastPlayedOn", { date: formatDay(row.lastPlayedAt) })
-                          : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ") || undefined
-                    }
-                    trailing={
-                      <Chip
-                        size="small"
-                        variant="outlined"
-                        color={PLAY_STATUS_CHIP[row.playStatus]}
-                        label={statusLabels[row.playStatus]}
-                      />
-                    }
-                    actions={removeAction(() => handleRemoveProgress(row))}
-                  />
-                ))}
-              </Panel>
-            </Box>
-          ) : null}
-        </Section>
-
-        <Section
-          id="play-sessions"
-          title={t("playSessions.title")}
-          action={
-            <SectionAction
-              icon={<AddIcon />}
-              label={t("playSessions.addAction")}
-              onClick={handleAddSessionClick}
-            />
-          }
-        >
-          {visibleSessions.length === 0 ? (
-            <EmptyLine>{t("playSessions.empty")}</EmptyLine>
-          ) : (
+        }
+      />
+      <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+        <Facts
+          facts={[
+            [
+              t("progress.statusLabel"),
+              playStatus && playStatus !== "none" ? statusLabels[playStatus] : t("progress.notSet"),
+            ],
+            [t("progress.playtimeColumn"), totalMinutes ? formatDuration(totalMinutes) : "—"],
+            [t("progress.lastPlayedColumn"), formatDay(lastPlayed ?? null) ?? "—"],
+          ]}
+        />
+        {visibleProgress.length ? (
+          <Box sx={{ mt: 1.25 }}>
             <Panel>
-              {visibleSessions.map((session) => (
+              {visibleProgress.map((row) => (
                 <ListRow
-                  key={session.id}
-                  label={`${session.platformName ?? ""} ${formatMoment(session.startedAt)}`.trim()}
-                  onClick={() => handleEditSessionClick(session)}
+                  key={row.id}
+                  label={row.platformName ?? t("games.about.unknownPlatform")}
+                  onClick={() => handleEditProgressClick(row)}
                   leading={
-                    <PlatformBadge>
-                      {badgeFor(session.platformId, session.platformName)}
-                    </PlatformBadge>
+                    <PlatformBadge>{badgeFor(row.platformId, row.platformName)}</PlatformBadge>
                   }
-                  title={formatMoment(session.startedAt)}
+                  title={row.platformName ?? t("games.about.unknownPlatform")}
                   subtitle={
                     [
-                      session.endedAt
-                        ? t("playSessions.endedAt", { date: formatMoment(session.endedAt) })
+                      row.playtimeMinutes ? formatDuration(row.playtimeMinutes) : null,
+                      row.lastPlayedAt
+                        ? t("progress.lastPlayedOn", { date: formatDay(row.lastPlayedAt) })
                         : null,
-                      session.notes,
                     ]
                       .filter(Boolean)
                       .join(" · ") || undefined
                   }
                   trailing={
-                    session.durationMinutes !== null ? (
-                      <Box
-                        component="span"
-                        sx={{
-                          fontSize: 13,
-                          color: "text.secondary",
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {formatDuration(session.durationMinutes)}
-                      </Box>
-                    ) : null
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      color={PLAY_STATUS_CHIP[row.playStatus]}
+                      label={statusLabels[row.playStatus]}
+                    />
                   }
-                  actions={removeAction(() => handleRemoveSession(session))}
+                  actions={removeAction(() => handleRemoveProgress(row))}
                 />
               ))}
             </Panel>
-          )}
-        </Section>
+          </Box>
+        ) : null}
+      </CardContent>
+
+      <CardHeader
+        id="play-sessions"
+        title={t("playSessions.title")}
+        subheader={t("playSessions.subheader")}
+        action={
+          <SectionAction
+            icon={<AddIcon />}
+            label={t("playSessions.addAction")}
+            onClick={handleAddSessionClick}
+          />
+        }
+      />
+      <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+        {visibleSessions.length === 0 ? (
+          <EmptyLine>{t("playSessions.empty")}</EmptyLine>
+        ) : (
+          <Panel>
+            {visibleSessions.map((session) => (
+              <ListRow
+                key={session.id}
+                label={`${session.platformName ?? ""} ${formatMoment(session.startedAt)}`.trim()}
+                onClick={() => handleEditSessionClick(session)}
+                leading={
+                  <PlatformBadge>
+                    {badgeFor(session.platformId, session.platformName)}
+                  </PlatformBadge>
+                }
+                title={formatMoment(session.startedAt)}
+                subtitle={
+                  [
+                    session.endedAt
+                      ? t("playSessions.endedAt", { date: formatMoment(session.endedAt) })
+                      : null,
+                    session.notes,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || undefined
+                }
+                trailing={
+                  session.durationMinutes !== null ? (
+                    <Box
+                      component="span"
+                      sx={{
+                        fontSize: 13,
+                        color: "text.secondary",
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      {formatDuration(session.durationMinutes)}
+                    </Box>
+                  ) : null
+                }
+                actions={removeAction(() => handleRemoveSession(session))}
+              />
+            ))}
+          </Panel>
+        )}
+      </CardContent>
 
         <ProgressDialog
           open={progressDialogOpen}
@@ -389,7 +394,6 @@ const GameProgressSection = ({
           onSubmit={handleSessionSubmit}
           isSubmitting={createSession.isPending || updateSession.isPending}
         />
-      </CardContent>
     </>
   );
 };

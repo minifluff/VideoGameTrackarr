@@ -1,7 +1,12 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Box from "@mui/material/Box";
+import ButtonBase from "@mui/material/ButtonBase";
 import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
+import Collapse from "@mui/material/Collapse";
 import Divider from "@mui/material/Divider";
 import { useTheme } from "@mui/material/styles";
 import Stack from "@mui/material/Stack";
@@ -105,6 +110,12 @@ const GameAboutSection = ({ game, preview = false, publicToken }: GameAboutSecti
     (acc[company.role] ??= []).push(company);
     return acc;
   }, {});
+
+  // The old "Available on" line and the per-platform release chips now live behind one
+  // expandable section below Game modes, so a many-release game stops pushing the rest
+  // of the page down. The section only renders when at least one of the two would have.
+  const [platformsExpanded, setPlatformsExpanded] = useState(false);
+  const showAvailablePlatforms = game.platforms.length > 0 || game.releaseDates.length > 1;
 
   const hasStoryline = game.storyline && game.storyline !== game.summary;
 
@@ -259,21 +270,6 @@ const GameAboutSection = ({ game, preview = false, publicToken }: GameAboutSecti
             </Typography>
             {companies.map((company, index) => (
               <Stack key={company.id} direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-                {company.logoUrl ? (
-                  <Box
-                    component="img"
-                    src={company.logoUrl}
-                    alt=""
-                    sx={{
-                      height: 22,
-                      width: "auto",
-                      maxWidth: 64,
-                      objectFit: "contain",
-                      borderRadius: 0.5,
-                      border: `1px solid ${theme.palette.divider}`,
-                    }}
-                  />
-                ) : null}
                 <Typography variant="body2" color="text.secondary" component="span">
                   {company.name}
                   {index < companies.length - 1 ? "," : ""}
@@ -282,14 +278,6 @@ const GameAboutSection = ({ game, preview = false, publicToken }: GameAboutSecti
             ))}
           </Stack>
         ))}
-        {game.platforms.length > 0 ? (
-          <Typography variant="body2" color="text.secondary" component="div">
-            {t("games.about.availableOnLabel", {
-              platforms: game.platforms.map((platform) => platform.name).join(", "),
-            })}
-          </Typography>
-        ) : null}
-
         {game.genres.length > 0 || game.franchises.length > 0 || game.collections.length > 0 ? (
           <Stack direction="row" spacing={1} sx={{ mt: 1.5, flexWrap: "wrap", rowGap: 1 }}>
             {game.genres.map((genre) => (
@@ -329,19 +317,48 @@ const GameAboutSection = ({ game, preview = false, publicToken }: GameAboutSecti
           </Stack>
         ) : null}
 
-        {game.releaseDates.length > 1 ? (
-          <Stack direction="row" spacing={1} sx={{ mt: 1.5, flexWrap: "wrap", rowGap: 1 }}>
-            {game.releaseDates.map((releaseDate) => (
-              <Chip
-                key={releaseDate.id}
-                size="small"
-                variant="outlined"
-                label={`${releaseDate.platformName ?? t("games.about.unknownPlatform")}: ${
-                  releaseDate.human ?? t("games.about.tbd")
-                }${releaseDate.releaseRegion ? ` (${releaseRegionLabel[releaseDate.releaseRegion]})` : ""}`}
-              />
-            ))}
-          </Stack>
+        {showAvailablePlatforms ? (
+          <Box sx={{ mt: 1.5 }}>
+            <ButtonBase
+              onClick={() => setPlatformsExpanded((expanded) => !expanded)}
+              aria-expanded={platformsExpanded}
+              sx={{ display: "flex", alignItems: "center", gap: 0.5, borderRadius: 1 }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                {t("games.about.availablePlatformsTitle")}
+              </Typography>
+              {platformsExpanded ? (
+                <ExpandLessIcon fontSize="small" color="action" />
+              ) : (
+                <ExpandMoreIcon fontSize="small" color="action" />
+              )}
+            </ButtonBase>
+            <Collapse in={platformsExpanded}>
+              <Stack spacing={1.5} sx={{ mt: 1 }}>
+                {game.platforms.length > 0 ? (
+                  <Typography variant="body2" color="text.secondary" component="div">
+                    {t("games.about.availableOnLabel", {
+                      platforms: game.platforms.map((platform) => platform.name).join(", "),
+                    })}
+                  </Typography>
+                ) : null}
+                {game.releaseDates.length > 1 ? (
+                  <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", rowGap: 1 }}>
+                    {game.releaseDates.map((releaseDate) => (
+                      <Chip
+                        key={releaseDate.id}
+                        size="small"
+                        variant="outlined"
+                        label={`${releaseDate.platformName ?? t("games.about.unknownPlatform")}: ${
+                          releaseDate.human ?? t("games.about.tbd")
+                        }${releaseDate.releaseRegion ? ` (${releaseRegionLabel[releaseDate.releaseRegion]})` : ""}`}
+                      />
+                    ))}
+                  </Stack>
+                ) : null}
+              </Stack>
+            </Collapse>
+          </Box>
         ) : null}
       </CardContent>
       <Divider />

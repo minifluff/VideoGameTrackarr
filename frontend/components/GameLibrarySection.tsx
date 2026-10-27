@@ -2,6 +2,7 @@ import { useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import CheckIcon from "@mui/icons-material/Check";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import DriveFileMoveIcon from "@mui/icons-material/DriveFileMove";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import SellOutlinedIcon from "@mui/icons-material/SellOutlined";
@@ -9,6 +10,7 @@ import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import Backdrop from "@mui/material/Backdrop";
 import Box from "@mui/material/Box";
 import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
 import Checkbox from "@mui/material/Checkbox";
 import CircularProgress from "@mui/material/CircularProgress";
 import FormControlLabel from "@mui/material/FormControlLabel";
@@ -44,7 +46,7 @@ import { TOAST_OPTIONS } from "../utils/toastOptions";
 import ConfirmDialog from "./ConfirmDialog";
 import { EmptyLine, ListRow, Panel, Pill, PlatformBadge, RowAction, SectionAction } from "./Detail";
 import LibraryItemDialog, { type LibraryItemFormValues, type RomChanges } from "./LibraryItemDialog";
-import { Section } from "./Section";
+import MoveLibraryItemDialog from "./MoveLibraryItemDialog";
 import { showUndoToast } from "./UndoToast";
 
 interface GameLibrarySectionProps {
@@ -78,6 +80,9 @@ const GameLibrarySection = ({
   // Moving an owned copy that holds a ROM to the Wishlist deletes the ROM (see
   // library_service.update_library_item) — confirmed first, unlike an ordinary move.
   const [moveConfirmItem, setMoveConfirmItem] = useState<LibraryItem | null>(null);
+  // Restored from the pre-port tables: moving a copy to another game (or splitting it
+  // into a new one) lives in its own dialog, separate from the owned/wishlist Move.
+  const [transferItemId, setTransferItemId] = useState<number | null>(null);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogItem, setDialogItem] = useState<LibraryItem | null>(null);
@@ -183,6 +188,10 @@ const GameLibrarySection = ({
   const handleRemove = (item: LibraryItem) => {
     const { undo } = scheduleItemRemoval([item]);
     showUndoToast(t("games.library.removedFromToast", { count: 1, phrase: statusPhrase[item.status] }), undo, 5000);
+  };
+
+  const handleTransferClick = (rowId: number) => {
+    setTransferItemId(rowId);
   };
 
   const handleMoveClick = async (rowId: number, currentStatus: LibraryStatus, confirmed = false) => {
@@ -296,114 +305,120 @@ const GameLibrarySection = ({
           <CircularProgress color="inherit" />
         </Backdrop>
       )}
+      {/* The wrapping Card in GameDetails already carries id="library". The header
+          matches the other detail sections (Tags, Addons, Notes): CardHeader title +
+          subheader, with the actions in its action slot. */}
+      <CardHeader
+        title={t("games.library.title")}
+        subheader={t("games.library.subheader")}
+        action={
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={hideFromPublic}
+                  onChange={(e) => updateVisibility.mutate(e.target.checked)}
+                  size="small"
+                />
+              }
+              label={t("games.library.hideFromPublicLabel")}
+              sx={{ m: 0, whiteSpace: "nowrap" }}
+            />
+            <SectionAction
+              icon={<AddIcon />}
+              label={t("games.library.addCopy")}
+              onClick={(event) => setAddMenuAnchor(event.currentTarget)}
+              aria-haspopup="menu"
+            />
+          </Box>
+        }
+      />
       <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
-        {/* No id here: the wrapping Card in GameDetails already carries id="library", so
-            an id on this Section would duplicate it in the DOM. */}
-        <Section
-          title={t("games.library.title")}
-          action={
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={hideFromPublic}
-                    onChange={(e) => updateVisibility.mutate(e.target.checked)}
-                    size="small"
-                  />
-                }
-                label={t("games.library.hideFromPublicLabel")}
-                sx={{ m: 0, whiteSpace: "nowrap" }}
-              />
-              <SectionAction
-                icon={<AddIcon />}
-                label={t("games.library.addCopy")}
-                onClick={(event) => setAddMenuAnchor(event.currentTarget)}
-                aria-haspopup="menu"
-              />
-            </Box>
-          }
-        >
-          <Menu anchorEl={addMenuAnchor} open={addMenuAnchor !== null} onClose={() => setAddMenuAnchor(null)}>
-            <MenuItem
-              onClick={() => {
-                setAddMenuAnchor(null);
-                handleAddClick("owned");
-              }}
-            >
-              <ListItemIcon>
-                <CheckIcon fontSize="small" />
-              </ListItemIcon>
-              {t("games.library.addToCollection")}
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setAddMenuAnchor(null);
-                handleAddClick("wishlist");
-              }}
-            >
-              <ListItemIcon>
-                <FavoriteIcon fontSize="small" />
-              </ListItemIcon>
-              {t("games.library.addToWishlist")}
-            </MenuItem>
-          </Menu>
-          {visibleItems.length === 0 ? (
-            <EmptyLine>{t("games.library.empty")}</EmptyLine>
-          ) : (
-            <Panel>
-              {visibleItems.map((item) => {
-                const owned = item.status === "owned";
-                // Format, with Steelbook only for a physical copy marked as one.
-                const formatLine = [
-                  formatStorefrontLabel(item),
-                  item.format === "physical" && item.steelbook ? t("games.library.steelbookColumn") : null,
-                ]
-                  .filter(Boolean)
-                  .join(" · ");
-                return (
-                  <ListRow
-                    key={item.id}
-                    label={item.platformName ?? t("games.about.unknownPlatform")}
-                    onClick={() => handleEditClick(item.id)}
-                    leading={<PlatformBadge>{platformBadge(item)}</PlatformBadge>}
-                    title={item.platformName ?? t("games.about.unknownPlatform")}
-                    subtitle={
-                      <>
-                        {formatLine || item.roms.length ? (
-                          <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                            {formatLine}
-                            {renderRomIcon(item)}
-                          </Box>
-                        ) : null}
-                        {item.edition ? <Box component="span" sx={{ display: "block" }}>{item.edition}</Box> : null}
-                        {renderSaleLine(item)}
-                      </>
-                    }
-                    trailing={
-                      <Pill small tone={owned ? "owned" : "wishlist"} icon={owned ? <CheckIcon /> : <FavoriteIcon />}>
-                        {owned ? t("games.library.ownedChip") : t("games.library.wishlistChip")}
-                      </Pill>
-                    }
-                    actions={
-                      <>
-                        <RowAction
-                          title={owned ? t("table.moveToWishlist") : t("table.moveToCollection")}
-                          icon={owned ? <FavoriteBorderIcon fontSize="small" /> : <CheckIcon fontSize="small" />}
-                          onClick={() => void handleMoveClick(item.id, item.status)}
-                        />
-                        <RowAction
-                          title={t("common.remove")}
-                          icon={<DeleteOutlineOutlinedIcon fontSize="small" />}
-                          onClick={() => handleRemove(item)}
-                        />
-                      </>
-                    }
-                  />
-                );
-              })}
-            </Panel>
-          )}
-        </Section>
+        <Menu anchorEl={addMenuAnchor} open={addMenuAnchor !== null} onClose={() => setAddMenuAnchor(null)}>
+          <MenuItem
+            onClick={() => {
+              setAddMenuAnchor(null);
+              handleAddClick("owned");
+            }}
+          >
+            <ListItemIcon>
+              <CheckIcon fontSize="small" />
+            </ListItemIcon>
+            {t("games.library.addToCollection")}
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              setAddMenuAnchor(null);
+              handleAddClick("wishlist");
+            }}
+          >
+            <ListItemIcon>
+              <FavoriteIcon fontSize="small" />
+            </ListItemIcon>
+            {t("games.library.addToWishlist")}
+          </MenuItem>
+        </Menu>
+        {visibleItems.length === 0 ? (
+          <EmptyLine>{t("games.library.empty")}</EmptyLine>
+        ) : (
+          <Panel>
+            {visibleItems.map((item) => {
+              const owned = item.status === "owned";
+              // Format, with Steelbook only for a physical copy marked as one.
+              const formatLine = [
+                formatStorefrontLabel(item),
+                item.format === "physical" && item.steelbook ? t("games.library.steelbookColumn") : null,
+              ]
+                .filter(Boolean)
+                .join(" · ");
+              return (
+                <ListRow
+                  key={item.id}
+                  label={item.platformName ?? t("games.about.unknownPlatform")}
+                  onClick={() => handleEditClick(item.id)}
+                  leading={<PlatformBadge>{platformBadge(item)}</PlatformBadge>}
+                  title={item.platformName ?? t("games.about.unknownPlatform")}
+                  subtitle={
+                    <>
+                      {formatLine || item.roms.length ? (
+                        <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                          {formatLine}
+                          {renderRomIcon(item)}
+                        </Box>
+                      ) : null}
+                      {item.edition ? <Box component="span" sx={{ display: "block" }}>{item.edition}</Box> : null}
+                      {renderSaleLine(item)}
+                    </>
+                  }
+                  trailing={
+                    <Pill small tone={owned ? "owned" : "wishlist"} icon={owned ? <CheckIcon /> : <FavoriteIcon />}>
+                      {owned ? t("games.library.ownedChip") : t("games.library.wishlistChip")}
+                    </Pill>
+                  }
+                  actions={
+                    <>
+                      <RowAction
+                        title={owned ? t("table.moveToWishlist") : t("table.moveToCollection")}
+                        icon={owned ? <FavoriteBorderIcon fontSize="small" /> : <CheckIcon fontSize="small" />}
+                        onClick={() => void handleMoveClick(item.id, item.status)}
+                      />
+                      <RowAction
+                        title={t("common.transfer")}
+                        icon={<DriveFileMoveIcon fontSize="small" />}
+                        onClick={() => handleTransferClick(item.id)}
+                      />
+                      <RowAction
+                        title={t("common.remove")}
+                        icon={<DeleteOutlineOutlinedIcon fontSize="small" />}
+                        onClick={() => handleRemove(item)}
+                      />
+                    </>
+                  }
+                />
+              );
+            })}
+          </Panel>
+        )}
 
         <LibraryItemDialog
           open={dialogOpen}
@@ -463,6 +478,15 @@ const GameLibrarySection = ({
             if (item) void handleMoveClick(item.id, item.status, true);
           }}
         />
+        {transferItemId !== null && (
+          <MoveLibraryItemDialog
+            open={transferItemId !== null}
+            onClose={() => setTransferItemId(null)}
+            itemId={transferItemId}
+            itemLabel=""
+            currentGameId={gameId}
+          />
+        )}
       </CardContent>
     </>
   );

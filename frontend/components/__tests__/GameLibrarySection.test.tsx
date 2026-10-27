@@ -67,7 +67,12 @@ describe("GameLibrarySection", () => {
       <GameLibrarySection {...baseProps} libraryItems={[wishlistedItem, ownedItem]} />
     );
 
-    expect(screen.getByRole("heading", { name: "Your Library" })).toBeInTheDocument();
+    // CardHeader renders its title as a span, not a heading, like the other detail
+    // sections (Tags, Addons, Notes).
+    expect(screen.getByText("Your Library")).toBeInTheDocument();
+    expect(
+      screen.getByText("Collection and wishlist entries across platforms and regions")
+    ).toBeInTheDocument();
     expect(screen.getByText("Owned")).toBeInTheDocument();
     expect(screen.getByText("Wishlist")).toBeInTheDocument();
     // Owned first even when the wishlist item comes first in the prop list. Rows are
@@ -85,6 +90,13 @@ describe("GameLibrarySection", () => {
     const hide = screen.getByLabelText("Hide");
     const addCopy = screen.getByRole("button", { name: "Add copy" });
     expect(hide.compareDocumentPosition(addCopy) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("opens the Move library item dialog from a row's Transfer action", async () => {
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[ownedItem]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Move to another game" }));
+    expect(await screen.findByText("Move library item")).toBeInTheDocument();
   });
 
   it("opens the Add copy menu with collection and wishlist entries", () => {
