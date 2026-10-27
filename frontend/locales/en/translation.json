@@ -108,6 +108,18 @@
       "custom": "Custom games",
       "duplicates": "Duplicate copies",
       "orphans": "Accessories without hardware"
+    },
+    "customize": {
+      "button": "Customize",
+      "title": "Customize Overview",
+      "description": "Drag sections (or use the arrows) to reorder them, and switch off the ones you don't want. Saved to your account, so every browser shows the same.",
+      "moveUp": "Move {{name}} up",
+      "moveDown": "Move {{name}} down",
+      "show": "Show {{name}}",
+      "reset": "Reset to default",
+      "saveError": "Couldn't save the Overview layout. Please try again.",
+      "allHidden": "Every section is hidden. Use Customize to show some again.",
+      "stats": "Summary tiles"
     }
   },
   "breadcrumbs": {
@@ -780,6 +792,18 @@
       "gamesHiddenErrorToast": "Failed to hide games from public",
       "gamesUnhiddenToast": "{{count}} game(s) unhidden",
       "newestButton": "Newest"
+    },
+    "listView": {
+      "columnName": "Name",
+      "sortDateAdded": "Date added",
+      "columnType": "Type",
+      "columnYear": "Year",
+      "columnPlatforms": "Platforms",
+      "columnRating": "Rating",
+      "columnLibrary": "Library",
+      "columnLabels": "Labels",
+      "sortAscending": "Ascending",
+      "sortDescending": "Descending"
     },
     "listToolbar": {
       "exitSelectionModeAriaLabel": "Exit selection mode",

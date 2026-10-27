@@ -41,9 +41,26 @@ class TokenResponse(CamelModel):
     token_type: str = "bearer"
 
 
+class OverviewSection(CamelModel):
+    """One Dashboard section in the saved layout. Keys the frontend doesn't know
+    are ignored there, so a layout saved by a newer version still loads after a
+    downgrade."""
+
+    key: str = Field(pattern=r"^[a-zA-Z][a-zA-Z0-9]{0,39}$")
+    hidden: bool = False
+
+
+class PreferencesRequest(CamelModel):
+    """Only the fields sent are changed, so the Dashboard layout can be saved
+    on its own."""
+
+    overview_layout: list[OverviewSection] | None = Field(default=None, max_length=50)
+
+
 class UserResponse(CamelModel):
     id: int
     username: str
+    overview_layout: list[OverviewSection] | None = None
 
 
 class SetupStatusResponse(CamelModel):

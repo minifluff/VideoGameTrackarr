@@ -7,6 +7,7 @@ from app.models.system import User
 from app.schemas.auth import (
     ChangePasswordRequest,
     LoginRequest,
+    PreferencesRequest,
     RefreshRequest,
     SetupRequest,
     SetupStatusResponse,
@@ -67,7 +68,27 @@ def logout(body: RefreshRequest, db: Session = Depends(get_db)) -> None:
 
 @router.get("/me", response_model=UserResponse)
 def me(current_user: User = Depends(get_current_user)) -> UserResponse:
-    return UserResponse(id=current_user.id, username=current_user.username)
+    return UserResponse(
+        id=current_user.id, username=current_user.username, overview_layout=current_user.overview_layout
+    )
+
+
+@router.put("/me/preferences", response_model=UserResponse)
+def update_preferences(
+    body: PreferencesRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> UserResponse:
+    """Saves the signed-in user's preferences — currently just the Dashboard's
+    section order/visibility, so every browser shows the same page. Only the
+    fields sent are changed."""
+    if body.overview_layout is not None:
+        current_user.overview_layout = [section.model_dump() for section in body.overview_layout]
+        db.commit()
+        db.refresh(current_user)
+    return UserResponse(
+        id=current_user.id, username=current_user.username, overview_layout=current_user.overview_layout
+    )
 
 
 @router.post("/change-password", response_model=TokenResponse)

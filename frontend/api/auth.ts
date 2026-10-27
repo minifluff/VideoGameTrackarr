@@ -1,7 +1,7 @@
 import axios from "axios";
 import { API_BASE_URL, apiClient } from "./client";
 import { tokenStorage } from "./tokenStorage";
-import type { AuthTokens, CurrentUser, SetupStatus } from "./types";
+import type { AuthTokens, CurrentUser, OverviewSectionSetting, SetupStatus } from "./types";
 
 // Login/logout/setup intentionally use plain axios, not apiClient: there's no access token
 // yet at this point, and the interceptors' refresh-on-401 logic doesn't apply to any of them.
@@ -43,6 +43,13 @@ export async function logout(): Promise<void> {
 
 export async function fetchCurrentUser(): Promise<CurrentUser> {
   const response = await apiClient.get<CurrentUser>("/api/auth/me");
+  return response.data;
+}
+
+export async function updatePreferences(preferences: {
+  overviewLayout?: OverviewSectionSetting[];
+}): Promise<CurrentUser> {
+  const response = await apiClient.put<CurrentUser>("/api/auth/me/preferences", preferences);
   return response.data;
 }
 

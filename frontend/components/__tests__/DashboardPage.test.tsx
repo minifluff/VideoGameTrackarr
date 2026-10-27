@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { ThemeProvider } from "@mui/material/styles";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
@@ -26,16 +26,21 @@ function renderDashboard() {
 }
 
 describe("DashboardPage", () => {
-  it("shows the upstream sections and a settings-gear menu with the page options", async () => {
+  it("shows the upstream sections with restored buttons and a Customize dialog", async () => {
     renderDashboard();
     expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
     expect(screen.getByText("Quick add")).toBeInTheDocument();
     expect(screen.getByText("Now playing")).toBeInTheDocument();
     expect(screen.getByText("Needs attention")).toBeInTheDocument();
     expect(screen.getByText("Nothing marked Playing yet.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add game" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Display Mode" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
-    expect(await screen.findByRole("menuitem", { name: "Add game" })).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "Display Mode" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Customize" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("Customize Overview")).toBeInTheDocument();
+    expect(within(dialog).getByText("Summary tiles")).toBeInTheDocument();
+    // "Quick add" also names the page section, so the row is scoped to the dialog.
+    expect(within(dialog).getByText("Quick add")).toBeInTheDocument();
   });
 });

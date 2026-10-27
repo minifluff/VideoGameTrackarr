@@ -45,7 +45,7 @@ def test_me_returns_current_user_with_valid_access_token(client, test_user):
     response = client.get("/api/auth/me", headers={"Authorization": f"Bearer {access_token}"})
 
     assert response.status_code == 200
-    assert response.json() == {"id": test_user.id, "username": "admin"}
+    assert response.json() == {"id": test_user.id, "username": "admin", "overviewLayout": None}
 
 
 def test_me_rejects_garbage_token(client):
@@ -255,6 +255,34 @@ def test_change_password_requires_auth(client):
 def test_change_password_rejects_a_password_longer_than_72_bytes(auth_client):
     response = auth_client.post(
         "/api/auth/change-password", json={"currentPassword": "correct-password", "newPassword": "x" * 73}
+    )
+
+    assert response.status_code == 422
+
+
+def test_preferences_requires_auth(client):
+    response = client.put("/api/auth/me/preferences", json={"overviewLayout": []})
+
+    assert response.status_code == 401
+
+
+def test_preferences_saves_overview_layout(auth_client):
+    layout = [
+        {"key": "needsAttention", "hidden": False},
+        {"key": "stats", "hidden": True},
+    ]
+    response = auth_client.put("/api/auth/me/preferences", json={"overviewLayout": layout})
+
+    assert response.status_code == 200
+    assert response.json()["overviewLayout"] == layout
+
+    me = auth_client.get("/api/auth/me")
+    assert me.json()["overviewLayout"] == layout
+
+
+def test_preferences_rejects_bad_section_key(auth_client):
+    response = auth_client.put(
+        "/api/auth/me/preferences", json={"overviewLayout": [{"key": "bad key!", "hidden": False}]}
     )
 
     assert response.status_code == 422

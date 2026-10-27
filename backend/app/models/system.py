@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, ForeignKey, Integer, String, func
+from sqlalchemy import JSON, Boolean, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -18,6 +18,9 @@ class User(TimestampMixin, Base):
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     public_share_token: Mapped[str | None] = mapped_column(
         String(64), unique=True, comment="Unlisted share-link token for the public Games/Hardware view"
+    )
+    overview_layout: Mapped[list | None] = mapped_column(
+        JSON, comment="Dashboard section order/visibility, as [{key, hidden}] — null until customised"
     )
     steam_id_64: Mapped[str | None] = mapped_column(
         String(32), comment="Steam profile SteamID64, used for Steam Web API sync"

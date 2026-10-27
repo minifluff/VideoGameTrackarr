@@ -108,6 +108,18 @@
       "custom": "Jeux personnalisés",
       "duplicates": "Copies en double",
       "orphans": "Accessoires sans matériel"
+    },
+    "customize": {
+      "button": "Personnaliser",
+      "title": "Personnaliser la vue d'ensemble",
+      "description": "Faites glisser les sections (ou utilisez les flèches) pour les réorganiser, et désactivez celles que vous ne voulez pas. Enregistré sur votre compte, tous les navigateurs affichent donc la même chose.",
+      "moveUp": "Monter {{name}}",
+      "moveDown": "Descendre {{name}}",
+      "show": "Afficher {{name}}",
+      "reset": "Réinitialiser",
+      "saveError": "Impossible d'enregistrer la disposition de la vue d'ensemble. Veuillez réessayer.",
+      "allHidden": "Toutes les sections sont masquées. Utilisez Personnaliser pour en afficher à nouveau.",
+      "stats": "Tuiles récapitulatives"
     }
   },
   "breadcrumbs": {
@@ -780,6 +792,18 @@
       "gamesHiddenErrorToast": "Failed to hide games from public",
       "gamesUnhiddenToast": "{{count}} game(s) unhidden",
       "newestButton": "Newest"
+    },
+    "listView": {
+      "columnName": "Nom",
+      "sortDateAdded": "Date d'ajout",
+      "columnType": "Type",
+      "columnYear": "Année",
+      "columnPlatforms": "Plateformes",
+      "columnRating": "Note",
+      "columnLibrary": "Bibliothèque",
+      "columnLabels": "Étiquettes",
+      "sortAscending": "Croissant",
+      "sortDescending": "Décroissant"
     },
     "listToolbar": {
       "exitSelectionModeAriaLabel": "Quitter le mode sélection",
