@@ -5,7 +5,6 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import GameList from "./GameList";
-import InsightsSubNav from "./InsightsSubNav";
 
 const UnlinkedGamesPage = () => {
   const { t } = useTranslation();
@@ -15,7 +14,6 @@ const UnlinkedGamesPage = () => {
     <GameList
       sessionPrefix="unlinkedGames"
       forcedFilters={{ unlinkedOnly: true, hideWithCoverArt: hideWithCoverArt || undefined }}
-      subNav={<InsightsSubNav />}
       header={
         <Box sx={{ mb: 2 }}>
           <Typography variant="h4" component="h1" gutterBottom>

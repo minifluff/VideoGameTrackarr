@@ -51,8 +51,8 @@ interface GameListProps {
   // forcedFilters pins the Playing page to playing.
   forcedOwnershipStatuses?: OwnershipStatus[];
   header?: React.ReactNode;
-  // Optional section nav slot — only Unlinked Games uses it (InsightsSubNav). The
-  // Games subnav itself is gone; passing nothing renders no subnav row.
+  // Optional section nav slot — currently unused. The Games subnav itself is gone;
+  // passing nothing renders no subnav row.
   subNav?: React.ReactNode;
 }
 
