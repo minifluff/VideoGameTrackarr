@@ -219,12 +219,15 @@ const DashboardPage = () => {
       </Section>
     ),
     events: events?.length ? <EventsTeaserSection cardSize={cardSize} /> : null,
-    onSale: hasOnSale ? <OnSaleTeaserSection cardSize={cardSize} /> : null,
+    // The release calendars and the on-sale row use the same fixed card widths as the
+    // strips below (game cards 150, hardware cards 170, both times the card-size
+    // scale), so every dashboard card is the same size.
+    onSale: hasOnSale ? <OnSaleTeaserSection cardSize={cardSize} columnWidth={STRIP_COLUMN * cardSize} /> : null,
     gamesCalendar: hasGameReleases ? (
-      <ReleaseCalendarSection scope="games" title={labels.gamesCalendar} cardSize={cardSize} />
+      <ReleaseCalendarSection scope="games" title={labels.gamesCalendar} cardSize={cardSize} columnWidth={STRIP_COLUMN * cardSize} />
     ) : null,
     hardwareCalendar: hasHardwareReleases ? (
-      <ReleaseCalendarSection scope="hardware" title={labels.hardwareCalendar} cardSize={cardSize} />
+      <ReleaseCalendarSection scope="hardware" title={labels.hardwareCalendar} cardSize={cardSize} columnWidth={(STRIP_COLUMN + 20) * cardSize} />
     ) : null,
     nowPlaying: (
       <Section

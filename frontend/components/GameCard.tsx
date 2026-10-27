@@ -12,7 +12,7 @@ import DoneIcon from "@mui/icons-material/Done";
 import { useTranslation } from "react-i18next";
 import { resolveAssetUrl } from "../api/client";
 import type { GameCategory, PlayStatus } from "../api/types";
-import { getAddonType, getReleaseYear, isAddon } from "../utils/utils";
+import { formatReleaseDate, getAddonType, getReleaseYear, isAddon } from "../utils/utils";
 import OwnershipBadges from "./OwnershipBadges";
 
 const PLAY_STATUS_LABEL_KEYS: Record<PlayStatus, string> = {
@@ -92,6 +92,9 @@ interface GameCardProps {
   // public games grid pass the owned platforms). Fork-only: upstream's card has no
   // platform row, but dropping it would hide owned-platform info the grids show today.
   ownedPlatforms?: string[];
+  // "full" shows the whole release date (day, month, year) instead of just the year — the
+  // release calendar, where the day is the point.
+  dateFormat?: "year" | "full";
 }
 
 // The 2026 card: the cover carries it. A 3:4 cover with today's badges and chips on it, then
@@ -109,9 +112,10 @@ const GameCard = ({
   onOpen,
   hoverActions,
   ownedPlatforms,
+  dateFormat = "year",
 }: GameCardProps) => {
   const theme = useTheme();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   // Upstream's vgt tokens, as literals: the fork's M3 theme has no equivalents for the
   // muted meta text or the strong hover border, and these two are the look.
   const isDark = theme.palette.mode === "dark";
@@ -403,7 +407,11 @@ const GameCard = ({
             minHeight: 17,
           }}
         >
-          <span>{releaseYear ?? t("games.card.unknownYear")}</span>
+          <span>
+            {dateFormat === "full" && game.firstReleaseDate
+              ? formatReleaseDate(game.firstReleaseDate, i18n.resolvedLanguage ?? i18n.language)
+              : (releaseYear ?? t("games.card.unknownYear"))}
+          </span>
           {isAddon(game) ? (
             <>
               <span aria-hidden> · </span>

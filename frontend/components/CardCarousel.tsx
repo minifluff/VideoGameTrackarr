@@ -30,6 +30,10 @@ interface CardCarouselProps<T> {
   // Dashboard card-size scale, when the caller owns one (Customize Overview); otherwise
   // the global appearance size applies, as on the Games pages.
   cardSize?: number;
+  // Fixed card width in px. When set, the cards match the dashboard strips exactly
+  // (same width, same scale) instead of sizing as an even share of the row; when
+  // omitted, the percentage sizing below applies (the Events teaser keeps it).
+  columnWidth?: number;
 }
 
 function CardCarousel<T>({
@@ -39,9 +43,11 @@ function CardCarousel<T>({
   title,
   viewAllHref,
   cardSize,
+  columnWidth,
 }: CardCarouselProps<T>) {
   const { t } = useTranslation();
   const columns = useResponsiveColumns(cardSize);
+  const itemBasis = columnWidth !== undefined ? `${columnWidth}px` : itemFlexBasis(columns);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
@@ -55,11 +61,11 @@ function CardCarousel<T>({
 
   useEffect(() => {
     updateScrollState();
-    // items.length/columns are enough to trigger a recheck when the row's content or the
-    // per-breakpoint column count changes — neither is referenced inside updateScrollState
+    // items.length/columns/columnWidth are enough to trigger a recheck when the row's
+    // content or the card sizing changes — none is referenced inside updateScrollState
     // itself.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items.length, columns]);
+  }, [items.length, columns, columnWidth]);
 
   const scrollByPage = (direction: 1 | -1) => {
     const el = scrollRef.current;
@@ -126,7 +132,7 @@ function CardCarousel<T>({
           <Box
             key={getItemKey(item)}
             sx={{
-              flex: `0 0 ${itemFlexBasis(columns)}`,
+              flex: `0 0 ${itemBasis}`,
               // Without this, a flex item's automatic minimum size defaults to its content's
               // min-content width — a long, unwrapped (white-space: nowrap) game title can
               // exceed the fixed flex-basis above and silently blow the card up past its

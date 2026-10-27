@@ -1,9 +1,10 @@
 import { useNavigate } from "react-router-dom";
-import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
+import type { UpcomingRelease } from "../api/types";
 import { useReleaseCalendar } from "../hooks/useDashboard";
 import { gameIdentifier, hardwareIdentifier } from "../utils/identifiers";
+import { formatReleaseDate } from "../utils/utils";
 import CardCarousel from "./CardCarousel";
 import GameCard from "./GameCard";
 import HardwareCard from "./HardwareCard";
@@ -11,26 +12,24 @@ import HardwareCard from "./HardwareCard";
 interface ReleaseCalendarSectionProps {
   scope: "games" | "hardware";
   title: string;
+  // Dashboard card-size scale, when the caller owns one (Customize Overview); otherwise
+  // the global appearance size applies. Fork-only: upstream's section has no card size.
   cardSize?: number;
+  // Fixed card width in px (see CardCarousel); omitted, cards share the row like the grids.
+  columnWidth?: number;
 }
 
-const formatReleaseDate = (dateStr: string): string => {
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return dateStr;
-  }
-};
-
-const ReleaseCalendarSection = ({ scope, title, cardSize }: ReleaseCalendarSectionProps) => {
-  const { t } = useTranslation();
+const ReleaseCalendarSection = ({ scope, title, cardSize, columnWidth }: ReleaseCalendarSectionProps) => {
+  const { t, i18n } = useTranslation();
   const { data, isLoading } = useReleaseCalendar();
   const navigate = useNavigate();
+
+  // Hardware cards show the release date inside the card. Upstream shows just the year
+  // when that's all the hardware reference knows, but the fork's release-calendar API
+  // carries no precision, so every hardware date renders in full — the same date the
+  // old caption below the card showed.
+  const releaseDateLabel = (item: UpcomingRelease) =>
+    formatReleaseDate(Date.parse(item.releaseDate) / 1000, i18n.resolvedLanguage ?? i18n.language);
 
   if (isLoading) {
     return <Typography color="text.secondary">{t("releaseCalendar.loading")}</Typography>;
@@ -54,7 +53,6 @@ const ReleaseCalendarSection = ({ scope, title, cardSize }: ReleaseCalendarSecti
   }
 
   return (
-    <>
     <CardCarousel
       items={releases}
       getItemKey={(item) =>
@@ -66,28 +64,20 @@ const ReleaseCalendarSection = ({ scope, title, cardSize }: ReleaseCalendarSecti
       }
       title={title}
       cardSize={cardSize}
+      columnWidth={columnWidth}
       renderItem={(item) => {
         if (item.kind === "game" && item.game) {
           return (
-            <Box>
-              <GameCard
-                game={item.game}
-                context="list"
-                contextFunction={() => navigate(`/game/${gameIdentifier(item.game!)}`)}
-              />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", textAlign: "center", mt: 0.5, fontWeight: "bold" }}
-              >
-                {formatReleaseDate(item.releaseDate)}
-              </Typography>
-            </Box>
+            <GameCard
+              game={item.game}
+              context="list"
+              contextFunction={() => navigate(`/game/${gameIdentifier(item.game!)}`)}
+              dateFormat="full"
+            />
           );
         }
         if (item.kind === "device" && item.device) {
           return (
-            <Box>
             <HardwareCard
               name={item.device.officialName}
               subtitle={[item.device.manufacturerName, item.device.hardwarePlatformName]
@@ -97,25 +87,17 @@ const ReleaseCalendarSection = ({ scope, title, cardSize }: ReleaseCalendarSecti
               owned={item.device.owned}
               wishlisted={item.device.wishlisted}
               ownedQuantity={item.device.ownedQuantity}
+              dateLine={releaseDateLabel(item)}
               onClick={() =>
                 navigate(
                   `/hardware/device/${hardwareIdentifier(item.device!.officialName, item.device!.uuid)}`
                 )
               }
             />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", textAlign: "center", mt: 0.5, fontWeight: "bold" }}
-              >
-                {formatReleaseDate(item.releaseDate)}
-              </Typography>
-            </Box>
           );
         }
         if (item.kind === "accessory" && item.accessory) {
           return (
-            <Box>
             <HardwareCard
               name={item.accessory.officialName}
               subtitle={[item.accessory.manufacturerName, item.accessory.accessoryTypeName]
@@ -125,26 +107,18 @@ const ReleaseCalendarSection = ({ scope, title, cardSize }: ReleaseCalendarSecti
               owned={item.accessory.owned}
               wishlisted={item.accessory.wishlisted}
               ownedQuantity={item.accessory.ownedQuantity}
+              dateLine={releaseDateLabel(item)}
               onClick={() =>
                 navigate(
                   `/hardware/accessory/${hardwareIdentifier(item.accessory!.officialName, item.accessory!.uuid)}`
                 )
               }
             />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", textAlign: "center", mt: 0.5, fontWeight: "bold" }}
-              >
-                {formatReleaseDate(item.releaseDate)}
-              </Typography>
-            </Box>
           );
         }
         return null;
       }}
     />
-    </>
   );
 };
 

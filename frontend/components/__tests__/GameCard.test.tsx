@@ -275,6 +275,20 @@ describe("GameCard", () => {
     expect(screen.queryByText("Custom")).not.toBeInTheDocument();
   });
 
+  it("shows the full release date with dateFormat full, and just the year by default", () => {
+    const { unmount } = renderWithTheme(
+      <GameCard game={baseGame} context="list" contextFunction={vi.fn()} dateFormat="full" />
+    );
+
+    expect(screen.getByText("Feb 29, 2016")).toBeInTheDocument();
+    unmount();
+
+    renderWithTheme(<GameCard game={baseGame} context="list" contextFunction={vi.fn()} />);
+
+    expect(screen.getByText("2016")).toBeInTheDocument();
+    expect(screen.queryByText("Feb 29, 2016")).not.toBeInTheDocument();
+  });
+
   it("shows the addon type label for non-main_game categories", () => {
     renderWithTheme(
       <GameCard

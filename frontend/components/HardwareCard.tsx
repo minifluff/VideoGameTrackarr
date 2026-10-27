@@ -20,13 +20,16 @@ interface HardwareCardProps {
   // Optional so a read-only context (the public share-link view) can render a non-clickable
   // card without a dummy handler.
   onClick?: () => void;
+  // Second line under the subtitle — the release calendar's date, rendered inside the
+  // card instead of as a caption below it (upstream's shape).
+  dateLine?: string;
 }
 
 // Shared by Hardware and Accessory grids — same shape of info (name, a one-line
 // subtitle, owned/wishlist badges, a quantity chip) but neither maps cleanly onto
 // GameCard's game-specific fields (release year, play status, addon type), so this is
 // its own component rather than a GameCard reuse.
-const HardwareCard = ({ name, subtitle, imageUrl, owned, wishlisted, ownedQuantity, onClick }: HardwareCardProps) => {
+const HardwareCard = ({ name, subtitle, imageUrl, owned, wishlisted, ownedQuantity, onClick, dateLine }: HardwareCardProps) => {
   const theme = useTheme();
   const { t } = useTranslation();
   const isClickable = Boolean(onClick);
@@ -102,6 +105,16 @@ const HardwareCard = ({ name, subtitle, imageUrl, owned, wishlisted, ownedQuanti
         >
           {subtitle ?? " "}
         </Typography>
+        {dateLine !== undefined ? (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            component="div"
+            sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
+          >
+            {dateLine}
+          </Typography>
+        ) : null}
         {owned && ownedQuantity > 1 ? <Chip label={`x${ownedQuantity}`} size="small" sx={{ mt: 0.75 }} /> : null}
       </CardContent>
     </Card>
