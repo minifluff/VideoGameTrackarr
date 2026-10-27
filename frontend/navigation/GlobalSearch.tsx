@@ -131,7 +131,15 @@ const GlobalSearch = () => {
       (list ?? []).filter((item) => matches(name(item))).slice(0, PER_KIND);
 
     return [
-      ...(games ?? []).slice(0, PER_KIND).map((game) => ({
+      // Missing games stay out of search: an auto-discovered game (found by a
+      // Collection/Series "what's missing" resync) that isn't owned or wishlisted
+      // is not something to jump to from the header — the same "missing"
+      // definition the backend and the public list use. They still show on the
+      // Games list and collection/series pages under their own toggles.
+      ...(games ?? [])
+        .filter((game) => !(game.autoDiscovered && !game.owned && !game.wishlisted))
+        .slice(0, PER_KIND)
+        .map((game) => ({
         kind: "game" as const,
         id: game.id,
         label: game.name,

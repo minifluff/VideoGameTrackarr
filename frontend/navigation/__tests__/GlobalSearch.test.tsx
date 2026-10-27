@@ -12,7 +12,13 @@ vi.mock("../../hooks/useGames", () => ({
   useGames: (filters: { search?: string }, options?: { enabled?: boolean }) => ({
     data:
       options?.enabled && filters.search
-        ? [{ id: 1, uuid: "u1", slug: "zelda-botw", name: "Zelda: Breath of the Wild", coverUrl: null, firstReleaseDate: 1488499200 }]
+        ? [
+            { id: 1, uuid: "u1", slug: "zelda-botw", name: "Zelda: Breath of the Wild", coverUrl: null, firstReleaseDate: 1488499200 },
+            // Auto-discovered and neither owned nor wishlisted: "missing", hidden below.
+            { id: 2, uuid: "u2", slug: "zelda-links-awakening", name: "Zelda: Link's Awakening", coverUrl: null, firstReleaseDate: null, autoDiscovered: true, owned: false, wishlisted: false },
+            // Auto-discovered but wishlisted: not missing, still searchable.
+            { id: 3, uuid: "u3", slug: "zelda-echoes", name: "Zelda: Echoes of Wisdom", coverUrl: null, firstReleaseDate: null, autoDiscovered: true, owned: false, wishlisted: true },
+          ]
         : undefined,
   }),
 }));
@@ -76,6 +82,15 @@ describe("GlobalSearch", () => {
 
     await userEvent.click(screen.getByText("Zelda: Breath of the Wild"));
     expect(router.state.location.pathname).toBe("/game/zelda-botw");
+  });
+
+  it("hides missing games but keeps wishlisted discoveries", async () => {
+    renderSearch();
+    await userEvent.type(screen.getByRole("combobox", { name: "Search" }), "zelda");
+
+    expect(await screen.findByText("Zelda: Breath of the Wild")).toBeInTheDocument();
+    expect(screen.getByText("Zelda: Echoes of Wisdom")).toBeInTheDocument();
+    expect(screen.queryByText("Zelda: Link's Awakening")).not.toBeInTheDocument();
   });
 
   it("filters the Games list by the text on Enter, applying it once", async () => {
