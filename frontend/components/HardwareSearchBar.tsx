@@ -112,7 +112,7 @@ const HardwareSearchBar = ({
     manufacturerIds.length + deviceTypeIds.length + accessoryTypeIds.length + platformIds.length;
 
   return (
-    <Paper sx={{ p: 2, borderRadius: 2 }}>
+    <Paper elevation={0} sx={{ p: 2, borderRadius: 2 }}>
       <Stack spacing={1.5}>
         <Stack direction="row" spacing={1}>
           <TextField

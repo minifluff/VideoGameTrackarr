@@ -362,9 +362,6 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
           bgcolor: "background.default",
           pt: 0.5,
           pb: 2,
-          // Once scrolled content locks under this sticky header, the bottom edge needs to
-          // read as an intentional floating panel rather than content abruptly disappearing.
-          boxShadow: "0 4px 8px -4px rgba(0, 0, 0, 0.2)",
         }}
       >
         {subNav ? (
