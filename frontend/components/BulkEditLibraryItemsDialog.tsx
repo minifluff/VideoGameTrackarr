@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Autocomplete from "@mui/material/Autocomplete";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -14,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import type { BulkLibraryField } from "../api/library";
 import type { MediaFormat } from "../api/types";
 import { useBulkUpdateLibraryItems } from "../hooks/useLibrary";
+import { useGames } from "../hooks/useGames";
 import { usePlatforms } from "../hooks/usePlatforms";
 import { useRegions } from "../hooks/useRegions";
 
@@ -34,6 +36,7 @@ const FIELD_KEYS: { value: BulkLibraryField; labelKey: string }[] = [
   { value: "status", labelKey: "games.listPage.bulkEdit.fields.status" },
   { value: "edition", labelKey: "games.listPage.bulkEdit.fields.edition" },
   { value: "notes", labelKey: "games.listPage.bulkEdit.fields.notes" },
+  { value: "game", labelKey: "games.listPage.bulkEdit.fields.game" },
 ];
 
 interface BulkEditLibraryItemsDialogProps {
@@ -54,25 +57,38 @@ const BulkEditLibraryItemsDialog = ({
   const { t } = useTranslation();
   const [field, setField] = useState<BulkLibraryField>("format");
   const [value, setValue] = useState("");
+  const [gameSearch, setGameSearch] = useState("");
+  const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const bulkUpdate = useBulkUpdateLibraryItems();
   const { data: platforms } = usePlatforms();
   const { data: regions } = useRegions();
+  const { data: gameResults } = useGames(
+    { search: gameSearch.length >= 2 ? gameSearch : undefined },
+    { enabled: open && field === "game" }
+  );
 
   useEffect(() => {
     if (open) {
       setField("format");
       setValue("");
+      setGameSearch("");
+      setSelectedGameId(null);
       setError(null);
     }
   }, [open ]);
 
   const isTextField = field === "edition" || field === "notes";
-  const canApply = isTextField || value !== "";
+  const canApply =
+    field === "game" ? selectedGameId !== null : isTextField || value !== "";
 
   const handleApply = async () => {
     const coerced: string | number | null =
-      field === "platform" || field === "region" ? Number(value) : value;
+      field === "game"
+        ? selectedGameId
+        : field === "platform" || field === "region"
+          ? Number(value)
+          : value;
     try {
       const result = await bulkUpdate.mutateAsync({ itemIds, field, value: coerced });
       onApplied(result.updated);
@@ -95,6 +111,8 @@ const BulkEditLibraryItemsDialog = ({
             onChange={(event) => {
               setField(event.target.value as BulkLibraryField);
               setValue("");
+              setGameSearch("");
+              setSelectedGameId(null);
               setError(null);
             }}
           >
@@ -175,6 +193,25 @@ const BulkEditLibraryItemsDialog = ({
           </FormControl>
         )}
 
+        {field === "game" && (
+          <Autocomplete
+            options={gameResults ?? []}
+            getOptionLabel={(option) => option.name}
+            value={(gameResults ?? []).find((g) => g.id === selectedGameId) ?? null}
+            onChange={(_, game) => setSelectedGameId(game?.id ?? null)}
+            inputValue={gameSearch}
+            onInputChange={(_, text) => setGameSearch(text)}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label={t("games.listPage.bulkEdit.valueLabel")}
+                placeholder={t("library.targetGamePlaceholder")}
+                fullWidth
+              />
+            )}
+          />
+        )}
+
         {isTextField && (
           <TextField
             label={t("games.listPage.bulkEdit.valueLabel")}
@@ -187,6 +224,10 @@ const BulkEditLibraryItemsDialog = ({
 
         {field === "format" && (
           <Alert severity="info">{t("games.listPage.bulkEdit.romWarning")}</Alert>
+        )}
+
+        {field === "game" && (
+          <Alert severity="info">{t("games.listPage.bulkEdit.moveNote")}</Alert>
         )}
       </DialogContent>
       <DialogActions>

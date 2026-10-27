@@ -117,6 +117,21 @@ def bulk_update_library_items(
     elif field in ("edition", "notes"):
         text = str(value).strip() if value is not None else None
         fields = {field: text or None}
+    elif field == "game":
+        # Moving copies to another game doesn't fit the set-a-column loop below
+        # (it reassigns game_id), and an item already in the target game is a
+        # no-op, not an error — so a bulk move over a mixed selection still moves
+        # everything that needs moving. Targets and ids are still validated
+        # before anything is written, like every other field.
+        _require_game(db, value)
+        unique_ids = list(dict.fromkeys(item_ids))
+        items = [_require_library_item(db, item_id) for item_id in unique_ids]
+        moved = 0
+        for item in items:
+            if item.game_id != value:
+                move_library_item(db, item.id, value)
+                moved += 1
+        return moved
     else:  # pragma: no cover - the route's Literal type already restricts this
         raise ValueError(f"Unsupported bulk-update field: {field}")
 

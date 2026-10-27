@@ -34,6 +34,12 @@ vi.mock("../../hooks/useRegions", () => ({
   useRegions: () => ({ data: [{ id: 3, name: "NTSC-U/C (North America)" }] }),
 }));
 
+vi.mock("../../hooks/useGames", () => ({
+  useGames: () => ({
+    data: [{ id: 42, name: "Target Game" }],
+  }),
+}));
+
 describe("BulkEditLibraryItemsDialog", () => {
   it("applies a format change to every selected item", async () => {
     const user = userEvent.setup();
@@ -75,6 +81,31 @@ describe("BulkEditLibraryItemsDialog", () => {
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
     expect(mutateAsync).toHaveBeenCalledWith({ itemIds: [5], field: "platform", value: 7 });
+  });
+
+  it("moves every selected item to the picked game", async () => {
+    const user = userEvent.setup();
+    render(
+      <BulkEditLibraryItemsDialog open itemIds={[11, 12]} onClose={vi.fn()} onApplied={vi.fn()} />
+    );
+
+    await user.click(screen.getByRole("combobox", { name: "Field" }));
+    await user.click(await screen.findByRole("option", { name: "Move to game" }));
+    expect(
+      screen.getByText(/Only the game changes/)
+    ).toBeInTheDocument();
+    // Nothing picked yet, so Apply stays disabled.
+    expect(screen.getByRole("button", { name: "Apply" })).toBeDisabled();
+
+    await user.click(screen.getByRole("combobox", { name: "New value" }));
+    await user.click(await screen.findByRole("option", { name: "Target Game" }));
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    expect(mutateAsync).toHaveBeenCalledWith({
+      itemIds: [11, 12],
+      field: "game",
+      value: 42,
+    });
   });
 
   it("applies free-text edition (blank would clear it)", async () => {

@@ -77,8 +77,8 @@ def update_library_item(
 
 class BulkUpdateLibraryItemsRequest(BaseModel):
     item_ids: list[int] = Field(min_length=1, max_length=1000)
-    field: Literal["format", "platform", "region", "status", "edition", "notes"]
-    # format/status arrive as their enum value strings, platform/region as
+    field: Literal["format", "platform", "region", "status", "edition", "notes", "game"]
+    # format/status arrive as their enum value strings, platform/region/game as
     # integer ids, edition/notes as free text (blank clears the field).
     value: str | int | None = None
 

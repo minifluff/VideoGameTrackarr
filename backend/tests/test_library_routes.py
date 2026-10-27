@@ -385,6 +385,41 @@ def test_bulk_update_platform_and_status(auth_client, seed_game, seed_platform, 
     assert items[0]["status"] == "wishlist"
 
 
+def test_bulk_update_game_moves_items(auth_client, seed_game, seed_platform, db_session):
+    from app.models.catalog import Game, GameCategory
+
+    target = Game(name="Target Game", slug="target-game", category=GameCategory.MAIN_GAME)
+    db_session.add(target)
+    db_session.commit()
+    first = _add_item(auth_client, seed_game.id, seed_platform.id, "physical")
+    second = _add_item(auth_client, seed_game.id, seed_platform.id, "digital")
+
+    response = auth_client.post(
+        "/api/library/bulk-update",
+        json={"item_ids": [first, second], "field": "game", "value": target.id},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"updated": 2}
+    assert auth_client.get(f"/api/games/{seed_game.id}/library").json() == []
+    items = auth_client.get(f"/api/games/{target.id}/library").json()
+    assert len(items) == 2
+    assert {item["format"] for item in items} == {"physical", "digital"}
+
+
+def test_bulk_update_game_rejects_unknown_target(auth_client, seed_game, seed_platform):
+    item_id = _add_item(auth_client, seed_game.id, seed_platform.id)
+
+    response = auth_client.post(
+        "/api/library/bulk-update",
+        json={"item_ids": [item_id], "field": "game", "value": 999999},
+    )
+
+    assert response.status_code == 404
+    items = auth_client.get(f"/api/games/{seed_game.id}/library").json()
+    assert len(items) == 1
+
+
 def test_bulk_update_edition_blank_clears(auth_client, seed_game, seed_platform):
     item_id = _add_item(auth_client, seed_game.id, seed_platform.id)
 

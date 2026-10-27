@@ -43,7 +43,7 @@ export async function bulkDeleteLibraryItems(itemIds: number[]): Promise<{ delet
   return response.data;
 }
 
-export type BulkLibraryField = "format" | "platform" | "region" | "status" | "edition" | "notes";
+export type BulkLibraryField = "format" | "platform" | "region" | "status" | "edition" | "notes" | "game";
 
 // Sets ONE field on many library items at once (List page bulk edit). The
 // backend validates every id before writing, so a bad id fails the whole call.

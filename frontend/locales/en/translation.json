@@ -1182,13 +1182,15 @@
         "error": "Couldn't update the selected items.",
         "blankClears": "Leave blank to clear this field.",
         "romWarning": "Copies that stop being ROM, Abandonware or ISO lose their uploaded ROM files.",
+        "moveNote": "Only the game changes — platform, format, edition and uploaded ROM files stay with each copy.",
         "fields": {
           "format": "Format",
           "platform": "Platform",
           "region": "Region",
           "status": "Status",
           "edition": "Edition",
-          "notes": "Notes"
+          "notes": "Notes",
+          "game": "Move to game"
         },
         "statusOwned": "Owned",
         "statusWishlist": "Wishlist",
@@ -1871,7 +1873,7 @@
   },
   "library": {
     "moveItemTitle": "Move library item",
-    "moveItemDescription": "Move '{item}' to a different game or split it into its own listing.",
+    "moveItemDescription": "Move '{{item}}' to a different game or split it into its own listing.",
     "moveToGameTab": "Move to game",
     "splitToNewGameTab": "New game",
     "targetGameLabel": "Target game",

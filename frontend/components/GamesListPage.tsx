@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DeleteIcon from "@mui/icons-material/Delete";
+import DriveFileMoveIcon from "@mui/icons-material/DriveFileMove";
 import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import Alert from "@mui/material/Alert";
@@ -13,6 +14,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Collapse from "@mui/material/Collapse";
 import FormControl from "@mui/material/FormControl";
+import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
@@ -27,12 +29,14 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { listAllLibraryItems } from "../api/library";
 import { useBulkDeleteLibraryItems } from "../hooks/useLibrary";
 import BulkEditLibraryItemsDialog from "./BulkEditLibraryItemsDialog";
+import MoveLibraryItemDialog from "./MoveLibraryItemDialog";
 import type { LibraryListItem } from "../api/types";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 
@@ -52,6 +56,7 @@ const GamesListPage = () => {
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<number>>(new Set());
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [moveItem, setMoveItem] = useState<LibraryListItem | null>(null);
   const [bulkDeleteError, setBulkDeleteError] = useState<string | null>(null);
   const bulkDelete = useBulkDeleteLibraryItems();
 
@@ -367,6 +372,7 @@ const GamesListPage = () => {
                     </TableSortLabel>
                   </TableCell>
                 ))}
+                  <TableCell />
 
               </TableRow>
             </TableHead>
@@ -391,6 +397,17 @@ const GamesListPage = () => {
                   <TableCell>{item.format ?? "—"}</TableCell>
                   <TableCell>{item.edition ?? "—"}</TableCell>
                   <TableCell>{item.notes ?? "—"}</TableCell>
+                  <TableCell padding="checkbox" onClick={(event) => event.stopPropagation()}>
+                    <Tooltip title={t("common.transfer")}>
+                      <IconButton
+                        size="small"
+                        aria-label={t("common.transfer")}
+                        onClick={() => setMoveItem(item)}
+                      >
+                        <DriveFileMoveIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -439,6 +456,19 @@ const GamesListPage = () => {
           setSelectedIds(new Set());
         }}
       />
+      {moveItem && (
+        <MoveLibraryItemDialog
+          open
+          onClose={() => setMoveItem(null)}
+          itemId={moveItem.id}
+          itemLabel={
+            moveItem.platformName
+              ? `${moveItem.gameName} (${moveItem.platformName})`
+              : moveItem.gameName
+          }
+          currentGameId={moveItem.gameId}
+        />
+      )}
     </>
   );
 };

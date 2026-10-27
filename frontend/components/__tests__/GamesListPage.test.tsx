@@ -47,7 +47,11 @@ const bulkDeleteMutate = vi.fn().mockResolvedValue({ deleted: 1 });
 vi.mock("../../hooks/useLibrary", () => ({
   useBulkUpdateLibraryItems: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useBulkDeleteLibraryItems: () => ({ mutateAsync: bulkDeleteMutate, isPending: false }),
+  useMoveLibraryItem: () => ({ mutate: vi.fn(), isPending: false }),
+  useSplitLibraryItem: () => ({ mutate: vi.fn(), isPending: false }),
 }));
+
+vi.mock("../../hooks/useGames", () => ({ useGames: () => ({ data: [] }) }));
 
 function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -113,5 +117,32 @@ describe("GamesListPage selection", () => {
     await user.click(zeldaCheckbox);
     // Still on the list (selection bar visible), not navigated to the game page.
     expect(await screen.findByText("1 selected")).toBeInTheDocument();
+  });
+});
+
+describe("GamesListPage move action", () => {
+  it("shows a Move button on every row and opens the move dialog for that row", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    const moveButtons = await screen.findAllByRole("button", { name: "Move to another game" });
+    expect(moveButtons).toHaveLength(2);
+
+    await user.click(moveButtons[0]);
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText("Move library item")).toBeInTheDocument();
+    expect(screen.getByText(/Astro Bot \(PlayStation 5\)/)).toBeInTheDocument();
+  });
+
+  it("does not navigate when clicking a row Move button", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    const moveButtons = await screen.findAllByRole("button", { name: "Move to another game" });
+    await user.click(moveButtons[1]);
+    // The dialog belongs to the list page, so it only shows if we stayed put.
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText(/Zelda: Tears of the Kingdom \(Nintendo Switch\)/)).toBeInTheDocument();
+    expect(screen.queryByText(/selected/)).not.toBeInTheDocument();
   });
 });
