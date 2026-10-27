@@ -143,7 +143,7 @@ GPL-3.0 — see [LICENSE](LICENSE).
 
 ## Customizations in this fork (most customizations are only tested under english pages)
 
-- Playnite library sync (via network share and JSON exporter plugin)
+- Playnite library Import (via network share and JSON exporter plugin)
 - Steam sync "Sync all" button
 - CSV import
 - Custom appearance settings (accent color, app title)
@@ -157,8 +157,6 @@ GPL-3.0 — see [LICENSE](LICENSE).
 - Platform page added
 - Platform Manager page added
 - Added platforms to Public page
-- Added dates to Games Calender section
-- Removed Events from Dashboard
 - Added Linked cover art (local nas or web).
 - Change search to allow any order of words.
 - Added Navigation Menu hides on scroll on phones
@@ -167,11 +165,9 @@ GPL-3.0 — see [LICENSE](LICENSE).
 - Added public game hiding feature
 - Move Remove to dropdown of multi-select and added confirm. Making tags the default action.
 - collapsible title/description and sticky toolbar on catalog pages
-- Added Test Game list page
-- Submenus collapse
+- Added Individual Games list page
 - Added Scheduled JSON backup to Network share
 - Fixed Isthereanydeal sale tracking and removed requirement to manual enter games to track
-- Many more Fixes and changes
 - Added persistent login
 - Added simple Andoid app. Downloadable from settings.
 - Display Mode added. Displays cover art, Screenshot, Artwork and Videos in slideshow
