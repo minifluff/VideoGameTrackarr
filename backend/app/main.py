@@ -138,7 +138,9 @@ CROSS_ORIGIN_ISOLATION_HEADERS = {
 # Sent on every response (as in DieCastCollectionTracker). The app's CSP fits the built
 # frontend: scripts and styles from this origin only (MUI injects <style> tags, hence
 # 'unsafe-inline' for styles; no script is inline), images also from https: (IGDB covers,
-# YouTube and Steam artwork), YouTube's no-cookie player and this app's own emulator page as
+# YouTube and Steam artwork) and http: (covers pasted as local-network links — a LAN
+# server has no TLS, so without http: the browser refuses those images outright),
+# YouTube's no-cookie player and this app's own emulator page as
 # the only frames, and the service worker may fetch IGDB images to cache them. No other site
 # may frame the app.
 APP_CONTENT_SECURITY_POLICY = "; ".join(
@@ -146,7 +148,7 @@ APP_CONTENT_SECURITY_POLICY = "; ".join(
         "default-src 'self'",
         "script-src 'self'",
         "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data: blob: https:",
+        "img-src 'self' data: blob: https: http:",
         "media-src 'self' blob:",
         "font-src 'self' data:",
         "connect-src 'self' https://images.igdb.com",

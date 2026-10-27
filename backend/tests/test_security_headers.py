@@ -13,6 +13,14 @@ def test_api_and_app_responses_carry_the_security_headers(client):
     assert "'unsafe-eval'" not in csp
 
 
+def test_app_policy_allows_http_images_for_local_network_covers():
+    csp = security_headers_for("/games")["Content-Security-Policy"]
+
+    # Local-network cover links are plain http (no TLS on a LAN server); without http:
+    # in img-src the browser refuses them and the cover preview renders broken.
+    assert "img-src 'self' data: blob: https: http:" in csp
+
+
 def test_the_emulator_gets_its_own_policy():
     csp = security_headers_for("/emulatorjs/player.html")["Content-Security-Policy"]
 
