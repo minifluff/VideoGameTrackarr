@@ -125,11 +125,11 @@ const CatalogBrowseGrid = ({
   // Per-page card size (Options menu) — seeded from the global appearance size.
   const { cardSize: globalCardSize } = useAppearance();
   const [cardSize, setCardSize] = useSessionState(`${stateKey}.cardSize`, globalCardSize);
-  // On by default: the "what's missing" discoveries a Resync (see CatalogResyncButton)
-  // catalogues are the point of these pages — hiding them behind an off-by-default
-  // switch buried in the filter dialog made them effectively invisible (and
-  // impossible to clean up). The switch stays available to hide them.
-  const [showMissing, setShowMissing] = useSessionState(`${stateKey}.showMissing`, true);
+  // Off by default on Collection/Series pages: the "what's missing" discoveries a
+  // Resync (see CatalogResyncButton) catalogues are hidden until the switch is turned
+  // on. (Platform pages don't render the switch at all — every game there is already
+  // one of your copies — so this default only ever affects Collection/Series pages.)
+  const [showMissing, setShowMissing] = useSessionState(`${stateKey}.showMissing`, false);
   const [includeAddons, setIncludeAddons] = useSessionState(`${stateKey}.includeAddons`, false);
 
   const trimmedKeyword = searchKeyword.trim();
