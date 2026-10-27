@@ -216,10 +216,6 @@ const PlayniteSyncPage = () => {
       <Typography variant="h4" component="h1" gutterBottom>
         {t("settings.playniteSync.title")}
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        {t("settings.playniteSync.description")}
-      </Typography>
-
       {!configured ? (
         <Paper sx={{ p: 3, textAlign: "center" }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>

@@ -37,9 +37,6 @@ const EventsPage = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           {t("nav.events")}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {t("events.page.description")}
-        </Typography>
       </Box>
       {isLoading ? (
         <Typography color="text.secondary">{t("common.loading")}</Typography>

@@ -17,7 +17,6 @@ function renderGrid(stateKey: string) {
       <CatalogIndexGrid
         stateKey={stateKey}
         title="Collections"
-        description=""
         emptyMessage="None"
         searchLabel="Search collections"
         searchPlaceholder="Enter collection name"
@@ -59,7 +58,6 @@ describe("CatalogIndexGrid min-games slider", () => {
         <CatalogIndexGrid
           stateKey="collections-slider"
           title="Collections"
-          description=""
           emptyMessage="None"
           searchLabel="Search collections"
           searchPlaceholder="Enter collection name"
@@ -92,7 +90,6 @@ describe("CatalogIndexGrid min-games slider", () => {
         <CatalogIndexGrid
           stateKey="platforms-slider"
           title="Platforms"
-          description=""
           emptyMessage="None"
           searchLabel="Search platforms"
           searchPlaceholder="Enter platform name"

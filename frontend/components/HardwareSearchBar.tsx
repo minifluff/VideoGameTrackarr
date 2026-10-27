@@ -1,11 +1,10 @@
 import { useState } from "react";
 import ClearIcon from "@mui/icons-material/Clear";
-import FilterListIcon from "@mui/icons-material/FilterList";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import SearchIcon from "@mui/icons-material/Search";
 import SortIcon from "@mui/icons-material/Sort";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
@@ -139,15 +138,22 @@ const HardwareSearchBar = ({
             }}
             fullWidth
           />
-          <Button
-            startIcon={<SortIcon />}
-            onClick={(event) => setSortMenuAnchor(event.currentTarget)}
-            aria-haspopup="menu"
-            aria-expanded={sortMenuAnchor !== null}
-            sx={{ flexShrink: 0, alignSelf: "center" }}
+          <Tooltip
+            title={
+              sortOptions.find((option) => option.value === sort)?.label ??
+              t("hardware.listToolbar.sortByLabel")
+            }
           >
-            {t("hardware.listToolbar.sortByLabel")}
-          </Button>
+            <IconButton
+              onClick={(event) => setSortMenuAnchor(event.currentTarget)}
+              aria-label={t("hardware.listToolbar.sortByLabel")}
+              aria-haspopup="menu"
+              aria-expanded={sortMenuAnchor !== null}
+              sx={{ alignSelf: "center" }}
+            >
+              <SortIcon />
+            </IconButton>
+          </Tooltip>
           <Tooltip title={t("hardware.searchBar.filtersButtonLabel")}>
             <IconButton
               onClick={() => setFiltersOpen(true)}
@@ -155,7 +161,7 @@ const HardwareSearchBar = ({
               sx={{ alignSelf: "center" }}
             >
               <Badge badgeContent={activeFilterCount} color="primary">
-                <FilterListIcon />
+                <FilterAltIcon />
               </Badge>
             </IconButton>
           </Tooltip>

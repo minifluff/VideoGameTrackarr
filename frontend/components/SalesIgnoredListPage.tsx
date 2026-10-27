@@ -72,9 +72,6 @@ const SalesIgnoredListPage = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           {t("insights.salesIgnored.heading")}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {t("insights.salesIgnored.description")}
-        </Typography>
       </Box>
 
       <Paper sx={{ width: "100%", overflow: "hidden", borderRadius: 2 }}>

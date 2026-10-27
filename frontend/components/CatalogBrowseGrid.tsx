@@ -288,9 +288,6 @@ const CatalogBrowseGrid = ({
               <Typography variant="h4" component="h1" gutterBottom>
                 {name ?? t("common.loading")}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {isPlatform ? t("catalog.browseGrid.platformNotice") : t("catalog.browseGrid.importedOnlyNotice")}
-              </Typography>
             </Box>
             {slug && resyncKind && resyncLabel ? (
               <CatalogResyncButton kind={resyncKind} slug={slug} label={resyncLabel} />

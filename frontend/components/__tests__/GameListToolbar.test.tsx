@@ -183,6 +183,25 @@ describe("GameListToolbar top-row controls", () => {
     expect(screen.queryByRole("button", { name: "Options" })).not.toBeInTheDocument();
   });
 
+  it("renders Options and Sort as icon-only buttons", () => {
+    renderToolbar({ cardSize: 1.0, onCardSizeChange: vi.fn() });
+
+    // Icon-only: no visible text label, just the icon — the accessible name comes
+    // from aria-label, and the Sort tooltip carries the current sort instead.
+    expect(screen.getByRole("button", { name: "Options" })).toHaveTextContent("");
+    expect(screen.getByRole("button", { name: "Sort By" })).toHaveTextContent("");
+  });
+
+  it("puts the select-games button before the search field", () => {
+    renderToolbar({ onEnterSelectionMode: vi.fn(), visibleCount: 1 });
+
+    const selectButton = screen.getByRole("button", { name: "Select games" });
+    const searchBox = screen.getByRole("textbox");
+    expect(
+      selectButton.compareDocumentPosition(searchBox) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
   it("changes the page card size from the Options menu", async () => {
     const props = renderToolbar({ cardSize: 1.0, onCardSizeChange: vi.fn() });
     const user = userEvent.setup();

@@ -14,9 +14,6 @@ const OnSalePage = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           {t("nav.onSale")}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {t("insights.onSale.description")}
-        </Typography>
       </Box>
       <OnSaleSection />
     </>

@@ -2,7 +2,6 @@ import { useState } from "react";
 import ClearIcon from "@mui/icons-material/Clear";
 import SearchIcon from "@mui/icons-material/Search";
 import SortIcon from "@mui/icons-material/Sort";
-import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import Menu from "@mui/material/Menu";
@@ -10,6 +9,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Collapse from "@mui/material/Collapse";
+import Tooltip from "@mui/material/Tooltip";
 import { useTranslation } from "react-i18next";
 import { useScrollCollapse } from "../hooks/useScrollCollapse";
 import type { CatalogSortOption } from "../api/types";
@@ -49,6 +49,10 @@ const CatalogIndexToolbar = ({
   const { t } = useTranslation();
   const collapsed = useScrollCollapse(80);
   const [sortMenuAnchor, setSortMenuAnchor] = useState<HTMLElement | null>(null);
+  const currentSortOption = SORT_OPTIONS.find((option) => option.value === sort);
+  const sortTooltip = currentSortOption
+    ? t(currentSortOption.labelKey)
+    : t("games.listToolbar.sortByLabel");
 
   return (
     <Collapse in={!collapsed} timeout={200}>
@@ -83,15 +87,17 @@ const CatalogIndexToolbar = ({
           }}
           fullWidth
         />
-        <Button
-          startIcon={<SortIcon />}
-          onClick={(event) => setSortMenuAnchor(event.currentTarget)}
-          aria-haspopup="menu"
-          aria-expanded={sortMenuAnchor !== null}
-          sx={{ flexShrink: 0 }}
-        >
-          {t("games.listToolbar.sortByLabel")}
-        </Button>
+        <Tooltip title={sortTooltip}>
+          <IconButton
+            onClick={(event) => setSortMenuAnchor(event.currentTarget)}
+            aria-label={t("games.listToolbar.sortByLabel")}
+            aria-haspopup="menu"
+            aria-expanded={sortMenuAnchor !== null}
+            sx={{ alignSelf: "center" }}
+          >
+            <SortIcon />
+          </IconButton>
+        </Tooltip>
       </Stack>
       <Menu
         anchorEl={sortMenuAnchor}

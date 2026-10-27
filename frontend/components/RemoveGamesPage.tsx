@@ -115,10 +115,6 @@ const RemoveGamesPage = () => {
       <Typography variant="h4" component="h1" gutterBottom>
         {t("settings.removeGames.title")}
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        {t("settings.removeGames.description")}
-      </Typography>
-
       <Box sx={{ display: "flex", gap: 2, mb: 2, flexWrap: "wrap", alignItems: "center" }}>
         <TextField
           size="small"

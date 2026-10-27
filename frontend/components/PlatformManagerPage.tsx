@@ -202,9 +202,6 @@ const PlatformManagerPage = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           {t("nav.platformManager")}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {t("settings.platformManager.description")}
-        </Typography>
         <Button variant="outlined" sx={{ mt: 2 }} onClick={() => setMassMoveOpen(true)}>
           {t("settings.platformManager.massMoveButton")}
         </Button>

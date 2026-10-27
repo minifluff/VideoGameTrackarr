@@ -104,9 +104,6 @@ const TagManagerPage = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           {t("nav.tagManager")}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {t("settings.tagManager.description")}
-        </Typography>
       </Box>
 
       <EnhancedTable

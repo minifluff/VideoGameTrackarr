@@ -49,7 +49,6 @@ const PlatformsPage = () => {
       <CatalogIndexGrid
         stateKey="platforms"
         title={t("games.platformsPage.title")}
-        description={t("games.platformsPage.description")}
         emptyMessage={t("games.platformsPage.emptyMessage")}
         searchLabel={t("games.platformsPage.searchLabel")}
         searchPlaceholder={t("games.platformsPage.searchPlaceholder")}

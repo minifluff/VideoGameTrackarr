@@ -21,9 +21,6 @@ const UnlinkedGamesPage = () => {
           <Typography variant="h4" component="h1" gutterBottom>
             {t("nav.unlinkedGames")}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {t("insights.unlinkedGames.description")}
-          </Typography>
           <FormControlLabel
             control={
               <Checkbox

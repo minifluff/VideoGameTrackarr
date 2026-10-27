@@ -340,7 +340,10 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
       <Box
         sx={{
           position: "sticky",
-          top: (theme) => theme.mixins.toolbar.minHeight,
+          // Dock exactly under the fixed AppBar: 56px on phones, 64px on wider
+          // screens. The old flat mixins.toolbar.minHeight resolved to 56 at every
+          // width, so on desktop the stuck bar slid 8px underneath the AppBar.
+          top: { xs: 56, sm: 64 },
           zIndex: 1,
           bgcolor: "background.default",
           pt: 0.5,
@@ -369,9 +372,6 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
           <Box>
             <Typography variant="h4" component="h1" gutterBottom>
               {t("games.list.pageTitle")}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {t("games.list.pageSubtitle")}
             </Typography>
           </Box>
           <Button

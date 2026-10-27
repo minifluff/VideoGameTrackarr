@@ -22,7 +22,6 @@ interface CatalogIndexEntry {
 
 interface CatalogIndexGridProps<T extends CatalogIndexEntry> {
   title: string;
-  description: string;
   emptyMessage: string;
   searchLabel: string;
   searchPlaceholder: string;
@@ -53,7 +52,6 @@ interface CatalogIndexGridProps<T extends CatalogIndexEntry> {
 // size concern here.
 const CatalogIndexGrid = <T extends CatalogIndexEntry>({
   title,
-  description,
   emptyMessage,
   searchLabel,
   searchPlaceholder,
@@ -116,9 +114,6 @@ const CatalogIndexGrid = <T extends CatalogIndexEntry>({
             <Box>
               <Typography variant="h4" component="h1" gutterBottom>
                 {title}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {description}
               </Typography>
             </Box>
             {showMinGamesFilter && entries && entries.length > 0 ? (

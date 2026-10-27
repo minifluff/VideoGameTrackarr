@@ -55,9 +55,6 @@ const HardwarePage = () => {
             <Typography variant="h4" component="h1" gutterBottom>
               {t("hardware.page.title")}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {t("hardware.page.subtitle")}
-            </Typography>
           </Box>
           <Stack direction="row" spacing={1.5} sx={{ flexShrink: 0, flexWrap: "wrap", rowGap: 1 }}>
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate("/hardware/device/add")}>

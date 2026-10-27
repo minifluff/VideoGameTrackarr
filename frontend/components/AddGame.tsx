@@ -239,9 +239,6 @@ const AddGame = () => {
             {t("games.add.steamSyncButton")}
           </Button>
         </Box>
-        <Typography variant="body2" color="text.secondary">
-          {t("games.add.pageSubtitle")}
-        </Typography>
       </Box>
       <Box sx={{ width: "100%", typography: "body1" }}>
         <RadioGroup

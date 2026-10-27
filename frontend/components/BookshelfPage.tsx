@@ -197,7 +197,7 @@ const BookshelfPage = () => {
     [shelves, keyword, platformFilter, formatFilter, caseFormats]
   );
 
-  const totalCases = shelves.reduce((sum, shelf) => sum + shelf.cases.length, 0);
+
 
   // Rows are packed against the real shelf width (repacked on resize) so each
   // row of cases gets its own shelf board at any window size. The shelf only
@@ -244,9 +244,6 @@ const BookshelfPage = () => {
         <Box>
           <Typography variant="h4" component="h1">
             {t("games.bookshelf.title")}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {t("games.bookshelf.summary", { cases: totalCases })}
           </Typography>
         </Box>
         <Stack spacing={1.5} sx={{ width: "100%", flex: { sm: 1 }, maxWidth: { sm: 620 } }}>

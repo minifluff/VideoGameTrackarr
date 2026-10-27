@@ -626,9 +626,6 @@ const SteamSyncPage = () => {
           <Typography variant="h4" component="h1" gutterBottom>
             {t("insights.steamSync.heading")}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {t("insights.steamSync.description")}
-          </Typography>
         </Box>
         <Button
           variant="outlined"

@@ -5,7 +5,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
-import FilterListIcon from "@mui/icons-material/FilterList";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import LabelIcon from "@mui/icons-material/Label";
 import SearchIcon from "@mui/icons-material/Search";
 import SortIcon from "@mui/icons-material/Sort";
@@ -40,7 +40,6 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
-import { useScrollDirection } from "../hooks/useScrollCollapse";
 import type { MatchAllField, MatchAllFilters } from "../api/games";
 import type {
   CatalogRef,
@@ -410,8 +409,6 @@ const GameListToolbar = ({
   onIncludeAddonsChange,
 }: GameListToolbarProps) => {
   const { t } = useTranslation();
-  // Hide on scroll down, reappear on scroll up.
-  const hideSearchBar = useScrollDirection(80);
   const allPlaceholder = t("games.listToolbar.allOption");
   const selectedTags = tagOptions.filter((tag) => tagIds.includes(tag.id));
   const selectedGenres = genreOptions.filter((genre) => genreIds.includes(genre.id));
@@ -450,6 +447,13 @@ const GameListToolbar = ({
     playStatuses.length +
     (steelbookOnly ? 1 : 0);
   const hasActiveFilters = activeFilterCount > 0;
+  // Icon-only Sort button, so its tooltip carries the current sort instead of a
+  // generic label — otherwise there's no way to tell what the list is sorted by
+  // without opening the menu.
+  const currentSortOption = GAME_SORT_OPTIONS.find((option) => option.value === sort);
+  const sortTooltip = currentSortOption
+    ? t(currentSortOption.labelKey)
+    : t("games.listToolbar.sortByLabel");
 
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortMenuAnchor, setSortMenuAnchor] = useState<HTMLElement | null>(null);
@@ -630,10 +634,21 @@ const GameListToolbar = ({
   }
 
   return (
-    <Box sx={{ display: hideSearchBar ? "none" : "block" }}>
-      <Stack spacing={1.5}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-          <TextField
+    <Stack spacing={1.5}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+        {onEnterSelectionMode ? (
+          <Tooltip title={t("games.listToolbar.selectGames")}>
+            <IconButton
+              onClick={onEnterSelectionMode}
+              aria-label={t("games.listToolbar.selectGames")}
+              disabled={visibleCount === 0}
+              sx={{ alignSelf: "center" }}
+            >
+              <CheckBoxOutlineBlankIcon />
+            </IconButton>
+          </Tooltip>
+        ) : null}
+        <TextField
             label={t("games.listToolbar.searchLabel")}
             variant="outlined"
             size="small"
@@ -670,25 +685,29 @@ const GameListToolbar = ({
             fullWidth
           />
           {onCardSizeChange !== undefined && cardSize !== undefined ? (
-            <Button
-              startIcon={<TuneIcon />}
-              onClick={(event) => setOptionsMenuAnchor(event.currentTarget)}
-              aria-haspopup="menu"
-              aria-expanded={optionsMenuAnchor !== null}
-              sx={{ flexShrink: 0 }}
-            >
-              {t("games.listToolbar.optionsButton")}
-            </Button>
+            <Tooltip title={t("games.listToolbar.optionsButton")}>
+              <IconButton
+                onClick={(event) => setOptionsMenuAnchor(event.currentTarget)}
+                aria-label={t("games.listToolbar.optionsButton")}
+                aria-haspopup="menu"
+                aria-expanded={optionsMenuAnchor !== null}
+                sx={{ alignSelf: "center" }}
+              >
+                <TuneIcon />
+              </IconButton>
+            </Tooltip>
           ) : null}
-          <Button
-            startIcon={<SortIcon />}
-            onClick={(event) => setSortMenuAnchor(event.currentTarget)}
-            aria-haspopup="menu"
-            aria-expanded={sortMenuAnchor !== null}
-            sx={{ flexShrink: 0 }}
-          >
-            {t("games.listToolbar.sortByLabel")}
-          </Button>
+          <Tooltip title={sortTooltip}>
+            <IconButton
+              onClick={(event) => setSortMenuAnchor(event.currentTarget)}
+              aria-label={t("games.listToolbar.sortByLabel")}
+              aria-haspopup="menu"
+              aria-expanded={sortMenuAnchor !== null}
+              sx={{ alignSelf: "center" }}
+            >
+              <SortIcon />
+            </IconButton>
+          </Tooltip>
           <Tooltip title={t("games.listToolbar.filtersButtonLabel")}>
             <IconButton
               onClick={() => setFiltersOpen(true)}
@@ -696,22 +715,10 @@ const GameListToolbar = ({
               sx={{ alignSelf: "center" }}
             >
               <Badge badgeContent={activeFilterCount} color="primary">
-                <FilterListIcon />
+                <FilterAltIcon />
               </Badge>
             </IconButton>
           </Tooltip>
-          {onEnterSelectionMode ? (
-            <Tooltip title={t("games.listToolbar.selectGames")}>
-              <IconButton
-                onClick={onEnterSelectionMode}
-                aria-label={t("games.listToolbar.selectGames")}
-                disabled={visibleCount === 0}
-                sx={{ alignSelf: "center" }}
-              >
-                <CheckBoxOutlineBlankIcon />
-              </IconButton>
-            </Tooltip>
-          ) : null}
         </Stack>
         <Menu
           anchorEl={sortMenuAnchor}
@@ -1069,8 +1076,7 @@ const GameListToolbar = ({
             </Button>
           </DialogActions>
         </Dialog>
-      </Stack>
-    </Box>
+    </Stack>
   );
 };
 

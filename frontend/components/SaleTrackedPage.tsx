@@ -63,9 +63,6 @@ const SaleTrackedPage = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           {t("insights.saleTracked.heading")}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {t("insights.saleTracked.description")}
-        </Typography>
       </Box>
 
       <Paper sx={{ width: "100%", overflow: "hidden", borderRadius: 2 }}>
