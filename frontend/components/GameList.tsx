@@ -40,13 +40,23 @@ interface GameListProps {
   sessionPrefix?: string;
   forcedFilters?: Partial<GameListFilters>;
   initialOwnershipStatuses?: OwnershipStatus[];
+  // Optional title override for the default header — Playing/Wishlist pages show
+  // their own name instead of "Games" while keeping the same header (count, Newest,
+  // Add button). A custom `header` still wins outright when provided.
+  title?: string;
+  // Hard-coded ownership scope, the client-side mirror of forcedFilters (which can't
+  // express ownership — GameListFilters has no ownership field, so ownership is
+  // filtered here, not by the backend). When set, the list always shows exactly
+  // these statuses regardless of the toolbar's Ownership field, the same way
+  // forcedFilters pins the Playing page to playing.
+  forcedOwnershipStatuses?: OwnershipStatus[];
   header?: React.ReactNode;
   // Optional section nav slot — only Unlinked Games uses it (InsightsSubNav). The
   // Games subnav itself is gone; passing nothing renders no subnav row.
   subNav?: React.ReactNode;
 }
 
-const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStatuses, header, subNav }: GameListProps) => {
+const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStatuses, forcedOwnershipStatuses, title, header, subNav }: GameListProps) => {
   const { t } = useTranslation();
   const collapsed = useScrollCollapse();
   // Tabs and title: hidden once scrolled, only return when back at the very top
@@ -199,6 +209,9 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
     },
   });
 
+  // Forced scope wins over the toolbar's Ownership field (see forcedOwnershipStatuses).
+  const effectiveOwnershipStatuses = forcedOwnershipStatuses ?? ownershipStatuses;
+
   const filteredGames = useMemo(() => {
     if (!games) return [];
     // The Games list never shows a Collection/Series "what's missing" discovery that hasn't
@@ -207,13 +220,13 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
     // isn't owned/wishlisted yet is unaffected — it stays visible (greyscaled, no chip; see
     // GameCard.tsx) since it was never "missing" in that sense.
     let list = games.filter((game) => !(game.autoDiscovered && !game.owned && !game.wishlisted));
-    if (ownershipStatuses.length > 0) {
+    if (effectiveOwnershipStatuses.length > 0) {
       list = list.filter((game) =>
-        matchesOwnership(game, ownershipStatuses, ownershipExclude, matchAll.ownership)
+        matchesOwnership(game, effectiveOwnershipStatuses, ownershipExclude, matchAll.ownership)
       );
     }
     return list;
-  }, [games, ownershipStatuses, ownershipExclude, matchAll.ownership]);
+  }, [games, effectiveOwnershipStatuses, ownershipExclude, matchAll.ownership]);
 
   const visibleGames = useMemo(
     () => filteredGames.filter((game) => !isPending(game.id)),
@@ -372,7 +385,7 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
         >
           <Box>
             <Typography variant="h4" component="h1" gutterBottom>
-              {t("games.list.pageTitle")}
+              {title ?? t("games.list.pageTitle")}
             </Typography>
             {games !== undefined ? (
               <Typography variant="body2" color="text.secondary">
