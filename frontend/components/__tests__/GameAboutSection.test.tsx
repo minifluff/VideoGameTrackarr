@@ -173,12 +173,16 @@ describe("GameAboutSection platforms and companies", () => {
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute("aria-expanded", "true");
     expect(container.querySelector(".MuiCollapse-hidden")).toBeNull();
-    // Everything the old layout showed is still there once expanded.
-    expect(
-      screen.getByText("Available on: Nintendo Switch, Sony Playstation 5")
-    ).toBeInTheDocument();
-    expect(screen.getByText("Nintendo Switch: Oct 04, 2024 (Worldwide)")).toBeInTheDocument();
-    expect(screen.getByText("Nintendo Switch: Oct 01, 2024 (Worldwide)")).toBeInTheDocument();
+    // Upstream's Platforms & release dates table: one row per platform, dates earliest
+    // first, regions beside them. The Playstation 5 row has no dates in this fixture.
+    expect(screen.getByText("Platforms & release dates")).toBeInTheDocument();
+    const switchRow = screen.getByText("Nintendo Switch");
+    const ps5Row = screen.getByText("Sony Playstation 5");
+    expect(switchRow.compareDocumentPosition(ps5Row) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const earlyDate = screen.getByText("Oct 01, 2024");
+    const lateDate = screen.getByText("Oct 04, 2024");
+    expect(earlyDate.compareDocumentPosition(lateDate) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getAllByText("Worldwide")).toHaveLength(2);
 
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute("aria-expanded", "false");
@@ -195,8 +199,9 @@ describe("GameAboutSection platforms and companies", () => {
 
     const toggle = screen.getByRole("button", { name: "Available Platforms" });
     fireEvent.click(toggle);
-    expect(
-      screen.getByText("Available on: Nintendo Switch, Sony Playstation 5")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Platforms & release dates")).toBeInTheDocument();
+    expect(screen.getByText("Nintendo Switch")).toBeInTheDocument();
+    expect(screen.getByText("Sony Playstation 5")).toBeInTheDocument();
+    expect(screen.getByText("Oct 04, 2024")).toBeInTheDocument();
   });
 });

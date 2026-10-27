@@ -20,11 +20,11 @@ import nintendoLogo from "../assets/nintendo-logo.png";
 import playstationLogo from "../assets/playstation-logo.png";
 import steamLogo from "../assets/steam-logo.png";
 import xboxLogo from "../assets/xbox-logo.png";
-import type { GameAboutData, GameCompany, IgdbReleaseRegion } from "../api/types";
+import type { GameAboutData, GameCompany, GameReleaseDate, IgdbReleaseRegion } from "../api/types";
 import { useStoreRegion } from "../theme/StoreRegionProvider";
 import { gameIdentifier } from "../utils/identifiers";
 import { localiseStoreUrl } from "../utils/storeRegion";
-import { getAddonType, getReleaseYear, isAddon } from "../utils/utils";
+import { formatReleaseDate, getAddonType, getReleaseYear, isAddon } from "../utils/utils";
 import ExpandableText from "./ExpandableText";
 import ScreenshotGallery from "./ScreenshotGallery";
 import VideoGallery from "./VideoGallery";
@@ -116,6 +116,26 @@ const GameAboutSection = ({ game, preview = false, publicToken }: GameAboutSecti
   // of the page down. The section only renders when at least one of the two would have.
   const [platformsExpanded, setPlatformsExpanded] = useState(false);
   const showAvailablePlatforms = game.platforms.length > 0 || game.releaseDates.length > 1;
+  // Upstream's Platforms & release dates rows: one row per platform from either list, by
+  // platform name, with release dates without a platform last. A platform's dates read
+  // earliest first; one with no known date (IGDB's "TBD") or no release date at all
+  // leaves the date blank.
+  const byPlatformName = (a: string, b: string) =>
+    a.localeCompare(b, undefined, { sensitivity: "base", numeric: true });
+  const datesByPlatform = new Map<string | null, GameReleaseDate[]>(
+    game.platforms.map((platform) => [platform.name, []])
+  );
+  for (const releaseDate of game.releaseDates) {
+    const dates = datesByPlatform.get(releaseDate.platformName) ?? [];
+    if (releaseDate.date !== null) dates.push(releaseDate);
+    datesByPlatform.set(releaseDate.platformName, dates);
+  }
+  const platformRows = [...datesByPlatform]
+    .map(([name, dates]) => ({
+      name,
+      dates: dates.sort((a, b) => (a.date as number) - (b.date as number)),
+    }))
+    .sort((a, b) => byPlatformName(a.name ?? "\uffff", b.name ?? "\uffff"));
 
   const hasStoryline = game.storyline && game.storyline !== game.summary;
 
@@ -334,29 +354,65 @@ const GameAboutSection = ({ game, preview = false, publicToken }: GameAboutSecti
               )}
             </ButtonBase>
             <Collapse in={platformsExpanded}>
-              <Stack spacing={1.5} sx={{ mt: 1 }}>
-                {game.platforms.length > 0 ? (
-                  <Typography variant="body2" color="text.secondary" component="div">
-                    {t("games.about.availableOnLabel", {
-                      platforms: game.platforms.map((platform) => platform.name).join(", "),
-                    })}
-                  </Typography>
-                ) : null}
-                {game.releaseDates.length > 1 ? (
-                  <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", rowGap: 1 }}>
-                    {game.releaseDates.map((releaseDate) => (
-                      <Chip
-                        key={releaseDate.id}
-                        size="small"
-                        variant="outlined"
-                        label={`${releaseDate.platformName ?? t("games.about.unknownPlatform")}: ${
-                          releaseDate.human ?? t("games.about.tbd")
-                        }${releaseDate.releaseRegion ? ` (${releaseRegionLabel[releaseDate.releaseRegion]})` : ""}`}
-                      />
-                    ))}
-                  </Stack>
-                ) : null}
-              </Stack>
+              {/* Upstream's Platforms & release dates card: one row per platform with
+              its dates, instead of the old "Available on" line plus release chips. */}
+              <Box
+                sx={{
+                  mt: 1,
+                  bgcolor: "background.paper",
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 2,
+                  px: 1.75,
+                  py: 1.5,
+                  minWidth: 0,
+                }}
+              >
+                <Typography component="h3" sx={{ fontSize: 11.5, color: "text.secondary", mb: 1 }}>
+                  {t("games.about.platformsReleaseDatesTitle")}
+                </Typography>
+                <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0 }}>
+                  {platformRows.map((row, index) => (
+                    <Box
+                      component="li"
+                      key={row.name ?? ""}
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: "minmax(0, 1fr) auto",
+                        columnGap: 1.5,
+                        py: 0.75,
+                        borderTop: index ? 1 : 0,
+                        borderColor: "divider",
+                        fontSize: 13.5,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          minWidth: 0,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {row.name ?? t("games.about.unknownPlatform")}
+                      </Box>
+                      <Box sx={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
+                        {row.dates.map((releaseDate) => (
+                          <div key={releaseDate.id}>
+                            {releaseDate.human ??
+                              formatReleaseDate(releaseDate.date as number, i18n.language)}
+                            {releaseDate.releaseRegion ? (
+                              <Box component="span" sx={{ color: "text.secondary", ml: 0.75 }}>
+                                {releaseRegionLabel[releaseDate.releaseRegion]}
+                              </Box>
+                            ) : null}
+                          </div>
+                        ))}
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
             </Collapse>
           </Box>
         ) : null}
