@@ -235,9 +235,21 @@ const GlobalSearch = () => {
             htmlInput: { ...params.slotProps.htmlInput, "aria-label": t("search.label") },
             input: {
               ...params.slotProps.input,
+              // The header behind this is the accent colour, so the input gets its own
+              // white box with dark text — otherwise the text sits unreadably on green.
+              // Colours are fixed, not theme tokens, because the box is always white.
+              sx: {
+                backgroundColor: "#fff",
+                borderRadius: 1,
+                "& .MuiInputBase-input": { color: "rgba(0, 0, 0, 0.87)" },
+                "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(0, 0, 0, 0.23)" },
+                "& .MuiAutocomplete-clearIndicator, & .MuiAutocomplete-popupIndicator": {
+                  color: "rgba(0, 0, 0, 0.54)",
+                },
+              },
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                  <SearchIcon fontSize="small" sx={{ color: "rgba(0, 0, 0, 0.54)" }} />
                 </InputAdornment>
               ),
               endAdornment: (
@@ -247,9 +259,9 @@ const GlobalSearch = () => {
                     display: { xs: "none", md: "block" },
                     fontFamily: "inherit",
                     fontSize: 11,
-                    color: "text.secondary",
+                    color: "rgba(0, 0, 0, 0.54)",
                     border: 1,
-                    borderColor: "divider",
+                    borderColor: "rgba(0, 0, 0, 0.23)",
                     borderRadius: 1,
                     px: 0.75,
                     mr: 0.5,
