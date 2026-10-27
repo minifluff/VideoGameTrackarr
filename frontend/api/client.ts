@@ -55,6 +55,17 @@ function isPublicRoute(): boolean {
   return window.location.pathname.startsWith("/public/");
 }
 
+// Only the login and refresh endpoints themselves must never trigger a refresh:
+// a 401 there means bad credentials or an already-dead refresh token, and
+// retrying would loop. Every other endpoint refreshes normally — including
+// /api/auth/me, which the Dashboard calls on every cold start. The old blanket
+// skip for all of /api/auth/* meant an expired access token on that first /me
+// call signed the user out on every return after 15 idle minutes, throwing
+// away a perfectly valid refresh token instead of using it.
+export function shouldSkipTokenRefresh(url: string | undefined): boolean {
+  return url?.startsWith("/api/auth/login") === true || url?.startsWith("/api/auth/refresh") === true;
+}
+
 function redirectToLogin(): void {
   // Never redirect away from public share pages — they're deliberately unauthenticated.
   if (isPublicRoute()) {
@@ -81,9 +92,7 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // A 401 from the auth endpoints themselves means bad credentials or an already-dead
-    // refresh token — refreshing again would just loop.
-    if (originalRequest.url?.startsWith("/api/auth/")) {
+    if (shouldSkipTokenRefresh(originalRequest.url)) {
       redirectToLogin();
       return Promise.reject(error);
     }
