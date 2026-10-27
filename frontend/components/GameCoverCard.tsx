@@ -1,9 +1,12 @@
 import { useState } from "react";
+import CloseIcon from "@mui/icons-material/Close";
 import ImageNotSupportedOutlinedIcon from "@mui/icons-material/ImageNotSupportedOutlined";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardMedia from "@mui/material/CardMedia";
 import Chip from "@mui/material/Chip";
+import Dialog from "@mui/material/Dialog";
+import IconButton from "@mui/material/IconButton";
 import { useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -11,6 +14,14 @@ import { useTranslation } from "react-i18next";
 import { resolveAssetUrl } from "../api/client";
 import type { GameDetail } from "../api/types";
 import OwnershipBadges from "./OwnershipBadges";
+
+// Stored IGDB covers are t_720p (sharp enough for every card size the app renders),
+// but a fullscreen view is bigger than any card — so an IGDB cover is re-requested at
+// t_1080p there. Any other URL (uploads, local-network links) passes through untouched.
+const fullSizeCoverUrl = (url: string | null): string | null => {
+  if (!url || !url.includes("images.igdb.com/")) return url;
+  return url.replace(/\/t_[a-z0-9]+\//, "/t_1080p/");
+};
 
 interface GameCoverCardProps {
   game: Pick<GameDetail, "name" | "coverUrl" | "owned" | "wishlisted" | "isOnSale" | "autoDiscovered">;
@@ -26,11 +37,14 @@ const GameCoverCard = ({ game }: GameCoverCardProps) => {
   // "No Image Available" placeholder instead of the browser's broken-image icon.
   const [failedCoverUrl, setFailedCoverUrl] = useState<string | null>(null);
   const coverFailed = failedCoverUrl !== null && failedCoverUrl === game.coverUrl;
+  const [fullscreen, setFullscreen] = useState(false);
+  const coverSrc = resolveAssetUrl(game.coverUrl) ?? undefined;
   // See GameCard.tsx's identical split — only a still-unclaimed "what's missing" discovery
   // gets the chip, not every greyscaled (not-yet-owned) cover.
   const showMissingChip = isGreyscale && game.autoDiscovered;
 
   return (
+    <>
     <Card
       sx={{
         // Used to cap out at a fixed 260/320px below the md breakpoint, centered with
@@ -57,8 +71,9 @@ const GameCoverCard = ({ game }: GameCoverCardProps) => {
             <CardMedia
               component="img"
               alt={game.name}
-              image={resolveAssetUrl(game.coverUrl) ?? undefined}
+              image={coverSrc}
               onError={() => setFailedCoverUrl(game.coverUrl)}
+              onClick={() => setFullscreen(true)}
               sx={{
                 position: "absolute",
                 inset: 0,
@@ -66,6 +81,7 @@ const GameCoverCard = ({ game }: GameCoverCardProps) => {
                 height: "100%",
                 objectFit: "cover",
                 filter: isGreyscale ? "grayscale(1)" : "none",
+                cursor: "pointer",
               }}
             />
           ) : (
@@ -121,6 +137,44 @@ const GameCoverCard = ({ game }: GameCoverCardProps) => {
         </Box>
       </Tooltip>
     </Card>
+    <Dialog
+      fullScreen
+      open={fullscreen}
+      onClose={() => setFullscreen(false)}
+      sx={{ "& .MuiDialog-paper": { bgcolor: "black" } }}
+    >
+      {/* Clicking anywhere dismisses, as does Esc and the close button. The artwork
+      itself renders in full color: the card's greyscale is an ownership signal, and
+      the viewer is for looking at the art. */}
+      <Box
+        onClick={() => setFullscreen(false)}
+        sx={{
+          position: "relative",
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <IconButton
+          aria-label={t("common.close")}
+          onClick={() => setFullscreen(false)}
+          sx={{ position: "absolute", top: 8, right: 8, color: "white", zIndex: 1 }}
+        >
+          <CloseIcon />
+        </IconButton>
+        {coverSrc ? (
+          <Box
+            component="img"
+            alt={game.name}
+            src={fullSizeCoverUrl(coverSrc) ?? undefined}
+            sx={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+          />
+        ) : null}
+      </Box>
+    </Dialog>
+    </>
   );
 };
 
