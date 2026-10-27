@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardActionArea from "@mui/material/CardActionArea";
@@ -32,6 +33,9 @@ const CatalogRefCard = ({ name, gameCount, coverUrls, onClick }: CatalogRefCardP
   const theme = useTheme();
   const covers = coverUrls.slice(0, 4);
   const grid = GRID_BY_COUNT[covers.length];
+  // Dead tile URLs hide their slot (the grid shape stays — only the broken-image icon
+  // goes) instead of showing a broken-image icon inside the tile.
+  const [failedUrls, setFailedUrls] = useState<ReadonlySet<string>>(new Set());
 
   return (
     <Card
@@ -70,7 +74,14 @@ const CatalogRefCard = ({ name, gameCount, coverUrls, onClick }: CatalogRefCardP
                   src={resolveAssetUrl(url) ?? undefined}
                   alt=""
                   loading="lazy"
-                  sx={{ width: "100%", height: "100%", minHeight: 0, objectFit: "cover", display: "block" }}
+                  onError={() => setFailedUrls((prev) => new Set(prev).add(url))}
+                  style={{ display: failedUrls.has(url) ? "none" : "block" }}
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    minHeight: 0,
+                    objectFit: "cover",
+                  }}
                 />
               ))}
             </Box>

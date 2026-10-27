@@ -105,6 +105,12 @@ const GameCard = ({
   // still resolves near-instantly, so the skeleton is only visible for genuinely-loading
   // covers, not a permanent flash on every re-render.
   const [coverLoaded, setCoverLoaded] = useState(false);
+  // Which cover URL failed to load, if any — a dead URL shows the "No cover"
+  // placeholder instead of the browser's broken-image icon. Compared against the
+  // current URL (not a bare boolean) so a different cover for the same card — e.g.
+  // after an edit — loads normally instead of inheriting the old failure.
+  const [failedCoverUrl, setFailedCoverUrl] = useState<string | null>(null);
+  const coverFailed = failedCoverUrl !== null && failedCoverUrl === game.coverUrl;
   const showsBadges =
     (context === "list" || context === "addon" || context === "public") && !selectable;
   // Same gate as showsBadges — the add/added search-result contexts don't carry real
@@ -198,7 +204,7 @@ const GameCard = ({
             cursor: isClickable || selectable ? "pointer" : "default",
           }}
         >
-          {game.coverUrl ? (
+          {game.coverUrl && !coverFailed ? (
             <>
               {!coverLoaded && (
                 <Skeleton
@@ -213,7 +219,7 @@ const GameCard = ({
                 image={resolveAssetUrl(game.coverUrl) ?? undefined}
                 loading="lazy"
                 onLoad={() => setCoverLoaded(true)}
-                onError={() => setCoverLoaded(true)}
+                onError={() => setFailedCoverUrl(game.coverUrl)}
                 sx={{
                   position: "absolute",
                   inset: 0,

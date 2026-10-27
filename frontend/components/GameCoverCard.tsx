@@ -1,3 +1,4 @@
+import { useState } from "react";
 import ImageNotSupportedOutlinedIcon from "@mui/icons-material/ImageNotSupportedOutlined";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
@@ -21,6 +22,10 @@ const GameCoverCard = ({ game }: GameCoverCardProps) => {
   // Only ever rendered for an already-imported game on its own Game Detail page, so
   // owned/wishlisted is always meaningful here — no context gate needed like GameCard's.
   const isGreyscale = !game.owned && !game.wishlisted;
+  // Same deal as GameCard's failedCoverUrl: a dead cover URL falls back to the
+  // "No Image Available" placeholder instead of the browser's broken-image icon.
+  const [failedCoverUrl, setFailedCoverUrl] = useState<string | null>(null);
+  const coverFailed = failedCoverUrl !== null && failedCoverUrl === game.coverUrl;
   // See GameCard.tsx's identical split — only a still-unclaimed "what's missing" discovery
   // gets the chip, not every greyscaled (not-yet-owned) cover.
   const showMissingChip = isGreyscale && game.autoDiscovered;
@@ -48,11 +53,12 @@ const GameCoverCard = ({ game }: GameCoverCardProps) => {
             (aspect-ratio + object-fit directly on a replaced element is the combination
             that's been flaky across browsers under non-100% zoom). */}
         <Box sx={{ position: "relative", aspectRatio: "3 / 4", overflow: "hidden" }}>
-          {game.coverUrl ? (
+          {game.coverUrl && !coverFailed ? (
             <CardMedia
               component="img"
               alt={game.name}
               image={resolveAssetUrl(game.coverUrl) ?? undefined}
+              onError={() => setFailedCoverUrl(game.coverUrl)}
               sx={{
                 position: "absolute",
                 inset: 0,

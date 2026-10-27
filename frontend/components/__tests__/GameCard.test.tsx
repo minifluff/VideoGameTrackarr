@@ -1,4 +1,4 @@
-import { render, screen, type RenderResult } from "@testing-library/react";
+import { fireEvent, render, screen, type RenderResult } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ThemeProvider } from "@mui/material/styles";
 import { describe, expect, it, vi } from "vitest";
@@ -42,6 +42,19 @@ describe("GameCard", () => {
       "src",
       "https://images.igdb.com/cover.jpg"
     );
+  });
+
+  it("shows the 'No cover' placeholder when the cover image fails to load", () => {
+    renderWithTheme(
+      <GameCard
+        game={{ ...baseGame, coverUrl: "https://images.igdb.com/cover.jpg" }}
+        context="list"
+        contextFunction={vi.fn()}
+      />
+    );
+
+    fireEvent.error(screen.getByRole("img", { name: /Hollow Knight/ }));
+    expect(screen.getByText("No cover")).toBeInTheDocument();
   });
 
   it("shows the wishlist and owned badges in list context", () => {

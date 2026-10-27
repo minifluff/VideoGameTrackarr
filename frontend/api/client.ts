@@ -20,7 +20,14 @@ export function resolveAssetUrl(url: string | null): string | null {
   if (!url || /^https?:\/\//i.test(url)) {
     return url;
   }
-  return `${API_BASE_URL}${url}`;
+  // Protocol-relative (//images.igdb.com/...) — rows stored before the backend started
+  // normalizing IGDB URLs to https still carry this form, and prepending the API origin
+  // below would turn them into a same-origin 404 ({origin}//images.igdb.com/...).
+  // Same treatment as the backend's _normalize_image_url.
+  if (url.startsWith("//")) {
+    return `https:${url}`;
+  }
+  return url.startsWith("/") ? `${API_BASE_URL}${url}` : `${API_BASE_URL}/${url}`;
 }
 
 apiClient.interceptors.request.use((config) => {

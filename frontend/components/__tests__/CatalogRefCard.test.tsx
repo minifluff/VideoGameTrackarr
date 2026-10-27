@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import CatalogRefCard from "../CatalogRefCard";
 
@@ -26,6 +26,14 @@ describe("CatalogRefCard covers", () => {
 
     expect(images).toHaveLength(4);
     expect(images[0]).toHaveAttribute("src", "https://img.example/0.jpg");
+  });
+
+  it("hides a tile whose image fails to load, keeping the other tiles", () => {
+    const images = renderCard(covers(2));
+
+    fireEvent.error(images[0]);
+    expect(images[0]).toHaveStyle({ display: "none" });
+    expect(images[1]).toHaveStyle({ display: "block" });
   });
 
   it("still shows the name and game count", () => {
