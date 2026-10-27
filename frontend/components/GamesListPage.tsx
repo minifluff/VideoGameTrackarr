@@ -217,10 +217,10 @@ const GamesListPage = () => {
 
   const columns: { key: SortColumn; label: string }[] = [
     { key: "gameName", label: t("games.listPage.nameColumn") },
-    { key: "status", label: t("games.listPage.statusColumn") },
     { key: "platformName", label: t("games.listPage.platformColumn") },
     { key: "format", label: t("games.listPage.formatColumn") },
     { key: "edition", label: t("games.listPage.editionColumn") },
+    { key: "status", label: t("games.listPage.statusColumn") },
     { key: "notes", label: t("games.listPage.notesColumn") },
   ];
 
@@ -401,6 +401,9 @@ const GamesListPage = () => {
                     />
                   </TableCell>
                   <TableCell>{item.gameName}</TableCell>
+                  <TableCell>{item.platformName ?? "—"}</TableCell>
+                  <TableCell>{item.format ?? "—"}</TableCell>
+                  <TableCell>{item.edition ?? "—"}</TableCell>
                   <TableCell>
                     <Pill
                       small
@@ -412,9 +415,6 @@ const GamesListPage = () => {
                         : t("games.library.wishlistChip")}
                     </Pill>
                   </TableCell>
-                  <TableCell>{item.platformName ?? "—"}</TableCell>
-                  <TableCell>{item.format ?? "—"}</TableCell>
-                  <TableCell>{item.edition ?? "—"}</TableCell>
                   <TableCell>{item.notes ?? "—"}</TableCell>
                   <TableCell padding="checkbox" onClick={(event) => event.stopPropagation()}>
                     <Tooltip title={t("common.transfer")}>

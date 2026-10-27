@@ -145,6 +145,16 @@ describe("GamesListPage status column", () => {
     expect(screen.getByText("Wishlist")).toBeInTheDocument();
   });
 
+  it("places the Status column between Edition and Notes", async () => {
+    renderPage();
+
+    const headers = await screen.findAllByRole("columnheader");
+    const labels = headers.map((h) =>
+      (h.textContent ?? "").replace(/sorted (ascending|descending)/, "").trim(),
+    );
+    expect(labels).toEqual(["", "Name", "Platform", "Format", "Edition", "Status", "Notes", ""]);
+  });
+
   it("sorts by status when the Status header is clicked", async () => {
     const user = userEvent.setup();
     renderPage();
