@@ -15,7 +15,11 @@ describe("resolveOverviewLayout", () => {
       { key: "stats", hidden: true },
     ]);
     expect(layout[0]).toEqual({ key: "needsAttention", hidden: false });
-    expect(layout[1]).toEqual({ key: "stats", hidden: true });
+    // The button entries follow needsAttention (their default predecessor), so they
+    // land ahead of the saved stats entry; stats keeps its hidden flag wherever it is.
+    expect(layout[1]).toEqual({ key: "displayMode", hidden: false });
+    expect(layout[2]).toEqual({ key: "publicCollection", hidden: false });
+    expect(layout.find((section) => section.key === "stats")).toEqual({ key: "stats", hidden: true });
     // The rest fall back to their default places, after their default predecessor.
     expect(layout.map((section) => section.key)).toContain("quickAdd");
   });
@@ -34,8 +38,8 @@ describe("resolveOverviewLayout", () => {
   it("inserts a missing section after its default predecessor", () => {
     const layout = resolveOverviewLayout([{ key: "needsAttention", hidden: false }]);
     const keys = layout.map((section) => section.key);
-    // needsAttention is last by default, so everything else precedes it in default order.
-    expect(keys[keys.length - 1]).toBe("needsAttention");
+    // The two button entries are last by default, so everything else precedes them.
+    expect(keys[keys.length - 1]).toBe("publicCollection");
     expect(keys).toEqual([
       "stats",
       "quickAdd",
@@ -48,6 +52,8 @@ describe("resolveOverviewLayout", () => {
       "recentlyAddedGames",
       "recentlyAddedHardware",
       "needsAttention",
+      "displayMode",
+      "publicCollection",
     ]);
   });
 });

@@ -69,7 +69,10 @@ def logout(body: RefreshRequest, db: Session = Depends(get_db)) -> None:
 @router.get("/me", response_model=UserResponse)
 def me(current_user: User = Depends(get_current_user)) -> UserResponse:
     return UserResponse(
-        id=current_user.id, username=current_user.username, overview_layout=current_user.overview_layout
+        id=current_user.id,
+        username=current_user.username,
+        overview_layout=current_user.overview_layout,
+        overview_card_size=current_user.overview_card_size,
     )
 
 
@@ -79,15 +82,21 @@ def update_preferences(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> UserResponse:
-    """Saves the signed-in user's preferences — currently just the Dashboard's
-    section order/visibility, so every browser shows the same page. Only the
-    fields sent are changed."""
+    """Saves the signed-in user's preferences — the Dashboard's section
+    order/visibility and its card-size scale, so every browser shows the same
+    page. Only the fields sent are changed."""
     if body.overview_layout is not None:
         current_user.overview_layout = [section.model_dump() for section in body.overview_layout]
+    if body.overview_card_size is not None:
+        current_user.overview_card_size = body.overview_card_size
+    if body.overview_layout is not None or body.overview_card_size is not None:
         db.commit()
         db.refresh(current_user)
     return UserResponse(
-        id=current_user.id, username=current_user.username, overview_layout=current_user.overview_layout
+        id=current_user.id,
+        username=current_user.username,
+        overview_layout=current_user.overview_layout,
+        overview_card_size=current_user.overview_card_size,
     )
 
 

@@ -45,7 +45,12 @@ def test_me_returns_current_user_with_valid_access_token(client, test_user):
     response = client.get("/api/auth/me", headers={"Authorization": f"Bearer {access_token}"})
 
     assert response.status_code == 200
-    assert response.json() == {"id": test_user.id, "username": "admin", "overviewLayout": None}
+    assert response.json() == {
+        "id": test_user.id,
+        "username": "admin",
+        "overviewLayout": None,
+        "overviewCardSize": None,
+    }
 
 
 def test_me_rejects_garbage_token(client):
@@ -284,5 +289,21 @@ def test_preferences_rejects_bad_section_key(auth_client):
     response = auth_client.put(
         "/api/auth/me/preferences", json={"overviewLayout": [{"key": "bad key!", "hidden": False}]}
     )
+
+    assert response.status_code == 422
+
+
+def test_preferences_saves_overview_card_size(auth_client):
+    response = auth_client.put("/api/auth/me/preferences", json={"overviewCardSize": 1.5})
+
+    assert response.status_code == 200
+    assert response.json()["overviewCardSize"] == 1.5
+
+    me = auth_client.get("/api/auth/me")
+    assert me.json()["overviewCardSize"] == 1.5
+
+
+def test_preferences_rejects_out_of_range_card_size(auth_client):
+    response = auth_client.put("/api/auth/me/preferences", json={"overviewCardSize": 3.0})
 
     assert response.status_code == 422

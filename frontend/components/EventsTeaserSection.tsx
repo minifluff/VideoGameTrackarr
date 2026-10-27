@@ -5,7 +5,7 @@ import EventCard from "./EventCard";
 
 // Renders nothing at all (heading included) when there are no upcoming events — same
 // "always-empty section is just noise" reasoning as OnSaleTeaserSection.tsx.
-const EventsTeaserSection = () => {
+const EventsTeaserSection = ({ cardSize }: { cardSize?: number }) => {
   const { t } = useTranslation();
   const { data: events } = useEvents();
 
@@ -20,6 +20,7 @@ const EventsTeaserSection = () => {
       renderItem={(event) => <EventCard event={event} />}
       title={t("insights.dashboard.eventsHeading")}
       viewAllHref="/events"
+      cardSize={cardSize}
     />
   );
 };

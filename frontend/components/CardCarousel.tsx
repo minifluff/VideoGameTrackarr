@@ -27,6 +27,9 @@ interface CardCarouselProps<T> {
   // Omit when there's no dedicated full-page destination for this section (e.g. Release
   // Calendar) — the chevron-link next to the title only renders when this is set.
   viewAllHref?: string;
+  // Dashboard card-size scale, when the caller owns one (Customize Overview); otherwise
+  // the global appearance size applies, as on the Games pages.
+  cardSize?: number;
 }
 
 function CardCarousel<T>({
@@ -35,9 +38,10 @@ function CardCarousel<T>({
   getItemKey,
   title,
   viewAllHref,
+  cardSize,
 }: CardCarouselProps<T>) {
   const { t } = useTranslation();
-  const columns = useResponsiveColumns();
+  const columns = useResponsiveColumns(cardSize);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
@@ -69,10 +73,15 @@ function CardCarousel<T>({
 
   return (
     <Box>
-      <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", mb: 1.5 }}>
-        <Typography variant="h5" component="h2">
+      {/* Header matches Section.tsx (overline title + rule + action): the teasers used
+      to carry a big h5 title, which read as a different kind of block from the rest of
+      the dashboard. The view-all chevron and scroll arrows sit right of the rule, as
+      the section's action group. */}
+      <Stack direction="row" sx={{ alignItems: "center", gap: 1.5, mb: 1.5, minHeight: 28 }}>
+        <Typography variant="overline" component="h2" sx={{ color: "primary.main", fontWeight: 700, lineHeight: 1.4 }}>
           {title}
         </Typography>
+        <Box sx={{ flexGrow: 1, height: "1px", bgcolor: "divider" }} />
         {viewAllHref ? (
           <IconButton
             component={Link}
@@ -84,7 +93,6 @@ function CardCarousel<T>({
             <ChevronRightIcon fontSize="small" />
           </IconButton>
         ) : null}
-        <Box sx={{ flexGrow: 1 }} />
         <IconButton
           size="small"
           onClick={() => scrollByPage(-1)}

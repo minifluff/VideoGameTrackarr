@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, ForeignKey, Integer, String, func
+from sqlalchemy import JSON, Boolean, Float, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -21,6 +21,9 @@ class User(TimestampMixin, Base):
     )
     overview_layout: Mapped[list | None] = mapped_column(
         JSON, comment="Dashboard section order/visibility, as [{key, hidden}] — null until customised"
+    )
+    overview_card_size: Mapped[float | None] = mapped_column(
+        Float, comment="Dashboard card-size scale (0.5 small, 1.0 medium, 2.0 large) — null means medium"
     )
     steam_id_64: Mapped[str | None] = mapped_column(
         String(32), comment="Steam profile SteamID64, used for Steam Web API sync"

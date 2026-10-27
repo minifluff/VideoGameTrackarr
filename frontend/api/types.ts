@@ -844,6 +844,8 @@ export interface CurrentUser {
   username: string;
   // The Dashboard's sections in order; null until customised (see hooks/useOverviewLayout.ts).
   overviewLayout: OverviewSectionSetting[] | null;
+  // The Dashboard's card-size scale (0.5 small, 1.0 medium, 2.0 large); null means medium.
+  overviewCardSize: number | null;
 }
 
 export interface SetupStatus {

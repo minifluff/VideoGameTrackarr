@@ -48,6 +48,7 @@ export async function fetchCurrentUser(): Promise<CurrentUser> {
 
 export async function updatePreferences(preferences: {
   overviewLayout?: OverviewSectionSetting[];
+  overviewCardSize?: number;
 }): Promise<CurrentUser> {
   const response = await apiClient.put<CurrentUser>("/api/auth/me/preferences", preferences);
   return response.data;

@@ -9,6 +9,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import IconButton from "@mui/material/IconButton";
+import Slider from "@mui/material/Slider";
 import Switch from "@mui/material/Switch";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
@@ -20,18 +21,22 @@ import {
 
 interface CustomizeOverviewDialogProps {
   layout: OverviewSection[];
+  cardSize: number;
   labels: Record<OverviewSectionKey, string>;
   saving: boolean;
   onClose: () => void;
-  onSave: (layout: OverviewSection[]) => void;
+  onSave: (layout: OverviewSection[], cardSize: number) => void;
 }
 
 // Show/hide and reorder the Dashboard's sections: drag a row by its handle, or use the arrows
-// (keyboard and touch). Nothing changes until Save. Mounted only while open, so each opening
-// starts from the saved layout. Ported from upstream; its `vgt.text3` tokens are mapped to
+// (keyboard and touch). The card-size slider below the description scales the Dashboard's
+// game/hardware cards (same Small/Medium/Large stops as the Games page slider). Nothing
+// changes until Save. Mounted only while open, so each opening starts from the saved
+// layout. Ported from upstream; its `vgt.text3` tokens are mapped to
 // `text.secondary`, which this fork's theme does have.
 const CustomizeOverviewDialog = ({
   layout,
+  cardSize,
   labels,
   saving,
   onClose,
@@ -39,6 +44,7 @@ const CustomizeOverviewDialog = ({
 }: CustomizeOverviewDialogProps) => {
   const { t } = useTranslation();
   const [draft, setDraft] = useState(layout);
+  const [draftCardSize, setDraftCardSize] = useState(cardSize);
   const [dragKey, setDragKey] = useState<OverviewSectionKey | null>(null);
 
   const moveTo = (key: OverviewSectionKey, index: number) =>
@@ -75,6 +81,28 @@ const CustomizeOverviewDialog = ({
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
           {t("overview.customize.description")}
         </Typography>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" gutterBottom>
+            {t("settings.appearance.cardSize")}
+          </Typography>
+          <Box sx={{ px: 1 }}>
+            <Slider
+              value={draftCardSize}
+              onChange={(_event, value) => setDraftCardSize(value as number)}
+              min={0.5}
+              max={2.0}
+              step={0.1}
+              marks={[
+                { value: 0.5, label: t("settings.appearance.cardSizeSmall") },
+                { value: 1.0, label: t("settings.appearance.cardSizeMedium") },
+                { value: 2.0, label: t("settings.appearance.cardSizeLarge") },
+              ]}
+              valueLabelDisplay="auto"
+              valueLabelFormat={(value) => `${Math.round(value * 100)}%`}
+              aria-label={t("settings.appearance.cardSize")}
+            />
+          </Box>
+        </Box>
         <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, display: "grid", gap: 0.75 }}>
           {draft.map((section, index) => {
             const label = labels[section.key];
@@ -154,14 +182,20 @@ const CustomizeOverviewDialog = ({
         </Box>
       </DialogContent>
       <DialogActions sx={{ justifyContent: "space-between" }}>
-        <Button onClick={() => setDraft(DEFAULT_OVERVIEW_LAYOUT)} disabled={saving}>
+        <Button
+          onClick={() => {
+            setDraft(DEFAULT_OVERVIEW_LAYOUT);
+            setDraftCardSize(1.0);
+          }}
+          disabled={saving}
+        >
           {t("overview.customize.reset")}
         </Button>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button onClick={onClose} disabled={saving}>
             {t("common.cancel")}
           </Button>
-          <Button variant="contained" onClick={() => onSave(draft)} disabled={saving}>
+          <Button variant="contained" onClick={() => onSave(draft, draftCardSize)} disabled={saving}>
             {t("common.save")}
           </Button>
         </Box>

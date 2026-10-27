@@ -55,12 +55,14 @@ class PreferencesRequest(CamelModel):
     on its own."""
 
     overview_layout: list[OverviewSection] | None = Field(default=None, max_length=50)
+    overview_card_size: float | None = Field(default=None, ge=0.5, le=2.0)
 
 
 class UserResponse(CamelModel):
     id: int
     username: str
     overview_layout: list[OverviewSection] | None = None
+    overview_card_size: float | None = None
 
 
 class SetupStatusResponse(CamelModel):

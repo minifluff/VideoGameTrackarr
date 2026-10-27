@@ -6,8 +6,10 @@ import TuneIcon from "@mui/icons-material/Tune";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
+import IconButton from "@mui/material/IconButton";
 import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
@@ -18,6 +20,7 @@ import { useGames } from "../hooks/useGames";
 import { useHardwareStats } from "../hooks/useHardwareStats";
 import { useAccessoriesWithoutOwnedHardware, useDuplicateLibraryItems, useMissingAddons, useOnSale } from "../hooks/useInsights";
 import { useOverviewLayout, type OverviewSection, type OverviewSectionKey } from "../hooks/useOverviewLayout";
+import { useShareLink } from "../hooks/useShareLink";
 import { useCurrency } from "../theme/CurrencyProvider";
 import { formatCurrency } from "../utils/currency";
 import { gameIdentifier, hardwareIdentifier } from "../utils/identifiers";
@@ -49,7 +52,9 @@ const SectionLink = ({ children, onClick, to }: { children: ReactNode; onClick?:
 // useOverviewLayout). Deeper breakdowns live on Insights.
 // Two deliberate fork differences: the Custom-games attention tile is left out (this
 // fork's games API has no source filter, so there's no cheap count for it), and the
-// header keeps the fork's Add Game button plus a footer Display Mode button.
+// header keeps the fork's Add Game button plus an icon-only Customize button. The
+// Display Mode and Public Game Collection buttons are layout entries (last by default),
+// so they can be hidden and reordered from Customize like any section.
 const DashboardPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -63,7 +68,8 @@ const DashboardPage = () => {
   const { data: duplicates } = useDuplicateLibraryItems();
   const { data: orphans } = useAccessoriesWithoutOwnedHardware();
   const { data: events } = useEvents();
-  const { layout, save: saveLayout } = useOverviewLayout();
+  const { data: shareToken } = useShareLink();
+  const { layout, cardSize, save: saveLayout } = useOverviewLayout();
   const [customizing, setCustomizing] = useState(false);
 
   if (statsLoading || hardwareStatsLoading || releasesLoading || onSaleLoading) {
@@ -138,6 +144,8 @@ const DashboardPage = () => {
     recentlyAddedGames: t("overview.recentlyAddedGames"),
     recentlyAddedHardware: t("overview.recentlyAddedHardware"),
     needsAttention: t("overview.needsAttention"),
+    displayMode: t("insights.dashboard.displayModeButton"),
+    publicCollection: t("insights.dashboard.publicCollectionButton"),
   };
 
   const attention = [
@@ -210,13 +218,13 @@ const DashboardPage = () => {
         </TileGrid>
       </Section>
     ),
-    events: events?.length ? <EventsTeaserSection /> : null,
-    onSale: hasOnSale ? <OnSaleTeaserSection /> : null,
+    events: events?.length ? <EventsTeaserSection cardSize={cardSize} /> : null,
+    onSale: hasOnSale ? <OnSaleTeaserSection cardSize={cardSize} /> : null,
     gamesCalendar: hasGameReleases ? (
-      <ReleaseCalendarSection scope="games" title={labels.gamesCalendar} />
+      <ReleaseCalendarSection scope="games" title={labels.gamesCalendar} cardSize={cardSize} />
     ) : null,
     hardwareCalendar: hasHardwareReleases ? (
-      <ReleaseCalendarSection scope="hardware" title={labels.hardwareCalendar} />
+      <ReleaseCalendarSection scope="hardware" title={labels.hardwareCalendar} cardSize={cardSize} />
     ) : null,
     nowPlaying: (
       <Section
@@ -234,7 +242,7 @@ const DashboardPage = () => {
         }
       >
         {playing?.length ? (
-          <Strip columnWidth={STRIP_COLUMN}>{playing.map(gameCard)}</Strip>
+          <Strip columnWidth={STRIP_COLUMN * cardSize}>{playing.map(gameCard)}</Strip>
         ) : (
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
             {t("overview.nothingPlaying")}
@@ -244,12 +252,12 @@ const DashboardPage = () => {
     ),
     recentlyPlayed: stats?.recentlyPlayed.length ? (
       <Section id="recently-played" title={t("overview.recentlyPlayed")}>
-        <Strip columnWidth={STRIP_COLUMN}>{stats.recentlyPlayed.map(gameCard)}</Strip>
+        <Strip columnWidth={STRIP_COLUMN * cardSize}>{stats.recentlyPlayed.map(gameCard)}</Strip>
       </Section>
     ) : null,
     recentlyAddedGames: stats?.recentlyAdded.length ? (
       <Section id="recently-added" title={t("overview.recentlyAddedGames")} action={<SectionLink to="/games">{t("common.viewAll")}</SectionLink>}>
-        <Strip columnWidth={STRIP_COLUMN}>{stats.recentlyAdded.map(gameCard)}</Strip>
+        <Strip columnWidth={STRIP_COLUMN * cardSize}>{stats.recentlyAdded.map(gameCard)}</Strip>
       </Section>
     ) : null,
     recentlyAddedHardware: hardwareStats?.recentlyAdded.length ? (
@@ -258,7 +266,7 @@ const DashboardPage = () => {
         title={t("overview.recentlyAddedHardware")}
         action={<SectionLink to="/hardware">{t("common.viewAll")}</SectionLink>}
       >
-        <Strip columnWidth={STRIP_COLUMN + 20}>{hardwareStats.recentlyAdded.map(hardwareCard)}</Strip>
+        <Strip columnWidth={(STRIP_COLUMN + 20) * cardSize}>{hardwareStats.recentlyAdded.map(hardwareCard)}</Strip>
       </Section>
     ) : null,
     needsAttention: (
@@ -276,11 +284,33 @@ const DashboardPage = () => {
         </TileGrid>
       </Section>
     ),
+    displayMode: (
+      <Button
+        variant="contained"
+        fullWidth
+        size="large"
+        sx={{ mt: 3, py: 1.5, fontSize: "1.1rem" }}
+        onClick={() => navigate("/display-mode")}
+      >
+        {t("insights.dashboard.displayModeButton")}
+      </Button>
+    ),
+    publicCollection: shareToken ? (
+      <Button
+        variant="contained"
+        fullWidth
+        size="large"
+        sx={{ mt: 3, py: 1.5, fontSize: "1.1rem" }}
+        onClick={() => navigate(`/public/${shareToken}/games`)}
+      >
+        {t("insights.dashboard.publicCollectionButton")}
+      </Button>
+    ) : null,
   };
 
-  const handleSaveLayout = async (next: OverviewSection[]) => {
+  const handleSaveLayout = async (next: OverviewSection[], nextCardSize: number) => {
     try {
-      await saveLayout.mutateAsync(next);
+      await saveLayout.mutateAsync({ layout: next, cardSize: nextCardSize });
       setCustomizing(false);
     } catch (error) {
       console.error("Error saving the Dashboard layout:", error);
@@ -337,9 +367,16 @@ const DashboardPage = () => {
         >
           {t("insights.dashboard.addGameButton")}
         </Button>
-        <Button size="small" startIcon={<TuneIcon />} sx={{ ml: 1 }} onClick={() => setCustomizing(true)}>
-          {t("overview.customize.button")}
-        </Button>
+        <Tooltip title={t("overview.customize.button")}>
+          <IconButton
+            size="small"
+            sx={{ ml: 1 }}
+            aria-label={t("overview.customize.button")}
+            onClick={() => setCustomizing(true)}
+          >
+            <TuneIcon />
+          </IconButton>
+        </Tooltip>
       </Stack>
 
       {visible.map((section) => (
@@ -351,23 +388,14 @@ const DashboardPage = () => {
         </Typography>
       ) : null}
 
-      <Button
-        variant="contained"
-        fullWidth
-        size="large"
-        sx={{ mt: 3, py: 1.5, fontSize: "1.1rem" }}
-        onClick={() => navigate("/display-mode")}
-      >
-        {t("insights.dashboard.displayModeButton")}
-      </Button>
-
       {customizing ? (
         <CustomizeOverviewDialog
           layout={layout}
+          cardSize={cardSize}
           labels={labels}
           saving={saveLayout.isPending}
           onClose={() => setCustomizing(false)}
-          onSave={(next) => void handleSaveLayout(next)}
+          onSave={(next, nextCardSize) => void handleSaveLayout(next, nextCardSize)}
         />
       ) : null}
     </>

@@ -18,6 +18,10 @@ export const OVERVIEW_SECTION_KEYS = [
   "recentlyAddedGames",
   "recentlyAddedHardware",
   "needsAttention",
+  // Fork additions: the two dashboard buttons, so they can be hidden and reordered
+  // like any section instead of sitting fixed in the header or footer.
+  "displayMode",
+  "publicCollection",
 ] as const;
 
 export type OverviewSectionKey = (typeof OVERVIEW_SECTION_KEYS)[number];
@@ -60,14 +64,16 @@ export function resolveOverviewLayout(
 }
 
 // The Dashboard's section order and visibility, kept on the account so every browser
-// shows the same page.
+// shows the same page — plus its card-size scale (null on the account means medium).
 export function useOverviewLayout() {
   const queryClient = useQueryClient();
   const { data: user } = useCurrentUser();
   const layout = useMemo(() => resolveOverviewLayout(user?.overviewLayout), [user?.overviewLayout]);
+  const cardSize = user?.overviewCardSize ?? 1.0;
   const save = useMutation({
-    mutationFn: (next: OverviewSection[]) => updatePreferences({ overviewLayout: next }),
+    mutationFn: (next: { layout: OverviewSection[]; cardSize: number }) =>
+      updatePreferences({ overviewLayout: next.layout, overviewCardSize: next.cardSize }),
     onSuccess: (updated) => queryClient.setQueryData(currentUserQueryKey, updated),
   });
-  return { layout, save };
+  return { layout, cardSize, save };
 }

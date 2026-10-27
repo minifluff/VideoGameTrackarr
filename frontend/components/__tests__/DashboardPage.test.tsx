@@ -39,8 +39,13 @@ describe("DashboardPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Customize" }));
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByText("Customize Overview")).toBeInTheDocument();
+    expect(within(dialog).getByRole("slider", { name: "Game card size" })).toBeInTheDocument();
     expect(within(dialog).getByText("Summary tiles")).toBeInTheDocument();
     // "Quick add" also names the page section, so the row is scoped to the dialog.
     expect(within(dialog).getByText("Quick add")).toBeInTheDocument();
+    // The two dashboard buttons are layout entries too, so they get dialog rows;
+    // "Display Mode" also names the page button, so it is scoped to the dialog.
+    expect(within(dialog).getByText("Display Mode")).toBeInTheDocument();
+    expect(within(dialog).getByText("Public Game Collection")).toBeInTheDocument();
   });
 });
