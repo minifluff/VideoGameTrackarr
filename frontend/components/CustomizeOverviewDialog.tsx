@@ -132,6 +132,12 @@ const CustomizeOverviewDialog = ({
                   borderRadius: 2,
                   bgcolor: "background.paper",
                   opacity: dragKey === section.key ? 0.6 : 1,
+                  // The list above is display: grid, and grid items default to
+                  // min-width: auto — the row's min-content width, which counts the
+                  // nowrap label at full length. On phone widths that exceeds the
+                  // dialog and clips the toggle off the right edge. minWidth: 0 lets
+                  // the row shrink so the label ellipsizes instead.
+                  minWidth: 0,
                 }}
               >
                 <DragIndicatorIcon
