@@ -21,7 +21,6 @@ import { useBiosSystems, useDeleteBios, useUploadBios } from "../hooks/useLibrar
 import { formatFileSize } from "../utils/roms";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import ConfirmDialog from "./ConfirmDialog";
-import SettingsSubNav from "./SettingsSubNav";
 
 interface BiosCardProps {
   system: BiosSystem;
@@ -173,7 +172,6 @@ const EmulationPage = () => {
 
   return (
     <>
-      <SettingsSubNav />
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           {t("nav.emulation")}

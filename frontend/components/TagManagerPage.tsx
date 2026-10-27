@@ -10,7 +10,6 @@ import { useCreateTag, useDeleteTag, useTags, useUpdateTag } from "../hooks/useT
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import ConfirmDialog from "./ConfirmDialog";
 import EnhancedTable, { type HeadCell } from "./EnhancedTable";
-import SettingsSubNav from "./SettingsSubNav";
 import TagDialog from "./TagDialog";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
@@ -99,7 +98,6 @@ const TagManagerPage = () => {
 
   return (
     <>
-      <SettingsSubNav />
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           {t("nav.tagManager")}

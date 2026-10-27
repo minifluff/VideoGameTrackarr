@@ -59,7 +59,6 @@ import { useSessionState } from "../hooks/useSessionState";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import ConfirmDialog from "./ConfirmDialog";
 import RelinkSteamEntryDialog, { type RelinkTarget } from "./RelinkSteamEntryDialog";
-import SettingsSubNav from "./SettingsSubNav";
 
 const STEAM_IMPORT_JOB_ID = "steam_import";
 
@@ -620,7 +619,6 @@ const SteamSyncPage = () => {
 
   return (
     <>
-      <SettingsSubNav />
       <Box sx={{ mb: 3, display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2 }}>
         <Box>
           <Typography variant="h4" component="h1" gutterBottom>

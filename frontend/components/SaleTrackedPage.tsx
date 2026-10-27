@@ -22,7 +22,6 @@ import { useCurrency } from "../theme/CurrencyProvider";
 import { formatCurrency } from "../utils/currency";
 import { gameIdentifier } from "../utils/identifiers";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
-import SettingsSubNav from "./SettingsSubNav";
 
 const SaleTrackedPage = () => {
   const { t } = useTranslation();
@@ -58,7 +57,6 @@ const SaleTrackedPage = () => {
 
   return (
     <>
-      <SettingsSubNav />
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           {t("insights.saleTracked.heading")}

@@ -25,7 +25,6 @@ import steamLogo from "../assets/steam-logo.png";
 import { useIntegrationsStatus, useUpdateSteamId } from "../hooks/useIntegrations";
 import { useClearPlayniteCache, usePlayniteConfig, useTestPlayniteConnection, useUpdatePlayniteConfig } from "../hooks/usePlaynite";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
-import SettingsSubNav from "./SettingsSubNav";
 
 const PlayniteSection = () => {
   const { t } = useTranslation();
@@ -263,7 +262,6 @@ const IntegrationsPage = () => {
 
   return (
     <>
-      <SettingsSubNav />
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           {t("nav.integrations")}

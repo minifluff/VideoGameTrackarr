@@ -11,7 +11,6 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { Trans, useTranslation } from "react-i18next";
 import igdbLogo from "../assets/igdb-logo.png";
-import SettingsSubNav from "./SettingsSubNav";
 import { useEmulationConfig } from "../hooks/useLibrary";
 import { useVersion } from "../hooks/useVersion";
 
@@ -30,7 +29,6 @@ const About = () => {
 
   return (
     <Box sx={{ mb: 3 }}>
-      <SettingsSubNav />
       <Typography variant="h4" component="h1" gutterBottom>
         {t("about.title")}
       </Typography>

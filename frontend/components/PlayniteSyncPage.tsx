@@ -35,7 +35,6 @@ import {
   useUnignorePlayniteEntry,
 } from "../hooks/usePlaynite";
 import ConfirmDialog from "./ConfirmDialog";
-import SettingsSubNav from "./SettingsSubNav";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 
 const isEntryActionable = (entry: PlayniteEntry) =>
@@ -212,7 +211,6 @@ const PlayniteSyncPage = () => {
 
   return (
     <Box>
-      <SettingsSubNav />
       <Typography variant="h4" component="h1" gutterBottom>
         {t("settings.playniteSync.title")}
       </Typography>

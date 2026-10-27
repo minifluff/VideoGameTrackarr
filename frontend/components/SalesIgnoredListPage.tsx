@@ -26,7 +26,6 @@ import {
 } from "../hooks/useSalesTracking";
 import { gameIdentifier } from "../utils/identifiers";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
-import SettingsSubNav from "./SettingsSubNav";
 
 const PROVIDER_LABEL_KEY: Record<SalesProvider, string> = {
   itad: "insights.salesIgnored.provider.itad",
@@ -67,7 +66,6 @@ const SalesIgnoredListPage = () => {
 
   return (
     <>
-      <SettingsSubNav />
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           {t("insights.salesIgnored.heading")}

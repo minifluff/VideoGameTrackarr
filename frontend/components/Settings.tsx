@@ -24,7 +24,6 @@ import AppearanceSection from "./AppearanceSection";
 import ChangePasswordDialog from "./ChangePasswordDialog";
 import DataManagementSection from "./DataManagementSection";
 import DisplayModeSection from "./DisplayModeSection";
-import SettingsSubNav from "./SettingsSubNav";
 import ShareSection from "./ShareSection";
 import DatabaseResetSection from "./DatabaseResetSection";
 import IGDBAutoLinkSection from "./IGDBAutoLinkSection";
@@ -59,7 +58,6 @@ const Settings = () => {
 
   return (
     <Box sx={{ mb: 3 }}>
-      <SettingsSubNav />
       <Typography variant="h4" component="h1" gutterBottom>
         {t("settings.title")}
       </Typography>

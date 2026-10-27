@@ -27,7 +27,6 @@ import { TOAST_OPTIONS } from "../utils/toastOptions";
 import ConfirmDialog from "./ConfirmDialog";
 import MassMovePlatformDialog from "./MassMovePlatformDialog";
 import PlatformDialog from "./PlatformDialog";
-import SettingsSubNav from "./SettingsSubNav";
 
 type SortKey = "name" | "abbreviation" | "gameCount" | "igdbId" | "slug";
 
@@ -197,7 +196,6 @@ const PlatformManagerPage = () => {
 
   return (
     <>
-      <SettingsSubNav />
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           {t("nav.platformManager")}

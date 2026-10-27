@@ -19,7 +19,6 @@ import { useTranslation } from "react-i18next";
 import type { GameSummary } from "../api/types";
 import { useDeleteGame, useGames } from "../hooks/useGames";
 import ConfirmDialog from "./ConfirmDialog";
-import SettingsSubNav from "./SettingsSubNav";
 
 const RemoveGamesPage = () => {
   const { t } = useTranslation();
@@ -111,7 +110,6 @@ const RemoveGamesPage = () => {
 
   return (
     <Box>
-      <SettingsSubNav />
       <Typography variant="h4" component="h1" gutterBottom>
         {t("settings.removeGames.title")}
       </Typography>
