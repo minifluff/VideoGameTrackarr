@@ -1,5 +1,6 @@
 import { useState } from "react";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 import TimerOffIcon from "@mui/icons-material/TimerOff";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -14,20 +15,24 @@ import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { isAxiosError } from "axios";
-import { useClearPlaytime, useResetDatabase } from "../hooks/useSystem";
+import { useClearMissingGames, useClearPlaytime, useResetDatabase } from "../hooks/useSystem";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 
 const DatabaseResetSection = () => {
   const { t } = useTranslation();
   const resetDatabase = useResetDatabase();
   const clearPlaytime = useClearPlaytime();
+  const clearMissingGames = useClearMissingGames();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
   const [playtimeDialogOpen, setPlaytimeDialogOpen] = useState(false);
   const [playtimeConfirmation, setPlaytimeConfirmation] = useState("");
+  const [missingGamesDialogOpen, setMissingGamesDialogOpen] = useState(false);
+  const [missingGamesConfirmation, setMissingGamesConfirmation] = useState("");
 
   const confirmed = confirmation === "confirm";
   const playtimeConfirmed = playtimeConfirmation === "confirm";
+  const missingGamesConfirmed = missingGamesConfirmation === "confirm";
 
   const openDialog = () => {
     setConfirmation("");
@@ -37,6 +42,11 @@ const DatabaseResetSection = () => {
   const openPlaytimeDialog = () => {
     setPlaytimeConfirmation("");
     setPlaytimeDialogOpen(true);
+  };
+
+  const openMissingGamesDialog = () => {
+    setMissingGamesConfirmation("");
+    setMissingGamesDialogOpen(true);
   };
 
   const handleClearPlaytime = () => {
@@ -56,6 +66,27 @@ const DatabaseResetSection = () => {
           isAxiosError(error) && error.response?.data?.detail
             ? String(error.response.data.detail)
             : t("settings.dangerZone.clearPlaytimeError");
+        toast.error(detail, TOAST_OPTIONS);
+      },
+    });
+  };
+
+  const handleClearMissingGames = () => {
+    clearMissingGames.mutate("confirm", {
+      onSuccess: (result) => {
+        setMissingGamesDialogOpen(false);
+        toast.success(
+          t("settings.dangerZone.clearMissingGamesSuccess", {
+            games: result.gamesDeleted,
+          }),
+          TOAST_OPTIONS,
+        );
+      },
+      onError: (error: unknown) => {
+        const detail =
+          isAxiosError(error) && error.response?.data?.detail
+            ? String(error.response.data.detail)
+            : t("settings.dangerZone.clearMissingGamesError");
         toast.error(detail, TOAST_OPTIONS);
       },
     });
@@ -116,6 +147,14 @@ const DatabaseResetSection = () => {
       >
         {t("settings.dangerZone.clearPlaytimeButton")}
       </Button>
+      <Button
+        variant="outlined"
+        color="error"
+        startIcon={<DeleteSweepIcon />}
+        onClick={openMissingGamesDialog}
+      >
+        {t("settings.dangerZone.clearMissingGamesButton")}
+      </Button>
       </Box>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
@@ -150,6 +189,42 @@ const DatabaseResetSection = () => {
             {resetDatabase.isPending
               ? t("settings.dangerZone.resetting")
               : t("settings.dangerZone.resetButton")}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={missingGamesDialogOpen} onClose={() => setMissingGamesDialogOpen(false)}>
+        <DialogTitle color="error">{t("settings.dangerZone.clearMissingGamesDialogTitle")}</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            {t("settings.dangerZone.clearMissingGamesDialogDescription")}
+          </DialogContentText>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            {t("settings.dangerZone.clearMissingGamesDialogWarning")}
+          </Alert>
+          <TextField
+            autoFocus
+            fullWidth
+            label={t("settings.dangerZone.confirmLabel")}
+            placeholder="confirm"
+            value={missingGamesConfirmation}
+            onChange={(e) => setMissingGamesConfirmation(e.target.value)}
+            disabled={clearMissingGames.isPending}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setMissingGamesDialogOpen(false)} color="primary">
+            {t("common.cancel")}
+          </Button>
+          <Button
+            onClick={handleClearMissingGames}
+            color="error"
+            variant="contained"
+            disabled={!missingGamesConfirmed || clearMissingGames.isPending}
+          >
+            {clearMissingGames.isPending
+              ? t("settings.dangerZone.clearing")
+              : t("settings.dangerZone.clearMissingGamesButton")}
           </Button>
         </DialogActions>
       </Dialog>

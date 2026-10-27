@@ -19,7 +19,12 @@ from app.repositories import (
     genre_repository,
     platform_repository,
 )
-from app.repositories.game_repository import GameWithStatus
+from app.repositories.game_repository import (
+    GameWithStatus,
+    _is_browsable_game,
+    _owned_exists,
+    _wishlisted_exists,
+)
 from app.services import rom_service, upload_service
 from app.services.exceptions import ConflictError, NotFoundError
 from app.services.igdb_client import (
@@ -316,6 +321,34 @@ def delete_game(db: Session, game_id: int) -> None:
     rom_filenames = game_repository.delete_game_with_addons(db, game_with_status.game)
     db.commit()
     rom_service.delete_files(rom_filenames)
+
+
+def clear_missing_games(db: Session) -> int:
+    """Delete every unclaimed missing game — top-level, browsable, auto-discovered,
+    with neither an owned nor a wishlisted copy — via the same full cleanup as
+    deleting one game (addons and their attached rows go too). Returns the number
+    of top-level missing games deleted. Note this is a cleanup, not a blocklist:
+    the next collection/series 'what's missing' resync re-discovers cleared games."""
+    missing_ids = list(
+        db.scalars(
+            select(Game.id).where(
+                Game.parent_game_id.is_(None),
+                _is_browsable_game(Game.category),
+                Game.auto_discovered.is_(True),
+                ~_owned_exists(Game.id),
+                ~_wishlisted_exists(Game.id),
+            )
+        )
+    )
+    rom_filenames: list[str] = []
+    for game_id in missing_ids:
+        game = db.get(Game, game_id)
+        if game is None:
+            continue
+        rom_filenames.extend(game_repository.delete_game_with_addons(db, game))
+    db.commit()
+    rom_service.delete_files(rom_filenames)
+    return len(missing_ids)
 
 
 async def get_igdb_preview_payload(

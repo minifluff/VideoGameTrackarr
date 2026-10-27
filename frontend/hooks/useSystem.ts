@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { clearPlaytime, resetDatabase } from "../api/system";
+import { clearMissingGames, clearPlaytime, resetDatabase } from "../api/system";
 
 export const useResetDatabase = () => {
   const queryClient = useQueryClient();
@@ -18,6 +18,17 @@ export const useClearPlaytime = () => {
     mutationFn: (confirmation: string) => clearPlaytime(confirmation),
     onSuccess: () => {
       // Progress data changed — refetch queries that display it.
+      queryClient.invalidateQueries();
+    },
+  });
+};
+
+export const useClearMissingGames = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (confirmation: string) => clearMissingGames(confirmation),
+    onSuccess: () => {
+      // Missing games fed the games list, search, and dashboard counts — refetch it all.
       queryClient.invalidateQueries();
     },
   });

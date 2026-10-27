@@ -507,7 +507,13 @@
       "clearPlaytimeDialogWarning": "This cannot be undone. All playtime history will be permanently deleted.",
       "clearPlaytimeSuccess": "Cleared {{progress}} progress entries and {{sessions}} play sessions.",
       "clearPlaytimeError": "Failed to clear playtime progress.",
-      "clearing": "Clearing…"
+      "clearing": "Clearing…",
+      "clearMissingGamesButton": "Clear missing games",
+      "clearMissingGamesDialogTitle": "Clear all missing games?",
+      "clearMissingGamesDialogDescription": "This will permanently delete every auto-discovered game you neither own nor have wishlisted, along with their addons. There is no undo.",
+      "clearMissingGamesDialogWarning": "Cleared games will be re-discovered the next time a collection or series 'what's missing' resync runs.",
+      "clearMissingGamesSuccess": "Cleared {{games}} missing games.",
+      "clearMissingGamesError": "Failed to clear missing games."
     },
     "integrations": {
       "igdbHeading": "IGDB Credentials",

@@ -23,3 +23,14 @@ export const clearPlaytime = async (confirmation: string): Promise<ClearPlaytime
   });
   return data;
 };
+
+export interface ClearMissingGamesResult {
+  gamesDeleted: number;
+}
+
+export const clearMissingGames = async (confirmation: string): Promise<ClearMissingGamesResult> => {
+  const { data } = await apiClient.post<ClearMissingGamesResult>("/api/system/clear-missing-games", {
+    confirmation,
+  });
+  return data;
+};
