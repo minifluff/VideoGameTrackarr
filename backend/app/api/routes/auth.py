@@ -109,7 +109,7 @@ def change_password(
     db: Session = Depends(get_db),
 ) -> TokenResponse:
     """Changes the signed-in user's password. Every existing session is signed out (their
-    refresh tokens revoked); this one gets fresh tokens so it stays signed in. Rate limited
+    refresh tokens deleted); this one gets fresh tokens so it stays signed in. Rate limited
     like login, so a stolen session can't guess the current password either."""
     try:
         auth_service.change_password(db, current_user, body.current_password, body.new_password)

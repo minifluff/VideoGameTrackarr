@@ -527,41 +527,44 @@ const EnhancedTable = ({
                         >
                           {cell.id === "actions" ? (
                             <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
+                              {/* Tooltip wraps the button (as in the card view below) —
+                              a Tooltip inside the button lands its label on the icon,
+                              leaving the button itself unnamed to screen readers. */}
                               {showMoveButton ? (
-                                <IconButton onClick={(event) => handleMove(event, row.id)}>
-                                  {moveDirection === "up" ? (
-                                    <Tooltip title={t("table.moveToCollection")}>
-                                      <MoveUpIcon />
-                                    </Tooltip>
-                                  ) : (
-                                    <Tooltip title={t("table.moveToWishlist")}>
-                                      <MoveDownIcon />
-                                    </Tooltip>
-                                  )}
-                                </IconButton>
+                                <Tooltip
+                                  title={
+                                    moveDirection === "up"
+                                      ? t("table.moveToCollection")
+                                      : t("table.moveToWishlist")
+                                  }
+                                >
+                                  <IconButton onClick={(event) => handleMove(event, row.id)}>
+                                    {moveDirection === "up" ? <MoveUpIcon /> : <MoveDownIcon />}
+                                  </IconButton>
+                                </Tooltip>
                               ) : null}
                               {onTransferClick && (
-                                <IconButton
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    onTransferClick(row.id);
-                                  }}
-                                >
-                                  <Tooltip title={t("common.transfer")}>
+                                <Tooltip title={t("common.transfer")}>
+                                  <IconButton
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      onTransferClick(row.id);
+                                    }}
+                                  >
                                     <DriveFileMoveIcon />
-                                  </Tooltip>
-                                </IconButton>
+                                  </IconButton>
+                                </Tooltip>
                               )}
-                              <IconButton onClick={(event) => handleEdit(event, row.id)}>
-                                <Tooltip title={t("common.edit")}>
+                              <Tooltip title={t("common.edit")}>
+                                <IconButton onClick={(event) => handleEdit(event, row.id)}>
                                   <EditIcon />
-                                </Tooltip>
-                              </IconButton>
-                              <IconButton onClick={(event) => handleDelete(event, row.id)}>
-                                <Tooltip title={t("common.delete")}>
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title={t("common.delete")}>
+                                <IconButton onClick={(event) => handleDelete(event, row.id)}>
                                   <DeleteIcon />
-                                </Tooltip>
-                              </IconButton>
+                                </IconButton>
+                              </Tooltip>
                             </Stack>
                           ) : (
                             <Box

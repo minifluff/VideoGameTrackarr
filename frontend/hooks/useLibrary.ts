@@ -115,6 +115,9 @@ export function useAddRom(gameId: number) {
   return useMutation({
     mutationFn: (args: { itemId: number; file: File; label: string | null; onProgress?: ProgressFn }) =>
       addRom(args.itemId, args.file, args.label, args.onProgress),
+    // A File can't survive the offline persister's JSON serialization — run
+    // (or fail) immediately instead of being queued (see useImportCsv).
+    networkMode: "always",
     onSuccess: invalidate,
   });
 }
@@ -124,6 +127,8 @@ export function useReplaceRom(gameId: number) {
   return useMutation({
     mutationFn: (args: { romId: number; file: File; onProgress?: ProgressFn }) =>
       replaceRom(args.romId, args.file, args.onProgress),
+    // Same File-serialization reason as useAddRom above.
+    networkMode: "always",
     onSuccess: invalidate,
   });
 }
@@ -163,6 +168,9 @@ export function useUploadBios() {
   const invalidate = useInvalidateBios();
   return useMutation({
     mutationFn: ({ system, file }: { system: string; file: File }) => uploadBios(system, file),
+    // A File can't survive the offline persister's JSON serialization — run
+    // (or fail) immediately instead of being queued (see useImportCsv).
+    networkMode: "always",
     onSuccess: invalidate,
   });
 }

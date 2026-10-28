@@ -87,8 +87,23 @@ def get_stats(db: Session) -> DashboardStatsData:
         )
         or 0
     )
-    total_playtime_minutes = db.scalar(select(func.coalesce(func.sum(GameProgress.playtime_minutes), 0))) or 0
-    average_rating = db.scalar(select(func.avg(GameProgress.rating)).where(GameProgress.rating.is_not(None)))
+    # Like every other metric here, playtime and rating exclude missing games.
+    # The join (not a bare _is_missing_game(GameProgress.game_id)) is required:
+    # the predicate references Game.auto_discovered, which without Game in the
+    # FROM clause would cross-join every game onto every progress row.
+    total_playtime_minutes = (
+        db.scalar(
+            select(func.coalesce(func.sum(GameProgress.playtime_minutes), 0))
+            .join(Game, Game.id == GameProgress.game_id)
+            .where(~_is_missing_game(Game.id))
+        )
+        or 0
+    )
+    average_rating = db.scalar(
+        select(func.avg(GameProgress.rating))
+        .join(Game, Game.id == GameProgress.game_id)
+        .where(GameProgress.rating.is_not(None), ~_is_missing_game(Game.id))
+    )
 
     # Counted per-game via the same derived-priority status as _play_status_subquery, not a
     # raw GROUP BY over game_progress rows — a game with progress on multiple platforms must

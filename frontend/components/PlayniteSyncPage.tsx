@@ -405,11 +405,19 @@ const PlayniteSyncPage = () => {
                         <TableCell>{statusChip(entry)}</TableCell>
                         <TableCell align="right">
                           {entry.dismissed ? (
-                            <Button size="small" onClick={() => unignoreEntry.mutate(entry.playniteId)}>
+                            <Button
+                              size="small"
+                              onClick={() => unignoreEntry.mutate(entry.playniteId)}
+                              disabled={unignoreEntry.isPending && unignoreEntry.variables === entry.playniteId}
+                            >
                               {t("settings.playniteSync.unignoreButton")}
                             </Button>
                           ) : (
-                            <Button size="small" onClick={() => ignoreEntry.mutate(entry.playniteId)}>
+                            <Button
+                              size="small"
+                              onClick={() => ignoreEntry.mutate(entry.playniteId)}
+                              disabled={ignoreEntry.isPending && ignoreEntry.variables === entry.playniteId}
+                            >
                               {t("settings.playniteSync.ignoreButton")}
                             </Button>
                           )}

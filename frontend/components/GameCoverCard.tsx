@@ -6,8 +6,10 @@ import Card from "@mui/material/Card";
 import CardMedia from "@mui/material/CardMedia";
 import Chip from "@mui/material/Chip";
 import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
 import IconButton from "@mui/material/IconButton";
 import { useTheme } from "@mui/material/styles";
+import { visuallyHidden } from "@mui/utils";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
@@ -238,6 +240,10 @@ const GameCoverCard = ({ game }: GameCoverCardProps) => {
       onClose={closeViewer}
       sx={{ "& .MuiDialog-paper": { bgcolor: "black" } }}
     >
+      {/* No visible title in the viewer — the game name as a visually-hidden
+      DialogTitle gives the fullscreen dialog an accessible name (MUI links
+      DialogTitle to the dialog's aria-labelledby automatically). */}
+      <DialogTitle sx={visuallyHidden}>{game.name}</DialogTitle>
       {/* Clicking anywhere dismisses, as does Esc and the close button. The artwork
       itself renders in full color: the card's greyscale is an ownership signal, and
       the viewer is for looking at the art. touchAction none keeps the browser from

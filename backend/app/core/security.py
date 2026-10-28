@@ -1,3 +1,4 @@
+import logging
 import uuid
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
@@ -6,6 +7,17 @@ import bcrypt
 import jwt
 
 from app.core.config import get_settings
+
+logger = logging.getLogger(__name__)
+
+try:
+    # Optional import: cryptography joins requirements.txt with this change, but
+    # the app must keep booting on images built before it lands (and in test
+    # venvs without it) — helpers below degrade to legacy plaintext behavior.
+    from cryptography.fernet import Fernet, InvalidToken
+except ImportError:  # pragma: no cover - exercised only without cryptography
+    Fernet = None  # type: ignore[assignment,misc]
+    InvalidToken = None  # type: ignore[assignment,misc]
 
 
 class TokenType(StrEnum):
@@ -141,3 +153,67 @@ def decode_token(token: str, expected_type: TokenType) -> dict:
         raise TokenError(f"Expected a {expected_type.value} token")
 
     return payload
+
+
+# --- SMB passwords at rest -------------------------------------------------
+# playnite_smb_password / export_smb_password live in the same String columns
+# as before (no schema change): when a Fernet key is configured, values are
+# stored as Fernet tokens; otherwise they stay plaintext (legacy behavior).
+# Decryption tolerates legacy rows: a value that fails to decrypt is returned
+# as-is, and the next save re-encrypts it.
+
+_smb_key_warning_logged = False
+
+
+def _smb_fernet() -> "Fernet | None":
+    """Fernet cipher from settings, or None when encryption is unavailable
+    (no key configured, cryptography not installed, or a malformed key).
+    Never raises — a missing key must warn, not break boot."""
+    global _smb_key_warning_logged
+    key = get_settings().smb_encryption_key
+    if not key or Fernet is None:
+        if not _smb_key_warning_logged:
+            logger.warning(
+                "SMB_ENCRYPTION_KEY is not set (or cryptography is not installed) — "
+                "SMB passwords are stored in plaintext"
+            )
+            _smb_key_warning_logged = True
+        return None
+    try:
+        return Fernet(key)
+    except (ValueError, TypeError):
+        if not _smb_key_warning_logged:
+            logger.warning("SMB_ENCRYPTION_KEY is malformed — SMB passwords are stored in plaintext")
+            _smb_key_warning_logged = True
+        return None
+
+
+def encrypt_smb_password(plaintext: str | None) -> str | None:
+    """Encrypt a password for storage, or return it unchanged when encryption
+    is unavailable. None passes through (callers use None for 'untouched')."""
+    if plaintext is None:
+        return None
+    cipher = _smb_fernet()
+    if cipher is None:
+        return plaintext
+    return cipher.encrypt(plaintext.encode("utf-8")).decode("utf-8")
+
+
+def decrypt_smb_password(stored: str | None) -> str | None:
+    """Decrypt a stored SMB password. Legacy plaintext rows pass through
+    unchanged (and are re-encrypted on next save); a Fernet token that fails
+    to decrypt — e.g. the key was rotated — is logged and passed through
+    rather than crashing the caller."""
+    if stored is None:
+        return None
+    cipher = _smb_fernet()
+    if cipher is None:
+        return stored
+    try:
+        return cipher.decrypt(stored.encode("utf-8")).decode("utf-8")
+    except (InvalidToken, ValueError, TypeError):
+        if stored.startswith("gAAAAA"):
+            logger.warning("Stored SMB password could not be decrypted — wrong key?")
+        else:
+            logger.debug("Stored SMB password is legacy plaintext, passing through")
+        return stored

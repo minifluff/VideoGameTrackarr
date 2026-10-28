@@ -72,6 +72,23 @@ describe("useUndoableAction", () => {
     expect(result.current.isPending(1)).toBe(false);
   });
 
+  it("commits pending actions on unmount instead of dropping them", () => {
+    const onCommit = vi.fn().mockResolvedValue(undefined);
+    const { result, unmount } = renderHook(() =>
+      useUndoableAction<Item>({ getId: (item) => item.id, onCommit, delayMs: 1000 })
+    );
+
+    act(() => {
+      result.current.schedule([{ id: 1 }]);
+    });
+
+    act(() => {
+      unmount();
+    });
+
+    expect(onCommit).toHaveBeenCalledWith([{ id: 1 }]);
+  });
+
   it("calling undo twice is a no-op the second time", () => {
     const onCommit = vi.fn().mockResolvedValue(undefined);
     const { result } = renderHook(() =>

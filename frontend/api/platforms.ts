@@ -13,7 +13,7 @@ export async function listLibraryPlatforms(): Promise<LibraryPlatform[]> {
 }
 
 export async function getPlatform(slug: string): Promise<CatalogBrowseResult> {
-  const response = await apiClient.get<CatalogBrowseResult>(`/api/platforms/${slug}`);
+  const response = await apiClient.get<CatalogBrowseResult>(`/api/platforms/${encodeURIComponent(slug)}`);
   return response.data;
 }
 
@@ -22,7 +22,7 @@ export async function listPlatformAddons(
   filters: GameListFilters = {},
   signal?: AbortSignal
 ): Promise<GameSummary[]> {
-  const response = await apiClient.get<GameSummary[]>(`/api/platforms/${slug}/addons`, {
+  const response = await apiClient.get<GameSummary[]>(`/api/platforms/${encodeURIComponent(slug)}/addons`, {
     params: buildGameFilterParams(filters),
     paramsSerializer: { indexes: null },
     signal,

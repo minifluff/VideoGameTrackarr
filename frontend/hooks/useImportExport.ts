@@ -57,12 +57,14 @@ export function useRestoreBackup() {
 // Polled from RestoreGuard (mounted once in AppShell) for as long as the authenticated app
 // is open, so an in-progress restore is detected on first load too — not just right after
 // this tab's own restoreBackup call — which is what makes the blocking overlay survive a
-// refresh, a route change, or the tab being closed and reopened mid-restore.
+// refresh, a route change, or the tab being closed and reopened mid-restore. While a
+// restore is running the poll stays at 3s; otherwise it backs off to 30s — still fast
+// enough to catch a restore started in another tab, without a 3s request forever.
 export function useRestoreStatus() {
   return useQuery({
     queryKey: restoreStatusQueryKey,
     queryFn: fetchRestoreStatus,
-    refetchInterval: 3000,
+    refetchInterval: (query) => (query.state.data?.status === "running" ? 3000 : 30000),
     // The app's offline persister (offline/queryPersistence.ts) rehydrates queries from
     // IndexedDB on load, and the global default staleTime is 30s — without overriding it
     // here, a page refresh could briefly show a stale cached "idle" (persisted from before

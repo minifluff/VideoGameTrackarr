@@ -119,7 +119,7 @@ export async function listBiosSystems(): Promise<BiosSystem[]> {
 export async function uploadBios(system: string, file: File): Promise<BiosSystem> {
   const form = new FormData();
   form.append("file", file);
-  const response = await apiClient.post<BiosSystem>(`/api/emulation/bios/${system}`, form);
+  const response = await apiClient.post<BiosSystem>(`/api/emulation/bios/${encodeURIComponent(system)}`, form);
   return response.data;
 }
 

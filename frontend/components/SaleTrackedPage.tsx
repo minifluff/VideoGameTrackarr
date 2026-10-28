@@ -120,6 +120,7 @@ const SaleTrackedPage = () => {
                         <IconButton
                           size="small"
                           onClick={() => void handleUntrack(row.libraryItemId)}
+                          disabled={untrackItem.isPending && untrackItem.variables === row.libraryItemId}
                         >
                           <RemoveCircleIcon fontSize="small" />
                         </IconButton>

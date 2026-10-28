@@ -183,7 +183,12 @@ function JobCard({ job }: { job: JobSummary }) {
             action={
               <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 {result.failed > 0 && (
-                  <IconButton size="small" onClick={() => setShowFailures((prev) => !prev)}>
+                  <IconButton
+                    size="small"
+                    onClick={() => setShowFailures((prev) => !prev)}
+                    aria-label={showFailures ? t("common.collapse") : t("common.expand")}
+                    aria-expanded={showFailures}
+                  >
                     {showFailures ? (
                       <ExpandLessIcon fontSize="small" />
                     ) : (

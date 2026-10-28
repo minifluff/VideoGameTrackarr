@@ -104,3 +104,28 @@ def test_upload_accessory_image_rejects_non_image_file(auth_client):
     )
 
     assert response.status_code == 400
+
+
+def test_upload_cover_rejects_oversized_body(auth_client, monkeypatch):
+    # Cap patched down so a normal small image still trips it — the route must
+    # 413 instead of buffering an unbounded body.
+    from app.api.routes import uploads
+
+    monkeypatch.setattr(uploads, "MAX_IMAGE_BYTES", 10)
+    response = auth_client.post(
+        "/api/uploads/covers", files={"file": ("cover.png", io.BytesIO(_image_bytes()), "image/png")}
+    )
+
+    assert response.status_code == 413
+
+
+def test_upload_cover_rejects_decompression_bomb(auth_client, monkeypatch):
+    # Pillow's pixel-count guard is global: with it patched to 1, any real image
+    # trips DecompressionBombError, which must surface as a 400 — not a 500
+    # (it is not a ValueError, so the old handler missed it).
+    monkeypatch.setattr(Image, "MAX_IMAGE_PIXELS", 1)
+    response = auth_client.post(
+        "/api/uploads/covers", files={"file": ("cover.png", io.BytesIO(_image_bytes()), "image/png")}
+    )
+
+    assert response.status_code == 400

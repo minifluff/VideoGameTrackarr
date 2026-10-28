@@ -57,3 +57,45 @@ def test_clear_missing_games_deletes_only_missing(auth_client, db_session, seed_
     assert db_session.get(Game, missing_addon_id) is None
     for game_id in keep_ids:
         assert db_session.get(Game, game_id) is not None
+
+
+def test_clear_missing_games_keeps_parent_with_owned_addon(auth_client, db_session, seed_platform):
+    # Missing parent (no own items) whose addon holds a real owned copy: clearing
+    # it would wipe the addon copy, its ROMs, and its progress — so the parent
+    # must survive, uncounted. A plain missing game is still cleared.
+    missing_parent = Game(
+        igdb_id=7007, name="Missing Parent", category=GameCategory.MAIN_GAME, auto_discovered=True
+    )
+    db_session.add(missing_parent)
+    db_session.commit()
+    owned_addon = Game(
+        name="Owned Addon",
+        category=GameCategory.DLC_ADDON,
+        parent_game_id=missing_parent.id,
+        auto_discovered=True,
+    )
+    db_session.add(owned_addon)
+    db_session.commit()
+    addon_item = LibraryItem(game_id=owned_addon.id, platform_id=seed_platform.id, status=LibraryStatus.OWNED)
+    db_session.add(addon_item)
+    missing_game = Game(
+        igdb_id=7008, name="Missing Game", category=GameCategory.MAIN_GAME, auto_discovered=True
+    )
+    db_session.add(missing_game)
+    db_session.commit()
+    parent_id, addon_id, item_id, missing_id = (
+        missing_parent.id,
+        owned_addon.id,
+        addon_item.id,
+        missing_game.id,
+    )
+
+    response = auth_client.post("/api/system/clear-missing-games", json={"confirmation": "confirm"})
+
+    assert response.status_code == 200
+    assert response.json() == {"gamesDeleted": 1}
+    db_session.expire_all()
+    assert db_session.get(Game, parent_id) is not None
+    assert db_session.get(Game, addon_id) is not None
+    assert db_session.get(LibraryItem, item_id) is not None
+    assert db_session.get(Game, missing_id) is None

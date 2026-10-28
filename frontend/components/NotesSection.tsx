@@ -44,6 +44,7 @@ const NoteRow = ({
   const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(note.body);
+  const [deleting, setDeleting] = useState(false);
 
   const handleSave = async () => {
     if (!draft.trim()) return;
@@ -57,11 +58,15 @@ const NoteRow = ({
   };
 
   const handleDelete = async () => {
+    if (deleting) return;
+    setDeleting(true);
     try {
       await onDelete(note.id);
     } catch (error) {
       console.error("Error deleting note:", error);
       toast.error(t("notes.deleteError"), TOAST_OPTIONS);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -95,7 +100,7 @@ const NoteRow = ({
             </IconButton>
           </Tooltip>
           <Tooltip title={t("common.delete")}>
-            <IconButton size="small" onClick={handleDelete}>
+            <IconButton size="small" onClick={handleDelete} disabled={deleting}>
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Tooltip>

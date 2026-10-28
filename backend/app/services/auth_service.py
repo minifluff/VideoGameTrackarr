@@ -1,3 +1,4 @@
+import logging
 import secrets
 from datetime import UTC, datetime, timedelta
 
@@ -14,6 +15,8 @@ from app.core.security import (
 )
 from app.models.system import RefreshToken, User
 from app.services.exceptions import ConflictError, NotFoundError
+
+logger = logging.getLogger(__name__)
 
 
 class AuthError(Exception):
@@ -47,14 +50,20 @@ def create_initial_admin(db: Session, username: str, password: str) -> User:
 
 
 def change_password(db: Session, user: User, current_password: str, new_password: str) -> None:
-    """Sets a new password and revokes every refresh token the user has, so other browsers
+    """Sets a new password and deletes every refresh token the user has, so other browsers
     and devices are signed out once their short-lived access token runs out. The caller
-    issues fresh tokens for the session that made the change."""
+    issues fresh tokens for the session that made the change.
+
+    Deletion (not revocation) is deliberate: a stale client's later refresh then finds
+    no record and fails quietly, instead of tripping reuse detection and revoking the
+    fresh session too. Only rotation-revoked tokens are reuse evidence.
+    """
     if not verify_password(current_password, user.password_hash):
         raise WrongPasswordError("The current password is incorrect.")
 
     user.password_hash = hash_password(new_password)
-    _revoke_all(db, user.id)
+    db.query(RefreshToken).filter(RefreshToken.user_id == user.id).delete(synchronize_session=False)
+    db.commit()
 
 
 def _revoke_all(db: Session, user_id: int) -> None:
@@ -74,14 +83,28 @@ def issue_tokens(db: Session, user: User, remember_me: bool = False) -> tuple[st
 
 def rotate_refresh_token(db: Session, refresh_token: str) -> tuple[str, str]:
     """Validates a refresh token, revokes it, and issues a fresh access+refresh pair.
-    Rotation means a stolen refresh token can be replayed at most once before the
-    legitimate client's next refresh fails loudly (the record is already revoked).
+
+    Reuse detection: presenting an already-revoked token is treated as a
+    compromise signal, not just a failed refresh — every refresh token for that
+    user is revoked (the attacker's rotated family dies with it) and the event
+    is logged, then the request still fails with AuthError. A token that never
+    existed (unknown jti, bad signature, expired) is NOT reuse evidence — it
+    fails quietly as before, so random guesses can't mass-revoke sessions.
 
     A "Remember me" session keeps its long lifetime across rotations: the rotated
     token was issued with ~a year of life while a normal one gets
     settings.refresh_token_expire_days (default 30 days), so anything with far more
     than the normal lifetime left is re-issued as remember-me. No schema change needed.
     """
+    revoked = _load_revoked_record(db, refresh_token)
+    if revoked is not None:
+        logger.warning(
+            "Revoked refresh token presented for user %s — revoking all refresh tokens",
+            revoked.user_id,
+        )
+        _revoke_all(db, revoked.user_id)
+        raise AuthError("Refresh token has been revoked")
+
     record, user = _load_active_refresh_token(db, refresh_token)
 
     record.revoked_at = datetime.now(UTC)
@@ -125,6 +148,21 @@ def get_user_by_share_token(db: Session, token: str) -> User:
     if user is None:
         raise NotFoundError("Share link not found")
     return user
+
+
+def _load_revoked_record(db: Session, refresh_token: str) -> RefreshToken | None:
+    """The RefreshToken row for a token that was already revoked, or None.
+    Undecodable tokens (bad signature, expired, wrong type) and unknown jtis
+    return None — they are not reuse evidence, so they must not trigger the
+    family-wide revocation in rotate_refresh_token."""
+    try:
+        payload = decode_token(refresh_token, TokenType.REFRESH)
+    except TokenError:
+        return None
+    record = db.query(RefreshToken).filter(RefreshToken.jti == payload.get("jti")).first()
+    if record is None or record.revoked_at is None:
+        return None
+    return record
 
 
 def _load_active_refresh_token(db: Session, refresh_token: str) -> tuple[RefreshToken, User]:

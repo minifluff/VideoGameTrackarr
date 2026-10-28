@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import exists, select
+from sqlalchemy.orm import Session, aliased
 
 from app.core.identifiers import extract_uuid
 from app.models.catalog import CompanyRole, Game, GameCategory, IgdbReleaseRegion, Platform
@@ -328,7 +328,14 @@ def clear_missing_games(db: Session) -> int:
     with neither an owned nor a wishlisted copy — via the same full cleanup as
     deleting one game (addons and their attached rows go too). Returns the number
     of top-level missing games deleted. Note this is a cleanup, not a blocklist:
-    the next collection/series 'what's missing' resync re-discovers cleared games."""
+    the next collection/series 'what's missing' resync re-discovers cleared games.
+
+    A parent whose addon subtree holds any library item is NOT a candidate, even
+    when the parent itself has none: deletion wipes the addons too, so clearing
+    such a parent would silently destroy a real owned copy (and its ROMs and
+    progress) sitting on the addon. Those parents are left untouched and
+    uncounted, not deleted."""
+    ChildGame = aliased(Game)
     missing_ids = list(
         db.scalars(
             select(Game.id).where(
@@ -337,6 +344,11 @@ def clear_missing_games(db: Session) -> int:
                 Game.auto_discovered.is_(True),
                 ~_owned_exists(Game.id),
                 ~_wishlisted_exists(Game.id),
+                # No library item on any addon of this parent.
+                ~exists().where(
+                    ChildGame.parent_game_id == Game.id,
+                    LibraryItem.game_id == ChildGame.id,
+                ),
             )
         )
     )

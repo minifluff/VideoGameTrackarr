@@ -119,13 +119,14 @@ export function useStartBulkImport() {
 
 // Polled only while AddGame.tsx is mounted (unlike restore's app-wide RestoreGuard) — bulk
 // import only ever needs to affect that one page, not the whole app, per the user's own
-// explicit scoping.
+// explicit scoping. And only while an import is actually running (same pattern as
+// useJobsList), not at a constant 3s while the page just sits open.
 export function useBulkImportStatus(enabled: boolean) {
   return useQuery({
     queryKey: bulkImportStatusQueryKey,
     queryFn: getBulkImportStatus,
     enabled,
-    refetchInterval: 3000,
+    refetchInterval: (query) => (query.state.data?.status === "running" ? 3000 : false),
     refetchIntervalInBackground: true,
     staleTime: 0,
   });

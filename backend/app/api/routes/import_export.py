@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from starlette.background import BackgroundTask
 
 from app.api.deps import get_current_user, get_db, get_session_factory
+from app.api.routes.uploads import read_upload_capped
 from app.core.security import TokenError, TokenType, create_backup_download_token, decode_token
 from app.models.system import User
 from app.schemas.backup import FullBackupLinkResponse, RestoreStatusResponse
@@ -17,6 +18,13 @@ from app.schemas.base import CamelModel
 from app.schemas.csv_import import CsvImportResult
 from app.services import backup_service, csv_service, export_backup_job, hardware_csv_service, restore_job
 from app.services.export_backup_job import ExportBackupError
+
+# Same unbounded-read problem as the image uploads (await file.read() with no
+# cap): a multi-GB body would OOM the container before parsing started. The
+# .zip restore path already streams to a temp file; only the CSV and JSON
+# branches needed caps. Both are far above any real export of a ~10k library.
+MAX_CSV_BYTES = 64 * 1024 * 1024
+MAX_JSON_BACKUP_BYTES = 256 * 1024 * 1024
 
 router = APIRouter(tags=["import-export"], dependencies=[Depends(get_current_user)])
 # Reached by a plain browser navigation with a signed token in the path (no auth header).
@@ -93,7 +101,7 @@ async def import_csv(file: UploadFile = File(...), db: Session = Depends(get_db)
     Rows are validated individually — a bad row is skipped (reported in `errors`) while
     the rest still import. Nothing is wiped: this adds to the library, unlike restore.
     """
-    raw = await file.read()
+    raw = await read_upload_capped(file, MAX_CSV_BYTES)
     try:
         csv_text = raw.decode("utf-8-sig")
     except UnicodeDecodeError as exc:
@@ -116,7 +124,7 @@ async def restore_backup(
     if head.startswith(b"PK") or (file.filename or "").lower().endswith(".zip"):
         return _to_response(await _start_full_restore(file, session_factory))
 
-    raw = await file.read()
+    raw = await read_upload_capped(file, MAX_JSON_BACKUP_BYTES)
     try:
         payload = backup_service.parse_backup_payload(raw.decode("utf-8"))
     except (UnicodeDecodeError, ValidationError, ValueError) as exc:

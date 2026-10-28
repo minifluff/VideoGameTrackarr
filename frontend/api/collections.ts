@@ -8,7 +8,7 @@ export async function listCollections(): Promise<CatalogRefSummary[]> {
 }
 
 export async function getCollection(slug: string): Promise<CatalogBrowseResult> {
-  const response = await apiClient.get<CatalogBrowseResult>(`/api/collections/${slug}`);
+  const response = await apiClient.get<CatalogBrowseResult>(`/api/collections/${encodeURIComponent(slug)}`);
   return response.data;
 }
 
@@ -17,7 +17,7 @@ export async function listCollectionAddons(
   filters: GameListFilters = {},
   signal?: AbortSignal
 ): Promise<GameSummary[]> {
-  const response = await apiClient.get<GameSummary[]>(`/api/collections/${slug}/addons`, {
+  const response = await apiClient.get<GameSummary[]>(`/api/collections/${encodeURIComponent(slug)}/addons`, {
     params: buildGameFilterParams(filters),
     paramsSerializer: { indexes: null },
     signal,

@@ -69,6 +69,9 @@ const GamesListPage = () => {
       setBulkDeleteOpen(false);
       setBulkDeleteError(null);
       setSelectedIds(new Set());
+      // Deleting every item on the last page would otherwise leave `page`
+      // pointing past the end of the shrunken list and render a blank table.
+      setPage(0);
     } catch {
       setBulkDeleteError(t("games.listPage.bulkEdit.deleteError"));
     }

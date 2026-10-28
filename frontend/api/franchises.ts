@@ -8,7 +8,7 @@ export async function listFranchises(): Promise<CatalogRefSummary[]> {
 }
 
 export async function getFranchise(slug: string): Promise<CatalogBrowseResult> {
-  const response = await apiClient.get<CatalogBrowseResult>(`/api/franchises/${slug}`);
+  const response = await apiClient.get<CatalogBrowseResult>(`/api/franchises/${encodeURIComponent(slug)}`);
   return response.data;
 }
 
@@ -17,7 +17,7 @@ export async function listFranchiseAddons(
   filters: GameListFilters = {},
   signal?: AbortSignal
 ): Promise<GameSummary[]> {
-  const response = await apiClient.get<GameSummary[]>(`/api/franchises/${slug}/addons`, {
+  const response = await apiClient.get<GameSummary[]>(`/api/franchises/${encodeURIComponent(slug)}/addons`, {
     params: buildGameFilterParams(filters),
     paramsSerializer: { indexes: null },
     signal,

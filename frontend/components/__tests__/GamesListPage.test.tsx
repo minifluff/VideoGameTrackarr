@@ -37,8 +37,13 @@ const items: LibraryListItem[] = [
   },
 ];
 
+// Rest-typed so the factory's lazy wrapper below typechecks: the wrapper must
+// not dereference this at factory time (hoisted factories run before this
+// initializer), only when the query actually calls it.
+const mockListItems = vi.fn((..._args: unknown[]) => Promise.resolve(items));
+
 vi.mock("../../api/library", () => ({
-  listAllLibraryItems: () => Promise.resolve(items),
+  listAllLibraryItems: (...args: unknown[]) => mockListItems(...args),
   bulkUpdateLibraryItems: vi.fn(),
 }));
 
@@ -195,5 +200,38 @@ describe("GamesListPage move action", () => {
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     expect(screen.getByText(/Zelda: Tears of the Kingdom \(Nintendo Switch\)/)).toBeInTheDocument();
     expect(screen.queryByText(/selected/)).not.toBeInTheDocument();
+  });
+});
+
+describe("GamesListPage bulk delete pagination", () => {
+  it("returns to the first page after deleting every item on the last page", async () => {
+    const user = userEvent.setup();
+    // Zero-padded so the page's Name-ascending sort keeps numeric order.
+    const many: LibraryListItem[] = Array.from({ length: 26 }, (_, i) => ({
+      ...items[0],
+      id: 100 + i,
+      gameId: 100 + i,
+      gameName: `Game ${String(i + 1).padStart(2, "0")}`,
+      gameUuid: `uuid-many-${i}`,
+    }));
+    mockListItems.mockResolvedValueOnce(many);
+    renderPage();
+
+    await screen.findByText("Game 01");
+    // 25 rows per page leaves a second page holding only Game 26.
+    await user.click(screen.getByText("50"));
+    await user.click(screen.getByRole("option", { name: "25" }));
+    await user.click(screen.getByRole("button", { name: "Go to next page" }));
+    expect(await screen.findByText("Game 26")).toBeInTheDocument();
+    expect(screen.queryByText("Game 01")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("checkbox", { name: "Select page" }));
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+    expect(await screen.findByText("Delete 1 items?")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+
+    // The delete resets the page: the first page's items are visible again
+    // instead of a blank second page.
+    expect(await screen.findByText("Game 01")).toBeInTheDocument();
   });
 });

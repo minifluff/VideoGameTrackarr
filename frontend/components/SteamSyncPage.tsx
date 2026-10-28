@@ -558,6 +558,11 @@ const SteamSyncPage = () => {
 
   const renderActions = (row: SyncRow, childCount = 0) => {
     const actionable = isRowActionable(row);
+    // The ignore/unignore mutations are shared across rows, so gate the
+    // disabled state on the in-flight mutation's variables, not just isPending
+    // — otherwise one row's click would freeze every row's button.
+    const ignoreMutation = row.source === "owned" ? ignoreEntry : ignoreWishlistEntry;
+    const unignoreMutation = row.source === "owned" ? unignoreEntry : unignoreWishlistEntry;
     return (
       <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>
         {actionable && (
@@ -593,13 +598,21 @@ const SteamSyncPage = () => {
         )}
         {row.entry.status !== "ignored" ? (
           <Tooltip title={t("insights.steamSync.ignoreButton")}>
-            <IconButton size="small" onClick={() => void handleIgnore(row)}>
+            <IconButton
+              size="small"
+              onClick={() => void handleIgnore(row)}
+              disabled={ignoreMutation.isPending && ignoreMutation.variables === row.entry.steamAppId}
+            >
               <BlockIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         ) : (
           <Tooltip title={t("insights.steamSync.unignoreButton")}>
-            <IconButton size="small" onClick={() => void handleUnignore(row)}>
+            <IconButton
+              size="small"
+              onClick={() => void handleUnignore(row)}
+              disabled={unignoreMutation.isPending && unignoreMutation.variables === row.entry.steamAppId}
+            >
               <UndoIcon fontSize="small" />
             </IconButton>
           </Tooltip>

@@ -159,6 +159,37 @@ def test_setup_rejects_short_username(client):
     assert response.status_code == 422
 
 
+def test_setup_rejects_password_over_bcrypt_limit(client):
+    # bcrypt silently truncates past 72 bytes, so setup must reject a longer
+    # password — otherwise the stored password is shorter than the one given.
+    response = client.post("/api/auth/setup", json={"username": "admin", "password": "x" * 73})
+
+    assert response.status_code == 422
+
+
+def test_setup_accepts_password_at_bcrypt_limit(client):
+    response = client.post("/api/auth/setup", json={"username": "admin", "password": "x" * 72})
+
+    assert response.status_code == 200
+
+
+def test_refresh_reuse_revokes_all_tokens(client, test_user):
+    login = client.post("/api/auth/login", json={"username": "admin", "password": "correct-password"})
+    old_refresh_token = login.json()["refreshToken"]
+
+    rotated = client.post("/api/auth/refresh", json={"refreshToken": old_refresh_token})
+    assert rotated.status_code == 200
+    new_refresh_token = rotated.json()["refreshToken"]
+
+    # Replaying the revoked token fails — and as reuse evidence it revokes the
+    # whole family, so the rotated token dies with it.
+    replay = client.post("/api/auth/refresh", json={"refreshToken": old_refresh_token})
+    assert replay.status_code == 401
+
+    reuse = client.post("/api/auth/refresh", json={"refreshToken": new_refresh_token})
+    assert reuse.status_code == 401
+
+
 def test_setup_rate_limited_after_five_attempts(client):
     for _ in range(5):
         client.post("/api/auth/setup", json={"username": "admin", "password": "a-strong-password"})
@@ -221,10 +252,27 @@ def test_change_password_signs_other_sessions_out_and_keeps_this_one(client, tes
     )
 
     assert response.status_code == 200
+    # The other session is signed out by the password change alone.
     assert client.post("/api/auth/refresh", json={"refreshToken": other["refreshToken"]}).status_code == 401
+    # The stale refresh fails quietly (its record was deleted, not revoked), so it
+    # is NOT reuse evidence — the fresh token from the password change survives it.
     assert client.post("/api/auth/refresh", json={"refreshToken": response.json()["refreshToken"]}).status_code == 200
     login = client.post("/api/auth/login", json={"username": test_user.username, "password": "a-brand-new-password"})
     assert login.status_code == 200
+
+
+def test_change_password_keeps_this_session_without_stale_refresh(client, test_user):
+    first = client.post("/api/auth/login", json={"username": test_user.username, "password": "correct-password"}).json()
+    client.post("/api/auth/login", json={"username": test_user.username, "password": "correct-password"}).json()
+
+    response = client.post(
+        "/api/auth/change-password",
+        json={"currentPassword": "correct-password", "newPassword": "a-brand-new-password"},
+        headers={"Authorization": f"Bearer {first['accessToken']}"},
+    )
+
+    assert response.status_code == 200
+    assert client.post("/api/auth/refresh", json={"refreshToken": response.json()["refreshToken"]}).status_code == 200
 
 
 def test_change_password_rejects_a_wrong_current_password(client, test_user):

@@ -122,3 +122,12 @@ def test_import_csv_is_idempotent(auth_client):
     assert first["imported"] == 1
     assert second["imported"] == 0
     assert second["skipped"] == 1
+
+
+def test_import_csv_rejects_oversized_body(auth_client, monkeypatch):
+    from app.api.routes import import_export
+
+    monkeypatch.setattr(import_export, "MAX_CSV_BYTES", 10)
+    response = auth_client.post("/api/import/csv", files=_csv_file("name\nZelda\n"))
+
+    assert response.status_code == 413

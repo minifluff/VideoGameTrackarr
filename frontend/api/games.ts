@@ -175,7 +175,7 @@ export async function fetchBookshelfEntries(): Promise<BookshelfEntry[]> {
 }
 
 export async function getGame(identifier: string): Promise<GameDetail> {
-  const response = await apiClient.get<GameDetail>(`/api/games/${identifier}`);
+  const response = await apiClient.get<GameDetail>(`/api/games/${encodeURIComponent(identifier)}`);
   return response.data;
 }
 

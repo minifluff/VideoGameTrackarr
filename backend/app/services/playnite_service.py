@@ -9,6 +9,7 @@ from typing import Any
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
+from app.core.security import decrypt_smb_password, encrypt_smb_password
 from app.models.catalog import GameCategory
 from app.models.library import LibraryStatus, MediaFormat, Tag
 from app.models.playnite import PlayniteLibraryEntry
@@ -151,7 +152,8 @@ def set_config(
     # An empty string clears the stored password; None leaves it untouched so the
     # frontend can update path/username without re-sending the password every time.
     if smb_password is not None:
-        user.playnite_smb_password = smb_password if smb_password else None
+        # Stored encrypted when a Fernet key is configured (see app/core/security.py).
+        user.playnite_smb_password = encrypt_smb_password(smb_password if smb_password else None)
     db.commit()
     db.refresh(user)
     return user
@@ -179,7 +181,9 @@ def scan_library(db: Session, user: User) -> dict[str, Any]:
 
     try:
         games_data, platforms = _read_playnite_library(
-            user.playnite_smb_path, user.playnite_smb_username, user.playnite_smb_password
+            user.playnite_smb_path,
+            user.playnite_smb_username,
+            decrypt_smb_password(user.playnite_smb_password),
         )
     except PlayniteError:
         raise

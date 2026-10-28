@@ -17,6 +17,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.security import decrypt_smb_password, encrypt_smb_password
 from app.models.system import User
 from app.services import backup_service
 from app.services.job_registry import JobDefinition
@@ -284,7 +285,8 @@ def set_config(
     user.export_smb_path = smb_path.strip() if smb_path and smb_path.strip() else None
     user.export_smb_username = smb_username.strip() if smb_username and smb_username.strip() else None
     if smb_password:
-        user.export_smb_password = smb_password
+        # Stored encrypted when a Fernet key is configured (see app/core/security.py).
+        user.export_smb_password = encrypt_smb_password(smb_password)
     elif smb_password is not None:
         # Explicit empty string clears it.
         user.export_smb_password = None
@@ -334,7 +336,9 @@ def _export(db: Session, report_progress: Callable[[int, int], None]) -> dict[st
     try:
         # 2. Upload it to the share.
         connection, tree, subpath = _connect(
-            user.export_smb_path, user.export_smb_username, user.export_smb_password
+            user.export_smb_path,
+            user.export_smb_username,
+            decrypt_smb_password(user.export_smb_password),
         )
         try:
             report_progress(0, 100)

@@ -8,14 +8,14 @@ import {
 
 export const catalogResyncStatusQueryKey = ["catalog-resync", "status"] as const;
 
-// Polled continuously (like useRestoreStatus) so CatalogResyncButton picks up an
-// already-running job on mount — e.g. the user started a resync, navigated away, and came
-// back to the same Collection/Series page.
+// Polled only while a resync is running (same pattern as useJobsList) — the mount-time
+// fetch still picks up an already-running job, e.g. the user started a resync, navigated
+// away, and came back to the same Collection/Series page, without a 3s request forever.
 export function useCatalogResyncStatus() {
   return useQuery({
     queryKey: catalogResyncStatusQueryKey,
     queryFn: fetchCatalogResyncStatus,
-    refetchInterval: 3000,
+    refetchInterval: (query) => (query.state.data?.status === "running" ? 3000 : false),
     staleTime: 0,
     refetchIntervalInBackground: true,
   });

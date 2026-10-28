@@ -76,3 +76,11 @@ class SetupRequest(CamelModel):
 
     username: str = Field(min_length=3, max_length=255)
     password: str = Field(min_length=8)
+
+    @field_validator("password")
+    @classmethod
+    def _fits_bcrypt(cls, value: str) -> str:
+        # Same 72-byte cap as ChangePasswordRequest: bcrypt silently truncates
+        # longer passwords, so accepting one here would store a shorter password
+        # than the user believes they set (and change-password would reject it).
+        return _check_bcrypt_length(value)

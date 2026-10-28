@@ -18,13 +18,23 @@ const DEFAULT_DELAY_MS = 5000;
 // Pairs with a toast that offers an "Undo" button — see GameListPage/GameLibrarySection.
 export function useUndoableAction<T>({ getId, onCommit, delayMs = DEFAULT_DELAY_MS }: UseUndoableActionOptions<T>) {
   const [pendingIds, setPendingIds] = useState<ReadonlySet<number>>(new Set());
-  const timeoutsRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+  const timeoutsRef = useRef<Map<number, { timeoutId: ReturnType<typeof setTimeout>; items: T[] }>>(new Map());
   const nextBatchIdRef = useRef(0);
+  // Read through a ref in the unmount cleanup so it always sees the latest
+  // onCommit without re-running the effect (and its cleanup) on every render.
+  const onCommitRef = useRef(onCommit);
+  onCommitRef.current = onCommit;
 
   useEffect(() => {
     const timeouts = timeoutsRef.current;
     return () => {
-      timeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+      // Commit, don't drop: the toast survives navigation and still claims the
+      // action happened, so navigating away inside the grace period must apply
+      // the pending actions rather than silently discarding them.
+      timeouts.forEach(({ timeoutId, items }) => {
+        clearTimeout(timeoutId);
+        void onCommitRef.current(items);
+      });
       timeouts.clear();
     };
   }, []);
@@ -48,15 +58,15 @@ export function useUndoableAction<T>({ getId, onCommit, delayMs = DEFAULT_DELAY_
         timeoutsRef.current.delete(batchId);
         void onCommit(items).finally(clearPending);
       }, delayMs);
-      timeoutsRef.current.set(batchId, timeoutId);
+      timeoutsRef.current.set(batchId, { timeoutId, items });
 
       return {
         undo: () => {
-          const pendingTimeout = timeoutsRef.current.get(batchId);
-          if (!pendingTimeout) {
+          const pending = timeoutsRef.current.get(batchId);
+          if (!pending) {
             return;
           }
-          clearTimeout(pendingTimeout);
+          clearTimeout(pending.timeoutId);
           timeoutsRef.current.delete(batchId);
           clearPending();
         },

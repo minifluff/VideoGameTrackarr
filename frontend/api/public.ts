@@ -51,7 +51,7 @@ export async function listPublicGames(
     playStatusExclude: filters.playStatusExclude || undefined,
     steelbookOnly: filters.steelbookOnly || undefined,
   };
-  const response = await publicClient.get<PublicGameSummary[]>(`/api/public/${token}/games`, {
+  const response = await publicClient.get<PublicGameSummary[]>(`/api/public/${encodeURIComponent(token)}/games`, {
     params,
     paramsSerializer: { indexes: null },
   });
@@ -59,55 +59,55 @@ export async function listPublicGames(
 }
 
 export async function fetchPublicBookshelf(token: string): Promise<PublicBookshelf> {
-  const response = await publicClient.get<PublicBookshelf>(`/api/public/${token}/bookshelf`);
+  const response = await publicClient.get<PublicBookshelf>(`/api/public/${encodeURIComponent(token)}/bookshelf`);
   return response.data;
 }
 
 export async function getPublicGame(token: string, gameId: number): Promise<PublicGameDetail> {
-  const response = await publicClient.get<PublicGameDetail>(`/api/public/${token}/games/${gameId}`);
+  const response = await publicClient.get<PublicGameDetail>(`/api/public/${encodeURIComponent(token)}/games/${gameId}`);
   return response.data;
 }
 
 export async function listPublicDevices(token: string, search?: string): Promise<PublicDeviceSummary[]> {
-  const response = await publicClient.get<PublicDeviceSummary[]>(`/api/public/${token}/devices`, {
+  const response = await publicClient.get<PublicDeviceSummary[]>(`/api/public/${encodeURIComponent(token)}/devices`, {
     params: { search: search || undefined },
   });
   return response.data;
 }
 
 export async function listPublicAccessories(token: string, search?: string): Promise<PublicAccessorySummary[]> {
-  const response = await publicClient.get<PublicAccessorySummary[]>(`/api/public/${token}/accessories`, {
+  const response = await publicClient.get<PublicAccessorySummary[]>(`/api/public/${encodeURIComponent(token)}/accessories`, {
     params: { search: search || undefined },
   });
   return response.data;
 }
 
 export async function listPublicTags(token: string): Promise<{ id: number; name: string }[]> {
-  const response = await publicClient.get<{ id: number; name: string }[]>(`/api/public/${token}/tags`);
+  const response = await publicClient.get<{ id: number; name: string }[]>(`/api/public/${encodeURIComponent(token)}/tags`);
   return response.data;
 }
 
 export async function listPublicGenres(token: string): Promise<{ id: number; name: string }[]> {
-  const response = await publicClient.get<{ id: number; name: string }[]>(`/api/public/${token}/genres`);
+  const response = await publicClient.get<{ id: number; name: string }[]>(`/api/public/${encodeURIComponent(token)}/genres`);
   return response.data;
 }
 
 export async function listPublicGameModes(token: string): Promise<string[]> {
-  const response = await publicClient.get<string[]>(`/api/public/${token}/game-modes`);
+  const response = await publicClient.get<string[]>(`/api/public/${encodeURIComponent(token)}/game-modes`);
   return response.data;
 }
 
 export async function listPublicCollections(token: string): Promise<{ id: number; name: string }[]> {
-  const response = await publicClient.get<{ id: number; name: string }[]>(`/api/public/${token}/collections`);
+  const response = await publicClient.get<{ id: number; name: string }[]>(`/api/public/${encodeURIComponent(token)}/collections`);
   return response.data;
 }
 
 export async function listPublicFranchises(token: string): Promise<{ id: number; name: string }[]> {
-  const response = await publicClient.get<{ id: number; name: string }[]>(`/api/public/${token}/franchises`);
+  const response = await publicClient.get<{ id: number; name: string }[]>(`/api/public/${encodeURIComponent(token)}/franchises`);
   return response.data;
 }
 
 export async function listPublicPlatforms(token: string): Promise<{ id: number; name: string }[]> {
-  const response = await publicClient.get<{ id: number; name: string }[]>(`/api/public/${token}/platforms`);
+  const response = await publicClient.get<{ id: number; name: string }[]>(`/api/public/${encodeURIComponent(token)}/platforms`);
   return response.data;
 }

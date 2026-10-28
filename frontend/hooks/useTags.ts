@@ -50,7 +50,9 @@ export function useBulkUpdateGameTags() {
         ...gameIds.flatMap((gameId) => removeTagIds.map((tagId) => detachTag(gameId, tagId))),
       ]);
     },
-    onSuccess: () => {
+    // onSettled, not onSuccess: the fan-out can half-apply (one pair fails
+    // while others succeed), and the applied pairs still need to be reflected.
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["games"] });
       queryClient.invalidateQueries({ queryKey: ["tagCoverage"] });
     },

@@ -119,6 +119,29 @@ def test_stats_exclude_missing_games(auth_client, db_session, seed_game, seed_pl
     assert missing_game.id not in [g["id"] for g in body["recentlyAdded"]]
 
 
+def test_stats_playtime_and_rating_exclude_missing_games(auth_client, db_session, seed_game, seed_platform):
+    db_session.add(LibraryItem(game_id=seed_game.id, platform_id=seed_platform.id, status=LibraryStatus.OWNED))
+    db_session.add(
+        GameProgress(game_id=seed_game.id, platform_id=seed_platform.id, playtime_minutes=60, rating=4.0)
+    )
+    # Unclaimed discovery with progress rows of its own (claim → log playtime →
+    # delete the copy leaves progress behind): its totals must not leak in.
+    missing_game = Game(
+        igdb_id=7007, name="Missing Game", category=GameCategory.MAIN_GAME, auto_discovered=True
+    )
+    db_session.add(missing_game)
+    db_session.commit()
+    db_session.add(
+        GameProgress(game_id=missing_game.id, platform_id=seed_platform.id, playtime_minutes=100, rating=5.0)
+    )
+    db_session.commit()
+
+    body = auth_client.get("/api/dashboard/stats").json()
+
+    assert body["totalPlaytimeMinutes"] == 60
+    assert body["averageRating"] == 4.0
+
+
 def test_stats_recently_added_and_recently_played(auth_client, db_session, seed_game, seed_platform):
     db_session.add(
         GameProgress(game_id=seed_game.id, platform_id=seed_platform.id, last_played_at=datetime.now(UTC).date())

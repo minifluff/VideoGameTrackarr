@@ -30,6 +30,13 @@ class Settings(BaseSettings):
     # default that would inevitably end up reused in production (a real, recurring CVE
     # pattern in other frameworks).
     jwt_secret_key: str | None = None
+    # Fernet key encrypting SMB passwords at rest (playnite_smb_password,
+    # export_smb_password). No default — without it those columns keep their
+    # legacy plaintext behavior and a warning is logged at first use. Generate
+    # one with: python -c "from cryptography.fernet import Fernet;
+    # print(Fernet.generate_key().decode())". Deliberately distinct from
+    # jwt_secret_key: that signs tokens, this encrypts stored credentials.
+    smb_encryption_key: str | None = None
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 30

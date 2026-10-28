@@ -1213,6 +1213,7 @@
       "summary": "{{cases}} cases on the shelf",
       "searchPlaceholder": "Search the shelf…",
       "empty": "Nothing on the shelf yet — own some games first.",
+      "loadMore": "Load more",
       "template": {
         "title": "Spine template · {{platform}}",
         "forPlatform": "Spine template for {{platform}}",

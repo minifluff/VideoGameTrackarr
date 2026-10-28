@@ -218,10 +218,21 @@ const EmulatorPlayerDialog = ({
     : null;
 
   return (
-    <Dialog open={open} onClose={() => void handleClose()} fullScreen>
+    <Dialog
+      open={open}
+      onClose={() => void handleClose()}
+      fullScreen
+      aria-labelledby="emulator-player-title"
+    >
       <AppBar position="static" color="default" elevation={1}>
         <Toolbar variant="dense">
-          <Typography variant="h6" component="h2" sx={{ flex: 1, minWidth: 0 }} noWrap>
+          <Typography
+            id="emulator-player-title"
+            variant="h6"
+            component="h2"
+            sx={{ flex: 1, minWidth: 0 }}
+            noWrap
+          >
             {title}
           </Typography>
           {closing ? (
