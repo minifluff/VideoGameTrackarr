@@ -278,6 +278,10 @@ const GameCard = ({
                 alt={game.name}
                 src={resolveAssetUrl(game.coverUrl) ?? undefined}
                 loading="lazy"
+                // Decode off the main thread: a row of covers decoding at once
+                // is visible jank on a slow device, and nothing here needs the
+                // pixels synchronously (the skeleton covers the wait).
+                decoding="async"
                 onLoad={() => setCoverLoaded(true)}
                 onError={() => setFailedCoverUrl(game.coverUrl)}
                 sx={{

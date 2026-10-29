@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import Box from "@mui/material/Box";
 import { useLocation, useNavigationType } from "react-router-dom";
@@ -221,4 +221,14 @@ function VirtualGameGrid<T>({ items, getKey, renderItem, estimateRowHeight, card
   );
 }
 
-export default VirtualGameGrid;
+// Memoized: this grid's own render is the expensive part of the Games pages
+// (dozens of cards with images plus the virtualizer's measurements), and its
+// parents re-render for reasons that don't touch the grid at all — typing in
+// the toolbar search, the sticky header collapsing on scroll. Call sites that
+// stabilize their props (stable items/getKey/renderItem) skip those renders
+// entirely; call sites passing fresh closures each render behave exactly as
+// before, since memo only skips when every prop is unchanged. The cast keeps
+// the generic signature: React 18's memo() types would otherwise erase it.
+const MemoizedVirtualGameGrid = memo(VirtualGameGrid) as typeof VirtualGameGrid;
+
+export default MemoizedVirtualGameGrid;

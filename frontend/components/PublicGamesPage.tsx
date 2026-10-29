@@ -1,11 +1,11 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
-import type { GameSortOption } from "../api/types";
+import type { GameSortOption, PublicGameSummary } from "../api/types";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useScrollDirection } from "../hooks/useScrollCollapse";
 import { usePublicGameModes, usePublicGames, usePublicGenres, usePublicPlatforms, usePublicTags } from "../hooks/usePublic";
@@ -13,6 +13,10 @@ import { useSessionState } from "../hooks/useSessionState";
 import GameCard from "./GameCard";
 import PublicGamesToolbar, { type OwnershipStatus } from "./PublicGamesToolbar";
 import VirtualGameGrid from "./VirtualGameGrid";
+
+// Module-level so the memoized VirtualGameGrid sees a stable getKey — an
+// inline arrow would defeat the memo on every parent render.
+const getGameKey = (game: PublicGameSummary) => game.id;
 
 const PublicGamesPage = () => {
   const { token } = useParams<{ token: string }>();
@@ -77,6 +81,20 @@ const PublicGamesPage = () => {
     setPlayStatuses([]);
     setOwnershipStatuses([]);
   };
+
+  // Stable so the memoized grid skips parent renders that don't touch the
+  // list itself (typing in the search field, the search bar hiding on scroll).
+  const renderGameCard = useCallback(
+    (game: PublicGameSummary) => (
+      <GameCard
+        game={game}
+        context="public"
+        contextFunction={() => navigate(`/public/${token}/games/${game.id}`)}
+        ownedPlatforms={game.ownedPlatforms}
+      />
+    ),
+    [navigate, token],
+  );
 
 
   return (
@@ -158,15 +176,8 @@ const PublicGamesPage = () => {
       ) : (
         <VirtualGameGrid
           items={games}
-          getKey={(game) => game.id}
-          renderItem={(game) => (
-            <GameCard
-              game={game}
-              context="public"
-              contextFunction={() => navigate(`/public/${token}/games/${game.id}`)}
-              ownedPlatforms={game.ownedPlatforms}
-            />
-          )}
+          getKey={getGameKey}
+          renderItem={renderGameCard}
         />
       )}
     </>

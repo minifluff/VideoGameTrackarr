@@ -42,6 +42,12 @@ describe("GameCard", () => {
       "src",
       "https://images.igdb.com/cover.jpg"
     );
+    // Covers decode off the main thread so a row of them loading at once
+    // doesn't jank a slow device.
+    expect(screen.getByRole("img", { name: /Hollow Knight/ })).toHaveAttribute(
+      "decoding",
+      "async"
+    );
   });
 
   it("shows the 'No cover' placeholder when the cover image fails to load", () => {

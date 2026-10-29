@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import Box from "@mui/material/Box";
@@ -36,6 +36,10 @@ import { useAppearance } from "../theme/AppearanceProvider";
 import { useSearchHandoff } from "../navigation/GlobalSearch";
 
 const MIN_SEARCH_LENGTH = 3;
+
+// Module-level so the memoized VirtualGameGrid sees a stable getKey — an
+// inline arrow would defeat the memo on every parent render.
+const getGameKey = (game: GameSummary) => game.id;
 
 interface GameListProps {
   sessionPrefix?: string;
@@ -253,11 +257,17 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
     [filteredGames, isPending]
   );
 
-  const handleGameClick = (game: GameSummary) => {
-    navigate(`/game/${gameIdentifier(game)}`);
-  };
+  // Stable callbacks so the memoized grid's renderItem stays identical across
+  // parent renders that don't touch selection (typing in the toolbar search,
+  // the sticky header collapsing on scroll) — otherwise the memo never skips.
+  const handleGameClick = useCallback(
+    (game: GameSummary) => {
+      navigate(`/game/${gameIdentifier(game)}`);
+    },
+    [navigate],
+  );
 
-  const toggleSelected = (gameId: number) => {
+  const toggleSelected = useCallback((gameId: number) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(gameId)) {
@@ -267,7 +277,7 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
       }
       return next;
     });
-  };
+  }, []);
 
   const handleEnterSelectionMode = () => {
     setSelectionMode(true);
@@ -339,6 +349,21 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
     formats.length > 0 ||
     storefronts.length > 0 ||
     steelbookOnly;
+
+  const renderGameCard = useCallback(
+    (game: GameSummary) => (
+      <GameCard
+        game={game}
+        context="list"
+        contextFunction={() => handleGameClick(game)}
+        selectable={selectionMode}
+        selected={selectedIds.has(game.id)}
+        onToggleSelect={() => toggleSelected(game.id)}
+        ownedPlatforms={game.ownedPlatforms}
+      />
+    ),
+    [selectionMode, selectedIds, handleGameClick, toggleSelected],
+  );
 
   const clearAllFilters = () => {
     setSearchKeyword("");
@@ -550,18 +575,8 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
           <VirtualGameGrid
             cardSize={cardSize}
             items={visibleGames}
-            getKey={(game) => game.id}
-            renderItem={(game) => (
-              <GameCard
-                game={game}
-                context="list"
-                contextFunction={() => handleGameClick(game)}
-                selectable={selectionMode}
-                selected={selectedIds.has(game.id)}
-                onToggleSelect={() => toggleSelected(game.id)}
-                ownedPlatforms={game.ownedPlatforms}
-              />
-            )}
+            getKey={getGameKey}
+            renderItem={renderGameCard}
           />
         )}
       </Box>
