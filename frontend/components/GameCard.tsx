@@ -6,7 +6,6 @@ import Chip from "@mui/material/Chip";
 import { green } from "@mui/material/colors";
 import Skeleton from "@mui/material/Skeleton";
 import { styled, useTheme } from "@mui/material/styles";
-import Tooltip from "@mui/material/Tooltip";
 import AddIcon from "@mui/icons-material/Add";
 import DoneIcon from "@mui/icons-material/Done";
 import { useTranslation } from "react-i18next";
@@ -237,7 +236,6 @@ const GameCard = ({
         />
       ) : null}
 
-      <Tooltip title={t("games.card.nameYearTooltip", { name: game.name, year: releaseYear ?? "?" })}>
         <Box
           className="vgt-card-cover"
           onClick={handleCardActivate}
@@ -383,7 +381,6 @@ const GameCard = ({
             </Box>
           ) : null}
         </Box>
-      </Tooltip>
 
       <Box sx={{ pt: 1 }}>
         <Box

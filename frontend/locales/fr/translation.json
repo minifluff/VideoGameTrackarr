@@ -877,7 +877,6 @@
       "customLabel": "Personnalisé",
       "selectAriaLabel": "Sélectionner {{name}}",
       "deselectAriaLabel": "Désélectionner {{name}}",
-      "nameYearTooltip": "{{name}} ({{year}})",
       "onSaleLabel": "En promotion",
       "missingLabel": "Manquant"
     },

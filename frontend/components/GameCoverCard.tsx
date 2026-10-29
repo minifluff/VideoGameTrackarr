@@ -10,7 +10,6 @@ import DialogTitle from "@mui/material/DialogTitle";
 import IconButton from "@mui/material/IconButton";
 import { useTheme } from "@mui/material/styles";
 import { visuallyHidden } from "@mui/utils";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { resolveAssetUrl } from "../api/client";
@@ -159,7 +158,6 @@ const GameCoverCard = ({ game }: GameCoverCardProps) => {
       }}
     >
       <OwnershipBadges owned={game.owned} wishlisted={game.wishlisted} />
-      <Tooltip title={game.name}>
         {/* aspect-ratio lives on this wrapper, not the <img> itself — see GameCard.tsx for why
             (aspect-ratio + object-fit directly on a replaced element is the combination
             that's been flaky across browsers under non-100% zoom). */}
@@ -232,7 +230,6 @@ const GameCoverCard = ({ game }: GameCoverCardProps) => {
             />
           ) : null}
         </Box>
-      </Tooltip>
     </Card>
     <Dialog
       fullScreen
