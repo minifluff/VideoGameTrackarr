@@ -29,7 +29,9 @@ describe("DashboardPage", () => {
   it("shows the upstream sections with restored buttons and a Customize dialog", async () => {
     renderDashboard();
     expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
-    expect(screen.getByText("Quick add")).toBeInTheDocument();
+    // The heading renders during load now (the header sits outside the
+    // skeleton gate), so wait for a section before asserting loaded content.
+    expect(await screen.findByText("Quick add")).toBeInTheDocument();
     expect(screen.getByText("Now playing")).toBeInTheDocument();
     expect(screen.getByText("Needs attention")).toBeInTheDocument();
     expect(screen.getByText("Nothing marked Playing yet.")).toBeInTheDocument();

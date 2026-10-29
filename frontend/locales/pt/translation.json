@@ -119,7 +119,8 @@
       "reset": "Repor predefinições",
       "saveError": "Não foi possível guardar o esquema da vista geral. Tente novamente.",
       "allHidden": "Todas as secções estão ocultas. Use Personalizar para mostrar algumas novamente.",
-      "stats": "Blocos de resumo"
+      "stats": "Blocos de resumo",
+      "displayModePublic": "Display Mode & Public Collection"
     }
   },
   "breadcrumbs": {
@@ -1213,7 +1214,6 @@
       "summary": "{{cases}} cases on the shelf",
       "searchPlaceholder": "Search the shelf…",
       "empty": "Nothing on the shelf yet — own some games first.",
-      "loadMore": "Load more",
       "template": {
         "title": "Spine template · {{platform}}",
         "forPlatform": "Spine template for {{platform}}",

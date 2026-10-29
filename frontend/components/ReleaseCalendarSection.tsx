@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import Typography from "@mui/material/Typography";
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import type { UpcomingRelease } from "../api/types";
 import { useReleaseCalendar } from "../hooks/useDashboard";
@@ -122,4 +123,6 @@ const ReleaseCalendarSection = ({ scope, title, cardSize, columnWidth }: Release
   );
 };
 
-export default ReleaseCalendarSection;
+// Memoized: same as EventsTeaserSection — the dashboard's per-query
+// re-renders during load must not re-render this subtree.
+export default memo(ReleaseCalendarSection);

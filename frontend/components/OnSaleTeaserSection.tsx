@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { useOnSale } from "../hooks/useInsights";
 import CardCarousel from "./CardCarousel";
@@ -30,4 +31,6 @@ const OnSaleTeaserSection = ({ cardSize, columnWidth }: { cardSize?: number; col
   );
 };
 
-export default OnSaleTeaserSection;
+// Memoized: same as EventsTeaserSection — the dashboard's per-query
+// re-renders during load must not re-render this subtree.
+export default memo(OnSaleTeaserSection);

@@ -119,7 +119,8 @@
       "reset": "Restablecer valores predeterminados",
       "saveError": "No se pudo guardar el diseño de la vista general. Inténtalo de nuevo.",
       "allHidden": "Todas las secciones están ocultas. Usa Personalizar para mostrar algunas de nuevo.",
-      "stats": "Tarjetas de resumen"
+      "stats": "Tarjetas de resumen",
+      "displayModePublic": "Display Mode & Public Collection"
     }
   },
   "breadcrumbs": {
@@ -1213,7 +1214,6 @@
       "summary": "{{cases}} cases on the shelf",
       "searchPlaceholder": "Search the shelf…",
       "empty": "Nothing on the shelf yet — own some games first.",
-      "loadMore": "Load more",
       "template": {
         "title": "Spine template · {{platform}}",
         "forPlatform": "Spine template for {{platform}}",

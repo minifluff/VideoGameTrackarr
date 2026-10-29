@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { useEvents } from "../hooks/useEvents";
 import CardCarousel from "./CardCarousel";
@@ -25,4 +26,6 @@ const EventsTeaserSection = ({ cardSize }: { cardSize?: number }) => {
   );
 };
 
-export default EventsTeaserSection;
+// Memoized: the dashboard re-renders as each of its queries resolves during
+// load, and this teaser only depends on its own data plus scalar props.
+export default memo(EventsTeaserSection);

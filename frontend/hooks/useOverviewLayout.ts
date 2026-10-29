@@ -19,9 +19,11 @@ export const OVERVIEW_SECTION_KEYS = [
   "recentlyAddedHardware",
   "needsAttention",
   // Fork additions: the two dashboard buttons, so they can be hidden and reordered
-  // like any section instead of sitting fixed in the header or footer.
+  // like any section instead of sitting fixed in the header or footer, plus the
+  // combined section that holds both buttons side by side.
   "displayMode",
   "publicCollection",
+  "displayModePublic",
 ] as const;
 
 export type OverviewSectionKey = (typeof OVERVIEW_SECTION_KEYS)[number];
@@ -67,7 +69,7 @@ export function resolveOverviewLayout(
 // shows the same page — plus its card-size scale (null on the account means medium).
 export function useOverviewLayout() {
   const queryClient = useQueryClient();
-  const { data: user } = useCurrentUser();
+  const { data: user, isLoading: userLoading } = useCurrentUser();
   const layout = useMemo(() => resolveOverviewLayout(user?.overviewLayout), [user?.overviewLayout]);
   const cardSize = user?.overviewCardSize ?? 1.0;
   const save = useMutation({
@@ -75,5 +77,5 @@ export function useOverviewLayout() {
       updatePreferences({ overviewLayout: next.layout, overviewCardSize: next.cardSize }),
     onSuccess: (updated) => queryClient.setQueryData(currentUserQueryKey, updated),
   });
-  return { layout, cardSize, save };
+  return { layout, cardSize, save, userLoading };
 }

@@ -55,7 +55,8 @@ const SectionLink = ({ children, onClick, to }: { children: ReactNode; onClick?:
 // fork's games API has no source filter, so there's no cheap count for it), and the
 // header keeps the fork's Add Game button plus an icon-only Customize button. The
 // Display Mode and Public Game Collection buttons are layout entries (last by default),
-// so they can be hidden and reordered from Customize like any section.
+// so they can be hidden and reordered from Customize like any section — as is the
+// combined section holding both buttons side by side, which never replaces them.
 const DashboardPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -70,16 +71,49 @@ const DashboardPage = () => {
   const { data: orphans } = useAccessoriesWithoutOwnedHardware();
   const { data: events } = useEvents();
   const { data: shareToken } = useShareLink();
-  const { layout, cardSize, save: saveLayout } = useOverviewLayout();
+  const { layout, cardSize, save: saveLayout, userLoading } = useOverviewLayout();
   const [customizing, setCustomizing] = useState(false);
+
+  // The header needs nothing from the section queries, so it renders at once
+  // instead of waiting behind the skeleton gate — on a slow device the page
+  // is tappable (Add game) while the sections still load. Customize stays
+  // disabled until the account layout arrives, so opening it early can never
+  // overwrite the saved layout with defaults.
+  const header = (
+    <Stack direction="row" sx={{ mb: 3, alignItems: "center" }}>
+      <Typography variant="h4" component="h1" sx={{ flexGrow: 1 }}>
+        {t("insights.dashboard.pageTitle")}
+      </Typography>
+      <Button
+        variant="contained"
+        startIcon={<AddIcon />}
+        onClick={() => navigate("/games/add")}
+      >
+        {t("insights.dashboard.addGameButton")}
+      </Button>
+      <Tooltip title={t("overview.customize.button")}>
+        <IconButton
+          size="small"
+          sx={{ ml: 1 }}
+          aria-label={t("overview.customize.button")}
+          disabled={userLoading}
+          onClick={() => setCustomizing(true)}
+        >
+          <TuneIcon />
+        </IconButton>
+      </Tooltip>
+    </Stack>
+  );
 
   if (statsLoading || hardwareStatsLoading || releasesLoading || onSaleLoading) {
     return (
-      <Stack spacing={3}>
-        <Skeleton variant="text" width="35%" height={44} />
-        <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
-        <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
-      </Stack>
+      <>
+        {header}
+        <Stack spacing={3}>
+          <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
+          <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
+        </Stack>
+      </>
     );
   }
 
@@ -147,6 +181,7 @@ const DashboardPage = () => {
     needsAttention: t("overview.needsAttention"),
     displayMode: t("insights.dashboard.displayModeButton"),
     publicCollection: t("insights.dashboard.publicCollectionButton"),
+    displayModePublic: t("overview.customize.displayModePublic"),
   };
 
   const attention = [
@@ -337,6 +372,30 @@ const DashboardPage = () => {
         {t("insights.dashboard.publicCollectionButton")}
       </Button>
     ) : null,
+    // Both buttons again, side by side (stacked on phones, where two large
+    // buttons can't share a row). The standalone buttons above stay exactly
+    // as they are — this section is an addition, not a replacement. Like the
+    // standalone Public Collection button it needs a share link to exist.
+    displayModePublic: shareToken ? (
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mt: 3, mb: 3 }}>
+        <Button
+          variant="contained"
+          size="large"
+          sx={{ flex: 1, py: 1.5, fontSize: "1.1rem" }}
+          onClick={() => navigate("/display-mode")}
+        >
+          {t("insights.dashboard.displayModeButton")}
+        </Button>
+        <Button
+          variant="contained"
+          size="large"
+          sx={{ flex: 1, py: 1.5, fontSize: "1.1rem" }}
+          onClick={() => navigate(`/public/${shareToken}/games`)}
+        >
+          {t("insights.dashboard.publicCollectionButton")}
+        </Button>
+      </Stack>
+    ) : null,
   };
 
   const handleSaveLayout = async (next: OverviewSection[], nextCardSize: number) => {
@@ -387,28 +446,7 @@ const DashboardPage = () => {
 
   return (
     <>
-      <Stack direction="row" sx={{ mb: 3, alignItems: "center" }}>
-        <Typography variant="h4" component="h1" sx={{ flexGrow: 1 }}>
-          {t("insights.dashboard.pageTitle")}
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate("/games/add")}
-        >
-          {t("insights.dashboard.addGameButton")}
-        </Button>
-        <Tooltip title={t("overview.customize.button")}>
-          <IconButton
-            size="small"
-            sx={{ ml: 1 }}
-            aria-label={t("overview.customize.button")}
-            onClick={() => setCustomizing(true)}
-          >
-            <TuneIcon />
-          </IconButton>
-        </Tooltip>
-      </Stack>
+      {header}
 
       {visible.map((section) => (
         <Fragment key={section.key}>{sections[section.key]}</Fragment>

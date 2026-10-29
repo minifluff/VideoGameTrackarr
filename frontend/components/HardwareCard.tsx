@@ -65,6 +65,7 @@ const HardwareCard = ({ name, subtitle, imageUrl, owned, wishlisted, ownedQuanti
           <CardMedia
             component="img"
             alt={name}
+            loading="lazy"
             image={resolveAssetUrl(imageUrl) ?? undefined}
             sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
           />

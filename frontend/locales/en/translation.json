@@ -119,7 +119,8 @@
       "reset": "Reset to default",
       "saveError": "Couldn't save the Overview layout. Please try again.",
       "allHidden": "Every section is hidden. Use Customize to show some again.",
-      "stats": "Summary tiles"
+      "stats": "Summary tiles",
+      "displayModePublic": "Display Mode & Public Collection"
     }
   },
   "breadcrumbs": {
@@ -1213,7 +1214,6 @@
       "summary": "{{cases}} cases on the shelf",
       "searchPlaceholder": "Search the shelf…",
       "empty": "Nothing on the shelf yet — own some games first.",
-      "loadMore": "Load more",
       "template": {
         "title": "Spine template · {{platform}}",
         "forPlatform": "Spine template for {{platform}}",

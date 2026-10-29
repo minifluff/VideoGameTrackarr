@@ -119,7 +119,8 @@
       "reset": "Réinitialiser",
       "saveError": "Impossible d'enregistrer la disposition de la vue d'ensemble. Veuillez réessayer.",
       "allHidden": "Toutes les sections sont masquées. Utilisez Personnaliser pour en afficher à nouveau.",
-      "stats": "Tuiles récapitulatives"
+      "stats": "Tuiles récapitulatives",
+      "displayModePublic": "Display Mode & Public Collection"
     }
   },
   "breadcrumbs": {
@@ -1213,7 +1214,6 @@
       "summary": "{{cases}} cases on the shelf",
       "searchPlaceholder": "Search the shelf…",
       "empty": "Nothing on the shelf yet — own some games first.",
-      "loadMore": "Load more",
       "template": {
         "title": "Spine template · {{platform}}",
         "forPlatform": "Spine template for {{platform}}",
