@@ -38,8 +38,8 @@ describe("resolveOverviewLayout", () => {
   it("inserts a missing section after its default predecessor", () => {
     const layout = resolveOverviewLayout([{ key: "needsAttention", hidden: false }]);
     const keys = layout.map((section) => section.key);
-    // The two button entries are last by default, so everything else precedes them.
-    expect(keys[keys.length - 1]).toBe("publicCollection");
+    // The button entries are last by default, so everything else precedes them.
+    expect(keys[keys.length - 1]).toBe("displayModePublic");
     expect(keys).toEqual([
       "stats",
       "quickAdd",
@@ -54,6 +54,7 @@ describe("resolveOverviewLayout", () => {
       "needsAttention",
       "displayMode",
       "publicCollection",
+      "displayModePublic",
     ]);
   });
 });
