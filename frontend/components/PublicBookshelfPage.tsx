@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Box from "@mui/material/Box";
@@ -22,7 +22,7 @@ import {
   resolvePlatformCaseSizes,
   TEMPLATE_TARGET_HEIGHT,
 } from "./BookshelfPage";
-import BookshelfGrid, { packRows, useShelfWidth, useTemplateInfo } from "./BookshelfGrid";
+import BookshelfGrid, { packRows, useProgressiveRows, useShelfWidth, useTemplateInfo } from "./BookshelfGrid";
 
 // The share-link Bookshelf: same shelf as the private page (shared grid,
 // builders, and sizing), fed by the public endpoint — hidden games never
@@ -116,28 +116,8 @@ const PublicBookshelfPage = () => {
     [visibleShelves, shelfWidth, platformCaseSizes]
   );
 
-  // Same progressive rendering as the private shelf.
-  const ROWS_PER_CHUNK = 10;
-  const [visibleRowCount, setVisibleRowCount] = useState(ROWS_PER_CHUNK);
-  useEffect(() => {
-    setVisibleRowCount(ROWS_PER_CHUNK);
-  }, [visibleShelves]);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const element = sentinelRef.current;
-    if (!element || typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(
-      (observed) => {
-        if (observed.some((entry) => entry.isIntersecting)) {
-          setVisibleRowCount((count) => Math.min(count + ROWS_PER_CHUNK, rows.length));
-        }
-      },
-      { rootMargin: "900px" }
-    );
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [rows, visibleRowCount]);
-  const visibleRows = rows.slice(0, visibleRowCount);
+  // Same progressive rendering as the private shelf (shared hook).
+  const { visibleRows, sentinelRef, hasMore } = useProgressiveRows(rows, visibleShelves);
 
   return (
     <Box>
@@ -208,7 +188,7 @@ const PublicBookshelfPage = () => {
             templateInfo={templateInfo}
             onCaseClick={(game) => navigate(`/public/${token}/games/${game.id}`)}
             sentinelRef={sentinelRef}
-            hasMore={visibleRowCount < rows.length}
+            hasMore={hasMore}
           />
         </Box>
       )}

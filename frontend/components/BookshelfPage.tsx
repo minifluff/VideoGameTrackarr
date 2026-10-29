@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
@@ -16,7 +15,7 @@ import { fetchBookshelfEntries } from "../api/games";
 import type { BookshelfEntry, PlatformResponse } from "../api/types";
 import { usePlatforms } from "../hooks/usePlatforms";
 import { gameIdentifier } from "../utils/identifiers";
-import BookshelfGrid, { packRows, useShelfWidth, useTemplateInfo } from "./BookshelfGrid";
+import BookshelfGrid, { packRows, useProgressiveRows, useShelfWidth, useTemplateInfo } from "./BookshelfGrid";
 import type { Shelf, ShelfCase, ShelfGame, TemplateInfo } from "./BookshelfGrid";
 import PlatformTemplateDialog from "./PlatformTemplateDialog";
 import { caseSizeToPixels, effectiveCaseSizeMm } from "../utils/caseSizes";
@@ -211,17 +210,11 @@ const BookshelfPage = () => {
     [visibleShelves, shelfWidth, platformCaseSizes]
   );
 
-  // Rows render in capped chunks: painting ~7,000 cases at once was the other
-  // half of the slow load. Start with a screenful and grow only when the user
-  // asks for more — auto-growing on scroll would eventually render every row
-  // and leave the DOM unbounded again. A new filter/search starts over.
-  const ROWS_PER_CHUNK = 10;
-  const [visibleRowCount, setVisibleRowCount] = useState(ROWS_PER_CHUNK);
-  useEffect(() => {
-    setVisibleRowCount(ROWS_PER_CHUNK);
-  }, [visibleShelves]);
-  const visibleRows = rows.slice(0, visibleRowCount);
-  const hasMoreRows = visibleRowCount < rows.length;
+  // Rows render in capped chunks (see useProgressiveRows): painting ~7,000
+  // cases at once was the other half of the slow load. The first chunk
+  // paints fast and the rest load automatically as the user scrolls — no
+  // button to tap. A new filter/search starts over.
+  const { visibleRows, sentinelRef, hasMore } = useProgressiveRows(rows, visibleShelves);
 
   return (
     <Box>
@@ -292,17 +285,9 @@ const BookshelfPage = () => {
             templateInfo={templateInfo}
             onBookendClick={(record) => setTemplatePlatform(record)}
             onCaseClick={(game) => navigate(`/game/${gameIdentifier(game)}`)}
+            sentinelRef={sentinelRef}
+            hasMore={hasMore}
           />
-        </Box>
-      )}
-      {hasMoreRows && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-          <Button
-            variant="outlined"
-            onClick={() => setVisibleRowCount((count) => Math.min(count + ROWS_PER_CHUNK, rows.length))}
-          >
-            {t("games.bookshelf.loadMore")}
-          </Button>
         </Box>
       )}
       <PlatformTemplateDialog platform={templatePlatform} onClose={() => setTemplatePlatform(null)} />

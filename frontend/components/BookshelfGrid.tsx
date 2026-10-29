@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import Box from "@mui/material/Box";
 import { useTranslation } from "react-i18next";
 import { resolveAssetUrl } from "../api/client";
@@ -246,6 +246,53 @@ export function useShelfWidth(): {
   return { shelfRef: setShelfElement, shelfWidth };
 }
 
+// Rows render in capped chunks: painting ~7,000 cases at once was the slow
+// load. Both shelf pages share this hook: the first chunk paints fast, and a
+// sentinel at the end grows it automatically as the user scrolls — no Load
+// more button to tap. A new filter/search (resetKey) starts over. Without
+// IntersectionObserver (very old browsers, jsdom) there is no sentinel to
+// watch, so the whole shelf renders rather than stranding the user at the
+// first chunk with no way to grow it.
+const ROWS_PER_CHUNK = 10;
+
+export function useProgressiveRows<T>(
+  rows: T[],
+  resetKey: unknown,
+): {
+  visibleRows: T[];
+  sentinelRef: RefObject<HTMLDivElement | null>;
+  hasMore: boolean;
+} {
+  const [visibleRowCount, setVisibleRowCount] = useState(ROWS_PER_CHUNK);
+  useEffect(() => {
+    setVisibleRowCount(ROWS_PER_CHUNK);
+  }, [resetKey]);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const observerAvailable = typeof IntersectionObserver !== "undefined";
+  useEffect(() => {
+    const element = sentinelRef.current;
+    if (!element || !observerAvailable) return;
+    const observer = new IntersectionObserver(
+      (observed) => {
+        if (observed.some((entry) => entry.isIntersecting)) {
+          setVisibleRowCount((count) => Math.min(count + ROWS_PER_CHUNK, rows.length));
+        }
+      },
+      // Start the next chunk well before the user reaches the bottom, so a
+      // slow device has it painted by the time they scroll there.
+      { rootMargin: "900px" },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [rows.length, visibleRowCount, observerAvailable]);
+  const hasMore = observerAvailable && visibleRowCount < rows.length;
+  return {
+    visibleRows: observerAvailable ? rows.slice(0, visibleRowCount) : rows,
+    sentinelRef,
+    hasMore,
+  };
+}
+
 export interface BookshelfGridProps {
   rows: ShelfRowItem[][];
   platformsByLabel: Map<string, PlatformResponse>;
@@ -369,6 +416,10 @@ const BookshelfGrid = ({
                 component="img"
                 src={resolveAssetUrl(templateUrl) ?? undefined}
                 alt=""
+                // Offscreen cases must not fetch or decode their template
+                // art until scrolled near — the long shelf's other big
+                // slow-device cost after the chunked rendering itself.
+                loading="lazy"
                 sx={{
                   position: "absolute",
                   inset: 0,
