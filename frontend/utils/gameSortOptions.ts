@@ -44,6 +44,18 @@ export function gameSortField(sort: GameSortOption): GameSortField {
   return sort.replace(/_(asc|desc)$/, "") as GameSortField;
 }
 
+// A link can preselect a sort (?sort=date_added_desc, e.g. the dashboard's Recently
+// added games chevron). Unknown values are ignored so a mistyped link can't break the
+// list — it just falls back to the remembered sort.
+export function parseGameSortParam(value: string | null): GameSortOption | null {
+  if (!value) return null;
+  const direction: SortDirection | null = value.endsWith("_desc") ? "desc" : value.endsWith("_asc") ? "asc" : null;
+  if (!direction) return null;
+  const field = value.slice(0, -(direction.length + 1));
+  if (!GAME_SORT_FIELDS.some((option) => option.field === field)) return null;
+  return `${field}_${direction}` as GameSortOption;
+}
+
 export function gameSortDirection(sort: GameSortOption): SortDirection {
   return sort.endsWith("_desc") ? "desc" : "asc";
 }

@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -21,6 +21,7 @@ import { toast } from "react-toastify";
 import { useTags } from "../hooks/useTags";
 import { bulkUpdateGameVisibility } from "../api/games";
 import { useUndoableAction } from "../hooks/useUndoableAction";
+import { parseGameSortParam } from "../utils/gameSortOptions";
 import { gameIdentifier } from "../utils/identifiers";
 import { matchesOwnership } from "../utils/ownershipFilter";
 import { ALL_KNOWN_STOREFRONTS } from "../utils/storefronts";
@@ -94,6 +95,25 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
   const [matchAll, setMatchAll] = useSessionState<MatchAllFilters>(`${sp}.matchAll`, {});
   const [steelbookOnly, setSteelbookOnly] = useSessionState(`${sp}.steelbookOnly`, false);
   const [sort, setSort] = useSessionState<GameSortOption>(`${sp}.sort`, "name_asc");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const sortParam = searchParams.get("sort");
+  // A link can land here with a sort preselected (the dashboard's Recently added
+  // games chevron): apply it once, then drop it from the URL so a later manual sort
+  // change sticks and a refresh doesn't snap back to the link's sort. An unknown
+  // value is ignored and the remembered sort stands.
+  useEffect(() => {
+    const parsed = parseGameSortParam(sortParam);
+    if (!parsed) return;
+    setSort(parsed);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("sort");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [sortParam, setSort, setSearchParams]);
   // Card size is per page (Options menu) — seeded from the global appearance size on
   // first visit, then remembered for this page's session key only.
   const { cardSize: globalCardSize } = useAppearance();

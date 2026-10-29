@@ -285,7 +285,7 @@ const DashboardPage = () => {
         renderItem={gameCard}
         cardSize={cardSize}
         columnWidth={STRIP_COLUMN * cardSize}
-        viewAllHref="/games"
+        viewAllHref="/games?sort=date_added_desc"
       />
     ) : null,
     recentlyAddedHardware: hardwareStats?.recentlyAdded.length ? (
