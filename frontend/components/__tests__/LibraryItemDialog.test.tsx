@@ -135,14 +135,44 @@ describe("LibraryItemDialog", () => {
       />
     );
 
-    // Physical is the default format, so Steelbook starts visible with no interaction needed.
-    expect(screen.getByLabelText("Steelbook")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("radio", { name: "Digital" }));
+    // Digital is the default format, so Steelbook starts hidden.
+    expect(screen.getByRole("radio", { name: "Digital" })).toBeChecked();
     expect(screen.queryByLabelText("Steelbook")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("radio", { name: "Physical" }));
     expect(screen.getByLabelText("Steelbook")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("radio", { name: "Digital" }));
+    expect(screen.queryByLabelText("Steelbook")).not.toBeInTheDocument();
+  });
+
+  it("lists Digital before Physical in the Format options", () => {
+    render(
+      <LibraryItemDialog
+        open
+        title="Add game to your collection"
+        status="owned"
+        platforms={platforms}
+        regions={regions}
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+        submitLabel="Add"
+      />
+    );
+
+    const group = screen.getByRole("radiogroup", { name: "format" });
+    const names = within(group)
+      .getAllByRole("radio")
+      .map((radio) => radio.closest("label")?.textContent);
+    expect(names).toEqual([
+      "Digital",
+      "Physical",
+      "ISO",
+      "ROM",
+      "Abandonware",
+      "Subscription",
+      "Other",
+    ]);
   });
 
   it("always shows Edition and Notes fields", () => {

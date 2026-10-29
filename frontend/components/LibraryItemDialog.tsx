@@ -105,8 +105,8 @@ const ROM_LABEL_MAX_LENGTH = 100;
 const ALWAYS_DIGITAL_CATEGORIES: GameCategory[] = ["dlc_addon", "expansion", "pack"];
 
 const FORMAT_OPTIONS: { value: MediaFormat; labelKey: string }[] = [
-  { value: "physical", labelKey: "dialogs.libraryItem.formatPhysical" },
   { value: "digital", labelKey: "dialogs.libraryItem.formatDigital" },
+  { value: "physical", labelKey: "dialogs.libraryItem.formatPhysical" },
   { value: "iso", labelKey: "dialogs.libraryItem.formatIso" },
   { value: "rom", labelKey: "dialogs.libraryItem.formatRom" },
   { value: "abandonware", labelKey: "dialogs.libraryItem.formatAbandonware" },
@@ -194,7 +194,7 @@ const LibraryItemDialog = ({
     formState: { errors },
   } = useForm<LibraryItemFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { format: lockFormatToDigital ? "digital" : "physical", ...defaultValues },
+    defaultValues: { format: "digital", ...defaultValues },
   });
 
   useEffect(() => {
@@ -202,7 +202,7 @@ const LibraryItemDialog = ({
       setRomDrafts({});
       setNewRoms([]);
       reset({
-        format: "physical",
+        format: "digital",
         ...defaultValues,
         ...(lockFormatToDigital ? { format: "digital" } : {}),
       });
