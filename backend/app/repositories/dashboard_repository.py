@@ -22,6 +22,7 @@ from app.repositories.device_repository import _row_to_device_with_status as _ro
 from app.repositories.device_repository import _wishlisted_exists as _device_wishlisted_exists
 from app.repositories.game_repository import (
     GameWithStatus,
+    _effective_date_added_epoch,
     _is_browsable_game,
     _owned_exists,
     _play_status_subquery,
@@ -159,7 +160,10 @@ def get_stats(db: Session) -> DashboardStatsData:
             _is_browsable_game(Game.category),
             ~_is_missing_game(Game.id),
         )
-        .order_by(Game.created_at.desc())
+        # Same effective date as the Date Added sort (see game_repository
+        # _effective_date_added_epoch): a pre-release addition surfaces on its
+        # release date, not its much earlier added date.
+        .order_by(_effective_date_added_epoch().desc())
         .limit(RECENT_LIMIT)
     )
     recently_added = [_row_to_game_with_status(row) for row in db.execute(recently_added_stmt)]

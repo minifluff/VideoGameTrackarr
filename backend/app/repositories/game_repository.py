@@ -2,9 +2,10 @@ import enum
 import random
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import ColumnElement, Select, and_, case, delete, exists, func, or_, select, update
+from sqlalchemy import ColumnElement, Integer, Select, and_, case, cast, delete, exists, func, or_, select, update
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.catalog import (
@@ -242,6 +243,35 @@ def _library_rank(game_id_column: ColumnElement[int]) -> ColumnElement[int | Non
     return case((and_(owned, wishlisted), 0), (owned, 1), (wishlisted, 2), else_=None)
 
 
+def _effective_date_added_epoch(now: datetime | None = None) -> ColumnElement[int]:
+    """The Date Added sort's effective date, as unix seconds.
+
+    Normally a game's row creation time (Game.created_at). But a game added before it
+    released — a preorder or wishlist entry, say — would otherwise sit buried under
+    everything added since, even though it only just came out. So when the game's
+    first release date is newer than its added date *and* that release date has
+    already passed, the release date wins instead. A future release date never wins:
+    an unreleased game keeps its added date until release day arrives.
+
+    Both sides are compared as unix seconds: first_release_date already is one, and
+    created_at is converted with SQLite's strftime (this app's database is SQLite —
+    see _game_modes_clause's json_each note for the same assumption).
+    """
+    now_ts = int((now or datetime.now(UTC)).timestamp())
+    added_epoch = cast(func.strftime("%s", Game.created_at), Integer)
+    return case(
+        (
+            and_(
+                Game.first_release_date.is_not(None),
+                Game.first_release_date <= now_ts,
+                Game.first_release_date > added_epoch,
+            ),
+            Game.first_release_date,
+        ),
+        else_=added_epoch,
+    )
+
+
 def _order_by_for_sort(sort: GameSortOption) -> list[ColumnElement[Any]]:
     """The sort's own order, empty values (no date, no rating, not in the library...) last
     in either direction, then by name so ties read A-Z."""
@@ -251,7 +281,7 @@ def _order_by_for_sort(sort: GameSortOption) -> list[ColumnElement[Any]]:
     if sort in (GameSortOption.RELEASE_DATE_ASC, GameSortOption.RELEASE_DATE_DESC):
         value = Game.first_release_date
     elif sort in (GameSortOption.DATE_ADDED_ASC, GameSortOption.DATE_ADDED_DESC):
-        value = Game.created_at
+        value = _effective_date_added_epoch()
     elif sort in (GameSortOption.TYPE_ASC, GameSortOption.TYPE_DESC):
         value = _rank(Game.category, _TYPE_ORDER)
     elif sort in (GameSortOption.PLATFORMS_ASC, GameSortOption.PLATFORMS_DESC):
