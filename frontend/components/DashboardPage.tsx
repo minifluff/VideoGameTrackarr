@@ -25,13 +25,14 @@ import { useCurrency } from "../theme/CurrencyProvider";
 import { formatCurrency } from "../utils/currency";
 import { gameIdentifier, hardwareIdentifier } from "../utils/identifiers";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
+import CardCarousel from "./CardCarousel";
 import CustomizeOverviewDialog from "./CustomizeOverviewDialog";
 import EventsTeaserSection from "./EventsTeaserSection";
 import GameCard from "./GameCard";
 import HardwareCard from "./HardwareCard";
 import OnSaleTeaserSection from "./OnSaleTeaserSection";
 import ReleaseCalendarSection from "./ReleaseCalendarSection";
-import { Section, Strip } from "./Section";
+import { Section } from "./Section";
 import { formatPlaytime, StatTile, TileGrid } from "./Stats";
 
 const STRIP_COLUMN = 150;
@@ -229,48 +230,75 @@ const DashboardPage = () => {
     hardwareCalendar: hasHardwareReleases ? (
       <ReleaseCalendarSection scope="hardware" title={labels.hardwareCalendar} cardSize={cardSize} columnWidth={(STRIP_COLUMN + 20) * cardSize} />
     ) : null,
-    nowPlaying: (
+    // Every row of cards is a CardCarousel: < and > page through it, with no scrollbar
+    // (upstream 2.4.3's Overview change, adapted to this dashboard's own carousel).
+    nowPlaying: playing?.length ? (
+      <CardCarousel
+        id="now-playing"
+        title={t("overview.nowPlaying")}
+        items={playing}
+        getItemKey={(game) => game.id}
+        renderItem={gameCard}
+        cardSize={cardSize}
+        columnWidth={STRIP_COLUMN * cardSize}
+        actions={
+          <>
+            <SectionLink onClick={() => navigate("/games")}>
+              {t("overview.backlogLink", { count: backlog })}
+            </SectionLink>
+            <SectionLink onClick={() => navigate("/games/playing")}>{t("common.viewAll")}</SectionLink>
+          </>
+        }
+      />
+    ) : (
       <Section
         id="now-playing"
         title={t("overview.nowPlaying")}
         action={
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <SectionLink onClick={() => navigate("/games")}>
-              {t("overview.backlogLink", { count: backlog })}
-            </SectionLink>
-            {playing?.length ? (
-              <SectionLink onClick={() => navigate("/games/playing")}>{t("common.viewAll")}</SectionLink>
-            ) : null}
-          </Box>
+          <SectionLink onClick={() => navigate("/games")}>
+            {t("overview.backlogLink", { count: backlog })}
+          </SectionLink>
         }
       >
-        {playing?.length ? (
-          <Strip columnWidth={STRIP_COLUMN * cardSize}>{playing.map(gameCard)}</Strip>
-        ) : (
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {t("overview.nothingPlaying")}
-          </Typography>
-        )}
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          {t("overview.nothingPlaying")}
+        </Typography>
       </Section>
     ),
     recentlyPlayed: stats?.recentlyPlayed.length ? (
-      <Section id="recently-played" title={t("overview.recentlyPlayed")}>
-        <Strip columnWidth={STRIP_COLUMN * cardSize}>{stats.recentlyPlayed.map(gameCard)}</Strip>
-      </Section>
+      <CardCarousel
+        id="recently-played"
+        title={t("overview.recentlyPlayed")}
+        items={stats.recentlyPlayed}
+        getItemKey={(game) => game.id}
+        renderItem={gameCard}
+        cardSize={cardSize}
+        columnWidth={STRIP_COLUMN * cardSize}
+      />
     ) : null,
     recentlyAddedGames: stats?.recentlyAdded.length ? (
-      <Section id="recently-added" title={t("overview.recentlyAddedGames")} action={<SectionLink to="/games">{t("common.viewAll")}</SectionLink>}>
-        <Strip columnWidth={STRIP_COLUMN * cardSize}>{stats.recentlyAdded.map(gameCard)}</Strip>
-      </Section>
+      <CardCarousel
+        id="recently-added"
+        title={t("overview.recentlyAddedGames")}
+        items={stats.recentlyAdded}
+        getItemKey={(game) => game.id}
+        renderItem={gameCard}
+        cardSize={cardSize}
+        columnWidth={STRIP_COLUMN * cardSize}
+        viewAllHref="/games"
+      />
     ) : null,
     recentlyAddedHardware: hardwareStats?.recentlyAdded.length ? (
-      <Section
+      <CardCarousel
         id="recently-added-hardware"
         title={t("overview.recentlyAddedHardware")}
-        action={<SectionLink to="/hardware">{t("common.viewAll")}</SectionLink>}
-      >
-        <Strip columnWidth={(STRIP_COLUMN + 20) * cardSize}>{hardwareStats.recentlyAdded.map(hardwareCard)}</Strip>
-      </Section>
+        items={hardwareStats.recentlyAdded}
+        getItemKey={(item) => `${item.kind}-${item.device?.id ?? item.accessory?.id}`}
+        renderItem={hardwareCard}
+        cardSize={cardSize}
+        columnWidth={(STRIP_COLUMN + 20) * cardSize}
+        viewAllHref="/hardware"
+      />
     ) : null,
     needsAttention: (
       <Section id="needs-attention" title={t("overview.needsAttention")}>

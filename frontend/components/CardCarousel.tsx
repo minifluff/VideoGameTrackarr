@@ -24,6 +24,8 @@ interface CardCarouselProps<T> {
   renderItem: (item: T) => ReactNode;
   getItemKey: (item: T) => string | number;
   title: string;
+  // In-page anchor for the section (the dashboard rows keep their Section ids).
+  id?: string;
   // Omit when there's no dedicated full-page destination for this section (e.g. Release
   // Calendar) — the chevron-link next to the title only renders when this is set.
   viewAllHref?: string;
@@ -34,6 +36,8 @@ interface CardCarouselProps<T> {
   // (same width, same scale) instead of sizing as an even share of the row; when
   // omitted, the percentage sizing below applies (the Events teaser keeps it).
   columnWidth?: number;
+  // More links beside the title, before "View all" (Now Playing's Backlog link).
+  actions?: ReactNode;
 }
 
 function CardCarousel<T>({
@@ -41,9 +45,11 @@ function CardCarousel<T>({
   renderItem,
   getItemKey,
   title,
+  id,
   viewAllHref,
   cardSize,
   columnWidth,
+  actions,
 }: CardCarouselProps<T>) {
   const { t } = useTranslation();
   const columns = useResponsiveColumns(cardSize);
@@ -67,6 +73,13 @@ function CardCarousel<T>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items.length, columns, columnWidth]);
 
+  // With fixed-width cards the column count doesn't change on resize, but whether the
+  // row overflows (and so whether > is enabled) does.
+  useEffect(() => {
+    window.addEventListener("resize", updateScrollState);
+    return () => window.removeEventListener("resize", updateScrollState);
+  }, []);
+
   const scrollByPage = (direction: 1 | -1) => {
     const el = scrollRef.current;
     if (!el) return;
@@ -78,7 +91,7 @@ function CardCarousel<T>({
   if (items.length === 0) return null;
 
   return (
-    <Box>
+    <Box component="section" id={id}>
       {/* Header matches Section.tsx (overline title + rule + action): the teasers used
       to carry a big h5 title, which read as a different kind of block from the rest of
       the dashboard. The view-all chevron and scroll arrows sit right of the rule, as
@@ -88,6 +101,7 @@ function CardCarousel<T>({
           {title}
         </Typography>
         <Box sx={{ flexGrow: 1, height: "1px", bgcolor: "divider" }} />
+        {actions}
         {viewAllHref ? (
           <IconButton
             component={Link}

@@ -8,7 +8,7 @@ import Typography from "@mui/material/Typography";
 
 // Ported from upstream's Detail.tsx: the shared building blocks for the detail pages'
 // list-style sections (library copies, progress rows, play sessions). Only the pieces
-// the ported sections use are here — Section and Strip already live in ./Section.tsx,
+// the ported sections use are here — Section already lives in ./Section.tsx,
 // and DetailHero/DetailColumns aren't needed by any fork section yet.
 //
 // Upstream's kit references its vgt theme tokens (vgt.text3, vgt.surface2, vgt.border,

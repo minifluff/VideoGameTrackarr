@@ -2,9 +2,10 @@ import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
-// Ported from upstream's Detail.tsx: a titled section (overline title + rule + action)
-// and a horizontally scrolling strip of cards. Upstream's scroll-margin constant lived on
-// its Page wrapper, which this fork doesn't have, so it's left out.
+// Ported from upstream's Detail.tsx: a titled section (overline title + rule + action).
+// Upstream's scroll-margin constant lived on its Page wrapper, which this fork doesn't
+// have, so it's left out. (The old horizontally scrolling Strip went away with the
+// dashboard rows' move to CardCarousel in upstream 2.4.3's style — no user left.)
 
 export const Section = ({
   id,
@@ -25,22 +26,6 @@ export const Section = ({
       <Box sx={{ flexGrow: 1, height: "1px", bgcolor: "divider" }} />
       {action}
     </Box>
-    {children}
-  </Box>
-);
-
-export const Strip = ({ columnWidth = 150, children }: { columnWidth?: number; children: ReactNode }) => (
-  <Box
-    sx={{
-      display: "grid",
-      gridAutoFlow: "column",
-      gridAutoColumns: columnWidth,
-      gap: 1.5,
-      overflowX: "auto",
-      pb: 1,
-      scrollbarWidth: "thin",
-    }}
-  >
     {children}
   </Box>
 );
