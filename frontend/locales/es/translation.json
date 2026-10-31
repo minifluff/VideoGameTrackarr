@@ -12,6 +12,8 @@
     "back": "Atrás",
     "loading": "Cargando...",
     "search": "Buscar",
+    "done": "Listo",
+    "noOptions": "Sin opciones",
     "yes": "Sí",
     "no": "No",
     "required": "Obligatorio",
