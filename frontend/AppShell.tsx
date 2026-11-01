@@ -21,6 +21,7 @@ import OfflineStatusIndicator from "./components/OfflineStatusIndicator";
 import RestoreGuard from "./components/RestoreGuard";
 
 import { useLogout } from "./hooks/useAuth";
+import { useDragToScroll } from "./hooks/useDragToScroll";
 import { useScrollResetOnNavigate } from "./hooks/useScrollResetOnNavigate";
 import GlobalSearch from "./navigation/GlobalSearch";
 import Sidebar, { SIDEBAR_WIDTH } from "./navigation/Sidebar";
@@ -41,6 +42,7 @@ const AppShell = () => {
   const navigate = useNavigate();
   const logoutMutation = useLogout();
   useScrollResetOnNavigate();
+  useDragToScroll();
 
   // A drawer left open on a small screen closes when the page changes.
   useEffect(() => {

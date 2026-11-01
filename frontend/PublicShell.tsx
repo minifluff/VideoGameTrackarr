@@ -11,6 +11,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import PublicSubNav from "./components/PublicSubNav";
+import { useDragToScroll } from "./hooks/useDragToScroll";
 import { useScrollResetOnNavigate } from "./hooks/useScrollResetOnNavigate";
 import { useColorMode } from "./theme/ColorModeProvider";
 import { isCustomIconDataUrl, resolveIconSrc, useAppearance } from "./theme/AppearanceProvider";
@@ -24,6 +25,7 @@ const PublicShell = () => {
   const themeLabel = mode === "dark" ? t("appShell.lightMode") : t("appShell.darkMode");
   const { appTitle, appIcon } = useAppearance();
   useScrollResetOnNavigate();
+  useDragToScroll();
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
