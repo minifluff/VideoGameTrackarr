@@ -16,6 +16,7 @@ import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { resolveAssetUrl } from "../api/client";
@@ -29,6 +30,7 @@ import { gameIdentifier } from "../utils/identifiers";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import CoverUrlDialog from "./CoverUrlDialog";
 import AddGameSuggestionsDialog from "./AddGameSuggestionsDialog";
+import GameMediaFields, { EMPTY_GAME_MEDIA, type GameMediaValue } from "./GameMediaFields";
 import AutocompleteSelect from "./AutocompleteSelect";
 
 interface CategoryOption {
@@ -91,6 +93,8 @@ const ManualGameForm = ({ initialValues, steamAppId }: ManualGameFormProps) => {
   const [edition, setEdition] = useState("");
   const [notes, setNotes] = useState("");
   const [parentGame, setParentGame] = useState<GameSummary | null>(null);
+  const [media, setMedia] = useState<GameMediaValue>(EMPTY_GAME_MEDIA);
+  const [mediaUploading, setMediaUploading] = useState(false);
   const [suggestionsDialogOpen, setSuggestionsDialogOpen] = useState(false);
 
   // Every other top-level game is a valid parent for a DLC/expansion/pack/etc — not just
@@ -129,6 +133,7 @@ const ManualGameForm = ({ initialValues, steamAppId }: ManualGameFormProps) => {
         notes: notes.trim() || null,
         parentGameId: showParentGameField ? (parentGame?.id ?? null) : null,
         steamAppId,
+        ...media,
       });
       toast.success(t("games.manualForm.addSuccessToast"), TOAST_OPTIONS);
       navigate(`/game/${gameIdentifier(game)}`);
@@ -145,6 +150,10 @@ const ManualGameForm = ({ initialValues, steamAppId }: ManualGameFormProps) => {
     }
     if (parentGameRequired && !parentGame) {
       toast.error(t("games.gameForm.linkedGameRequiredError"), TOAST_OPTIONS);
+      return;
+    }
+    if (mediaUploading) {
+      toast.info(t("games.gameForm.media.waitForUploads"), TOAST_OPTIONS);
       return;
     }
     // One last check that this isn't already on IGDB before creating a bare-bones custom
@@ -334,6 +343,12 @@ const ManualGameForm = ({ initialValues, steamAppId }: ManualGameFormProps) => {
             />
           </Grid>
         ) : null}
+        <Grid size={12}>
+          <Typography variant="overline" component="h3" sx={{ display: "block", color: "text.secondary", mb: 1 }}>
+            {t("games.gameForm.media.mediaHeading")}
+          </Typography>
+          <GameMediaFields value={media} onChange={setMedia} onUploadingChange={setMediaUploading} />
+        </Grid>
         <Grid size={12}>
           <Button
             variant="contained"

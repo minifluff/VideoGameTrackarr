@@ -63,7 +63,7 @@ def test_export_backup_contains_every_section(auth_client, db_session, seed_game
     # The backup file's internal keys are snake_case by design, not camelCase -
     # see schemas/backup.py's note on why this file format skips the API convention.
     body = response.json()
-    assert body["version"] == 2
+    assert body["version"] == 3
     assert len(body["games"]) == 1
     assert len(body["library_items"]) == 1
     assert len(body["game_progress"]) == 1
@@ -304,3 +304,42 @@ def test_acknowledge_restore_status_resets_a_completed_job(auth_client):
     assert ack_response.status_code == 204
 
     assert auth_client.get("/api/import/backup/status").json()["status"] == "idle"
+
+
+def test_restore_backup_restores_custom_game_media(auth_client, db_session):
+    from app.models.catalog import Artwork, GameVideo, Screenshot
+
+    payload = {
+        "version": 3,
+        "exported_at": "2026-01-01T00:00:00+00:00",
+        "platforms": [],
+        "regions": [],
+        "tags": [],
+        "games": [
+            {
+                "id": 100,
+                "igdb_id": None,
+                "name": "Restored Homebrew",
+                "category": "main_game",
+                "screenshot_urls": ["/uploads/game-media/shot.jpg"],
+                "artwork_urls": ["/uploads/game-media/art.jpg"],
+                "videos": [{"name": "Trailer", "video_id": "dQw4w9WgXcQ"}],
+            }
+        ],
+        "library_items": [],
+        "game_progress": [],
+        "play_sessions": [],
+        "notes": [],
+        "game_tags": [],
+    }
+    response = _upload_backup(auth_client, payload)
+
+    assert response.status_code == 202
+    status_body = _wait_for_restore_completion(auth_client)
+    assert status_body["status"] == "completed"
+    Path(status_body["result"]["safetySnapshotPath"]).unlink()
+
+    assert [s.url for s in db_session.query(Screenshot).filter_by(game_id=100)] == ["/uploads/game-media/shot.jpg"]
+    assert [a.url for a in db_session.query(Artwork).filter_by(game_id=100)] == ["/uploads/game-media/art.jpg"]
+    videos = db_session.query(GameVideo).filter_by(game_id=100).all()
+    assert [(v.name, v.video_id) for v in videos] == [("Trailer", "dQw4w9WgXcQ")]

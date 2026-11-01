@@ -30,6 +30,7 @@ import { gameIdentifier } from "../utils/identifiers";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import AutocompleteSelect from "./AutocompleteSelect";
 import CoverUrlDialog from "./CoverUrlDialog";
+import GameMediaFields, { type GameMediaValue } from "./GameMediaFields";
 
 interface CategoryOption {
   value: GameCategory;
@@ -92,6 +93,12 @@ const EditGameForm = ({ game }: EditGameFormProps) => {
   const [parentGame, setParentGame] = useState<GameSummary | null>(
     parentGameOptions.find((option) => option.id === game.parentGameId) ?? null
   );
+  const [media, setMedia] = useState<GameMediaValue>({
+    screenshotUrls: game.screenshotUrls,
+    artworkUrls: game.artworkUrls,
+    videos: game.videos.map((video) => ({ name: video.name, videoId: video.videoId })),
+  });
+  const [mediaUploading, setMediaUploading] = useState(false);
 
   const handleCoverFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -115,6 +122,10 @@ const EditGameForm = ({ game }: EditGameFormProps) => {
       toast.error(t("games.gameForm.linkedGameRequiredError"), TOAST_OPTIONS);
       return;
     }
+    if (mediaUploading) {
+      toast.info(t("games.gameForm.media.waitForUploads"), TOAST_OPTIONS);
+      return;
+    }
     try {
       await updateManualGame.mutateAsync({
         name: name.trim(),
@@ -128,6 +139,7 @@ const EditGameForm = ({ game }: EditGameFormProps) => {
         edition: edition.trim() || null,
         notes: notes.trim() || null,
         parentGameId: showParentGameField ? parentGame?.id ?? null : null,
+        ...media,
       });
       toast.success(t("games.edit.updateSuccessToast"), TOAST_OPTIONS);
       navigate(`/game/${gameIdentifier({ slug: game.slug, uuid: game.uuid, name: name.trim() })}`);
@@ -296,6 +308,12 @@ const EditGameForm = ({ game }: EditGameFormProps) => {
             />
           </Grid>
         ) : null}
+        <Grid size={12}>
+          <Typography variant="overline" component="h3" sx={{ display: "block", color: "text.secondary", mb: 1 }}>
+            {t("games.gameForm.media.mediaHeading")}
+          </Typography>
+          <GameMediaFields value={media} onChange={setMedia} onUploadingChange={setMediaUploading} />
+        </Grid>
         <Grid size={12}>
           <Stack direction="row" spacing={1.5}>
             <Button variant="contained" onClick={() => void handleSubmit()} disabled={updateManualGame.isPending}>

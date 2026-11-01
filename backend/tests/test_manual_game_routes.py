@@ -202,3 +202,129 @@ def test_update_manual_game_rejects_missing_parent(auth_client):
     response = auth_client.patch(f"/api/games/{created['id']}/manual", json={"parentGameId": 999999})
 
     assert response.status_code == 404
+
+
+def _upload_media(auth_client, monkeypatch, tmp_path) -> str:
+    import io
+
+    from PIL import Image
+
+    from app.services import upload_service
+
+    monkeypatch.setattr(upload_service, "GAME_MEDIA_DIR", tmp_path / "game-media")
+    monkeypatch.setattr(upload_service, "COVERS_DIR", tmp_path / "covers")
+    buf = io.BytesIO()
+    Image.new("RGB", (320, 180), color="blue").save(buf, format="PNG")
+    response = auth_client.post("/api/uploads/game-media", files={"file": ("shot.png", buf.getvalue(), "image/png")})
+    return response.json()["url"]
+
+
+def _media_file(url: str, tmp_path):
+    from app.services import upload_service
+
+    return tmp_path / "game-media" / url.removeprefix(upload_service.GAME_MEDIA_URL_PREFIX)
+
+
+def test_create_manual_game_with_screenshots_artwork_and_videos(auth_client, monkeypatch, tmp_path):
+    shots = [_upload_media(auth_client, monkeypatch, tmp_path), _upload_media(auth_client, monkeypatch, tmp_path)]
+    art = _upload_media(auth_client, monkeypatch, tmp_path)
+
+    response = auth_client.post(
+        "/api/games/manual",
+        json={
+            "name": "Homebrew",
+            "screenshotUrls": shots,
+            "artworkUrls": [art],
+            "videos": [{"name": "Trailer", "videoId": "dQw4w9WgXcQ"}, {"videoId": "abcdefghijk"}],
+        },
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["screenshotUrls"] == shots
+    assert body["artworkUrls"] == [art]
+    assert [(v["name"], v["videoId"]) for v in body["videos"]] == [("Trailer", "dQw4w9WgXcQ"), (None, "abcdefghijk")]
+
+
+def test_manual_game_media_must_be_uploads_and_at_most_ten(auth_client):
+    elsewhere = auth_client.post(
+        "/api/games/manual", json={"name": "A", "screenshotUrls": ["https://example.com/shot.jpg"]}
+    )
+    escape = auth_client.post("/api/games/manual", json={"name": "B", "artworkUrls": ["/uploads/game-media/../x.jpg"]})
+    too_many = auth_client.post(
+        "/api/games/manual", json={"name": "C", "screenshotUrls": [f"/uploads/game-media/{n}.jpg" for n in range(11)]}
+    )
+    bad_video = auth_client.post("/api/games/manual", json={"name": "D", "videos": [{"videoId": "not a video id"}]})
+
+    assert elsewhere.status_code == escape.status_code == too_many.status_code == 409
+    assert bad_video.status_code == 422
+
+
+def test_update_manual_game_reorders_and_deletes_removed_media(auth_client, monkeypatch, tmp_path):
+    first, second, third = (_upload_media(auth_client, monkeypatch, tmp_path) for _ in range(3))
+    created = auth_client.post(
+        "/api/games/manual", json={"name": "Homebrew", "artworkUrls": [first, second, third]}
+    ).json()
+
+    response = auth_client.patch(f"/api/games/{created['id']}/manual", json={"artworkUrls": [third, first]})
+
+    assert response.status_code == 200
+    assert response.json()["artworkUrls"] == [third, first]
+    assert not _media_file(second, tmp_path).exists()
+    assert _media_file(first, tmp_path).exists() and _media_file(third, tmp_path).exists()
+
+
+def test_update_manual_game_keeps_more_than_ten_images_it_already_had(auth_client, db_session, monkeypatch, tmp_path):
+    """A game unlinked from IGDB keeps IGDB's screenshots, possibly more than ten: it can keep
+    or remove them, but not add more."""
+    from app.models.catalog import Game, Screenshot
+
+    game = Game(name="Unlinked")
+    db_session.add(game)
+    db_session.flush()
+    igdb_urls = [f"https://images.igdb.com/igdb/image/upload/t_1080p/sc{n}.jpg" for n in range(12)]
+    db_session.add_all(Screenshot(game_id=game.id, igdb_id=900 + n, url=url) for n, url in enumerate(igdb_urls))
+    db_session.commit()
+
+    kept = auth_client.patch(f"/api/games/{game.id}/manual", json={"screenshotUrls": igdb_urls[1:]})
+    new_shot = _upload_media(auth_client, monkeypatch, tmp_path)
+    added = auth_client.patch(
+        f"/api/games/{game.id}/manual", json={"screenshotUrls": [*igdb_urls[1:], new_shot]}
+    )
+
+    assert kept.status_code == 200
+    assert kept.json()["screenshotUrls"] == igdb_urls[1:]
+    assert added.status_code == 409
+
+
+def test_replacing_a_cover_and_deleting_a_custom_game_remove_its_uploads(auth_client, monkeypatch, tmp_path):
+    from app.services import upload_service
+
+    monkeypatch.setattr(upload_service, "GAME_MEDIA_DIR", tmp_path / "game-media")
+    monkeypatch.setattr(upload_service, "COVERS_DIR", tmp_path / "covers")
+
+    def cover_upload() -> str:
+        import io
+
+        from PIL import Image
+
+        buf = io.BytesIO()
+        Image.new("RGB", (100, 140), color="red").save(buf, format="PNG")
+        return auth_client.post("/api/uploads/covers", files={"file": ("c.png", buf.getvalue(), "image/png")}).json()[
+            "url"
+        ]
+
+    def cover_file(url: str):
+        return tmp_path / "covers" / url.removeprefix(upload_service.COVERS_URL_PREFIX)
+
+    old_cover, new_cover, shot = cover_upload(), cover_upload(), _upload_media(auth_client, monkeypatch, tmp_path)
+    created = auth_client.post(
+        "/api/games/manual", json={"name": "Homebrew", "coverUrl": old_cover, "screenshotUrls": [shot]}
+    ).json()
+
+    auth_client.patch(f"/api/games/{created['id']}/manual", json={"coverUrl": new_cover})
+    assert not cover_file(old_cover).exists()
+
+    assert auth_client.delete(f"/api/games/{created['id']}").status_code == 204
+    assert not cover_file(new_cover).exists()
+    assert not _media_file(shot, tmp_path).exists()

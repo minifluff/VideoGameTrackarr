@@ -750,7 +750,25 @@
       "coverUrlLabel": "Image URL",
       "coverUrlPlaceholder": "https://example.com/cover.jpg",
       "coverUrlInvalid": "Please enter a valid http(s) URL",
-      "coverUrlUseButton": "Use image"
+      "coverUrlUseButton": "Use image",
+      "media": {
+        "mediaHeading": "Capturas, ilustraciones y vídeos",
+        "addImagesButton": "Añadir imágenes",
+        "imageAlt": "{{title}} {{index}}",
+        "removeImageAriaLabel": "Quitar imagen {{index}}",
+        "artworkHelperText": "Se muestra en la galería de ilustraciones de la página del juego.",
+        "tooManyFiles": "Solo se pueden añadir {{count}} más aquí, así que el resto se ha omitido.",
+        "uploadError": "No se pudo subir {{name}}. Usa un JPEG, PNG, WebP o GIF de menos de 20 MB.",
+        "videosHelperText": "Vídeos de YouTube, como los tráileres que muestran los juegos de IGDB.",
+        "videoLinkLabel": "Enlace de YouTube",
+        "videoTitleLabel": "Título (opcional)",
+        "addVideoButton": "Añadir",
+        "invalidVideoLink": "No es un enlace a un vídeo de YouTube.",
+        "duplicateVideo": "Este vídeo ya está añadido.",
+        "removeVideoAriaLabel": "Quitar vídeo {{index}}",
+        "untitledVideo": "Sin título",
+        "waitForUploads": "Espera a que terminen de subirse las imágenes."
+      }
     },
     "edit": {
       "pageTitle": "Editar juego",

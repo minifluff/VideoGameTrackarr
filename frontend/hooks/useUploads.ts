@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { uploadAccessoryImage, uploadCover, uploadSpine } from "../api/uploads";
+import { uploadAccessoryImage, uploadCover, uploadGameMedia, uploadSpine } from "../api/uploads";
 
 // All three carry a File, which can't survive the offline persister's JSON
 // serialization — 'always' runs (or fails) immediately instead of being queued
@@ -14,4 +14,8 @@ export function useUploadSpine() {
 
 export function useUploadAccessoryImage() {
   return useMutation({ mutationFn: uploadAccessoryImage, networkMode: "always" });
+}
+
+export function useUploadGameMedia() {
+  return useMutation({ mutationFn: uploadGameMedia, networkMode: "always" });
 }

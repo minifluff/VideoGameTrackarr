@@ -64,6 +64,7 @@ from app.schemas.backup import (
     BackupGame,
     BackupGameProgress,
     BackupGameTag,
+    BackupGameVideo,
     BackupHardware,
     BackupHardwarePlatform,
     BackupHardwareType,
@@ -87,7 +88,31 @@ from app.services import rom_service
 BACKUPS_DIR = BACKEND_DIR / "db" / "backups"
 
 
+def _custom_game_media(db: Session) -> dict[int, tuple[list[str], list[str], list[BackupGameVideo]]]:
+    """Custom games' screenshots, artwork and videos by game id, each in display order — one
+    query per kind rather than one per game."""
+    media: dict[int, tuple[list[str], list[str], list[BackupGameVideo]]] = {}
+    custom = select(Game.id).where(Game.igdb_id.is_(None))
+    for game_id, url in db.execute(
+        select(Screenshot.game_id, Screenshot.url).where(Screenshot.game_id.in_(custom)).order_by(Screenshot.id)
+    ):
+        media.setdefault(game_id, ([], [], []))[0].append(url)
+    for game_id, url in db.execute(
+        select(Artwork.game_id, Artwork.url).where(Artwork.game_id.in_(custom)).order_by(Artwork.id)
+    ):
+        media.setdefault(game_id, ([], [], []))[1].append(url)
+    for game_id, name, video_id in db.execute(
+        select(GameVideo.game_id, GameVideo.name, GameVideo.video_id)
+        .where(GameVideo.game_id.in_(custom))
+        .order_by(GameVideo.id)
+    ):
+        media.setdefault(game_id, ([], [], []))[2].append(BackupGameVideo(name=name, video_id=video_id))
+    return media
+
+
 def build_backup_payload(db: Session, include_files: bool = False) -> BackupPayload:
+    custom_media = _custom_game_media(db)
+    no_media: tuple[list[str], list[str], list[BackupGameVideo]] = ([], [], [])
     payload = BackupPayload(
         version=BACKUP_FORMAT_VERSION,
         exported_at=datetime.now(UTC).isoformat(),
@@ -113,6 +138,9 @@ def build_backup_payload(db: Session, include_files: bool = False) -> BackupPayl
                 category=g.category.value if g.category else None,
                 igdb_category_id=g.igdb_category_id,
                 parent_game_id=g.parent_game_id,
+                screenshot_urls=custom_media.get(g.id, no_media)[0],
+                artwork_urls=custom_media.get(g.id, no_media)[1],
+                videos=custom_media.get(g.id, no_media)[2],
             )
             for g in db.scalars(select(Game))
         ],
@@ -470,6 +498,11 @@ def restore_backup(db: Session, payload: BackupPayload, files_zip: Path | None =
             )
         )
     db.flush()
+    for g in payload.games:
+        # Only a custom game has these (see BackupGame); in order, so ids keep that order.
+        db.add_all(Screenshot(game_id=g.id, url=url) for url in g.screenshot_urls)
+        db.add_all(Artwork(game_id=g.id, url=url) for url in g.artwork_urls)
+        db.add_all(GameVideo(game_id=g.id, name=v.name, video_id=v.video_id) for v in g.videos)
 
     for li in payload.library_items:
         db.add(

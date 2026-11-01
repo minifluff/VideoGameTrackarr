@@ -78,7 +78,7 @@ def test_plain_export_leaves_files_out(auth_client, nes_item):
 
     body = auth_client.get("/api/export/backup").json()
 
-    assert body["version"] == 2
+    assert body["version"] == 3
     assert body["rom_files"] == [] and body["rom_save_states"] == [] and body["bios_files"] == []
 
 

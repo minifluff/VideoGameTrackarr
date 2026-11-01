@@ -318,9 +318,18 @@ def bulk_set_game_visibility(db: Session, game_ids: list[int], hide_from_public:
 
 def delete_game(db: Session, game_id: int) -> None:
     game_with_status = get_game_detail(db, game_id)
+    images = game_repository.image_urls(db, [game_id, *game_repository.addon_ids(db, game_id)])
     rom_filenames = game_repository.delete_game_with_addons(db, game_with_status.game)
     db.commit()
     rom_service.delete_files(rom_filenames)
+    _delete_uploads(images)
+
+
+def _delete_uploads(urls: list[str]) -> None:
+    """Removes the uploaded files among urls (a custom game's cover, screenshots, artwork);
+    anything else, like an IGDB image, is skipped."""
+    for url in urls:
+        upload_service.delete_if_local_upload(url)
 
 
 def clear_missing_games(db: Session) -> int:
@@ -477,7 +486,7 @@ async def link_game_to_igdb(db: Session, igdb_client: IGDBClient, game_id: int, 
     # manually-added addon being linked directly (rather than its parent) would otherwise
     # get silently detached — restore it afterward if that happened.
     existing_parent_id = game.parent_game_id
-    old_cover_url = game.cover_url
+    old_images = game_repository.image_urls(db, [game.id])
     game.igdb_id = igdb_id
     db.flush()
 
@@ -485,9 +494,9 @@ async def link_game_to_igdb(db: Session, igdb_client: IGDBClient, game_id: int, 
     if existing_parent_id is not None and result.game.parent_game_id is None:
         result.game.parent_game_id = existing_parent_id
         db.commit()
-    # The upsert above always overwrites cover_url with IGDB's own (or None) — any
-    # previously-uploaded cover (see app/services/upload_service.py) is now orphaned.
-    upload_service.delete_if_local_upload(old_cover_url)
+    # The upsert above always overwrites cover_url, screenshots and artwork with IGDB's own (or
+    # none) — any previously-uploaded ones (see app/services/upload_service.py) are now orphaned.
+    _delete_uploads(old_images)
     return result
 
 
@@ -541,7 +550,7 @@ async def link_addon_via_new_parent(
     if not isinstance(parent_ref, dict) or parent_ref.get("id") is None:
         raise ConflictError(f"IGDB game {addon_igdb_id} has no parent to import")
 
-    old_cover_url = game.cover_url
+    old_images = game_repository.image_urls(db, [game.id])
     await import_game_from_igdb(db, igdb_client, parent_ref["id"])
 
     new_addon = game_repository.get_game_by_igdb_id(db, addon_igdb_id)
@@ -551,9 +560,9 @@ async def link_addon_via_new_parent(
     if new_addon.id != game.id:
         game_repository.merge_game(db, source=game, target=new_addon)
     db.commit()
-    # game's own cover_url (if any) was never carried over to new_addon — same orphaned-
-    # upload cleanup as link_game_to_igdb above.
-    upload_service.delete_if_local_upload(old_cover_url)
+    # game's own cover, screenshots and artwork were never carried over to new_addon — same
+    # orphaned-upload cleanup as link_game_to_igdb above.
+    _delete_uploads(old_images)
     return get_game_detail(db, new_addon.id)
 
 
@@ -631,11 +640,11 @@ def merge_duplicate_game(db: Session, game_id: int, igdb_id: int) -> GameWithSta
         )
         db.flush()
 
-    old_cover_url = game.cover_url
+    old_images = game_repository.image_urls(db, [game.id])
     game_repository.merge_game(db, source=game, target=target)
     db.commit()
     # Never carried over to target — same orphaned-upload cleanup as link_game_to_igdb above.
-    upload_service.delete_if_local_upload(old_cover_url)
+    _delete_uploads(old_images)
     return get_game_detail(db, target.id)
 
 

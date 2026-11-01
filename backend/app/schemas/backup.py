@@ -6,7 +6,9 @@ from app.schemas.base import CamelModel
 
 # 2 added the optional rom_files/rom_save_states/bios_files sections (full backups only);
 # a version-1 file still restores — those sections just default to empty.
-BACKUP_FORMAT_VERSION = 2
+# 3 added a custom game's screenshots, artwork and videos (see BackupGame); older files
+# still restore — the new parts default to empty.
+BACKUP_FORMAT_VERSION = 3
 
 
 class _BackupRow(BaseModel):
@@ -38,6 +40,11 @@ class BackupTag(_BackupRow):
     color: str | None = None
 
 
+class BackupGameVideo(_BackupRow):
+    name: str | None = None
+    video_id: str
+
+
 class BackupGame(_BackupRow):
     # Deliberately covers only base, user-relevant Game columns — not the catalog-richness
     # relations added in M8 (genres/companies/franchises/collections/platforms-as-released-
@@ -46,6 +53,8 @@ class BackupGame(_BackupRow):
     # data that *isn't* recoverable from anywhere else (the library itself, and everything
     # the user typed: progress, ratings, notes, sessions, tags). A documented scope choice,
     # not an oversight — revisit if richness data ever stops being cheap to re-fetch.
+    # The exception is a custom game's screenshots, artwork and videos (version 3+): nothing
+    # can re-fetch those, so they're kept, in order, on custom games only.
     id: int
     igdb_id: int | None = None
     name: str
@@ -58,6 +67,9 @@ class BackupGame(_BackupRow):
     category: str | None = None
     igdb_category_id: int | None = None
     parent_game_id: int | None = None
+    screenshot_urls: list[str] = []
+    artwork_urls: list[str] = []
+    videos: list[BackupGameVideo] = []
 
 
 class BackupLibraryItem(_BackupRow):

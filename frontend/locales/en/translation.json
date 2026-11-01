@@ -750,7 +750,25 @@
       "coverUrlLabel": "Image URL",
       "coverUrlPlaceholder": "https://example.com/cover.jpg",
       "coverUrlInvalid": "Please enter a valid http(s) URL",
-      "coverUrlUseButton": "Use image"
+      "coverUrlUseButton": "Use image",
+      "media": {
+        "mediaHeading": "Screenshots, artwork and videos",
+        "addImagesButton": "Add images",
+        "imageAlt": "{{title}} {{index}}",
+        "removeImageAriaLabel": "Remove image {{index}}",
+        "artworkHelperText": "Shown in the artwork gallery on the game page.",
+        "tooManyFiles": "Only {{count}} more can be added here, so the rest were skipped.",
+        "uploadError": "Couldn't upload {{name}}. Use a JPEG, PNG, WebP or GIF under 20 MB.",
+        "videosHelperText": "YouTube videos, like the trailers IGDB games show.",
+        "videoLinkLabel": "YouTube link",
+        "videoTitleLabel": "Title (optional)",
+        "addVideoButton": "Add",
+        "invalidVideoLink": "That isn't a YouTube video link.",
+        "duplicateVideo": "This video is already added.",
+        "removeVideoAriaLabel": "Remove video {{index}}",
+        "untitledVideo": "Untitled",
+        "waitForUploads": "Wait for the images to finish uploading."
+      }
     },
     "edit": {
       "pageTitle": "Edit Game",

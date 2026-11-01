@@ -28,7 +28,8 @@ from app.models.library import (
 )
 from app.models.playnite import PlayniteLibraryEntry
 from app.models.steam import SteamLibraryEntry, SteamWishlistEntry
-from app.services import rom_service
+from app.repositories import game_repository
+from app.services import rom_service, upload_service
 
 
 def reset_database(db: Session) -> dict[str, int]:
@@ -36,6 +37,9 @@ def reset_database(db: Session) -> dict[str, int]:
 
     Returns counts of deleted games and library items for the response."""
     game_ids = list(db.scalars(select(Game.id)))
+    # Uploaded covers, screenshots and artwork are files on disk, not rows — collect their
+    # addresses before the rows are deleted, then remove the files after commit.
+    images = game_repository.image_urls(db, game_ids)
     item_ids = list(db.scalars(select(LibraryItem.id).where(LibraryItem.game_id.in_(game_ids)))) if game_ids else []
 
     # Collect ROM filenames so the caller can remove them from disk after commit.
@@ -79,5 +83,7 @@ def reset_database(db: Session) -> dict[str, int]:
 
     db.commit()
     rom_service.delete_files(rom_filenames)
+    for url in images:
+        upload_service.delete_if_local_upload(url)
 
     return {"games_deleted": len(game_ids), "library_items_deleted": len(item_ids)}
