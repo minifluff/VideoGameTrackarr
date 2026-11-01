@@ -20,6 +20,14 @@ import { useEffect, useRef } from "react";
 //   click that follows it, so dragging a game card scrolls instead of opening it, while
 //   tapping the same card still opens it. Anything can opt out with
 //   data-drag-scroll="off" on an ancestor.
+// - Two things that specifically broke dashboard rows before they were handled here:
+//   scroll-snap and the page drifting under the row. CardCarousel rows snap
+//   (scrollSnapType: x mandatory), and a browser snapping mid-drag fights the drag
+//   back to a card boundary, so snap is switched off on the dragged container for the
+//   duration of the drag and restored on release (when it snaps to a card, as intended).
+//   And a drag over a row scrolls both that row and the page, so a slightly diagonal
+//   row drag also moved the page — once a drag passes the threshold it locks to its
+//   dominant axis, so a horizontal row drag scrolls only the row.
 const CLICK_THRESHOLD_PX = 6;
 
 function isInteractiveStart(target: Element): boolean {
@@ -107,9 +115,25 @@ export function useDragToScroll(): void {
 
       let lastX = event.clientX;
       let lastY = event.clientY;
-      let startX = event.clientX;
-      let startY = event.clientY;
+      const startX = event.clientX;
+      const startY = event.clientY;
       let dragging = false;
+      let lockedAxis: "x" | "y" | null = null;
+      const snapTargets: { el: HTMLElement; original: string }[] = [];
+
+      const disableSnap = () => {
+        for (const target of [xTarget, yTarget]) {
+          if (target instanceof HTMLElement && window.getComputedStyle(target).scrollSnapType !== "none") {
+            snapTargets.push({ el: target, original: target.style.scrollSnapType });
+            target.style.scrollSnapType = "none";
+          }
+        }
+      };
+
+      const restoreSnap = () => {
+        for (const { el, original } of snapTargets) el.style.scrollSnapType = original;
+        snapTargets.length = 0;
+      };
 
       const onPointerMove = (moveEvent: PointerEvent) => {
         const dx = moveEvent.clientX - lastX;
@@ -125,11 +149,27 @@ export function useDragToScroll(): void {
           }
           dragging = true;
           document.body.classList.add("drag-scrolling");
+          disableSnap();
+          // Lock to the axis the drag is actually going in, when both are available;
+          // with only one scrollable axis, that axis wins regardless of direction.
+          const totalDx = moveEvent.clientX - startX;
+          const totalDy = moveEvent.clientY - startY;
+          if (xTarget !== null && yTarget !== null) {
+            lockedAxis = Math.abs(totalDx) >= Math.abs(totalDy) ? "x" : "y";
+          } else if (xTarget !== null) {
+            lockedAxis = "x";
+          } else {
+            lockedAxis = "y";
+          }
         }
-        if (xTarget === "window") window.scrollBy(-dx, 0);
-        else if (xTarget) xTarget.scrollLeft -= dx;
-        if (yTarget === "window") window.scrollBy(0, -dy);
-        else if (yTarget) yTarget.scrollTop -= dy;
+        if (lockedAxis === "x") {
+          if (xTarget === "window") window.scrollBy(-dx, 0);
+          else if (xTarget) xTarget.scrollLeft -= dx;
+        }
+        if (lockedAxis === "y") {
+          if (yTarget === "window") window.scrollBy(0, -dy);
+          else if (yTarget) yTarget.scrollTop -= dy;
+        }
       };
 
       const onPointerUp = () => {
@@ -137,6 +177,7 @@ export function useDragToScroll(): void {
         window.removeEventListener("pointerup", onPointerUp);
         window.removeEventListener("pointercancel", onPointerUp);
         document.body.classList.remove("drag-scrolling");
+        restoreSnap();
         if (!dragging) return;
         // The click that follows a drag must not open the card/link the drag started on.
         suppressClickRef.current = true;
