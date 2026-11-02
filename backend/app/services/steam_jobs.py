@@ -15,12 +15,14 @@ from app.services.steam_client import SteamClient
 
 JOB_STEAM_IMPORT = "steam_import"
 
-# Same reasoning as resync_jobs.py's _PACE_DELAY_SECONDS: neither SteamClient nor
-# IGDBClient self-throttles across many sequential calls, and this loop can make up to two
-# IGDB requests per unmatched Steam game (external_games lookup, then a full game import).
-_PACE_DELAY_SECONDS = 0.2
-# IGDB's free tier allows 4 requests/second — cap concurrent IGDB matching there.
-_IGDB_MATCH_CONCURRENCY = 4
+# IGDB's free tier allows 4 requests/second. IGDBClient rate-limits request starts to
+# that (see igdb_client.py), so matching can run more imports concurrently than the old
+# cap of 4 without tripping 429s. Phase 1 below needs no pacing at all: it only upserts
+# rows locally and makes no API calls, so the old 0.2s-per-entry sleep just burned
+# ~3 minutes per 1,000-entry library on every import, even when nothing had changed.
+_IGDB_MATCH_CONCURRENCY = 8
+# external_games lookups are batched into one query per chunk instead of one per game.
+_IGDB_LOOKUP_BATCH_SIZE = 50
 
 
 class SteamNotConfiguredError(Exception):
@@ -43,14 +45,36 @@ def run(
         db.close()
 
 
-async def _match_to_igdb(db: Session, igdb_client: IGDBClient, steam_app_id: int) -> int | None:
-    """Resolves a Steam AppID to a local Game id via IGDB's external_games mapping, importing
-    the game (and its hierarchical DLC/expansion/pack children) if it isn't already in VGT.
-    Shared by the owned-games and wishlist loops below — same matching sequence either way."""
-    igdb_id = await igdb_client.get_igdb_id_for_steam_appid(steam_app_id)
-    if igdb_id is None:
-        return None
+async def _resolve_igdb_ids(
+    igdb_client: IGDBClient, steam_app_ids: list[int]
+) -> tuple[dict[int, int], dict[int, str]]:
+    """Steam AppIDs to IGDB ids, in batches. Returns (resolved, failed): an id absent from
+    resolved simply has no IGDB match, while a failed id maps to its lookup error — the
+    caller records those as failures, the way a per-game lookup failure used to be. A
+    failed batch falls back to one lookup per game in it, so one bad id can't sink the
+    whole chunk."""
+    resolved: dict[int, int] = {}
+    failed: dict[int, str] = {}
+    for start in range(0, len(steam_app_ids), _IGDB_LOOKUP_BATCH_SIZE):
+        chunk = steam_app_ids[start : start + _IGDB_LOOKUP_BATCH_SIZE]
+        try:
+            resolved.update(await igdb_client.get_igdb_ids_for_steam_appids(chunk))
+        except Exception:
+            for app_id in chunk:
+                try:
+                    igdb_id = await igdb_client.get_igdb_id_for_steam_appid(app_id)
+                    if igdb_id is not None:
+                        resolved[app_id] = igdb_id
+                except Exception as exc:
+                    failed[app_id] = str(exc)
+    return resolved, failed
 
+
+async def _match_to_igdb(db: Session, igdb_client: IGDBClient, igdb_id: int) -> int:
+    """Imports the IGDB game (and its hierarchical DLC/expansion/pack children) if it
+    isn't already in VGT, and returns its local Game id. The caller resolves the Steam
+    AppID to igdb_id first (batched, see _resolve_igdb_ids) — shared by the owned-games
+    and wishlist loops below."""
     game = game_repository.get_game_by_igdb_id(db, igdb_id)
     if game is None:
         game_with_status = await game_service.import_game_from_igdb(db, igdb_client, igdb_id)
@@ -88,11 +112,11 @@ async def _import(db: Session, report_progress: Callable[[int, int], None]) -> d
         succeeded = 0
         failures: list[dict[str, Any]] = []
         owned_app_ids: set[int] = set()
-        # Phase 1: fast local upserts of every Steam entry (no IGDB calls yet).
+        # Phase 1: fast local upserts of every Steam entry (no IGDB calls yet, so no
+        # pacing — the old per-entry sleep is what made re-imports slow even with
+        # nothing new to match).
         unmatched: list[tuple[int, str]] = []
         for index, steam_game in enumerate(owned_games):
-            if index > 0:
-                await asyncio.sleep(_PACE_DELAY_SECONDS)
             try:
                 entry = steam_repository.upsert_entry(
                     db, steam_game.app_id, steam_game.name, steam_game.playtime_minutes, steam_game.last_played_at
@@ -107,28 +131,42 @@ async def _import(db: Session, report_progress: Callable[[int, int], None]) -> d
             report_progress(index + 1, len(owned_games))
         db.commit()
 
-        # Phase 2: IGDB-match the unmatched entries concurrently (capped at IGDB's
-        # 4 req/s free-tier limit). This is the slow part — parallelizing it is the
-        # main speedup for large libraries.
+        # Phase 2: IGDB-match the unmatched entries concurrently. Lookups are batched
+        # first (one query per 50 ids instead of one per game); only the imports run
+        # concurrently, capped by _IGDB_MATCH_CONCURRENCY with IGDBClient's own rate
+        # limiting keeping request starts at the free tier's 4/second. Progress is
+        # reported per matched game — previously this whole phase reported nothing,
+        # so the job looked stuck while matching.
         if unmatched:
+            name_by_app_id = dict(unmatched)
+            resolved, lookup_failed = await _resolve_igdb_ids(igdb_client, [app_id for app_id, _ in unmatched])
+            for app_id, error in lookup_failed.items():
+                succeeded -= 1
+                failures.append({"gameId": app_id, "gameName": name_by_app_id[app_id], "error": error})
             semaphore = asyncio.Semaphore(_IGDB_MATCH_CONCURRENCY)
+            matched = 0
 
             async def _match_one(app_id: int, game_name: str) -> None:
-                nonlocal succeeded
+                nonlocal succeeded, matched
                 async with semaphore:
                     try:
-                        game_id = await _match_to_igdb(db, igdb_client, app_id)
-                        if game_id is not None:
-                            entry = steam_repository.get_entry(db, app_id)
-                            if entry is not None:
-                                steam_repository.set_game_id(db, entry, game_id)
-                                db.commit()
+                        igdb_id = resolved.get(app_id)
+                        if igdb_id is None:
+                            return  # no IGDB match — the entry stays cached, unmatched
+                        game_id = await _match_to_igdb(db, igdb_client, igdb_id)
+                        entry = steam_repository.get_entry(db, app_id)
+                        if entry is not None:
+                            steam_repository.set_game_id(db, entry, game_id)
+                            db.commit()
                     except Exception as exc:  # noqa: BLE001 - one bad match must not abort the batch
                         db.rollback()
                         # Phase 1 already counted this game as succeeded — a Phase 2
                         # IGDB failure means the import actually failed for it.
                         succeeded -= 1
                         failures.append({"gameId": app_id, "gameName": game_name, "error": str(exc)})
+                    finally:
+                        matched += 1
+                        report_progress(matched, len(unmatched))
 
             await asyncio.gather(*(_match_one(app_id, name) for app_id, name in unmatched))
 
@@ -196,11 +234,9 @@ async def _import_wishlist(
 
     succeeded = 0
     failures: list[dict[str, Any]] = []
-    # Phase 1: fast local upserts.
+    # Phase 1: fast local upserts (no API calls, so no pacing — same as owned above).
     unmatched_app_ids: list[int] = []
     for index, item in enumerate(wishlist_items):
-        if index > 0:
-            await asyncio.sleep(_PACE_DELAY_SECONDS)
         try:
             existing = steam_wishlist_repository.get_entry(db, item.app_id)
             # GetWishlist never gives a name (see SteamClient.get_wishlist) — keep whatever
@@ -217,26 +253,36 @@ async def _import_wishlist(
         report_progress(index + 1, len(wishlist_items))
     db.commit()
 
-    # Phase 2: concurrent IGDB matching (same 4 req/s cap as the owned loop).
+    # Phase 2: concurrent IGDB matching (batched lookups + progress, same as owned).
     if unmatched_app_ids:
+        resolved, lookup_failed = await _resolve_igdb_ids(igdb_client, unmatched_app_ids)
+        for app_id, error in lookup_failed.items():
+            succeeded -= 1
+            failures.append({"gameId": app_id, "error": error})
         semaphore = asyncio.Semaphore(_IGDB_MATCH_CONCURRENCY)
+        matched = 0
 
         async def _match_one(app_id: int) -> None:
-            nonlocal succeeded
+            nonlocal succeeded, matched
             async with semaphore:
                 try:
-                    game_id = await _match_to_igdb(db, igdb_client, app_id)
-                    if game_id is not None:
-                        entry = steam_wishlist_repository.get_entry(db, app_id)
-                        if entry is not None:
-                            steam_wishlist_repository.set_game_id(db, entry, game_id)
-                            db.commit()
+                    igdb_id = resolved.get(app_id)
+                    if igdb_id is None:
+                        return  # no IGDB match — the entry stays cached, unmatched
+                    game_id = await _match_to_igdb(db, igdb_client, igdb_id)
+                    entry = steam_wishlist_repository.get_entry(db, app_id)
+                    if entry is not None:
+                        steam_wishlist_repository.set_game_id(db, entry, game_id)
+                        db.commit()
                 except Exception as exc:  # noqa: BLE001 - one bad match must not abort the batch
                     db.rollback()
                     # Phase 1 already counted this item as succeeded — a Phase 2
                     # IGDB failure means the import actually failed for it.
                     succeeded -= 1
                     failures.append({"gameId": app_id, "error": str(exc)})
+                finally:
+                    matched += 1
+                    report_progress(matched, len(unmatched_app_ids))
 
         await asyncio.gather(*(_match_one(app_id) for app_id in unmatched_app_ids))
 

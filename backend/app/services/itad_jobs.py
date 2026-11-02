@@ -11,7 +11,7 @@ from app.services.job_registry import JobDefinition
 
 JOB_ITAD_REFRESH = "itad_refresh"
 
-# Same reasoning as steam_jobs.py's _PACE_DELAY_SECONDS: ItadClient doesn't self-throttle
+# Same reasoning as catalog_resync_job.py's _PACE_DELAY_SECONDS: ItadClient doesn't self-throttle
 # across many sequential calls. Only the per-game title-lookup step is inherently
 # per-item (no batch lookup endpoint) — price/historical-low fetch is batched below, one
 # or two calls total rather than one per game.

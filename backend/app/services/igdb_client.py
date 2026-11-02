@@ -1,5 +1,7 @@
+import asyncio
 import json
 import logging
+import time
 from datetime import UTC, datetime, timedelta
 from typing import Literal
 
@@ -189,6 +191,14 @@ class IGDBClient:
         self._cache = cache or get_cache()
         self._access_token: str | None = None
         self._token_expires_at: datetime | None = None
+        # IGDB's free tier allows 4 requests/second. Rather than every caller pacing
+        # itself (steam_jobs.py used to sleep 0.2s per entry whether it called IGDB or
+        # not), this client spaces request *starts* at least 0.25s apart, per instance:
+        # concurrent callers still overlap while waiting on responses, but the request
+        # rate never exceeds the tier. A job that creates its own client (like the Steam
+        # import) gets the full allowance to itself.
+        self._request_lock = asyncio.Lock()
+        self._last_request_at: float | None = None
 
     async def aclose(self) -> None:
         await self._http.aclose()
@@ -201,6 +211,16 @@ class IGDBClient:
 
     @_retryable
     async def _request(self, method: str, url: str, **kwargs: object) -> httpx.Response:
+        # Only the timestamp bookkeeping holds the lock — the request itself runs
+        # outside it, so concurrent callers overlap on responses as intended.
+        async with self._request_lock:
+            now = time.monotonic()
+            if self._last_request_at is not None:
+                wait = 0.25 - (now - self._last_request_at)
+                if wait > 0:
+                    await asyncio.sleep(wait)
+                    now = time.monotonic()
+            self._last_request_at = now
         response = await self._http.request(method, url, **kwargs)
         response.raise_for_status()
         return response
@@ -351,6 +371,26 @@ class IGDBClient:
         response = await self._request("POST", f"{IGDB_API_BASE}/external_games", headers=headers, content=body)
         matches = response.json()
         return matches[0]["game"] if matches and "game" in matches[0] else None
+
+    async def get_igdb_ids_for_steam_appids(self, steam_app_ids: list[int]) -> dict[int, int]:
+        """The batched form of get_igdb_id_for_steam_appid: one external_games query for
+        the whole list (Apicalypse accepts a uid tuple), instead of one query per game.
+        Rows with no game are dropped — the caller treats an absent id as unmatched."""
+        if not steam_app_ids:
+            return {}
+        headers = await self._auth_headers()
+        uid_list = ", ".join(f'"{_escape_apicalypse_string(str(app_id))}"' for app_id in steam_app_ids)
+        body = (
+            "fields game, uid;\n"
+            f"where uid = ({uid_list}) & external_game_source = 1;\n"
+            f"limit {len(steam_app_ids)};"
+        )
+        response = await self._request("POST", f"{IGDB_API_BASE}/external_games", headers=headers, content=body)
+        return {
+            int(row["uid"]): row["game"]
+            for row in response.json()
+            if "game" in row and "uid" in row and str(row["uid"]).isdigit()
+        }
 
     async def get_upcoming_events(self) -> list[dict]:
         """Events whose end_time hasn't passed yet, soonest first — matches the app's

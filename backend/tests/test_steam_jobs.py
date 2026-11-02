@@ -16,7 +16,6 @@ def _configure_steam(monkeypatch, test_user, db_session, steam_id_64="7656119796
     test_user.steam_id_64 = steam_id_64
     db_session.commit()
     monkeypatch.setattr(get_settings(), "steam_api_key", "test-steam-key")
-    monkeypatch.setattr(steam_jobs, "_PACE_DELAY_SECONDS", 0)
 
     # Defaults every test to an empty wishlist so it never makes a real network call to
     # Steam's wishlist API — tests that actually care about wishlist behavior override this.
@@ -34,7 +33,6 @@ def _seed_game(db_session, igdb_id: int, name: str) -> Game:
 
 
 def test_run_requires_steam_configuration(db_session, test_user, monkeypatch):
-    monkeypatch.setattr(steam_jobs, "_PACE_DELAY_SECONDS", 0)
     # Neither steam_api_key nor test_user.steam_id_64 is set.
 
     with pytest.raises(steam_jobs.SteamNotConfiguredError):
@@ -69,12 +67,12 @@ def test_run_never_writes_progress_for_an_already_owned_game(db_session, test_us
             )
         ]
 
-    async def fake_get_igdb_id(self, steam_app_id):
-        assert steam_app_id == 220
-        return 233
+    async def fake_get_igdb_ids(self, steam_app_ids):
+        assert steam_app_ids == [220]
+        return {220: 233}
 
     monkeypatch.setattr(SteamClient, "get_owned_games", fake_get_owned_games)
-    monkeypatch.setattr(IGDBClient, "get_igdb_id_for_steam_appid", fake_get_igdb_id)
+    monkeypatch.setattr(IGDBClient, "get_igdb_ids_for_steam_appids", fake_get_igdb_ids)
 
     result = steam_jobs.run(lambda: db_session)
 
@@ -99,11 +97,11 @@ def test_run_caches_the_match_for_an_untracked_game(db_session, test_user, monke
     async def fake_get_owned_games(self, steam_id_64):
         return [SteamOwnedGame(app_id=220, name="Half-Life 2", playtime_minutes=754, last_played_at=None)]
 
-    async def fake_get_igdb_id(self, steam_app_id):
-        return 233
+    async def fake_get_igdb_ids(self, steam_app_ids):
+        return {220: 233}
 
     monkeypatch.setattr(SteamClient, "get_owned_games", fake_get_owned_games)
-    monkeypatch.setattr(IGDBClient, "get_igdb_id_for_steam_appid", fake_get_igdb_id)
+    monkeypatch.setattr(IGDBClient, "get_igdb_ids_for_steam_appids", fake_get_igdb_ids)
 
     result = steam_jobs.run(lambda: db_session)
 
@@ -122,12 +120,18 @@ def test_run_isolates_a_per_game_failure(db_session, test_user, monkeypatch):
             SteamOwnedGame(app_id=2, name="Bad Game", playtime_minutes=20, last_played_at=None),
         ]
 
+    # The batched lookup fails for the whole chunk, so the job falls back to one
+    # lookup per game — where app 2's lookup raises, exactly as before.
+    async def fake_get_igdb_ids(self, steam_app_ids):
+        raise RuntimeError("IGDB request failed")
+
     async def fake_get_igdb_id(self, steam_app_id):
         if steam_app_id == 2:
             raise RuntimeError("IGDB request failed")
         return None  # unmatched is fine for "Good Game" — just proves it isn't skipped
 
     monkeypatch.setattr(SteamClient, "get_owned_games", fake_get_owned_games)
+    monkeypatch.setattr(IGDBClient, "get_igdb_ids_for_steam_appids", fake_get_igdb_ids)
     monkeypatch.setattr(IGDBClient, "get_igdb_id_for_steam_appid", fake_get_igdb_id)
 
     result = steam_jobs.run(lambda: db_session)
@@ -149,12 +153,12 @@ def test_run_skips_matching_for_an_ignored_entry(db_session, test_user, monkeypa
     async def fake_get_owned_games(self, steam_id_64):
         return [SteamOwnedGame(app_id=220, name="Half-Life 2", playtime_minutes=754, last_played_at=None)]
 
-    async def fake_get_igdb_id(self, steam_app_id):
-        match_calls.append(steam_app_id)
-        return 233
+    async def fake_get_igdb_ids(self, steam_app_ids):
+        match_calls.extend(steam_app_ids)
+        return {220: 233}
 
     monkeypatch.setattr(SteamClient, "get_owned_games", fake_get_owned_games)
-    monkeypatch.setattr(IGDBClient, "get_igdb_id_for_steam_appid", fake_get_igdb_id)
+    monkeypatch.setattr(IGDBClient, "get_igdb_ids_for_steam_appids", fake_get_igdb_ids)
 
     steam_jobs.run(lambda: db_session)
 
@@ -173,13 +177,13 @@ def test_run_caches_and_matches_a_new_wishlist_item(db_session, test_user, monke
     async def fake_get_wishlist(self, steam_id_64):
         return [SteamWishlistItem(app_id=220, added_at=datetime(2026, 1, 1, tzinfo=UTC))]
 
-    async def fake_get_igdb_id(self, steam_app_id):
-        assert steam_app_id == 220
-        return 233
+    async def fake_get_igdb_ids(self, steam_app_ids):
+        assert steam_app_ids == [220]
+        return {220: 233}
 
     monkeypatch.setattr(SteamClient, "get_owned_games", _empty_owned_games)
     monkeypatch.setattr(SteamClient, "get_wishlist", fake_get_wishlist)
-    monkeypatch.setattr(IGDBClient, "get_igdb_id_for_steam_appid", fake_get_igdb_id)
+    monkeypatch.setattr(IGDBClient, "get_igdb_ids_for_steam_appids", fake_get_igdb_ids)
 
     result = steam_jobs.run(lambda: db_session)
 
@@ -218,13 +222,13 @@ def test_run_skips_matching_for_a_dismissed_wishlist_entry(db_session, test_user
     async def fake_get_wishlist(self, steam_id_64):
         return [SteamWishlistItem(app_id=220, added_at=None)]
 
-    async def fake_get_igdb_id(self, steam_app_id):
-        match_calls.append(steam_app_id)
-        return 233
+    async def fake_get_igdb_ids(self, steam_app_ids):
+        match_calls.extend(steam_app_ids)
+        return {220: 233}
 
     monkeypatch.setattr(SteamClient, "get_owned_games", _empty_owned_games)
     monkeypatch.setattr(SteamClient, "get_wishlist", fake_get_wishlist)
-    monkeypatch.setattr(IGDBClient, "get_igdb_id_for_steam_appid", fake_get_igdb_id)
+    monkeypatch.setattr(IGDBClient, "get_igdb_ids_for_steam_appids", fake_get_igdb_ids)
 
     steam_jobs.run(lambda: db_session)
 
@@ -240,12 +244,12 @@ def test_run_isolates_a_wishlist_failure_from_the_owned_games_result(db_session,
     async def failing_get_wishlist(self, steam_id_64):
         raise RuntimeError("wishlist request failed")
 
-    async def fake_get_igdb_id(self, steam_app_id):
-        return None
+    async def fake_get_igdb_ids(self, steam_app_ids):
+        return {}
 
     monkeypatch.setattr(SteamClient, "get_owned_games", fake_get_owned_games)
     monkeypatch.setattr(SteamClient, "get_wishlist", failing_get_wishlist)
-    monkeypatch.setattr(IGDBClient, "get_igdb_id_for_steam_appid", fake_get_igdb_id)
+    monkeypatch.setattr(IGDBClient, "get_igdb_ids_for_steam_appids", fake_get_igdb_ids)
 
     result = steam_jobs.run(lambda: db_session)
 
