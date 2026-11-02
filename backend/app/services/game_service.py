@@ -513,8 +513,18 @@ def unlink_igdb(db: Session, game_id: int) -> GameWithStatus:
 
 
 async def change_igdb_link(db: Session, igdb_client: IGDBClient, game_id: int, new_igdb_id: int) -> GameWithStatus:
-    """Changes a game's IGDB link to a different IGDB game: clears the existing
-    link, then links to the new IGDB ID (same as link_game_to_igdb)."""
+    """Changes a game's IGDB link to a different IGDB game.
+
+    Fresh IGDB id: clears the existing link, then links to the new ID (same as
+    link_game_to_igdb).
+
+    IGDB id already in the library: linking would violate the one-row-per-IGDB-id
+    rule, so this unlinks the source first and merges it into the existing row
+    instead. Previously the clear-then-link was atomic, so the link's "already in
+    your library" conflict rolled the clear back — and the dialog's follow-up
+    merge then failed with "already linked", because the source still carried its
+    old link. Unlinking before merging is what makes that flow work.
+    """
     game = db.get(Game, game_id)
     if game is None:
         raise NotFoundError(f"Game {game_id} not found")
@@ -522,6 +532,13 @@ async def change_igdb_link(db: Session, igdb_client: IGDBClient, game_id: int, n
         raise ConflictError(f"Game {game_id} is not linked to IGDB")
     if game.igdb_id == new_igdb_id:
         raise ConflictError(f"Game {game_id} is already linked to IGDB game {new_igdb_id}")
+
+    if game_repository.get_game_by_igdb_id(db, new_igdb_id) is not None:
+        # Unlink first: merge_duplicate_game requires an unlinked source, and
+        # moves the source's library status/progress/notes/tags onto the target.
+        game.igdb_id = None
+        db.flush()
+        return merge_duplicate_game(db, game_id, new_igdb_id)
 
     # Clear the old link so link_game_to_igdb's "already linked" check passes.
     game.igdb_id = None

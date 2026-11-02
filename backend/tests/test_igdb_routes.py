@@ -6,7 +6,7 @@ from PIL import Image
 
 from app.core.config import UPLOADS_DIR
 from app.models.catalog import Game, GameCategory
-from app.models.library import GameProgress, GameTag, LibraryItem, LibraryStatus, Note, Tag
+from app.models.library import GameProgress, GameTag, LibraryItem, LibraryStatus, Note, PlayStatus, Tag
 from app.services import upload_service
 from app.services.igdb_client import IGDB_API_BASE, IGDB_TOKEN_URL
 
@@ -670,3 +670,56 @@ def test_merge_into_igdb_discards_source_cover_image(auth_client, db_session, se
 
     assert response.status_code == 200
     assert not uploaded_path.exists()
+
+
+def test_change_igdb_link_to_existing_game_merges(auth_client, db_session, igdb_client, seed_platform):
+    # Changing a link onto an IGDB id already in the library used to fail: the
+    # clear-then-link was atomic, so the link's "already in your library"
+    # conflict rolled the clear back, and the dialog's follow-up merge then
+    # failed with "already linked". Now the change unlinks first and merges the
+    # source into the existing row.
+    source = Game(name="Batman", slug="batman", igdb_id=1111, category=GameCategory.MAIN_GAME)
+    target = Game(
+        name="Batman: The Telltale Series",
+        slug="batman-the-telltale-series",
+        igdb_id=2222,
+        category=GameCategory.MAIN_GAME,
+    )
+    db_session.add_all([source, target])
+    db_session.commit()
+    source_id, target_id = source.id, target.id
+    db_session.add(LibraryItem(game_id=source_id, platform_id=None, status=LibraryStatus.OWNED))
+    db_session.add(
+        GameProgress(
+            game_id=source_id, platform_id=seed_platform.id, play_status=PlayStatus.PLAYING, playtime_minutes=120
+        )
+    )
+    db_session.add(
+        GameProgress(
+            game_id=target_id, platform_id=seed_platform.id, play_status=PlayStatus.PLAYING, playtime_minutes=60
+        )
+    )
+    db_session.commit()
+
+    response = auth_client.post(f"/api/games/{source_id}/change-igdb-link", json={"igdbId": 2222})
+
+    assert response.status_code == 200
+    assert response.json()["id"] == target_id
+    assert response.json()["igdbId"] == 2222
+    db_session.expire_all()
+    assert db_session.get(Game, source_id) is None  # merged away, not duplicated
+    moved_items = db_session.query(LibraryItem).filter_by(game_id=target_id).all()
+    assert len(moved_items) == 1
+    kept_progress = db_session.query(GameProgress).filter_by(game_id=target_id).all()
+    assert len(kept_progress) == 1
+    assert kept_progress[0].playtime_minutes == 120  # merge keeps the larger progress
+
+
+def test_change_igdb_link_conflict_when_same_game(auth_client, db_session, igdb_client):
+    game = Game(name="Batman", slug="batman", igdb_id=1111, category=GameCategory.MAIN_GAME)
+    db_session.add(game)
+    db_session.commit()
+
+    response = auth_client.post(f"/api/games/{game.id}/change-igdb-link", json={"igdbId": 1111})
+
+    assert response.status_code == 409

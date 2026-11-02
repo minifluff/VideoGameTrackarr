@@ -116,8 +116,14 @@ const LinkToIgdbDialog = ({ open, gameId, gameName, gameCategory, onClose, chang
   const handleLink = async (igdbId: number, name: string) => {
     try {
       if (changeMode) {
-        await changeIgdbLink.mutateAsync(igdbId);
+        const game = await changeIgdbLink.mutateAsync(igdbId);
         toast.success(t("igdb.linkChangedSuccess"), TOAST_OPTIONS);
+        // A change onto an IGDB id already in the library merges this row into
+        // the existing one and deletes it — land on the surviving game instead
+        // of a deleted page.
+        if (game.id !== gameId) {
+          navigate(`/game/${gameIdentifier(game)}`);
+        }
       } else {
         await linkGameToIgdb.mutateAsync(igdbId);
         toast.success(t("igdb.linkedSuccess"), TOAST_OPTIONS);
