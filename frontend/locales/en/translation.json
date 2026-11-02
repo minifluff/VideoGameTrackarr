@@ -1378,6 +1378,7 @@
       "allSyncedState": "Everything is synced. Turn off Hide synced to see every entry.",
       "runImportButton": "Run Import",
       "importRunning": "Importing…",
+      "importProgress": "{{current}} of {{total}}",
       "importErrorToast": "Could not start the Steam import. Please try again.",
       "syncButton": "Sync",
       "addCustomButton": "Add as custom game",

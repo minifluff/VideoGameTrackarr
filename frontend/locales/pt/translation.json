@@ -1378,6 +1378,7 @@
       "allSyncedState": "Tudo está sincronizado. Desative Ocultar sincronizados para ver todas as entradas.",
       "runImportButton": "Executar Importar",
       "importRunning": "A importar…",
+      "importProgress": "{{current}} de {{total}}",
       "importErrorToast": "Não foi possível iniciar a importação Steam. Tente novamente.",
       "syncButton": "Sincronizar",
       "addCustomButton": "Adicionar como jogo personalizado",

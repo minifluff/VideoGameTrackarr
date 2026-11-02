@@ -13,6 +13,7 @@ vi.mock("react-toastify", () => ({
 
 let ownedEntries: SteamEntry[] = [];
 let wishlistEntries: SteamWishlistEntry[] = [];
+let jobsList: import("../../api/types").JobSummary[] = [];
 const syncOwned = vi.fn();
 const ignoreOwnedBulk = vi.fn();
 const ignoreWishlistBulk = vi.fn();
@@ -34,7 +35,7 @@ vi.mock("../../hooks/useIntegrations", () => ({
   useUnlinkSteamWishlistEntry: () => idleMutation(),
 }));
 vi.mock("../../hooks/useJobs", () => ({
-  useJobsList: () => ({ data: [] }),
+  useJobsList: () => ({ data: jobsList }),
   useRunJob: () => idleMutation(),
 }));
 vi.mock("../RelinkSteamEntryDialog", () => ({ default: () => null }));
@@ -294,5 +295,43 @@ describe("SteamSyncPage Ignore selected and Un-ignore", { timeout: 20_000 }, () 
         expect.anything()
       )
     );
+  });
+});
+
+describe("SteamSyncPage import progress", { timeout: 20_000 }, () => {
+  const runningJob = (progress: { current: number; total: number } | null) => ({
+    id: "steam_import",
+    run: {
+      status: "running" as const,
+      startedAt: null,
+      finishedAt: null,
+      result: null,
+      error: null,
+      progress,
+    },
+    schedule: { enabled: false, cronExpression: null, nextRunAt: null },
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    ownedEntries = [];
+    wishlistEntries = [];
+  });
+
+  it("shows the progress bar and counts under the import button while importing", () => {
+    jobsList = [runningJob({ current: 42, total: 100 })];
+    renderPage();
+
+    expect(screen.getByRole("button", { name: "Importing…" })).toBeDisabled();
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+    expect(screen.getByText("42 of 100")).toBeInTheDocument();
+  });
+
+  it("shows an indeterminate bar when the job reports no progress yet", () => {
+    jobsList = [runningJob(null)];
+    renderPage();
+
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+    expect(screen.queryByText("42 of 100")).not.toBeInTheDocument();
   });
 });

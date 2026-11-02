@@ -4,6 +4,7 @@ import AddIcon from "@mui/icons-material/Add";
 import BlockIcon from "@mui/icons-material/Block";
 import LinkIcon from "@mui/icons-material/Link";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
+import LinearProgress from "@mui/material/LinearProgress";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SyncIcon from "@mui/icons-material/Sync";
 import UndoIcon from "@mui/icons-material/Undo";
@@ -185,7 +186,13 @@ const SteamSyncPage = () => {
   const [sortBy, setSortBy] = useSessionState<"name" | "steamStatus" | "steamPlaytime" | "vgtPlaytime" | "vgtStatus">("steamSync.sortBy", "name");
   const [sortDirection, setSortDirection] = useSessionState<"asc" | "desc">("steamSync.sortDirection", "asc");
 
-  const isImporting = jobs?.find((job) => job.id === STEAM_IMPORT_JOB_ID)?.run.status === "running";
+  const importJob = jobs?.find((job) => job.id === STEAM_IMPORT_JOB_ID);
+  const isImporting = importJob?.run.status === "running";
+  // Same shape JobsSection shows for a running job; useJobsList polls every 3s
+  // while any job runs, so this bar moves without any extra polling here. Note the
+  // backend restarts the count at each import phase (owned upserts, then matching,
+  // then wishlist), so the bar can step back at a phase boundary.
+  const importProgress = isImporting ? (importJob?.run.progress ?? null) : null;
 
   const rowSortValue = (row: SyncRow, key: "name" | "steamStatus" | "steamPlaytime" | "vgtPlaytime" | "vgtStatus"): string | number => {
     switch (key) {
@@ -638,16 +645,37 @@ const SteamSyncPage = () => {
             {t("insights.steamSync.heading")}
           </Typography>
         </Box>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<PlayArrowIcon />}
-          onClick={() => void handleRunImport()}
-          disabled={isImporting}
-          sx={{ flexShrink: 0 }}
-        >
-          {isImporting ? t("insights.steamSync.importRunning") : t("insights.steamSync.runImportButton")}
-        </Button>
+        <Box sx={{ display: "flex", flexDirection: "column", flexShrink: 0, minWidth: 180 }}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<PlayArrowIcon />}
+            onClick={() => void handleRunImport()}
+            disabled={isImporting}
+          >
+            {isImporting ? t("insights.steamSync.importRunning") : t("insights.steamSync.runImportButton")}
+          </Button>
+          {isImporting && (
+            <Box sx={{ mt: 1 }}>
+              <LinearProgress
+                variant={importProgress ? "determinate" : "indeterminate"}
+                value={
+                  importProgress && importProgress.total > 0
+                    ? (importProgress.current / importProgress.total) * 100
+                    : undefined
+                }
+              />
+              {importProgress && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                  {t("insights.steamSync.importProgress", {
+                    current: importProgress.current,
+                    total: importProgress.total,
+                  })}
+                </Typography>
+              )}
+            </Box>
+          )}
+        </Box>
       </Box>
 
       <Paper sx={{ width: "100%", overflow: "hidden", borderRadius: 2 }}>
