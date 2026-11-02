@@ -760,3 +760,29 @@ def test_on_sale_excludes_a_wishlisted_ps5_physical_row_even_with_a_cached_disco
     response = auth_client.get("/api/insights/on-sale")
 
     assert response.json() == []
+
+
+def test_ignoring_a_duplicate_group_accepts_the_frontend_camelcase_payload(
+    auth_client, db_session, seed_game, seed_platform, seed_region
+):
+    # Regression test: the frontend posts camelCase (gameId/platformId/regionId),
+    # and the request model used to be plain snake_case BaseModel — pydantic
+    # dropped those fields as unknown, game_id went missing, and every ignore
+    # failed with 422 while the snake_case backend tests still passed.
+    _seed_duplicate_group(db_session, seed_game, seed_platform, seed_region)
+
+    response = auth_client.post(
+        "/api/insights/duplicate-library-items/ignore",
+        json={
+            "gameId": seed_game.id,
+            "status": "owned",
+            "platformId": seed_platform.id,
+            "regionId": seed_region.id,
+            "format": None,
+            "edition": None,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["gameId"] == seed_game.id
+    assert auth_client.get("/api/insights/duplicate-library-items").json() == []

@@ -1,7 +1,5 @@
 from datetime import datetime
 
-from pydantic import BaseModel
-
 from app.models.catalog import Game, GameCategory
 from app.models.hardware import Accessory
 from app.models.ignored_duplicate import IgnoredDuplicateGroup
@@ -30,9 +28,12 @@ def duplicate_group_from_orm(items: list[LibraryItem]) -> DuplicateLibraryItemGr
     )
 
 
-class IgnoreDuplicateGroupRequest(BaseModel):
-    """Route-local request model, so snake_case like every other request body — the
-    camelCase boundary is the response side only."""
+class IgnoreDuplicateGroupRequest(CamelModel):
+    """Request model for the ignore endpoint. This was a plain snake_case BaseModel,
+    but the frontend posts camelCase like every other request body — pydantic
+    silently dropped gameId/platformId/regionId as unknown fields, game_id came
+    up missing, and every ignore failed validation (422). CamelModel accepts
+    both casings, so the frontend's payload and snake_case callers both work."""
 
     game_id: int
     status: LibraryStatus
