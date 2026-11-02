@@ -24,7 +24,9 @@ import { useLogout } from "./hooks/useAuth";
 import { useDragToScroll } from "./hooks/useDragToScroll";
 import { useScrollResetOnNavigate } from "./hooks/useScrollResetOnNavigate";
 import GlobalSearch from "./navigation/GlobalSearch";
+import { getNavDestinations } from "./navigation/destinations";
 import Sidebar, { SIDEBAR_WIDTH } from "./navigation/Sidebar";
+import { useAppearance } from "./theme/AppearanceProvider";
 import { useColorMode } from "./theme/ColorModeProvider";
 
 // Upstream's model: one Sidebar, permanent on desktop and a hamburger drawer below
@@ -41,13 +43,26 @@ const AppShell = () => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const logoutMutation = useLogout();
+  const { hideHardwareMenu } = useAppearance();
   useScrollResetOnNavigate();
   useDragToScroll();
 
-  // A drawer left open on a small screen closes when the page changes.
+  // A drawer left open on a small screen closes when the page changes — except
+  // onto a parent section page, whose sub-items live in the drawer itself. Without
+  // this exemption, tapping a parent (Games, Settings, …) still closed the drawer
+  // via navigation even though Sidebar no longer closes it on the tap itself, so
+  // the sub-items vanished the moment they should have appeared.
   useEffect(() => {
-    setDrawerOpen(false);
-  }, [pathname]);
+    const isParentPage = getNavDestinations(t, { hideHardwareMenu }).some(
+      (destination) =>
+        destination.subItems &&
+        destination.subItems.length > 0 &&
+        pathname === destination.to
+    );
+    if (!isParentPage) {
+      setDrawerOpen(false);
+    }
+  }, [pathname, t, hideHardwareMenu]);
 
   const handleLogout = () => {
     // Clearing tokens/cache alone doesn't move the user off the current (now-stale)
