@@ -49,10 +49,28 @@ describe("Sidebar", () => {
     expect(screen.getByRole("link", { name: "Games" })).toHaveAttribute("aria-current", "page");
   });
 
-  it("calls onNavigate when a link is followed", () => {
+  it("calls onNavigate when a leaf link is followed", () => {
+    const { onNavigate } = renderSidebar("/", vi.fn());
+
+    fireEvent.click(screen.getByRole("link", { name: "Events" }));
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the drawer open when a parent with sub-items is selected, revealing them", () => {
     const { onNavigate } = renderSidebar("/", vi.fn());
 
     fireEvent.click(screen.getByRole("link", { name: "Games" }));
+    // No close: the tap navigates into the section, so its sub-items render
+    // in the still-open drawer instead of vanishing with it.
+    expect(onNavigate).not.toHaveBeenCalled();
+    expect(screen.getByRole("link", { name: "Bookshelf" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Playing" })).toBeInTheDocument();
+  });
+
+  it("calls onNavigate when a sub-item is followed", () => {
+    const { onNavigate } = renderSidebar("/games", vi.fn());
+
+    fireEvent.click(screen.getByRole("link", { name: "Bookshelf" }));
     expect(onNavigate).toHaveBeenCalledTimes(1);
   });
 });

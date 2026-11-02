@@ -225,6 +225,12 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
               const item = byTo.get(to);
               if (!item) return null;
               const inside = item.to !== "/" && isInSection(pathname, item.to);
+              // onNavigate closes the drawer (AppShell only passes it in drawer
+              // mode), and sub-items only render while inside their section — so
+              // letting a parent tap close the drawer hid its sub-items the moment
+              // they should have appeared. Parents keep the drawer open; only
+              // leaf taps (childless destinations and sub-items) close it.
+              const hasSubItems = !!item.subItems && item.subItems.length > 0;
               return (
                 <Box key={item.to}>
                   <NavLink
@@ -233,7 +239,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
                     icon={item.icon}
                     selected={isActive(item)}
                     count={counts[item.to]}
-                    onNavigate={onNavigate}
+                    onNavigate={hasSubItems ? undefined : onNavigate}
                   />
                   {inside
                     ? item.subItems?.map((sub) => (
