@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session, aliased, joinedload
 
 from app.models.catalog import Game, GameCategory
 from app.models.hardware import Accessory, AccessoryDeviceLink, UserAccessory, UserDevice
+from app.models.ignored_duplicate import IgnoredDuplicateGroup
 from app.models.library import LibraryItem, LibraryStatus, MediaFormat, PlayStatus
 from app.repositories.game_repository import GameSortOption, _apply_optional_game_filters
 
@@ -31,7 +32,75 @@ def find_duplicate_library_items(db: Session) -> list[list[LibraryItem]]:
     for item in db.scalars(stmt):
         key = (item.game_id, item.status, item.platform_id, item.region_id, item.format, item.edition)
         groups.setdefault(key, []).append(item)
-    return [group for group in groups.values() if len(group) > 1]
+    ignored = ignored_duplicate_keys(db)
+    return [group for group in groups.values() if len(group) > 1 and _duplicate_group_key(group[0]) not in ignored]
+
+
+def _duplicate_group_key(item: LibraryItem) -> tuple:
+    return (item.game_id, item.status, item.platform_id, item.region_id, item.format, item.edition)
+
+
+def _ignored_group_key(row: IgnoredDuplicateGroup) -> tuple:
+    return (row.game_id, row.status, row.platform_id, row.region_id, row.format, row.edition)
+
+
+def list_ignored_duplicate_groups(db: Session) -> list[IgnoredDuplicateGroup]:
+    """Ignored groups, newest first. The inner join on games drops rows whose game was
+    deleted — a dangling ignore row is harmless but shouldn't surface as a nameless row."""
+    stmt = (
+        select(IgnoredDuplicateGroup)
+        .join(Game, Game.id == IgnoredDuplicateGroup.game_id)
+        .options(
+            joinedload(IgnoredDuplicateGroup.game),
+            joinedload(IgnoredDuplicateGroup.platform),
+            joinedload(IgnoredDuplicateGroup.region),
+        )
+        .order_by(IgnoredDuplicateGroup.created_at.desc(), IgnoredDuplicateGroup.id.desc())
+    )
+    return list(db.scalars(stmt))
+
+
+def ignored_duplicate_keys(db: Session) -> set[tuple]:
+    return {_ignored_group_key(row) for row in db.scalars(select(IgnoredDuplicateGroup))}
+
+
+def ignore_duplicate_group(
+    db: Session,
+    game_id: int,
+    status: LibraryStatus,
+    platform_id: int | None,
+    region_id: int | None,
+    format: MediaFormat | None,
+    edition: str | None,
+) -> IgnoredDuplicateGroup:
+    """Idempotent — ignoring an already-ignored group returns the existing row rather
+    than a duplicate. Key comparison is in Python because SQL `=` can't match NULL
+    key columns (see find_duplicate_library_items)."""
+    key = (game_id, status, platform_id, region_id, format, edition)
+    for row in db.scalars(select(IgnoredDuplicateGroup)):
+        if _ignored_group_key(row) == key:
+            return row
+    row = IgnoredDuplicateGroup(
+        game_id=game_id,
+        status=status,
+        platform_id=platform_id,
+        region_id=region_id,
+        format=format,
+        edition=edition,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def unignore_duplicate_group(db: Session, ignored_id: int) -> bool:
+    row = db.get(IgnoredDuplicateGroup, ignored_id)
+    if row is None:
+        return False
+    db.delete(row)
+    db.commit()
+    return True
 
 
 def find_missing_addons(

@@ -1332,7 +1332,16 @@
       "removedToast": "Entrada duplicada removida",
       "anyPlatform": "Qualquer plataforma",
       "anyRegion": "Qualquer região",
-      "removeEntryTooltip": "Remover esta entrada"
+      "removeEntryTooltip": "Remover esta entrada",
+      "ignoreGroupTooltip": "Ignorar este grupo de duplicados",
+      "ignoredToast": "Grupo de duplicados ignorado",
+      "ignoreErrorToast": "Não foi possível ignorar este grupo de duplicados.",
+      "unignoredToast": "Este grupo de duplicados já não é ignorado",
+      "unignoreErrorToast": "Não foi possível parar de ignorar este grupo de duplicados.",
+      "unignoreTooltip": "Parar de ignorar este grupo de duplicados",
+      "showIgnoredLabel": "Mostrar ignorados",
+      "ignoredHeading": "Grupos de duplicados ignorados",
+      "ignoredNone": "Nenhum grupo de duplicados ignorado."
     },
     "missingAddons": {
       "noneFound": "Nenhum complemento em falta — tem tudo o que foi importado para os jogos que possui."

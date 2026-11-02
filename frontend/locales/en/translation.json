@@ -1332,7 +1332,16 @@
       "removedToast": "Duplicate entry removed",
       "anyPlatform": "Any platform",
       "anyRegion": "Any region",
-      "removeEntryTooltip": "Remove this entry"
+      "removeEntryTooltip": "Remove this entry",
+      "ignoreGroupTooltip": "Ignore this duplicate group",
+      "ignoredToast": "Duplicate group ignored",
+      "ignoreErrorToast": "Could not ignore this duplicate group.",
+      "unignoredToast": "Duplicate group is no longer ignored",
+      "unignoreErrorToast": "Could not stop ignoring this duplicate group.",
+      "unignoreTooltip": "Stop ignoring this duplicate group",
+      "showIgnoredLabel": "Show ignored",
+      "ignoredHeading": "Ignored duplicate groups",
+      "ignoredNone": "No ignored duplicate groups."
     },
     "missingAddons": {
       "noneFound": "No missing addons found — you have everything that's been imported for the games you own."

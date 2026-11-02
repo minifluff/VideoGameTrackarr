@@ -1,14 +1,17 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db
 from app.api.routes.game_filters import GameFilterParams
 from app.schemas.insights import (
     DuplicateLibraryItemGroupResponse,
+    IgnoredDuplicateGroupResponse,
+    IgnoreDuplicateGroupRequest,
     InsightAccessoryRefResponse,
     MissingAddonsResponse,
     OnSaleItemResponse,
     duplicate_group_from_orm,
+    ignored_duplicate_group_from_orm,
     insight_accessory_ref_from_orm,
     missing_addons_from_orm,
     on_sale_item_from_orm,
@@ -22,6 +25,37 @@ router = APIRouter(prefix="/api/insights", tags=["insights"], dependencies=[Depe
 def list_duplicate_library_items(db: Session = Depends(get_db)) -> list[DuplicateLibraryItemGroupResponse]:
     groups = insight_service.find_duplicate_library_items(db)
     return [duplicate_group_from_orm(group) for group in groups]
+
+
+@router.post("/duplicate-library-items/ignore", response_model=IgnoredDuplicateGroupResponse)
+def ignore_duplicate_library_items(
+    payload: IgnoreDuplicateGroupRequest, db: Session = Depends(get_db)
+) -> IgnoredDuplicateGroupResponse:
+    row = insight_service.ignore_duplicate_group(
+        db,
+        payload.game_id,
+        payload.status,
+        payload.platform_id,
+        payload.region_id,
+        payload.format,
+        payload.edition,
+    )
+    return ignored_duplicate_group_from_orm(row)
+
+
+@router.get("/duplicate-library-items/ignored", response_model=list[IgnoredDuplicateGroupResponse])
+def list_ignored_duplicate_library_items(
+    db: Session = Depends(get_db),
+) -> list[IgnoredDuplicateGroupResponse]:
+    rows = insight_service.list_ignored_duplicate_groups(db)
+    return [ignored_duplicate_group_from_orm(row) for row in rows]
+
+
+@router.post("/duplicate-library-items/ignored/{ignored_id}/unignore")
+def unignore_duplicate_library_items(ignored_id: int, db: Session = Depends(get_db)) -> Response:
+    if not insight_service.unignore_duplicate_group(db, ignored_id):
+        raise HTTPException(status_code=404, detail="Ignored duplicate group not found")
+    return Response(status_code=204)
 
 
 @router.get("/missing-addons", response_model=list[MissingAddonsResponse])

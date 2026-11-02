@@ -1,16 +1,51 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  ignoreDuplicateLibraryItems,
   listAccessoriesWithoutOwnedHardware,
   listDuplicateLibraryItems,
+  listIgnoredDuplicateLibraryItems,
   listMissingAddons,
   listOnSale,
+  unignoreDuplicateLibraryItems,
 } from "../api/insights";
 import type { GameListFilters } from "../api/games";
+import type { IgnoreDuplicateGroupRequest } from "../api/types";
 
 export function useDuplicateLibraryItems() {
   return useQuery({
     queryKey: ["insights", "duplicate-library-items"],
     queryFn: listDuplicateLibraryItems,
+  });
+}
+
+export function useIgnoredDuplicateLibraryItems(enabled: boolean) {
+  return useQuery({
+    queryKey: ["insights", "duplicate-library-items", "ignored"],
+    queryFn: listIgnoredDuplicateLibraryItems,
+    enabled,
+  });
+}
+
+function useInvalidateDuplicateLibraryItems() {
+  const queryClient = useQueryClient();
+  return () => {
+    void queryClient.invalidateQueries({ queryKey: ["insights", "duplicate-library-items"] });
+  };
+}
+
+export function useIgnoreDuplicateLibraryItems() {
+  const invalidate = useInvalidateDuplicateLibraryItems();
+  return useMutation({
+    mutationFn: (payload: IgnoreDuplicateGroupRequest) => ignoreDuplicateLibraryItems(payload),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUnignoreDuplicateLibraryItems() {
+  const invalidate = useInvalidateDuplicateLibraryItems();
+  return useMutation({
+    mutationFn: (ignoredId: number) => unignoreDuplicateLibraryItems(ignoredId),
+    onSuccess: invalidate,
   });
 }
 

@@ -1332,7 +1332,16 @@
       "removedToast": "Entrée en double retirée",
       "anyPlatform": "Toutes plateformes",
       "anyRegion": "Toutes régions",
-      "removeEntryTooltip": "Retirer cette entrée"
+      "removeEntryTooltip": "Retirer cette entrée",
+      "ignoreGroupTooltip": "Ignorer ce groupe de doublons",
+      "ignoredToast": "Groupe de doublons ignoré",
+      "ignoreErrorToast": "Impossible d'ignorer ce groupe de doublons.",
+      "unignoredToast": "Ce groupe de doublons n'est plus ignoré",
+      "unignoreErrorToast": "Impossible d'arrêter d'ignorer ce groupe de doublons.",
+      "unignoreTooltip": "Ne plus ignorer ce groupe de doublons",
+      "showIgnoredLabel": "Afficher les ignorés",
+      "ignoredHeading": "Groupes de doublons ignorés",
+      "ignoredNone": "Aucun groupe de doublons ignoré."
     },
     "missingAddons": {
       "noneFound": "Aucune extension manquante — vous possédez tout ce qui a été importé pour les jeux que vous possédez."

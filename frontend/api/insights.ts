@@ -2,6 +2,8 @@ import { apiClient } from "./client";
 import { buildGameFilterParams, type GameListFilters } from "./games";
 import type {
   DuplicateLibraryItemGroup,
+  IgnoreDuplicateGroupRequest,
+  IgnoredDuplicateGroup,
   InsightAccessoryRef,
   MissingAddonsEntry,
   OnSaleItem,
@@ -12,6 +14,27 @@ export async function listDuplicateLibraryItems(): Promise<DuplicateLibraryItemG
     "/api/insights/duplicate-library-items"
   );
   return response.data;
+}
+
+export async function listIgnoredDuplicateLibraryItems(): Promise<IgnoredDuplicateGroup[]> {
+  const response = await apiClient.get<IgnoredDuplicateGroup[]>(
+    "/api/insights/duplicate-library-items/ignored"
+  );
+  return response.data;
+}
+
+export async function ignoreDuplicateLibraryItems(
+  payload: IgnoreDuplicateGroupRequest
+): Promise<IgnoredDuplicateGroup> {
+  const response = await apiClient.post<IgnoredDuplicateGroup>(
+    "/api/insights/duplicate-library-items/ignore",
+    payload
+  );
+  return response.data;
+}
+
+export async function unignoreDuplicateLibraryItems(ignoredId: number): Promise<void> {
+  await apiClient.post(`/api/insights/duplicate-library-items/ignored/${ignoredId}/unignore`);
 }
 
 export async function listMissingAddons(

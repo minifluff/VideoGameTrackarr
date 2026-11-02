@@ -797,6 +797,30 @@ export interface DuplicateLibraryItemGroup {
   items: LibraryItem[];
 }
 
+export interface IgnoredDuplicateGroup {
+  id: number;
+  gameId: number;
+  gameName: string;
+  gameSlug: string | null;
+  gameUuid: string;
+  status: LibraryStatus;
+  platformId: number | null;
+  platformName: string | null;
+  regionId: number | null;
+  regionName: string | null;
+  format: MediaFormat | null;
+  edition: string | null;
+}
+
+export interface IgnoreDuplicateGroupRequest {
+  gameId: number;
+  status: LibraryStatus;
+  platformId: number | null;
+  regionId: number | null;
+  format: MediaFormat | null;
+  edition: string | null;
+}
+
 export interface InsightGameRef {
   id: number;
   uuid: string;

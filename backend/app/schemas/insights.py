@@ -1,8 +1,11 @@
 from datetime import datetime
 
+from pydantic import BaseModel
+
 from app.models.catalog import Game, GameCategory
 from app.models.hardware import Accessory
-from app.models.library import LibraryItem
+from app.models.ignored_duplicate import IgnoredDuplicateGroup
+from app.models.library import LibraryItem, LibraryStatus, MediaFormat
 from app.schemas.base import CamelModel
 from app.schemas.library import LibraryItemResponse, library_item_from_orm
 from app.services.itad_service import OnSaleItem
@@ -24,6 +27,50 @@ def duplicate_group_from_orm(items: list[LibraryItem]) -> DuplicateLibraryItemGr
         game_slug=items[0].game.slug,
         game_uuid=items[0].game.uuid,
         items=[library_item_from_orm(item) for item in items],
+    )
+
+
+class IgnoreDuplicateGroupRequest(BaseModel):
+    """Route-local request model, so snake_case like every other request body — the
+    camelCase boundary is the response side only."""
+
+    game_id: int
+    status: LibraryStatus
+    platform_id: int | None = None
+    region_id: int | None = None
+    format: MediaFormat | None = None
+    edition: str | None = None
+
+
+class IgnoredDuplicateGroupResponse(CamelModel):
+    id: int
+    game_id: int
+    game_name: str
+    game_slug: str | None
+    game_uuid: str
+    status: LibraryStatus
+    platform_id: int | None
+    platform_name: str | None
+    region_id: int | None
+    region_name: str | None
+    format: MediaFormat | None
+    edition: str | None
+
+
+def ignored_duplicate_group_from_orm(row: IgnoredDuplicateGroup) -> IgnoredDuplicateGroupResponse:
+    return IgnoredDuplicateGroupResponse(
+        id=row.id,
+        game_id=row.game_id,
+        game_name=row.game.name,
+        game_slug=row.game.slug,
+        game_uuid=row.game.uuid,
+        status=row.status,
+        platform_id=row.platform_id,
+        platform_name=row.platform.name if row.platform else None,
+        region_id=row.region_id,
+        region_name=row.region.name if row.region else None,
+        format=row.format,
+        edition=row.edition,
     )
 
 

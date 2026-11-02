@@ -55,6 +55,101 @@ def test_duplicate_detection_treats_null_platform_as_equal(auth_client, db_sessi
     assert len(group["items"]) == 2
 
 
+def _seed_duplicate_group(db_session, seed_game, seed_platform, seed_region):
+    db_session.add(
+        LibraryItem(
+            game_id=seed_game.id, platform_id=seed_platform.id, region_id=seed_region.id, status=LibraryStatus.OWNED
+        )
+    )
+    db_session.add(
+        LibraryItem(
+            game_id=seed_game.id, platform_id=seed_platform.id, region_id=seed_region.id, status=LibraryStatus.OWNED
+        )
+    )
+    db_session.commit()
+
+
+def test_ignoring_a_duplicate_group_hides_it_and_lists_it_as_ignored(
+    auth_client, db_session, seed_game, seed_platform, seed_region
+):
+    _seed_duplicate_group(db_session, seed_game, seed_platform, seed_region)
+
+    response = auth_client.post(
+        "/api/insights/duplicate-library-items/ignore",
+        json={
+            "game_id": seed_game.id,
+            "status": "owned",
+            "platform_id": seed_platform.id,
+            "region_id": seed_region.id,
+            "format": None,
+            "edition": None,
+        },
+    )
+
+    assert response.status_code == 200
+    ignored = response.json()
+    assert ignored["gameId"] == seed_game.id
+    assert ignored["gameName"] == seed_game.name
+    assert ignored["platformName"] == seed_platform.name
+
+    assert auth_client.get("/api/insights/duplicate-library-items").json() == []
+    [listed] = auth_client.get("/api/insights/duplicate-library-items/ignored").json()
+    assert listed["id"] == ignored["id"]
+
+
+def test_ignoring_a_duplicate_group_twice_is_idempotent(
+    auth_client, db_session, seed_game, seed_platform, seed_region
+):
+    _seed_duplicate_group(db_session, seed_game, seed_platform, seed_region)
+    payload = {
+        "game_id": seed_game.id,
+        "status": "owned",
+        "platform_id": seed_platform.id,
+        "region_id": seed_region.id,
+        "format": None,
+        "edition": None,
+    }
+
+    first = auth_client.post("/api/insights/duplicate-library-items/ignore", json=payload).json()
+    second = auth_client.post("/api/insights/duplicate-library-items/ignore", json=payload).json()
+
+    assert first["id"] == second["id"]
+    assert len(auth_client.get("/api/insights/duplicate-library-items/ignored").json()) == 1
+
+
+def test_unignoring_a_duplicate_group_brings_it_back(
+    auth_client, db_session, seed_game, seed_platform, seed_region
+):
+    _seed_duplicate_group(db_session, seed_game, seed_platform, seed_region)
+    ignored_id = auth_client.post(
+        "/api/insights/duplicate-library-items/ignore",
+        json={
+            "game_id": seed_game.id,
+            "status": "owned",
+            "platform_id": seed_platform.id,
+            "region_id": seed_region.id,
+            "format": None,
+            "edition": None,
+        },
+    ).json()["id"]
+
+    assert auth_client.post(f"/api/insights/duplicate-library-items/ignored/{ignored_id}/unignore").status_code == 204
+    assert len(auth_client.get("/api/insights/duplicate-library-items").json()) == 1
+    assert auth_client.get("/api/insights/duplicate-library-items/ignored").json() == []
+
+
+def test_unignoring_an_unknown_group_is_404(auth_client):
+    response = auth_client.post("/api/insights/duplicate-library-items/ignored/999999/unignore")
+
+    assert response.status_code == 404
+
+
+def test_duplicate_ignore_endpoints_require_auth(client):
+    assert client.post("/api/insights/duplicate-library-items/ignore", json={}).status_code == 401
+    assert client.get("/api/insights/duplicate-library-items/ignored").status_code == 401
+    assert client.post("/api/insights/duplicate-library-items/ignored/1/unignore").status_code == 401
+
+
 def test_missing_addons_requires_auth(client):
     response = client.get("/api/insights/missing-addons")
 

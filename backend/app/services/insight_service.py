@@ -5,13 +5,34 @@ from sqlalchemy.orm import Session
 
 from app.models.catalog import Game
 from app.models.hardware import Accessory
-from app.models.library import LibraryItem
+from app.models.ignored_duplicate import IgnoredDuplicateGroup
+from app.models.library import LibraryItem, LibraryStatus, MediaFormat
 from app.repositories import insight_repository
 from app.services import itad_service, platprices_service
 
 
 def find_duplicate_library_items(db: Session) -> list[list[LibraryItem]]:
     return insight_repository.find_duplicate_library_items(db)
+
+
+def list_ignored_duplicate_groups(db: Session) -> list[IgnoredDuplicateGroup]:
+    return insight_repository.list_ignored_duplicate_groups(db)
+
+
+def ignore_duplicate_group(
+    db: Session,
+    game_id: int,
+    status: LibraryStatus,
+    platform_id: int | None,
+    region_id: int | None,
+    format: MediaFormat | None,
+    edition: str | None,
+) -> IgnoredDuplicateGroup:
+    return insight_repository.ignore_duplicate_group(db, game_id, status, platform_id, region_id, format, edition)
+
+
+def unignore_duplicate_group(db: Session, ignored_id: int) -> bool:
+    return insight_repository.unignore_duplicate_group(db, ignored_id)
 
 
 def find_missing_addons(db: Session, **filters: Any) -> list[tuple[Game, list[tuple[Game, bool]]]]:
