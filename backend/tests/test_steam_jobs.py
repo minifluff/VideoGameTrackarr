@@ -255,3 +255,97 @@ def test_run_isolates_a_wishlist_failure_from_the_owned_games_result(db_session,
 
     assert result["succeeded"] == 1  # owned-games import still completed
     assert result["wishlist"]["error"] == "wishlist request failed"
+
+
+def test_run_relinks_an_already_matched_game_when_igdb_mapping_changes(db_session, test_user, monkeypatch):
+    # Full check: a matched entry is re-checked on every import, so when IGDB's
+    # Steam mapping moves to a different game, the link follows it.
+    old_game = _seed_game(db_session, igdb_id=233, name="Half-Life 2")
+    new_game = _seed_game(db_session, igdb_id=444, name="Half-Life 2 Remastered")
+    new_game_id = new_game.id  # captured before run() below closes db_session
+    db_session.add(SteamLibraryEntry(steam_app_id=220, steam_name="Half-Life 2", game_id=old_game.id))
+    db_session.commit()
+    _configure_steam(monkeypatch, test_user, db_session)
+
+    async def fake_get_owned_games(self, steam_id_64):
+        return [SteamOwnedGame(app_id=220, name="Half-Life 2", playtime_minutes=10, last_played_at=None)]
+
+    async def fake_get_igdb_ids(self, steam_app_ids):
+        return {220: 444}
+
+    monkeypatch.setattr(SteamClient, "get_owned_games", fake_get_owned_games)
+    monkeypatch.setattr(IGDBClient, "get_igdb_ids_for_steam_appids", fake_get_igdb_ids)
+
+    steam_jobs.run(lambda: db_session)
+
+    assert steam_repository.get_entry(db_session, 220).game_id == new_game_id
+
+
+def test_run_keeps_an_already_matched_game_when_mapping_unchanged(db_session, test_user, monkeypatch):
+    game = _seed_game(db_session, igdb_id=233, name="Half-Life 2")
+    game_id = game.id  # captured before run() below closes db_session
+    db_session.add(SteamLibraryEntry(steam_app_id=220, steam_name="Half-Life 2", game_id=game.id))
+    db_session.commit()
+    _configure_steam(monkeypatch, test_user, db_session)
+
+    async def fake_get_owned_games(self, steam_id_64):
+        return [SteamOwnedGame(app_id=220, name="Half-Life 2", playtime_minutes=10, last_played_at=None)]
+
+    async def fake_get_igdb_ids(self, steam_app_ids):
+        return {220: 233}
+
+    monkeypatch.setattr(SteamClient, "get_owned_games", fake_get_owned_games)
+    monkeypatch.setattr(IGDBClient, "get_igdb_ids_for_steam_appids", fake_get_igdb_ids)
+
+    result = steam_jobs.run(lambda: db_session)
+
+    assert result["failed"] == 0
+    assert steam_repository.get_entry(db_session, 220).game_id == game_id
+
+
+def test_run_never_overwrites_a_custom_link(db_session, test_user, monkeypatch):
+    # A link to a manually-added game (no igdb_id) is the user's explicit choice —
+    # the full check must not replace it even when IGDB now has a mapping.
+    custom = Game(igdb_id=None, name="My Custom Game", slug="my-custom-game", category=GameCategory.MAIN_GAME)
+    db_session.add(custom)
+    db_session.commit()
+    custom_id = custom.id  # captured before run() below closes db_session
+    db_session.add(SteamLibraryEntry(steam_app_id=220, steam_name="Half-Life 2", game_id=custom.id))
+    db_session.commit()
+    _configure_steam(monkeypatch, test_user, db_session)
+
+    async def fake_get_owned_games(self, steam_id_64):
+        return [SteamOwnedGame(app_id=220, name="Half-Life 2", playtime_minutes=10, last_played_at=None)]
+
+    async def fake_get_igdb_ids(self, steam_app_ids):
+        return {220: 233}
+
+    monkeypatch.setattr(SteamClient, "get_owned_games", fake_get_owned_games)
+    monkeypatch.setattr(IGDBClient, "get_igdb_ids_for_steam_appids", fake_get_igdb_ids)
+
+    steam_jobs.run(lambda: db_session)
+
+    assert steam_repository.get_entry(db_session, 220).game_id == custom_id
+
+
+def test_run_relinks_a_matched_wishlist_item_when_mapping_changes(db_session, test_user, monkeypatch):
+    old_game = _seed_game(db_session, igdb_id=233, name="Half-Life 2")
+    new_game = _seed_game(db_session, igdb_id=444, name="Half-Life 2 Remastered")
+    new_game_id = new_game.id  # captured before run() below closes db_session
+    db_session.add(SteamWishlistEntry(steam_app_id=220, steam_name="Half-Life 2", game_id=old_game.id))
+    db_session.commit()
+    _configure_steam(monkeypatch, test_user, db_session)
+
+    async def fake_get_wishlist(self, steam_id_64):
+        return [SteamWishlistItem(app_id=220, added_at=None)]
+
+    async def fake_get_igdb_ids(self, steam_app_ids):
+        return {220: 444}
+
+    monkeypatch.setattr(SteamClient, "get_owned_games", _empty_owned_games)
+    monkeypatch.setattr(SteamClient, "get_wishlist", fake_get_wishlist)
+    monkeypatch.setattr(IGDBClient, "get_igdb_ids_for_steam_appids", fake_get_igdb_ids)
+
+    steam_jobs.run(lambda: db_session)
+
+    assert steam_wishlist_repository.get_entry(db_session, 220).game_id == new_game_id
