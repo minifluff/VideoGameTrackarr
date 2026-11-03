@@ -1,8 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getShareLink, regenerateShareLink } from "../api/share";
+import { getPublicCollectionLink, getShareLink, regenerateShareLink } from "../api/share";
 
 export function useShareLink() {
   return useQuery({ queryKey: ["share-link"], queryFn: getShareLink });
+}
+
+export function usePublicCollectionLink() {
+  return useQuery({ queryKey: ["public-collection-link"], queryFn: getPublicCollectionLink });
 }
 
 export function useRegenerateShareLink() {

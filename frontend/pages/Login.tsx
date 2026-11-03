@@ -11,6 +11,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { useLogin, useSetupStatus } from "../hooks/useAuth";
+import { usePublicCollectionLink } from "../hooks/useShareLink";
 import { tokenStorage } from "../api/tokenStorage";
 import SetupAdmin from "./SetupAdmin";
 
@@ -22,6 +23,7 @@ const LoginForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const loginMutation = useLogin();
+  const { data: publicCollectionToken } = usePublicCollectionLink();
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -79,6 +81,16 @@ const LoginForm = () => {
         <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }} disabled={loginMutation.isPending}>
           {loginMutation.isPending ? t("auth.login.signingIn") : t("auth.login.signIn")}
         </Button>
+        {publicCollectionToken ? (
+          <Button
+            variant="outlined"
+            fullWidth
+            sx={{ mt: 2 }}
+            onClick={() => navigate(`/public/${publicCollectionToken}/games`)}
+          >
+            {t("auth.login.publicCollectionButton")}
+          </Button>
+        ) : null}
       </Box>
     </>
   );

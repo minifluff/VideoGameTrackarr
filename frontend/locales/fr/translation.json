@@ -702,6 +702,7 @@
       "password": "Mot de passe",
       "signingIn": "Connexion en cours...",
       "signIn": "Se connecter",
+      "publicCollectionButton": "Collection de jeux publique",
       "rememberMe": "Remember me"
     },
     "setupAdmin": {
