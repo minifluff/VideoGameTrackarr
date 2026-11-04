@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import type { FilterFieldSetting, Tag } from "../../api/types";
+import type { FilterFieldSetting, PlatformResponse, Tag } from "../../api/types";
 import { buildGameFilterParams } from "../../api/games";
 import { currentUserQueryKey } from "../../hooks/useAuth";
 import GameListToolbar from "../GameListToolbar";
@@ -279,6 +279,46 @@ describe("GameListToolbar filter layout", () => {
     const genre = within(dialog).getByRole("combobox", { name: "Genre" });
     expect(ownership.compareDocumentPosition(genre) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(within(dialog).queryByLabelText("Tags")).not.toBeInTheDocument();
+  });
+
+  it("lists only platforms with games in the Platforms dropdown", async () => {
+    const platforms: PlatformResponse[] = [
+      {
+        id: 1,
+        igdbId: null,
+        name: "Nintendo Switch",
+        slug: "switch",
+        abbreviation: "NS",
+        spineTemplateUrl: null,
+        caseHeightMm: null,
+        caseSpineMm: null,
+        spineColor: null,
+        spineIcon: null,
+        spineIconUrl: null,
+        gameCount: 12,
+      },
+      {
+        id: 2,
+        igdbId: null,
+        name: "Atari 2600",
+        slug: "atari-2600",
+        abbreviation: null,
+        spineTemplateUrl: null,
+        caseHeightMm: null,
+        caseSpineMm: null,
+        spineColor: null,
+        spineIcon: null,
+        spineIconUrl: null,
+        gameCount: 0,
+      },
+    ];
+    renderToolbar({ platformOptions: platforms });
+    const { user, dialog } = await openFilters();
+
+    await user.click(within(dialog).getByRole("combobox", { name: "Platforms" }));
+
+    expect(await screen.findByRole("option", { name: "Nintendo Switch (NS)" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Atari 2600" })).not.toBeInTheDocument();
   });
 
   it("opens the Customize dialog from the filters dialog", async () => {

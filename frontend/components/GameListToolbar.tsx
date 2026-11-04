@@ -426,6 +426,11 @@ const GameListToolbar = ({
   const selectedGenres = genreOptions.filter((genre) => genreIds.includes(genre.id));
   const selectedGameModes = gameModeOptions.filter((mode) => gameModes.includes(mode));
   const selectedPlatforms = platformOptions.filter((platform) => platformIds.includes(platform.id));
+  // The Platforms dropdown lists only platforms the user actually has browsable
+  // games for — a zero-game platform can never match anything, so it just clutters
+  // the list. Already-selected platforms still resolve from the full list above, so
+  // an active filter is never stranded invisible if its count drops to zero.
+  const platformFilterOptions = platformOptions.filter((platform) => platform.gameCount > 0);
   const selectedCollections = collectionOptions.filter((collection) =>
     collectionIds.includes(collection.id)
   );
@@ -683,7 +688,7 @@ const GameListToolbar = ({
         <Stack spacing={0.5}>
           <AutocompleteMultiSelect<PlatformResponse>
             label={t("games.listToolbar.consoleLabel")}
-            options={platformOptions}
+            options={platformFilterOptions}
             value={selectedPlatforms}
             onChange={(newValue) =>
               onPlatformIdsChange(newValue.map((platform) => platform.id))
