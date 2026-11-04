@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { BookshelfEntry, PlatformResponse } from "../../api/types";
-import { buildCaseFormatsFromEntries, buildShelvesFromEntries, buildTemplateCaseSizes, caseFormatsKey, caseSize, contrastTextColor, indexPlatformsByLabel, packRows, resolvePlatformCaseSizes, spineStyle, TITLE_BOTTOM_INSET, TITLE_TOP_INSET, titleBandLight } from "../BookshelfPage";
+import { buildCaseFormatsFromEntries, buildShelvesFromEntries, buildTemplateCaseSizes, caseFormatsKey, caseSize, contrastTextColor, indexPlatformsByLabel, packRows, platformFilterLabel, resolvePlatformCaseSizes, spineStyle, TITLE_BOTTOM_INSET, TITLE_TOP_INSET, titleBandLight } from "../BookshelfPage";
 import { presetForDimensions } from "../../utils/caseSizes";
 
 const entry = (overrides: Partial<BookshelfEntry>): BookshelfEntry => ({
@@ -108,6 +108,37 @@ describe("indexPlatformsByLabel", () => {
     expect(index.get("PS5")?.id).toBe(1);
     expect(index.get("Nintendo Switch")?.id).toBe(2);
     expect(index.get("PlayStation 5")).toBeUndefined();
+  });
+});
+
+describe("platformFilterLabel", () => {
+  const platform = (overrides: Partial<PlatformResponse>): PlatformResponse => ({
+    id: 1,
+    igdbId: null,
+    name: "PlayStation 5",
+    slug: "ps5",
+    abbreviation: "PS5",
+    spineTemplateUrl: null,
+    caseHeightMm: null,
+    caseSpineMm: null,
+    spineColor: null,
+    spineIcon: null,
+    spineIconUrl: null,
+    gameCount: 0,
+    ...overrides,
+  });
+
+  it("shows the full name with the short label in parentheses", () => {
+    const index = indexPlatformsByLabel([platform({})]);
+    expect(platformFilterLabel(index, "PS5")).toBe("PlayStation 5 (PS5)");
+  });
+
+  it("renders the label as-is without an abbreviation or catalogue entry", () => {
+    const index = indexPlatformsByLabel([
+      platform({ id: 2, name: "Nintendo Switch", abbreviation: null }),
+    ]);
+    expect(platformFilterLabel(index, "Nintendo Switch")).toBe("Nintendo Switch");
+    expect(platformFilterLabel(index, "Unknown")).toBe("Unknown");
   });
 });
 

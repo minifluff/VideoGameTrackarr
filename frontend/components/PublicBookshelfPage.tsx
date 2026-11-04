@@ -19,6 +19,7 @@ import {
   buildTemplateCaseSizes,
   caseFormatsKey,
   indexPlatformsByLabel,
+  platformFilterLabel,
   resolvePlatformCaseSizes,
   TEMPLATE_TARGET_HEIGHT,
 } from "./BookshelfPage";
@@ -153,7 +154,7 @@ const PublicBookshelfPage = () => {
                 <MenuItem value="all">{t("common.all")}</MenuItem>
                 {shelves.map((shelf) => (
                   <MenuItem key={shelf.platform} value={shelf.platform}>
-                    {shelf.platform}
+                    {platformFilterLabel(platformsByLabel, shelf.platform)}
                   </MenuItem>
                 ))}
               </Select>

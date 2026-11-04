@@ -66,6 +66,19 @@ export function indexPlatformsByLabel(
   return new Map((platforms ?? []).map((p) => [p.abbreviation ?? p.name, p]));
 }
 
+// The platform filter's label: full name with the short label in parentheses
+// ("PlayStation 5 (PS5)"). Shelves are keyed by the short label alone, so the full
+// name comes from the catalogue; a label with no catalogue entry (or no
+// abbreviation) renders as-is.
+export function platformFilterLabel(
+  platformsByLabel: Map<string, PlatformResponse>,
+  shelfLabel: string
+): string {
+  const platform = platformsByLabel.get(shelfLabel);
+  if (platform?.abbreviation) return `${platform.name} (${platform.abbreviation})`;
+  return shelfLabel;
+}
+
 // Each case's copy formats, for the Format filter — the slim endpoint
 // already resolved the platform label and merged duplicate copies' formats.
 export function caseFormatsKey(gameId: number, platform: string) {
@@ -250,7 +263,7 @@ const BookshelfPage = () => {
                 <MenuItem value="all">{t("common.all")}</MenuItem>
                 {shelves.map((shelf) => (
                   <MenuItem key={shelf.platform} value={shelf.platform}>
-                    {shelf.platform}
+                    {platformFilterLabel(platformsByLabel, shelf.platform)}
                   </MenuItem>
                 ))}
               </Select>
