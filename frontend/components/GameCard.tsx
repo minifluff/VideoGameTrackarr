@@ -451,11 +451,13 @@ const GameCard = ({
         {context === "list" || context === "addon" || context === "public" ? (
           // Always reserves the chip's slot (just invisible when there's no play status, and
           // while selecting), so a "Completed" chip on only some cards can't break a row's
-          // alignment and entering selection mode doesn't shift the grid — except on games
-          // that aren't owned at all (wishlist-only, unclaimed discoveries): those can
-          // never gain a play status, so reserving the slot just leaves a blank gap under
-          // the year/platforms line.
-          playStatus || game.owned !== false ? (
+          // alignment and entering selection mode doesn't shift the grid. The one
+          // exception is a game that is neither owned nor wishlisted (an unclaimed
+          // discovery, a manually-added title): with no platforms/Wishlisted line either,
+          // the slot would sit directly under the year looking like a blank platform
+          // row. Wishlisted games keep the slot — their Wishlisted line fills the
+          // platform row, so the slot below it matches owned cards and the row lines up.
+          playStatus || game.owned !== false || game.wishlisted ? (
             <Chip
               label={playStatus ? t(PLAY_STATUS_LABEL_KEYS[playStatus]) : " "}
               color={playStatus ? PLAY_STATUS_COLORS[playStatus] : "default"}

@@ -376,7 +376,7 @@ describe("GameCard", () => {
     expect(screen.queryByText(/PS4/)).not.toBeInTheDocument();
   });
 
-  it("reserves no play-status slot on a game that isn't owned", () => {
+  it("reserves the play-status slot on a wishlisted game, so its row lines up with owned cards", () => {
     const { container } = renderWithTheme(
       <GameCard
         game={{ ...baseGame, owned: false, wishlisted: true }}
@@ -386,8 +386,23 @@ describe("GameCard", () => {
       />
     );
 
-    // No status chip at all — a wishlist-only game can never gain a play status,
-    // so the reserved slot would just be a blank gap under the year.
+    // The Wishlisted line fills the platform row, so the reserved slot below it
+    // matches owned cards — without it the wishlist card dangles a row short.
+    expect(container.querySelectorAll(".MuiChip-root")).toHaveLength(1);
+  });
+
+  it("reserves no play-status slot on a game that is neither owned nor wishlisted", () => {
+    const { container } = renderWithTheme(
+      <GameCard
+        game={{ ...baseGame, owned: false, wishlisted: false }}
+        context="list"
+        contextFunction={vi.fn()}
+        ownedPlatforms={[]}
+      />
+    );
+
+    // No platforms/Wishlisted line either, so the slot would sit directly under
+    // the year looking like a blank platform row.
     expect(container.querySelectorAll(".MuiChip-root")).toHaveLength(0);
   });
 
