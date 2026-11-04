@@ -2,7 +2,6 @@ import { useState, type ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
-import Chip from "@mui/material/Chip";
 import { green } from "@mui/material/colors";
 import Skeleton from "@mui/material/Skeleton";
 import { styled, useTheme } from "@mui/material/styles";
@@ -22,12 +21,15 @@ const PLAY_STATUS_LABEL_KEYS: Record<PlayStatus, string> = {
   abandoned: "games.card.playStatusAbandoned",
 };
 
-const PLAY_STATUS_COLORS: Record<PlayStatus, "default" | "info" | "success" | "error"> = {
-  none: "default",
-  backlog: "default",
-  playing: "info",
-  completed: "success",
-  abandoned: "error",
+// Solid cover-chip backgrounds for the play status (the MUI Chip palette names the
+// old text-block chip used don't work as bgcolor values; "info.main" is the same blue
+// the Playing chip had, and backlog reuses the Custom chip's grey).
+const PLAY_STATUS_COVER_COLORS: Record<PlayStatus, string> = {
+  none: "#5d6673",
+  backlog: "#5d6673",
+  playing: "info.main",
+  completed: "success.main",
+  abandoned: "error.main",
 };
 
 const AddedGameButton = styled(Button)(({ theme }) => ({
@@ -335,7 +337,7 @@ const GameCard = ({
             />
           </Box>
 
-          {showSaleChip || showMissingChip || showCustomChip ? (
+          {showSaleChip || showMissingChip || showCustomChip || (showsBadges && playStatus) ? (
             <Box
               sx={{
                 position: "absolute",
@@ -355,6 +357,14 @@ const GameCard = ({
                 [SMALL_CARD]: { left: 6, right: 6, bottom: 6 },
               }}
             >
+              {/* Play status sits in the bottom-left corner, ahead of the On Sale chip
+                  when both are present, so the two can never overlap. */}
+              {showsBadges && playStatus
+                ? coverChip(
+                    t(PLAY_STATUS_LABEL_KEYS[playStatus]),
+                    PLAY_STATUS_COVER_COLORS[playStatus]
+                  )
+                : null}
               {showSaleChip ? coverChip(t("games.card.onSaleLabel"), "#2f9e6c") : null}
               {showMissingChip || showCustomChip ? (
                 <Box component="span" sx={{ ml: "auto", maxWidth: "100%", display: "flex" }}>
@@ -448,30 +458,7 @@ const GameCard = ({
             {platformLine}
           </Box>
         ) : null}
-        {context === "list" || context === "addon" || context === "public" ? (
-          // Always reserves the chip's slot (just invisible when there's no play status, and
-          // while selecting), so a "Completed" chip on only some cards can't break a row's
-          // alignment and entering selection mode doesn't shift the grid. The one
-          // exception is a game that is neither owned nor wishlisted (an unclaimed
-          // discovery, a manually-added title): with no platforms/Wishlisted line either,
-          // the slot would sit directly under the year looking like a blank platform
-          // row. Wishlisted games keep the slot — their Wishlisted line fills the
-          // platform row, so the slot below it matches owned cards and the row lines up.
-          playStatus || game.owned !== false || game.wishlisted ? (
-            <Chip
-              label={playStatus ? t(PLAY_STATUS_LABEL_KEYS[playStatus]) : " "}
-              color={playStatus ? PLAY_STATUS_COLORS[playStatus] : "default"}
-              size="small"
-              sx={{
-                mt: 0.75,
-                height: 20,
-                fontSize: 11,
-                fontWeight: 600,
-                visibility: showsBadges && playStatus ? "visible" : "hidden",
-              }}
-            />
-          ) : null
-        ) : null}
+
         {/* The "Add" button is hidden while a checkbox is showing (bulk-select mode on
             AddGame.tsx) — clicking the card there should toggle selection, not immediately
             import it, and a full-width Add button sitting right below the checkbox invited

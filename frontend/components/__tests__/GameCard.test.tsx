@@ -376,38 +376,21 @@ describe("GameCard", () => {
     expect(screen.queryByText(/PS4/)).not.toBeInTheDocument();
   });
 
-  it("reserves the play-status slot on a wishlisted game, so its row lines up with owned cards", () => {
-    const { container } = renderWithTheme(
+  it("shows the play status on the cover's bottom-left corner when the game has one", () => {
+    renderWithTheme(
       <GameCard
-        game={{ ...baseGame, owned: false, wishlisted: true }}
+        game={{ ...baseGame, owned: true, playStatus: "playing" }}
         context="list"
         contextFunction={vi.fn()}
-        ownedPlatforms={[]}
+        ownedPlatforms={["PS4"]}
       />
     );
 
-    // The Wishlisted line fills the platform row, so the reserved slot below it
-    // matches owned cards — without it the wishlist card dangles a row short.
-    expect(container.querySelectorAll(".MuiChip-root")).toHaveLength(1);
+    expect(screen.getByText("Playing")).toBeInTheDocument();
   });
 
-  it("reserves no play-status slot on a game that is neither owned nor wishlisted", () => {
-    const { container } = renderWithTheme(
-      <GameCard
-        game={{ ...baseGame, owned: false, wishlisted: false }}
-        context="list"
-        contextFunction={vi.fn()}
-        ownedPlatforms={[]}
-      />
-    );
-
-    // No platforms/Wishlisted line either, so the slot would sit directly under
-    // the year looking like a blank platform row.
-    expect(container.querySelectorAll(".MuiChip-root")).toHaveLength(0);
-  });
-
-  it("still reserves the play-status slot on an owned game without a status", () => {
-    const { container } = renderWithTheme(
+  it("shows no play-status overlay when the game has no status", () => {
+    renderWithTheme(
       <GameCard
         game={{ ...baseGame, owned: true }}
         context="list"
@@ -416,7 +399,10 @@ describe("GameCard", () => {
       />
     );
 
-    expect(container.querySelectorAll(".MuiChip-root")).toHaveLength(1);
+    expect(screen.queryByText("Playing")).not.toBeInTheDocument();
+    expect(screen.queryByText("Backlog")).not.toBeInTheDocument();
+    expect(screen.queryByText("Completed")).not.toBeInTheDocument();
+    expect(screen.queryByText("Abandoned")).not.toBeInTheDocument();
   });
 
   it("in add context without onOpen, clicking the cover does nothing (existing pickers)", async () => {
