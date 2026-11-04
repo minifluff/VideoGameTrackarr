@@ -17,11 +17,12 @@ My code is free to use how you wish. Just let me know if you need assistance.
 
 ## Screenshots
 
-![](./screenshots/1.png)
-![](./screenshots/2.png)
-![](./screenshots/3.png)
-![](./screenshots/4.png)
-![](./screenshots/5.png)![](./screenshots/6.png)
+<img width="1902" height="911" alt="1" src="https://github.com/user-attachments/assets/c5c0cb7e-ccf2-4935-aa4b-31297a774dc0" />
+<img width="1902" height="911" alt="2" src="https://github.com/user-attachments/assets/f8ea2c3d-364f-4067-90e0-e3cdd376dc8f" />
+<img width="1902" height="911" alt="3" src="https://github.com/user-attachments/assets/e6e5b0fb-01f5-4954-8144-a3383bcdf964" />
+<img width="1902" height="911" alt="4" src="https://github.com/user-attachments/assets/f1bc9d28-1a01-48b8-b7a4-3e57d83900ca" />
+<img width="406" height="825" alt="5" src="https://github.com/user-attachments/assets/1970b70d-5c44-48eb-bea5-43a12929e03e" />
+<img width="408" height="826" alt="6" src="https://github.com/user-attachments/assets/12481b91-a28d-4829-a5ff-f4345d75ecf9" />
 
 ## Features
 
