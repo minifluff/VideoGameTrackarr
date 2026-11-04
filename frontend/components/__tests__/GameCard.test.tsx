@@ -328,6 +328,27 @@ describe("GameCard", () => {
     expect(onOpen).toHaveBeenCalledOnce();
   });
 
+  it("shows owned platforms as one line, with a +N count past three", () => {
+    renderWithTheme(
+      <GameCard
+        game={baseGame}
+        context="list"
+        contextFunction={vi.fn()}
+        ownedPlatforms={["PS4", "Steam", "Xbox One", "Switch", "PC"]}
+      />
+    );
+
+    expect(screen.getByText("PS4 · Steam · Xbox One +2")).toBeInTheDocument();
+  });
+
+  it("shows no platform line when the game is owned on no platform", () => {
+    renderWithTheme(
+      <GameCard game={baseGame} context="list" contextFunction={vi.fn()} ownedPlatforms={[]} />
+    );
+
+    expect(screen.queryByText(/PS4/)).not.toBeInTheDocument();
+  });
+
   it("in add context without onOpen, clicking the cover does nothing (existing pickers)", async () => {
     const onAdd = vi.fn();
     renderWithTheme(
