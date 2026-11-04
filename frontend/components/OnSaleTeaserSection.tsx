@@ -22,7 +22,7 @@ const OnSaleTeaserSection = ({ cardSize, columnWidth }: { cardSize?: number; col
     <CardCarousel
       items={items.slice(0, TEASER_LIMIT)}
       getItemKey={(item) => item.libraryItemId}
-      renderItem={(item) => <OnSaleTile item={item} />}
+      renderItem={(item) => <OnSaleTile item={item} hideWishlistedLine />}
       title={t("insights.dashboard.onSaleHeading")}
       viewAllHref="/insights/on-sale"
       cardSize={cardSize}

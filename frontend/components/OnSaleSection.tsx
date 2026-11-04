@@ -16,7 +16,13 @@ interface OnSaleSectionProps {
   limit?: number;
 }
 
-export const OnSaleTile = ({ item }: { item: OnSaleItem }) => {
+export const OnSaleTile = ({
+  item,
+  hideWishlistedLine,
+}: {
+  item: OnSaleItem;
+  hideWishlistedLine?: boolean;
+}) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const addon = isAddon(item.game);
@@ -29,6 +35,7 @@ export const OnSaleTile = ({ item }: { item: OnSaleItem }) => {
         contextFunction={() =>
           navigate(`/${addon ? "addon" : "game"}/${gameIdentifier(item.game)}`)
         }
+        hideWishlistedLine={hideWishlistedLine}
       />
       <Typography
         variant="caption"
