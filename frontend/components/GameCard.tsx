@@ -87,7 +87,7 @@ interface GameCardProps {
   // selecting. See GameCardHoverAction. No call site passes these yet — the rendering is
   // here so the card matches upstream, wiring them up is a separate step.
   hoverActions?: ReactNode;
-  // Platform names rendered as one muted line below the card's text block (the Games
+  // Platform names rendered as one muted line directly under the year line (the Games
   // list and the public games grid pass the owned platforms). Fork-only: upstream's
   // card has no platform row, but dropping it would hide owned-platform info the grids
   // show today.
@@ -421,6 +421,25 @@ const GameCard = ({
             </>
           ) : null}
         </Box>
+        {/* Platforms as one muted line directly under the year, with the same
+            single-line truncation — chips wrapped to extra rows on multi-platform
+            games and broke a row's alignment. First three platforms, then a +N
+            count; the full list lives on the game detail page. */}
+        {ownedPlatforms !== undefined && ownedPlatforms.length > 0 ? (
+          <Box
+            sx={{
+              color: metaColor,
+              fontSize: 12,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              mt: 0.75,
+            }}
+          >
+            {ownedPlatforms.slice(0, 3).join(" · ")}
+            {ownedPlatforms.length > 3 ? ` +${ownedPlatforms.length - 3}` : null}
+          </Box>
+        ) : null}
         {context === "list" || context === "addon" || context === "public" ? (
           // Always reserves the chip's slot (just invisible when there's no play status, and
           // while selecting), so a "Completed" chip on only some cards can't break a row's
@@ -472,25 +491,7 @@ const GameCard = ({
             )}
           </>
         ) : null}
-        {/* Platforms as one muted line, same single-line truncation as the year line
-            above — chips wrapped to extra rows on multi-platform games and broke a
-            row's alignment. First three platforms, then a +N count; the full list
-            lives on the game detail page. */}
-        {ownedPlatforms !== undefined && ownedPlatforms.length > 0 ? (
-          <Box
-            sx={{
-              color: metaColor,
-              fontSize: 12,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              mt: 0.75,
-            }}
-          >
-            {ownedPlatforms.slice(0, 3).join(" · ")}
-            {ownedPlatforms.length > 3 ? ` +${ownedPlatforms.length - 3}` : null}
-          </Box>
-        ) : null}
+
       </Box>
     </Box>
   );
