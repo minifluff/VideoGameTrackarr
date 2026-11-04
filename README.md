@@ -21,7 +21,7 @@ My code is free to use how you wish. Just let me know if you need assistance.
 ![](./screenshots/2.png)
 ![](./screenshots/3.png)
 ![](./screenshots/4.png)
-![](./screenshots/5.png)
+![](./screenshots/5.png)![](./screenshots/6.png)
 
 ## Features
 
