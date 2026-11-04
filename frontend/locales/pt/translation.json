@@ -910,7 +910,8 @@
       "selectAriaLabel": "Selecionar {{name}}",
       "deselectAriaLabel": "Remover seleção de {{name}}",
       "onSaleLabel": "Em Promoção",
-      "missingLabel": "Em Falta"
+      "missingLabel": "Em Falta",
+      "wishlistedLine": "Na lista de desejos"
     },
     "subNav": {
       "allGames": "Todos os Jogos",

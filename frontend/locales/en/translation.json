@@ -910,7 +910,8 @@
       "selectAriaLabel": "Select {{name}}",
       "deselectAriaLabel": "Deselect {{name}}",
       "onSaleLabel": "On Sale",
-      "missingLabel": "Missing"
+      "missingLabel": "Missing",
+      "wishlistedLine": "Wishlisted"
     },
     "subNav": {
       "allGames": "All Games",

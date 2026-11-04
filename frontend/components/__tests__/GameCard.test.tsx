@@ -341,6 +341,33 @@ describe("GameCard", () => {
     expect(screen.getByText("PS4 · Steam · Xbox One +2")).toBeInTheDocument();
   });
 
+  it("shows 'Wishlisted' instead of platforms for a wishlisted game with none owned", () => {
+    renderWithTheme(
+      <GameCard
+        game={{ ...baseGame, owned: false, wishlisted: true }}
+        context="list"
+        contextFunction={vi.fn()}
+        ownedPlatforms={[]}
+      />
+    );
+
+    expect(screen.getByText("Wishlisted")).toBeInTheDocument();
+  });
+
+  it("prefers owned platforms over 'Wishlisted' when the game has both", () => {
+    renderWithTheme(
+      <GameCard
+        game={{ ...baseGame, owned: true, wishlisted: true }}
+        context="list"
+        contextFunction={vi.fn()}
+        ownedPlatforms={["PS4"]}
+      />
+    );
+
+    expect(screen.getByText("PS4")).toBeInTheDocument();
+    expect(screen.queryByText("Wishlisted")).not.toBeInTheDocument();
+  });
+
   it("shows no platform line when the game is owned on no platform", () => {
     renderWithTheme(
       <GameCard game={baseGame} context="list" contextFunction={vi.fn()} ownedPlatforms={[]} />

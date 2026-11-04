@@ -158,6 +158,15 @@ const GameCard = ({
   const isInteractive = isClickable || Boolean(selectable);
   const releaseYear = getReleaseYear(game.firstReleaseDate);
   const playStatus = game.playStatus && game.playStatus !== "none" ? game.playStatus : null;
+  // The line under the year: owned platforms first (three, then a +N count); a
+  // wishlisted game with no owned platforms shows "Wishlisted" instead, so the card
+  // reads as a status rather than a blank gap.
+  const platformLine =
+    ownedPlatforms !== undefined && ownedPlatforms.length > 0
+      ? `${ownedPlatforms.slice(0, 3).join(" · ")}${ownedPlatforms.length > 3 ? ` +${ownedPlatforms.length - 3}` : ""}`
+      : game.wishlisted
+        ? t("games.card.wishlistedLine")
+        : null;
 
   const handleCardActivate = () => {
     if (selectable) {
@@ -421,11 +430,11 @@ const GameCard = ({
             </>
           ) : null}
         </Box>
-        {/* Platforms as one muted line directly under the year, with the same
-            single-line truncation — chips wrapped to extra rows on multi-platform
-            games and broke a row's alignment. First three platforms, then a +N
-            count; the full list lives on the game detail page. */}
-        {ownedPlatforms !== undefined && ownedPlatforms.length > 0 ? (
+        {/* One muted line directly under the year, with the same single-line
+            truncation — chips wrapped to extra rows on multi-platform games and
+            broke a row's alignment. Owned platforms, or "Wishlisted" when there are
+            none; the full list lives on the game detail page. */}
+        {platformLine !== null ? (
           <Box
             sx={{
               color: metaColor,
@@ -436,8 +445,7 @@ const GameCard = ({
               mt: 0.75,
             }}
           >
-            {ownedPlatforms.slice(0, 3).join(" · ")}
-            {ownedPlatforms.length > 3 ? ` +${ownedPlatforms.length - 3}` : null}
+            {platformLine}
           </Box>
         ) : null}
         {context === "list" || context === "addon" || context === "public" ? (
