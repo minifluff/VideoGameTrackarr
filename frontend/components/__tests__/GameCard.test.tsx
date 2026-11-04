@@ -349,6 +349,34 @@ describe("GameCard", () => {
     expect(screen.queryByText(/PS4/)).not.toBeInTheDocument();
   });
 
+  it("reserves no play-status slot on a game that isn't owned", () => {
+    const { container } = renderWithTheme(
+      <GameCard
+        game={{ ...baseGame, owned: false, wishlisted: true }}
+        context="list"
+        contextFunction={vi.fn()}
+        ownedPlatforms={[]}
+      />
+    );
+
+    // No status chip at all — a wishlist-only game can never gain a play status,
+    // so the reserved slot would just be a blank gap under the year.
+    expect(container.querySelectorAll(".MuiChip-root")).toHaveLength(0);
+  });
+
+  it("still reserves the play-status slot on an owned game without a status", () => {
+    const { container } = renderWithTheme(
+      <GameCard
+        game={{ ...baseGame, owned: true }}
+        context="list"
+        contextFunction={vi.fn()}
+        ownedPlatforms={["PS4"]}
+      />
+    );
+
+    expect(container.querySelectorAll(".MuiChip-root")).toHaveLength(1);
+  });
+
   it("in add context without onOpen, clicking the cover does nothing (existing pickers)", async () => {
     const onAdd = vi.fn();
     renderWithTheme(

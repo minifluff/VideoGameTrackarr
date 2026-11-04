@@ -443,19 +443,24 @@ const GameCard = ({
         {context === "list" || context === "addon" || context === "public" ? (
           // Always reserves the chip's slot (just invisible when there's no play status, and
           // while selecting), so a "Completed" chip on only some cards can't break a row's
-          // alignment and entering selection mode doesn't shift the grid.
-          <Chip
-            label={playStatus ? t(PLAY_STATUS_LABEL_KEYS[playStatus]) : " "}
-            color={playStatus ? PLAY_STATUS_COLORS[playStatus] : "default"}
-            size="small"
-            sx={{
-              mt: 0.75,
-              height: 20,
-              fontSize: 11,
-              fontWeight: 600,
-              visibility: showsBadges && playStatus ? "visible" : "hidden",
-            }}
-          />
+          // alignment and entering selection mode doesn't shift the grid — except on games
+          // that aren't owned at all (wishlist-only, unclaimed discoveries): those can
+          // never gain a play status, so reserving the slot just leaves a blank gap under
+          // the year/platforms line.
+          playStatus || game.owned !== false ? (
+            <Chip
+              label={playStatus ? t(PLAY_STATUS_LABEL_KEYS[playStatus]) : " "}
+              color={playStatus ? PLAY_STATUS_COLORS[playStatus] : "default"}
+              size="small"
+              sx={{
+                mt: 0.75,
+                height: 20,
+                fontSize: 11,
+                fontWeight: 600,
+                visibility: showsBadges && playStatus ? "visible" : "hidden",
+              }}
+            />
+          ) : null
         ) : null}
         {/* The "Add" button is hidden while a checkbox is showing (bulk-select mode on
             AddGame.tsx) — clicking the card there should toggle selection, not immediately
