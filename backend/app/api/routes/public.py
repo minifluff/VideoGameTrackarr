@@ -149,10 +149,14 @@ def list_public_platforms(
     token: str,
     db: Session = Depends(get_db),
 ) -> list[dict]:
-    """Platforms the user owns games on, for the public page filter."""
+    """Platforms for the public page filter, with the same browsable-game counts as
+    the private list — the filter hides zero-game platforms, so the count rides along."""
     from app.repositories import platform_repository
     auth_service.get_user_by_share_token(db, token)
-    return [{"id": p.id, "name": p.name} for p in platform_repository.list_platforms(db)]
+    return [
+        {"id": p.id, "name": p.name, "gameCount": count}
+        for p, count in platform_repository.list_platforms_with_counts(db)
+    ]
 
 
 @router.get("/tags", response_model=list[dict])

@@ -107,7 +107,7 @@ export async function listPublicFranchises(token: string): Promise<{ id: number;
   return response.data;
 }
 
-export async function listPublicPlatforms(token: string): Promise<{ id: number; name: string }[]> {
-  const response = await publicClient.get<{ id: number; name: string }[]>(`/api/public/${encodeURIComponent(token)}/platforms`);
+export async function listPublicPlatforms(token: string): Promise<{ id: number; name: string; gameCount: number }[]> {
+  const response = await publicClient.get<{ id: number; name: string; gameCount: number }[]>(`/api/public/${encodeURIComponent(token)}/platforms`);
   return response.data;
 }

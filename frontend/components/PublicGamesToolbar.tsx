@@ -27,6 +27,14 @@ interface FilterOption {
   name: string;
 }
 
+// Platforms carry their browsable-game count (same source as the private list), so
+// the filter can hide zero-game platforms like the main toolbar does.
+interface PublicPlatformOption {
+  id: number;
+  name: string;
+  gameCount: number;
+}
+
 export type OwnershipStatus = "owned" | "wishlisted";
 
 interface OwnershipOption {
@@ -44,7 +52,7 @@ interface PublicGamesToolbarProps {
   onSearchChange: (value: string) => void;
   sort: GameSortOption;
   onSortChange: (value: GameSortOption) => void;
-  platformOptions: FilterOption[];
+  platformOptions: PublicPlatformOption[];
   platformIds: number[];
   onPlatformIdsChange: (value: number[]) => void;
   tagOptions: FilterOption[];
@@ -100,6 +108,10 @@ const PublicGamesToolbar = ({
   // Hide on scroll down, reappear on scroll up.
   const hideSearchBar = useScrollDirection(80);
   const [dialogOpen, setDialogOpen] = useState(false);
+  // Like the main toolbar: the dropdown lists only platforms with games, while
+  // already-selected platforms still resolve from the full list, so an active
+  // filter is never stranded invisible if its count drops to zero.
+  const platformFilterOptions = platformOptions.filter((p) => p.gameCount > 0);
 
   // The share page offers only the fields it shows; each comes in both directions,
   // labelled "Field (Ascending)" like the main toolbar's tooltip.
@@ -164,9 +176,9 @@ const PublicGamesToolbar = ({
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
-                <AutocompleteMultiSelect<FilterOption>
+                <AutocompleteMultiSelect<PublicPlatformOption>
                   label={t("games.listToolbar.consoleLabel")}
-                  options={platformOptions}
+                  options={platformFilterOptions}
                   value={platformOptions.filter((p) => platformIds.includes(p.id))}
                   onChange={(newValue) => onPlatformIdsChange(newValue.map((p) => p.id))}
                   getOptionLabel={(option) => option.name}

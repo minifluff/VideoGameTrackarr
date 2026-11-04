@@ -1,4 +1,4 @@
-from app.models.catalog import Game, GameCategory
+from app.models.catalog import Game, GameCategory, Platform
 from app.models.library import LibraryItem, LibraryStatus
 
 
@@ -28,6 +28,24 @@ def test_public_games_with_valid_token(auth_client, client, seed_game):
         "ownedEditions",
         "ownedCopies",
     }
+
+
+def test_public_platforms_include_game_counts(auth_client, client, db_session, seed_game, seed_platform):
+    switch = Platform(name="Nintendo Switch", slug="switch")
+    db_session.add(switch)
+    db_session.flush()
+    db_session.add(
+        LibraryItem(game_id=seed_game.id, platform_id=switch.id, status=LibraryStatus.OWNED)
+    )
+    db_session.commit()
+    token = _get_token(auth_client)
+
+    response = client.get(f"/api/public/{token}/platforms")
+
+    assert response.status_code == 200
+    by_name = {p["name"]: p for p in response.json()}
+    assert by_name["Nintendo Switch"]["gameCount"] == 1
+    assert by_name["PlayStation 5"]["gameCount"] == 0
 
 
 def test_public_games_wrong_token_is_404(client, seed_game):
