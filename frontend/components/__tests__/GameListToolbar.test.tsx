@@ -1,9 +1,11 @@
 import type { ComponentProps } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import type { Tag } from "../../api/types";
+import type { FilterFieldSetting, Tag } from "../../api/types";
 import { buildGameFilterParams } from "../../api/games";
+import { currentUserQueryKey } from "../../hooks/useAuth";
 import GameListToolbar from "../GameListToolbar";
 
 const tags: Tag[] = [
@@ -11,7 +13,13 @@ const tags: Tag[] = [
   { id: 2, name: "Metroidvania", color: null, textColor: null },
 ];
 
-function renderToolbar(overrides: Partial<ComponentProps<typeof GameListToolbar>> = {}) {
+// The toolbar reads the saved filter layout through useCurrentUser; without a token
+// that query stays disabled (default layout), and a seeded cache entry stands in for
+// a signed-in user with a customised layout.
+function renderToolbar(
+  overrides: Partial<ComponentProps<typeof GameListToolbar>> = {},
+  filterLayout?: FilterFieldSetting[] | null
+) {
   const props: ComponentProps<typeof GameListToolbar> = {
     searchKeyword: "",
     onSearchKeywordChange: vi.fn(),
@@ -72,7 +80,21 @@ function renderToolbar(overrides: Partial<ComponentProps<typeof GameListToolbar>
     onSortChange: vi.fn(),
     ...overrides,
   };
-  render(<GameListToolbar {...props} />);
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  if (filterLayout !== undefined) {
+    queryClient.setQueryData(currentUserQueryKey, {
+      id: 1,
+      username: "admin",
+      overviewLayout: null,
+      overviewCardSize: null,
+      filterLayout,
+    });
+  }
+  render(
+    <QueryClientProvider client={queryClient}>
+      <GameListToolbar {...props} />
+    </QueryClientProvider>
+  );
   return props;
 }
 
@@ -241,5 +263,32 @@ describe("GameListToolbar on a Platform page", () => {
     const { dialog } = await openFilters();
 
     expect(within(dialog).getByLabelText("Platforms")).toBeInTheDocument();
+  });
+});
+
+describe("GameListToolbar filter layout", () => {
+  it("renders fields in the saved order and hides hidden fields", async () => {
+    renderToolbar({}, [
+      { key: "ownership", hidden: false },
+      { key: "tags", hidden: true },
+    ]);
+    const { dialog } = await openFilters();
+
+    // Ownership moves ahead of Genre (default order is Genre first); Tags is hidden.
+    const ownership = within(dialog).getByRole("combobox", { name: "Ownership" });
+    const genre = within(dialog).getByRole("combobox", { name: "Genre" });
+    expect(ownership.compareDocumentPosition(genre) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(dialog).queryByLabelText("Tags")).not.toBeInTheDocument();
+  });
+
+  it("opens the Customize dialog from the filters dialog", async () => {
+    renderToolbar();
+    const { user } = await openFilters();
+
+    await user.click(screen.getByRole("button", { name: "Customize" }));
+
+    const customizeDialog = await screen.findByRole("dialog", { name: "Customize filters" });
+    expect(customizeDialog).toBeInTheDocument();
+    expect(within(customizeDialog).getByText("Tags")).toBeInTheDocument();
   });
 });

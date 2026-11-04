@@ -874,6 +874,11 @@ export interface OverviewSectionSetting {
   hidden: boolean;
 }
 
+export interface FilterFieldSetting {
+  key: string;
+  hidden: boolean;
+}
+
 export interface CurrentUser {
   id: number;
   username: string;
@@ -881,6 +886,8 @@ export interface CurrentUser {
   overviewLayout: OverviewSectionSetting[] | null;
   // The Dashboard's card-size scale (0.5 small, 1.0 medium, 2.0 large); null means medium.
   overviewCardSize: number | null;
+  // The Games filter dialog's fields in order; null until customised (see hooks/useFilterLayout.ts).
+  filterLayout: FilterFieldSetting[] | null;
 }
 
 export interface SetupStatus {

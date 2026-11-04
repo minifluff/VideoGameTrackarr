@@ -73,6 +73,7 @@ def me(current_user: User = Depends(get_current_user)) -> UserResponse:
         username=current_user.username,
         overview_layout=current_user.overview_layout,
         overview_card_size=current_user.overview_card_size,
+        filter_layout=current_user.filter_layout,
     )
 
 
@@ -83,13 +84,20 @@ def update_preferences(
     db: Session = Depends(get_db),
 ) -> UserResponse:
     """Saves the signed-in user's preferences — the Dashboard's section
-    order/visibility and its card-size scale, so every browser shows the same
-    page. Only the fields sent are changed."""
+    order/visibility and its card-size scale, plus the Games filter dialog's
+    field order/visibility, so every browser shows the same page. Only the
+    fields sent are changed."""
     if body.overview_layout is not None:
         current_user.overview_layout = [section.model_dump() for section in body.overview_layout]
     if body.overview_card_size is not None:
         current_user.overview_card_size = body.overview_card_size
-    if body.overview_layout is not None or body.overview_card_size is not None:
+    if body.filter_layout is not None:
+        current_user.filter_layout = [section.model_dump() for section in body.filter_layout]
+    if (
+        body.overview_layout is not None
+        or body.overview_card_size is not None
+        or body.filter_layout is not None
+    ):
         db.commit()
         db.refresh(current_user)
     return UserResponse(
@@ -97,6 +105,7 @@ def update_preferences(
         username=current_user.username,
         overview_layout=current_user.overview_layout,
         overview_card_size=current_user.overview_card_size,
+        filter_layout=current_user.filter_layout,
     )
 
 

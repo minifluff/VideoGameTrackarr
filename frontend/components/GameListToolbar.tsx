@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckIcon from "@mui/icons-material/Check";
@@ -14,6 +14,7 @@ import TuneIcon from "@mui/icons-material/Tune";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ConfirmDialog from "./ConfirmDialog";
+import CustomizeFiltersDialog from "./CustomizeFiltersDialog";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -43,6 +44,9 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import type { MatchAllField, MatchAllFilters } from "../api/games";
+import { useFilterLayout, type FilterField, type FilterFieldKey } from "../hooks/useFilterLayout";
+import { toast } from "react-toastify";
+import { TOAST_OPTIONS } from "../utils/toastOptions";
 import type {
   CatalogRef,
   CatalogRefSummary,
@@ -465,6 +469,8 @@ const GameListToolbar = ({
     : t("games.listToolbar.sortByLabel");
 
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [customizeFiltersOpen, setCustomizeFiltersOpen] = useState(false);
+  const { layout: filterLayout, save: saveFilterLayout } = useFilterLayout();
   const [sortMenuAnchor, setSortMenuAnchor] = useState<HTMLElement | null>(null);
   const [optionsMenuAnchor, setOptionsMenuAnchor] = useState<HTMLElement | null>(null);
 
@@ -490,6 +496,463 @@ const GameListToolbar = ({
     onStorefrontsChange,
     onStorefrontExcludeChange,
   ]);
+
+  // Each filter field's dialog cell, keyed so the dialog renders them in the saved
+  // layout order instead of a fixed order. Moved verbatim from the dialog grid below.
+  const filterFieldNodes: Record<FilterFieldKey, ReactNode> = {
+    toggles: (
+      onShowMissingChange || onIncludeAddonsChange ? (
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Stack spacing={0.5}>
+            {onShowMissingChange ? (
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={Boolean(showMissing)}
+                    onChange={(event) => onShowMissingChange(event.target.checked)}
+                  />
+                }
+                label={t("games.listToolbar.showMissingLabel")}
+              />
+            ) : null}
+            {onIncludeAddonsChange ? (
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={Boolean(includeAddons)}
+                    onChange={(event) => onIncludeAddonsChange(event.target.checked)}
+                  />
+                }
+                label={t("catalog.browseGrid.includeAddonsLabel")}
+              />
+            ) : null}
+          </Stack>
+        </Grid>
+      ) : null
+    ),
+    gameType: (
+      !hideGameTypesField ? (
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Stack spacing={0.5}>
+            <AutocompleteMultiSelect<GameTypeOption>
+              label={t("games.listToolbar.gameTypeLabel")}
+              options={GAME_TYPE_OPTIONS}
+              value={selectedGameTypes}
+              onChange={(newValue) =>
+                onGameTypesChange(newValue.map((option) => option.value))
+              }
+              getOptionLabel={(option) => option.label}
+              isOptionEqualToValue={(option, val) => option.value === val.value}
+              placeholder={allPlaceholder}
+              fullWidth
+            />
+            <FilterFieldOptions
+              selectedCount={gameTypes.length}
+              exclude={gameTypeExclude}
+              onExcludeChange={onGameTypeExcludeChange}
+            />
+          </Stack>
+        </Grid>
+      ) : null
+    ),
+    tags: (
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <Stack spacing={0.5}>
+          <AutocompleteMultiSelect<Tag>
+            label={t("games.listToolbar.tagLabel")}
+            options={tagOptions}
+            value={selectedTags}
+            onChange={(newValue) => onTagIdsChange(newValue.map((tag) => tag.id))}
+            getOptionLabel={(option) => option.name}
+            isOptionEqualToValue={(option, val) => option.id === val.id}
+            placeholder={allPlaceholder}
+            fullWidth
+            renderValue={(tagsValue, getItemProps) =>
+              tagsValue.map((tag, index) => {
+                const { key, ...itemProps } = getItemProps({ index });
+                return <TagChip key={key} tag={tag} {...itemProps} />;
+              })
+            }
+          />
+          <FilterFieldOptions
+            selectedCount={tagIds.length}
+            exclude={tagExclude}
+            onExcludeChange={onTagExcludeChange}
+            {...matchAllProps("tag")}
+          />
+        </Stack>
+      </Grid>
+    ),
+    genres: (
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <Stack spacing={0.5}>
+          <AutocompleteMultiSelect<CatalogRef>
+            label={t("games.listToolbar.genreLabel")}
+            options={genreOptions}
+            value={selectedGenres}
+            onChange={(newValue) =>
+              onGenreIdsChange(newValue.map((genre) => genre.id))
+            }
+            getOptionLabel={(option) => option.name}
+            isOptionEqualToValue={(option, val) => option.id === val.id}
+            placeholder={allPlaceholder}
+            fullWidth
+          />
+          <FilterFieldOptions
+            selectedCount={genreIds.length}
+            exclude={genreExclude}
+            onExcludeChange={onGenreExcludeChange}
+            {...matchAllProps("genre")}
+          />
+        </Stack>
+      </Grid>
+    ),
+    gameModes: (
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <Stack spacing={0.5}>
+          <AutocompleteMultiSelect<string>
+            label={t("games.listToolbar.gameModeLabel")}
+            options={gameModeOptions}
+            value={selectedGameModes}
+            onChange={onGameModesChange}
+            getOptionLabel={(option) => option}
+            isOptionEqualToValue={(option, val) => option === val}
+            placeholder={allPlaceholder}
+            fullWidth
+          />
+          <FilterFieldOptions
+            selectedCount={gameModes.length}
+            exclude={gameModeExclude}
+            onExcludeChange={onGameModeExcludeChange}
+            {...matchAllProps("gameMode")}
+          />
+        </Stack>
+      </Grid>
+    ),
+    ownership: (
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <Stack spacing={0.5}>
+          <AutocompleteMultiSelect<OwnershipOption>
+            label={t("games.listToolbar.ownershipLabel")}
+            options={OWNERSHIP_OPTIONS}
+            value={selectedOwnershipStatuses}
+            onChange={(newValue) =>
+              onOwnershipStatusesChange(newValue.map((option) => option.value))
+            }
+            getOptionLabel={(option) => t(option.labelKey)}
+            isOptionEqualToValue={(option, val) => option.value === val.value}
+            placeholder={allPlaceholder}
+            fullWidth
+          />
+          <FilterFieldOptions
+            selectedCount={ownershipStatuses.length}
+            exclude={ownershipExclude}
+            onExcludeChange={onOwnershipExcludeChange}
+            {...matchAllProps("ownership")}
+          />
+        </Stack>
+      </Grid>
+    ),
+    playStatus: (
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <Stack spacing={0.5}>
+          <AutocompleteMultiSelect<PlayStatusOption>
+            label={t("games.listToolbar.playStatusLabel")}
+            options={PLAY_STATUS_OPTIONS}
+            value={selectedPlayStatuses}
+            onChange={(newValue) =>
+              onPlayStatusesChange(newValue.map((option) => option.value))
+            }
+            getOptionLabel={(option) => t(option.labelKey)}
+            isOptionEqualToValue={(option, val) => option.value === val.value}
+            placeholder={allPlaceholder}
+            fullWidth
+          />
+          <FilterFieldOptions
+            selectedCount={playStatuses.length}
+            exclude={playStatusExclude}
+            onExcludeChange={onPlayStatusExcludeChange}
+            {...matchAllProps("playStatus")}
+          />
+        </Stack>
+      </Grid>
+    ),
+    platforms: (
+      !hidePlatformsField ? (
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <Stack spacing={0.5}>
+          <AutocompleteMultiSelect<PlatformResponse>
+            label={t("games.listToolbar.consoleLabel")}
+            options={platformOptions}
+            value={selectedPlatforms}
+            onChange={(newValue) =>
+              onPlatformIdsChange(newValue.map((platform) => platform.id))
+            }
+            getOptionLabel={platformOptionLabel}
+            isOptionEqualToValue={(option, val) => option.id === val.id}
+            placeholder={allPlaceholder}
+            fullWidth
+          />
+          <FilterFieldOptions
+            selectedCount={platformIds.length}
+            exclude={platformExclude}
+            onExcludeChange={onPlatformExcludeChange}
+            {...matchAllProps("platform")}
+          />
+        </Stack>
+      </Grid>
+      ) : null
+    ),
+    formats: (
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <Stack spacing={0.5}>
+          <AutocompleteMultiSelect<FormatOption>
+            label={t("games.listToolbar.formatLabel")}
+            options={FORMAT_OPTIONS}
+            value={selectedFormats}
+            onChange={(newValue) =>
+              onFormatsChange(newValue.map((option) => option.value))
+            }
+            getOptionLabel={(option) => option.label}
+            isOptionEqualToValue={(option, val) => option.value === val.value}
+            placeholder={allPlaceholder}
+            fullWidth
+          />
+          <FilterFieldOptions
+            selectedCount={formats.length}
+            exclude={formatExclude}
+            onExcludeChange={onFormatExcludeChange}
+            {...matchAllProps("format")}
+          />
+        </Stack>
+      </Grid>
+    ),
+    storefronts: (
+      showStorefrontFilter ? (
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Stack spacing={0.5}>
+            <AutocompleteMultiSelect<string>
+              label={t("games.listToolbar.storefrontLabel")}
+              options={storefrontOptions}
+              value={storefronts}
+              onChange={onStorefrontsChange}
+              getOptionLabel={(option) => option}
+              isOptionEqualToValue={(option, val) => option === val}
+              placeholder={allPlaceholder}
+              fullWidth
+            />
+            <FilterFieldOptions
+              selectedCount={storefronts.length}
+              exclude={storefrontExclude}
+              onExcludeChange={onStorefrontExcludeChange}
+              {...matchAllProps("storefront")}
+            />
+          </Stack>
+        </Grid>
+      ) : null
+    ),
+    collections: (
+      !hideCollectionsField ? (
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Stack spacing={0.5}>
+            <AutocompleteMultiSelect<CatalogRefSummary>
+              label={t("games.listToolbar.collectionLabel")}
+              options={collectionOptions}
+              value={selectedCollections}
+              onChange={(newValue) =>
+                onCollectionIdsChange(newValue.map((collection) => collection.id))
+              }
+              getOptionLabel={(option) => option.name}
+              isOptionEqualToValue={(option, val) => option.id === val.id}
+              placeholder={allPlaceholder}
+              fullWidth
+            />
+            <FilterFieldOptions
+              selectedCount={collectionIds.length}
+              exclude={collectionExclude}
+              onExcludeChange={onCollectionExcludeChange}
+              {...matchAllProps("collection")}
+            />
+          </Stack>
+        </Grid>
+      ) : null
+    ),
+    franchises: (
+      !hideFranchisesField ? (
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Stack spacing={0.5}>
+            <AutocompleteMultiSelect<CatalogRefSummary>
+              label={t("games.listToolbar.seriesLabel")}
+              options={franchiseOptions}
+              value={selectedFranchises}
+              onChange={(newValue) =>
+                onFranchiseIdsChange(newValue.map((franchise) => franchise.id))
+              }
+              getOptionLabel={(option) => option.name}
+              isOptionEqualToValue={(option, val) => option.id === val.id}
+              placeholder={allPlaceholder}
+              fullWidth
+            />
+            <FilterFieldOptions
+              selectedCount={franchiseIds.length}
+              exclude={franchiseExclude}
+              onExcludeChange={onFranchiseExcludeChange}
+              {...matchAllProps("franchise")}
+            />
+          </Stack>
+        </Grid>
+      ) : null
+    ),
+    steelbookOnly: (
+      onSteelbookOnlyChange ? (
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={Boolean(steelbookOnly)}
+                onChange={(event) => onSteelbookOnlyChange(event.target.checked)}
+              />
+            }
+            label={t("games.listToolbar.steelbookOnlyLabel")}
+          />
+        </Grid>
+      ) : null
+    ),
+  };
+
+  // The filter dialog's fields, in saved-layout terms: which label each row shows in
+  // the Customize dialog, and whether this page renders it at all (hide flags and
+  // optional callbacks differ per page — Games list, catalog browse, Missing Addons).
+  const filterFieldDefs: Record<FilterFieldKey, { label: string; applicable: boolean }> = {
+    toggles: {
+      label: t("games.listToolbar.customize.togglesLabel"),
+      applicable: Boolean(onShowMissingChange) || Boolean(onIncludeAddonsChange),
+    },
+    gameType: { label: t("games.listToolbar.gameTypeLabel"), applicable: !hideGameTypesField },
+    tags: { label: t("games.listToolbar.tagLabel"), applicable: true },
+    genres: { label: t("games.listToolbar.genreLabel"), applicable: true },
+    gameModes: { label: t("games.listToolbar.gameModeLabel"), applicable: true },
+    ownership: { label: t("games.listToolbar.ownershipLabel"), applicable: true },
+    playStatus: { label: t("games.listToolbar.playStatusLabel"), applicable: true },
+    platforms: { label: t("games.listToolbar.consoleLabel"), applicable: !hidePlatformsField },
+    formats: { label: t("games.listToolbar.formatLabel"), applicable: true },
+    storefronts: { label: t("games.listToolbar.storefrontLabel"), applicable: showStorefrontFilter },
+    collections: { label: t("games.listToolbar.collectionLabel"), applicable: !hideCollectionsField },
+    franchises: { label: t("games.listToolbar.seriesLabel"), applicable: !hideFranchisesField },
+    steelbookOnly: {
+      label: t("games.listToolbar.steelbookOnlyLabel"),
+      applicable: onSteelbookOnlyChange !== undefined,
+    },
+  };
+  const filterFieldLabels: Record<FilterFieldKey, string> = {
+    toggles: t("games.listToolbar.customize.togglesLabel"),
+    gameType: t("games.listToolbar.gameTypeLabel"),
+    tags: t("games.listToolbar.tagLabel"),
+    genres: t("games.listToolbar.genreLabel"),
+    gameModes: t("games.listToolbar.gameModeLabel"),
+    ownership: t("games.listToolbar.ownershipLabel"),
+    playStatus: t("games.listToolbar.playStatusLabel"),
+    platforms: t("games.listToolbar.consoleLabel"),
+    formats: t("games.listToolbar.formatLabel"),
+    storefronts: t("games.listToolbar.storefrontLabel"),
+    collections: t("games.listToolbar.collectionLabel"),
+    franchises: t("games.listToolbar.seriesLabel"),
+    steelbookOnly: t("games.listToolbar.steelbookOnlyLabel"),
+  };
+
+  // The fields the Customize dialog lists: the saved layout, restricted to what this
+  // page renders. Fields other pages render keep their saved places — the save handler
+  // merges them back (see below).
+  const customizableFields = filterLayout.filter(
+    (field) => filterFieldDefs[field.key].applicable
+  );
+
+  // Saving a layout that hides a field also clears that field's values — a hidden
+  // field must not keep filtering silently (same rule as the storefront effect above).
+  // Only newly hidden fields are cleared. MatchAll choices for several fields share one
+  // map, so they're collected and applied in a single update.
+  const handleSaveFilterLayout = async (draft: FilterField[]) => {
+    const previouslyHidden = new Set(
+      filterLayout.filter((field) => field.hidden).map((field) => field.key)
+    );
+    const matchAllFieldFor: Partial<Record<FilterFieldKey, MatchAllField>> = {
+      tags: "tag",
+      genres: "genre",
+      gameModes: "gameMode",
+      ownership: "ownership",
+      playStatus: "playStatus",
+      platforms: "platform",
+      formats: "format",
+      storefronts: "storefront",
+      collections: "collection",
+      franchises: "franchise",
+    };
+    const matchAllClears: Partial<Record<MatchAllField, boolean>> = {};
+    const clearMatchAll = (key: FilterFieldKey) => {
+      const matchAllField = matchAllFieldFor[key];
+      if (matchAllField && matchAll[matchAllField]) matchAllClears[matchAllField] = false;
+    };
+    for (const field of draft) {
+      if (!field.hidden || previouslyHidden.has(field.key)) continue;
+      if (field.key === "toggles") {
+        if (showMissing) onShowMissingChange?.(false);
+        if (includeAddons) onIncludeAddonsChange?.(false);
+      } else if (field.key === "gameType") {
+        if (gameTypes.length > 0) onGameTypesChange([]);
+        if (gameTypeExclude) onGameTypeExcludeChange(false);
+      } else if (field.key === "tags") {
+        if (tagIds.length > 0) onTagIdsChange([]);
+        if (tagExclude) onTagExcludeChange(false);
+      } else if (field.key === "genres") {
+        if (genreIds.length > 0) onGenreIdsChange([]);
+        if (genreExclude) onGenreExcludeChange(false);
+      } else if (field.key === "gameModes") {
+        if (gameModes.length > 0) onGameModesChange([]);
+        if (gameModeExclude) onGameModeExcludeChange(false);
+      } else if (field.key === "ownership") {
+        if (ownershipStatuses.length > 0) onOwnershipStatusesChange([]);
+        if (ownershipExclude) onOwnershipExcludeChange(false);
+      } else if (field.key === "playStatus") {
+        if (playStatuses.length > 0) onPlayStatusesChange([]);
+        if (playStatusExclude) onPlayStatusExcludeChange(false);
+      } else if (field.key === "platforms") {
+        if (platformIds.length > 0) onPlatformIdsChange([]);
+        if (platformExclude) onPlatformExcludeChange(false);
+      } else if (field.key === "formats") {
+        if (formats.length > 0) onFormatsChange([]);
+        if (formatExclude) onFormatExcludeChange(false);
+      } else if (field.key === "storefronts") {
+        if (storefronts.length > 0) onStorefrontsChange([]);
+        if (storefrontExclude) onStorefrontExcludeChange(false);
+      } else if (field.key === "collections") {
+        if (collectionIds.length > 0) onCollectionIdsChange([]);
+        if (collectionExclude) onCollectionExcludeChange(false);
+      } else if (field.key === "franchises") {
+        if (franchiseIds.length > 0) onFranchiseIdsChange([]);
+        if (franchiseExclude) onFranchiseExcludeChange(false);
+      } else if (field.key === "steelbookOnly") {
+        if (steelbookOnly) onSteelbookOnlyChange?.(false);
+      }
+      clearMatchAll(field.key);
+    }
+    if (Object.keys(matchAllClears).length > 0) {
+      onMatchAllChange({ ...matchAll, ...matchAllClears });
+    }
+    // Merge the draft back into the full saved layout: fields this page doesn't render
+    // keep their saved places, and the listed fields take the draft's order.
+    const draftKeys = new Set(draft.map((field) => field.key));
+    let draftIndex = 0;
+    const merged = filterLayout.map((field) =>
+      draftKeys.has(field.key) ? draft[draftIndex++] : field
+    );
+    try {
+      await saveFilterLayout.mutateAsync({ layout: merged });
+      setCustomizeFiltersOpen(false);
+    } catch (error) {
+      console.error("Error saving the filter layout:", error);
+      toast.error(t("games.listToolbar.customize.saveError"), TOAST_OPTIONS);
+    }
+  };
 
   const handleClearFilters = () => {
     onOwnershipStatusesChange([]);
@@ -807,301 +1270,16 @@ const GameListToolbar = ({
           <DialogTitle>{t("games.listToolbar.filtersButtonLabel")}</DialogTitle>
           <DialogContent sx={{ pt: 3 }}>
               <Grid container spacing={2} sx={{ mt: 0.5, pt: 0.5 }}>
-                {onShowMissingChange || onIncludeAddonsChange ? (
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Stack spacing={0.5}>
-                      {onShowMissingChange ? (
-                        <FormControlLabel
-                          control={
-                            <Switch
-                              checked={Boolean(showMissing)}
-                              onChange={(event) => onShowMissingChange(event.target.checked)}
-                            />
-                          }
-                          label={t("games.listToolbar.showMissingLabel")}
-                        />
-                      ) : null}
-                      {onIncludeAddonsChange ? (
-                        <FormControlLabel
-                          control={
-                            <Switch
-                              checked={Boolean(includeAddons)}
-                              onChange={(event) => onIncludeAddonsChange(event.target.checked)}
-                            />
-                          }
-                          label={t("catalog.browseGrid.includeAddonsLabel")}
-                        />
-                      ) : null}
-                    </Stack>
-                  </Grid>
-                ) : null}
-                {!hideGameTypesField ? (
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Stack spacing={0.5}>
-                      <AutocompleteMultiSelect<GameTypeOption>
-                        label={t("games.listToolbar.gameTypeLabel")}
-                        options={GAME_TYPE_OPTIONS}
-                        value={selectedGameTypes}
-                        onChange={(newValue) =>
-                          onGameTypesChange(newValue.map((option) => option.value))
-                        }
-                        getOptionLabel={(option) => option.label}
-                        isOptionEqualToValue={(option, val) => option.value === val.value}
-                        placeholder={allPlaceholder}
-                        fullWidth
-                      />
-                      <FilterFieldOptions
-                        selectedCount={gameTypes.length}
-                        exclude={gameTypeExclude}
-                        onExcludeChange={onGameTypeExcludeChange}
-                      />
-                    </Stack>
-                  </Grid>
-                ) : null}
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Stack spacing={0.5}>
-                    <AutocompleteMultiSelect<Tag>
-                      label={t("games.listToolbar.tagLabel")}
-                      options={tagOptions}
-                      value={selectedTags}
-                      onChange={(newValue) => onTagIdsChange(newValue.map((tag) => tag.id))}
-                      getOptionLabel={(option) => option.name}
-                      isOptionEqualToValue={(option, val) => option.id === val.id}
-                      placeholder={allPlaceholder}
-                      fullWidth
-                      renderValue={(tagsValue, getItemProps) =>
-                        tagsValue.map((tag, index) => {
-                          const { key, ...itemProps } = getItemProps({ index });
-                          return <TagChip key={key} tag={tag} {...itemProps} />;
-                        })
-                      }
-                    />
-                    <FilterFieldOptions
-                      selectedCount={tagIds.length}
-                      exclude={tagExclude}
-                      onExcludeChange={onTagExcludeChange}
-                      {...matchAllProps("tag")}
-                    />
-                  </Stack>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Stack spacing={0.5}>
-                    <AutocompleteMultiSelect<CatalogRef>
-                      label={t("games.listToolbar.genreLabel")}
-                      options={genreOptions}
-                      value={selectedGenres}
-                      onChange={(newValue) =>
-                        onGenreIdsChange(newValue.map((genre) => genre.id))
-                      }
-                      getOptionLabel={(option) => option.name}
-                      isOptionEqualToValue={(option, val) => option.id === val.id}
-                      placeholder={allPlaceholder}
-                      fullWidth
-                    />
-                    <FilterFieldOptions
-                      selectedCount={genreIds.length}
-                      exclude={genreExclude}
-                      onExcludeChange={onGenreExcludeChange}
-                      {...matchAllProps("genre")}
-                    />
-                  </Stack>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Stack spacing={0.5}>
-                    <AutocompleteMultiSelect<string>
-                      label={t("games.listToolbar.gameModeLabel")}
-                      options={gameModeOptions}
-                      value={selectedGameModes}
-                      onChange={onGameModesChange}
-                      getOptionLabel={(option) => option}
-                      isOptionEqualToValue={(option, val) => option === val}
-                      placeholder={allPlaceholder}
-                      fullWidth
-                    />
-                    <FilterFieldOptions
-                      selectedCount={gameModes.length}
-                      exclude={gameModeExclude}
-                      onExcludeChange={onGameModeExcludeChange}
-                      {...matchAllProps("gameMode")}
-                    />
-                  </Stack>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Stack spacing={0.5}>
-                    <AutocompleteMultiSelect<OwnershipOption>
-                      label={t("games.listToolbar.ownershipLabel")}
-                      options={OWNERSHIP_OPTIONS}
-                      value={selectedOwnershipStatuses}
-                      onChange={(newValue) =>
-                        onOwnershipStatusesChange(newValue.map((option) => option.value))
-                      }
-                      getOptionLabel={(option) => t(option.labelKey)}
-                      isOptionEqualToValue={(option, val) => option.value === val.value}
-                      placeholder={allPlaceholder}
-                      fullWidth
-                    />
-                    <FilterFieldOptions
-                      selectedCount={ownershipStatuses.length}
-                      exclude={ownershipExclude}
-                      onExcludeChange={onOwnershipExcludeChange}
-                      {...matchAllProps("ownership")}
-                    />
-                  </Stack>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Stack spacing={0.5}>
-                    <AutocompleteMultiSelect<PlayStatusOption>
-                      label={t("games.listToolbar.playStatusLabel")}
-                      options={PLAY_STATUS_OPTIONS}
-                      value={selectedPlayStatuses}
-                      onChange={(newValue) =>
-                        onPlayStatusesChange(newValue.map((option) => option.value))
-                      }
-                      getOptionLabel={(option) => t(option.labelKey)}
-                      isOptionEqualToValue={(option, val) => option.value === val.value}
-                      placeholder={allPlaceholder}
-                      fullWidth
-                    />
-                    <FilterFieldOptions
-                      selectedCount={playStatuses.length}
-                      exclude={playStatusExclude}
-                      onExcludeChange={onPlayStatusExcludeChange}
-                      {...matchAllProps("playStatus")}
-                    />
-                  </Stack>
-                </Grid>
-                {!hidePlatformsField ? (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Stack spacing={0.5}>
-                    <AutocompleteMultiSelect<PlatformResponse>
-                      label={t("games.listToolbar.consoleLabel")}
-                      options={platformOptions}
-                      value={selectedPlatforms}
-                      onChange={(newValue) =>
-                        onPlatformIdsChange(newValue.map((platform) => platform.id))
-                      }
-                      getOptionLabel={platformOptionLabel}
-                      isOptionEqualToValue={(option, val) => option.id === val.id}
-                      placeholder={allPlaceholder}
-                      fullWidth
-                    />
-                    <FilterFieldOptions
-                      selectedCount={platformIds.length}
-                      exclude={platformExclude}
-                      onExcludeChange={onPlatformExcludeChange}
-                      {...matchAllProps("platform")}
-                    />
-                  </Stack>
-                </Grid>
-                ) : null}
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Stack spacing={0.5}>
-                    <AutocompleteMultiSelect<FormatOption>
-                      label={t("games.listToolbar.formatLabel")}
-                      options={FORMAT_OPTIONS}
-                      value={selectedFormats}
-                      onChange={(newValue) =>
-                        onFormatsChange(newValue.map((option) => option.value))
-                      }
-                      getOptionLabel={(option) => option.label}
-                      isOptionEqualToValue={(option, val) => option.value === val.value}
-                      placeholder={allPlaceholder}
-                      fullWidth
-                    />
-                    <FilterFieldOptions
-                      selectedCount={formats.length}
-                      exclude={formatExclude}
-                      onExcludeChange={onFormatExcludeChange}
-                      {...matchAllProps("format")}
-                    />
-                  </Stack>
-                </Grid>
-                {showStorefrontFilter ? (
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Stack spacing={0.5}>
-                      <AutocompleteMultiSelect<string>
-                        label={t("games.listToolbar.storefrontLabel")}
-                        options={storefrontOptions}
-                        value={storefronts}
-                        onChange={onStorefrontsChange}
-                        getOptionLabel={(option) => option}
-                        isOptionEqualToValue={(option, val) => option === val}
-                        placeholder={allPlaceholder}
-                        fullWidth
-                      />
-                      <FilterFieldOptions
-                        selectedCount={storefronts.length}
-                        exclude={storefrontExclude}
-                        onExcludeChange={onStorefrontExcludeChange}
-                        {...matchAllProps("storefront")}
-                      />
-                    </Stack>
-                  </Grid>
-                ) : null}
-                {!hideCollectionsField ? (
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Stack spacing={0.5}>
-                      <AutocompleteMultiSelect<CatalogRefSummary>
-                        label={t("games.listToolbar.collectionLabel")}
-                        options={collectionOptions}
-                        value={selectedCollections}
-                        onChange={(newValue) =>
-                          onCollectionIdsChange(newValue.map((collection) => collection.id))
-                        }
-                        getOptionLabel={(option) => option.name}
-                        isOptionEqualToValue={(option, val) => option.id === val.id}
-                        placeholder={allPlaceholder}
-                        fullWidth
-                      />
-                      <FilterFieldOptions
-                        selectedCount={collectionIds.length}
-                        exclude={collectionExclude}
-                        onExcludeChange={onCollectionExcludeChange}
-                        {...matchAllProps("collection")}
-                      />
-                    </Stack>
-                  </Grid>
-                ) : null}
-                {!hideFranchisesField ? (
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Stack spacing={0.5}>
-                      <AutocompleteMultiSelect<CatalogRefSummary>
-                        label={t("games.listToolbar.seriesLabel")}
-                        options={franchiseOptions}
-                        value={selectedFranchises}
-                        onChange={(newValue) =>
-                          onFranchiseIdsChange(newValue.map((franchise) => franchise.id))
-                        }
-                        getOptionLabel={(option) => option.name}
-                        isOptionEqualToValue={(option, val) => option.id === val.id}
-                        placeholder={allPlaceholder}
-                        fullWidth
-                      />
-                      <FilterFieldOptions
-                        selectedCount={franchiseIds.length}
-                        exclude={franchiseExclude}
-                        onExcludeChange={onFranchiseExcludeChange}
-                        {...matchAllProps("franchise")}
-                      />
-                    </Stack>
-                  </Grid>
-                ) : null}
-                {onSteelbookOnlyChange ? (
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={Boolean(steelbookOnly)}
-                          onChange={(event) => onSteelbookOnlyChange(event.target.checked)}
-                        />
-                      }
-                      label={t("games.listToolbar.steelbookOnlyLabel")}
-                    />
-                  </Grid>
-                ) : null}
+                {filterLayout.map((field) => {
+                  if (field.hidden || !filterFieldDefs[field.key].applicable) return null;
+                  return <Fragment key={field.key}>{filterFieldNodes[field.key]}</Fragment>;
+                })}
               </Grid>
           </DialogContent>
           <DialogActions>
+            <Button onClick={() => setCustomizeFiltersOpen(true)}>
+              {t("games.listToolbar.customize.button")}
+            </Button>
             <Button onClick={handleClearFilters} disabled={!hasActiveFilters}>
               {t("games.listToolbar.clearFiltersButton")}
             </Button>
@@ -1110,6 +1288,15 @@ const GameListToolbar = ({
             </Button>
           </DialogActions>
         </Dialog>
+        {customizeFiltersOpen ? (
+          <CustomizeFiltersDialog
+            fields={customizableFields}
+            labels={filterFieldLabels}
+            saving={saveFilterLayout.isPending}
+            onClose={() => setCustomizeFiltersOpen(false)}
+            onSave={(next) => void handleSaveFilterLayout(next)}
+          />
+        ) : null}
     </Stack>
   );
 };

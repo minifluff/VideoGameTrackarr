@@ -878,6 +878,17 @@
       "showMissingLabel": "Mostrar o que me falta?",
       "steelbookOnlyLabel": "Somente Steelbooks",
       "clearFiltersButton": "Limpar filtros",
+      "customize": {
+        "button": "Personalizar",
+        "title": "Personalizar filtros",
+        "description": "Arraste as linhas (ou use as setas) para reordenar os filtros e desative os que não quer. Guardado na sua conta, por isso todos os navegadores mostram o mesmo.",
+        "moveUp": "Mover {{name}} para cima",
+        "moveDown": "Mover {{name}} para baixo",
+        "show": "Mostrar {{name}}",
+        "reset": "Repor predefinições",
+        "saveError": "Não foi possível guardar o esquema dos filtros. Tente novamente.",
+        "togglesLabel": "Mostrar em falta / Incluir complementos"
+      },
       "noFiltersAvailable": "Sem filtros disponíveis",
       "noSearchMatches": "Nenhum resultado encontrado.",
       "sortDateAddedAsc": "Date added (oldest first)",

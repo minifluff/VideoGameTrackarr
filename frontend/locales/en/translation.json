@@ -878,6 +878,17 @@
       "showMissingLabel": "Show what I am missing?",
       "steelbookOnlyLabel": "Steelbooks only",
       "clearFiltersButton": "Clear filters",
+      "customize": {
+        "button": "Customize",
+        "title": "Customize filters",
+        "description": "Drag rows (or use the arrows) to reorder the filters, and switch off the ones you don't want. Saved to your account, so every browser shows the same.",
+        "moveUp": "Move {{name}} up",
+        "moveDown": "Move {{name}} down",
+        "show": "Show {{name}}",
+        "reset": "Reset to default",
+        "saveError": "Couldn't save the filter layout. Please try again.",
+        "togglesLabel": "Show missing / Include add-ons"
+      },
       "noFiltersAvailable": "No filters available",
       "noSearchMatches": "No matches found.",
       "sortDateAddedAsc": "Date added (oldest first)",

@@ -878,6 +878,17 @@
       "showMissingLabel": "Afficher ce qu'il me manque ?",
       "steelbookOnlyLabel": "Steelbooks uniquement",
       "clearFiltersButton": "Effacer les filtres",
+      "customize": {
+        "button": "Personnaliser",
+        "title": "Personnaliser les filtres",
+        "description": "Faites glisser les lignes (ou utilisez les flèches) pour réorganiser les filtres, et désactivez ceux que vous ne voulez pas. Enregistré sur votre compte, tous les navigateurs affichent donc la même chose.",
+        "moveUp": "Monter {{name}}",
+        "moveDown": "Descendre {{name}}",
+        "show": "Afficher {{name}}",
+        "reset": "Réinitialiser",
+        "saveError": "Impossible d'enregistrer la disposition des filtres. Veuillez réessayer.",
+        "togglesLabel": "Afficher les manquants / Inclure les extensions"
+      },
       "noFiltersAvailable": "Aucun filtre disponible",
       "noSearchMatches": "Aucun résultat trouvé.",
       "sortDateAddedAsc": "Date added (oldest first)",

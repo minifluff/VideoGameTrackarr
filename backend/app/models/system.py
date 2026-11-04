@@ -22,6 +22,9 @@ class User(TimestampMixin, Base):
     overview_layout: Mapped[list | None] = mapped_column(
         JSON, comment="Dashboard section order/visibility, as [{key, hidden}] — null until customised"
     )
+    filter_layout: Mapped[list | None] = mapped_column(
+        JSON, comment="Games filter dialog field order/visibility, as [{key, hidden}] — null until customised"
+    )
     overview_card_size: Mapped[float | None] = mapped_column(
         Float, comment="Dashboard card-size scale (0.5 small, 1.0 medium, 2.0 large) — null means medium"
     )

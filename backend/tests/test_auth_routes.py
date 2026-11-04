@@ -50,6 +50,7 @@ def test_me_returns_current_user_with_valid_access_token(client, test_user):
         "username": "admin",
         "overviewLayout": None,
         "overviewCardSize": None,
+        "filterLayout": None,
     }
 
 
@@ -331,6 +332,28 @@ def test_preferences_saves_overview_layout(auth_client):
 
     me = auth_client.get("/api/auth/me")
     assert me.json()["overviewLayout"] == layout
+
+
+def test_preferences_saves_filter_layout(auth_client):
+    layout = [
+        {"key": "ownership", "hidden": False},
+        {"key": "tags", "hidden": True},
+    ]
+    response = auth_client.put("/api/auth/me/preferences", json={"filterLayout": layout})
+
+    assert response.status_code == 200
+    assert response.json()["filterLayout"] == layout
+
+    me = auth_client.get("/api/auth/me")
+    assert me.json()["filterLayout"] == layout
+
+
+def test_preferences_rejects_bad_filter_key(auth_client):
+    response = auth_client.put(
+        "/api/auth/me/preferences", json={"filterLayout": [{"key": "bad key!", "hidden": False}]}
+    )
+
+    assert response.status_code == 422
 
 
 def test_preferences_rejects_bad_section_key(auth_client):

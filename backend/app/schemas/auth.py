@@ -56,6 +56,8 @@ class PreferencesRequest(CamelModel):
 
     overview_layout: list[OverviewSection] | None = Field(default=None, max_length=50)
     overview_card_size: float | None = Field(default=None, ge=0.5, le=2.0)
+    # Same [{key, hidden}] shape as overview_layout, for the Games filter dialog.
+    filter_layout: list[OverviewSection] | None = Field(default=None, max_length=50)
 
 
 class UserResponse(CamelModel):
@@ -63,6 +65,7 @@ class UserResponse(CamelModel):
     username: str
     overview_layout: list[OverviewSection] | None = None
     overview_card_size: float | None = None
+    filter_layout: list[OverviewSection] | None = None
 
 
 class SetupStatusResponse(CamelModel):
