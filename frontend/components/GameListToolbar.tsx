@@ -1267,7 +1267,19 @@ const GameListToolbar = ({
           </Box>
         </Menu>
         <Dialog open={filtersOpen} onClose={() => setFiltersOpen(false)} fullWidth maxWidth="md">
-          <DialogTitle>{t("games.listToolbar.filtersButtonLabel")}</DialogTitle>
+          <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {t("games.listToolbar.filtersButtonLabel")}
+            <Box sx={{ flexGrow: 1 }} />
+            <Tooltip title={t("games.listToolbar.customize.button")}>
+              <IconButton
+                onClick={() => setCustomizeFiltersOpen(true)}
+                aria-label={t("games.listToolbar.customize.button")}
+                edge="end"
+              >
+                <TuneIcon />
+              </IconButton>
+            </Tooltip>
+          </DialogTitle>
           <DialogContent sx={{ pt: 3 }}>
               <Grid container spacing={2} sx={{ mt: 0.5, pt: 0.5 }}>
                 {filterLayout.map((field) => {
@@ -1277,9 +1289,6 @@ const GameListToolbar = ({
               </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setCustomizeFiltersOpen(true)}>
-              {t("games.listToolbar.customize.button")}
-            </Button>
             <Button onClick={handleClearFilters} disabled={!hasActiveFilters}>
               {t("games.listToolbar.clearFiltersButton")}
             </Button>
