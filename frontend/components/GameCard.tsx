@@ -94,14 +94,17 @@ interface GameCardProps {
   // card has no platform row, but dropping it would hide owned-platform info the grids
   // show today.
   ownedPlatforms?: string[];
+  // Dashboard sections pass this to drop the "Wishlisted" fallback (owned platforms
+  // still show) — a dashboard row of upcoming or recently-added games shouldn't read
+  // as a wishlist.
+  hideWishlistedLine?: boolean;
   // "full" shows the whole release date (day, month, year) instead of just the year — the
   // release calendar, where the day is the point.
   dateFormat?: "year" | "full";
 }
 
 // The 2026 card: the cover carries it. A 3:4 cover with today's badges and chips on it, then
-// the name, the year (and add-on type), and a reserved play-status slot so a row's cards
-// always line up.
+// the name, the year (and add-on type), and the platforms/Wishlisted line.
 const GameCard = ({
   game,
   context,
@@ -114,6 +117,7 @@ const GameCard = ({
   onOpen,
   hoverActions,
   ownedPlatforms,
+  hideWishlistedLine,
   dateFormat = "year",
 }: GameCardProps) => {
   const theme = useTheme();
@@ -166,7 +170,7 @@ const GameCard = ({
   const platformLine =
     ownedPlatforms !== undefined && ownedPlatforms.length > 0
       ? `${ownedPlatforms.slice(0, 3).join(" · ")}${ownedPlatforms.length > 3 ? ` +${ownedPlatforms.length - 3}` : ""}`
-      : game.wishlisted
+      : game.wishlisted && !hideWishlistedLine
         ? t("games.card.wishlistedLine")
         : null;
 

@@ -74,6 +74,7 @@ const ReleaseCalendarSection = ({ scope, title, cardSize, columnWidth }: Release
               context="list"
               contextFunction={() => navigate(`/game/${gameIdentifier(item.game!)}`)}
               dateFormat="full"
+              hideWishlistedLine
             />
           );
         }

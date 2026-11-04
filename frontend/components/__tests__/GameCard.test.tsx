@@ -354,6 +354,20 @@ describe("GameCard", () => {
     expect(screen.getByText("Wishlisted")).toBeInTheDocument();
   });
 
+  it("hides 'Wishlisted' when hideWishlistedLine is set, as dashboard sections do", () => {
+    renderWithTheme(
+      <GameCard
+        game={{ ...baseGame, owned: false, wishlisted: true }}
+        context="list"
+        contextFunction={vi.fn()}
+        ownedPlatforms={[]}
+        hideWishlistedLine
+      />
+    );
+
+    expect(screen.queryByText("Wishlisted")).not.toBeInTheDocument();
+  });
+
   it("prefers owned platforms over 'Wishlisted' when the game has both", () => {
     renderWithTheme(
       <GameCard

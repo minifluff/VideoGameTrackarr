@@ -118,7 +118,13 @@ const DashboardPage = () => {
   }
 
   const gameCard = (game: GameSummary) => (
-    <GameCard key={game.id} game={game} context="list" contextFunction={() => navigate(`/game/${gameIdentifier(game)}`)} />
+    <GameCard
+      key={game.id}
+      game={game}
+      context="list"
+      contextFunction={() => navigate(`/game/${gameIdentifier(game)}`)}
+      hideWishlistedLine
+    />
   );
   const hardwareCard = (item: RecentlyAddedHardwareItem) => {
     const device = item.device;
