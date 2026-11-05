@@ -378,3 +378,35 @@ def test_preferences_rejects_out_of_range_card_size(auth_client):
     response = auth_client.put("/api/auth/me/preferences", json={"overviewCardSize": 3.0})
 
     assert response.status_code == 422
+
+
+def _login(client):
+    response = client.post("/api/auth/login", json={"username": "admin", "password": "correct-password"})
+    assert response.status_code == 200
+    return response.json()["refreshToken"]
+
+
+def _rotate(client, refresh_token):
+    return client.post("/api/auth/refresh", json={"refreshToken": refresh_token})
+
+
+def test_second_login_keeps_first_location_signed_in(client, test_user):
+    first_location = _login(client)
+    second_location = _login(client)
+
+    # Each login is its own sign-in family, so rotating one never disturbs the other.
+    assert _rotate(client, first_location).status_code == 200
+    assert _rotate(client, second_location).status_code == 200
+
+
+def test_replayed_token_revokes_only_its_own_family(client, test_user):
+    first_location = _login(client)
+    second_location = _login(client)
+
+    rotated_first = _rotate(client, first_location).json()["refreshToken"]
+
+    # Replaying the pre-rotation token still fails — and kills only its own family.
+    assert _rotate(client, first_location).status_code == 401
+    assert _rotate(client, rotated_first).status_code == 401
+    # The other location is untouched.
+    assert _rotate(client, second_location).status_code == 200

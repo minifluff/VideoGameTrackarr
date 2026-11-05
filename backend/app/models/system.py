@@ -68,6 +68,12 @@ class RefreshToken(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
     jti: Mapped[str] = mapped_column(String(36), nullable=False, unique=True)
+    # Sign-in family: every login mints one family id, and rotations keep it, so each
+    # browser/device is its own family. Reuse detection revokes only the presented
+    # token's family — one location's stale or stolen token can no longer sign out
+    # every other location. NULL for rows issued before families existed; those
+    # graduate to a family on their first rotation after this lands.
+    family_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     expires_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
     revoked_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), server_default=func.now(), nullable=False)
