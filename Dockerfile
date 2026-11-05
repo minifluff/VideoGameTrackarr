@@ -57,4 +57,9 @@ HEALTHCHECK --interval=30s --timeout=20s --start-period=30s --retries=3 \
 
 # -s (subreaper) keeps tini reaping even when it isn't PID 1, e.g. under `init: true`.
 ENTRYPOINT ["tini", "-s", "--", "./docker-entrypoint.sh"]
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+# One worker on purpose: job run state (import progress, restore, schedules) lives in
+# process memory (see app/services/job_registry.py), so with several workers the page's
+# status polls land on a worker that never saw the run — Run Import looks dead, the
+# progress bar never appears, and a second click can start a duplicate import. A
+# single-admin instance has no need for multi-process parallelism to justify that.
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
