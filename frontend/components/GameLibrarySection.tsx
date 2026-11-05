@@ -44,7 +44,7 @@ import { useUpdateGameVisibility } from "../hooks/useGames";
 import { formatCurrency } from "../utils/currency";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import ConfirmDialog from "./ConfirmDialog";
-import { EmptyLine, ListRow, Panel, Pill, PlatformBadge, RowAction, SectionAction } from "./Detail";
+import { EmptyLine, ListRow, Panel, Pill, RowAction, SectionAction } from "./Detail";
 import LibraryItemDialog, { type LibraryItemFormValues, type RomChanges } from "./LibraryItemDialog";
 import MoveLibraryItemDialog from "./MoveLibraryItemDialog";
 import { showUndoToast } from "./UndoToast";
@@ -151,11 +151,6 @@ const GameLibrarySection = ({
         </Box>
       </Tooltip>
     );
-  };
-
-  const platformBadge = (item: LibraryItem) => {
-    const platform = platforms?.find((candidate) => candidate.id === item.platformId);
-    return platform?.abbreviation || item.platformName?.split(" ")[0] || "?";
   };
 
   const { schedule: scheduleItemRemoval, isPending: isItemPending } =
@@ -376,7 +371,6 @@ const GameLibrarySection = ({
                   key={item.id}
                   label={item.platformName ?? t("games.about.unknownPlatform")}
                   onClick={() => handleEditClick(item.id)}
-                  leading={<PlatformBadge>{platformBadge(item)}</PlatformBadge>}
                   title={item.platformName ?? t("games.about.unknownPlatform")}
                   subtitle={
                     <>
@@ -391,8 +385,20 @@ const GameLibrarySection = ({
                     </>
                   }
                   trailing={
-                    <Pill small tone={owned ? "owned" : "wishlist"} icon={owned ? <CheckIcon /> : <FavoriteIcon />}>
-                      {owned ? t("games.library.ownedChip") : t("games.library.wishlistChip")}
+                    <Pill
+                      small
+                      tone={owned ? "owned" : "wishlist"}
+                      icon={owned ? <CheckIcon /> : <FavoriteIcon />}
+                      title={owned ? t("games.library.ownedChip") : t("games.library.wishlistChip")}
+                    >
+                      {/* Phone screens get just the colored symbol — the text returns
+                          from sm up, so the row keeps its full chip on wider screens. */}
+                      <Box
+                        component="span"
+                        sx={{ display: { xs: "none", sm: "inline" } }}
+                      >
+                        {owned ? t("games.library.ownedChip") : t("games.library.wishlistChip")}
+                      </Box>
                     </Pill>
                   }
                   actions={

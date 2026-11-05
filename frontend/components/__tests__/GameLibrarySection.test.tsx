@@ -83,6 +83,13 @@ describe("GameLibrarySection", () => {
     expect(ownedRow.compareDocumentPosition(wishlistRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  it("shows no platform badge — the platform name is the row title", () => {
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[ownedItem]} />);
+
+    expect(screen.queryByText("PS5")).not.toBeInTheDocument();
+    expect(screen.getByText("PlayStation 5")).toBeInTheDocument();
+  });
+
   it("keeps the Move action and puts the Hide checkbox left of Add copy", () => {
     renderSection(<GameLibrarySection {...baseProps} libraryItems={[ownedItem]} />);
 
