@@ -52,8 +52,7 @@
   "nav": {
     "groups": {
       "library": "Biblioteca",
-      "insights": "Estatísticas",
-      "achievements": "Conquistas",
+      "stats": "Estatísticas",
       "system": "Sistema"
     },
     "primary": "Navegação principal",

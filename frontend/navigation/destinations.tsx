@@ -83,6 +83,13 @@ export function getNavDestinations(t: TFunction, options?: NavDestinationOptions
     },
     { to: "/events", label: t("nav.events"), icon: <EventIcon /> },
     {
+      // Own system, separate from games: RetroAchievements data, Exophase-style
+      // profile layout. No sub-items — the page is one view.
+      to: "/achievements",
+      label: t("nav.achievements"),
+      icon: <EmojiEventsIcon />,
+    },
+    {
       to: "/insights",
       label: t("nav.insights"),
       icon: <InsightsIcon />,
@@ -97,13 +104,6 @@ export function getNavDestinations(t: TFunction, options?: NavDestinationOptions
         { to: "/insights/on-sale", label: t("nav.onSale"), icon: <SellIcon /> },
         { to: "/insights/unlinked-games", label: t("nav.unlinkedGames"), icon: <LinkIcon /> },
       ],
-    },
-    {
-      // Own system, separate from games: RetroAchievements data, Exophase-style
-      // profile layout. No sub-items — the page is one view.
-      to: "/achievements",
-      label: t("nav.achievements"),
-      icon: <EmojiEventsIcon />,
     },
     {
       to: "/settings",
