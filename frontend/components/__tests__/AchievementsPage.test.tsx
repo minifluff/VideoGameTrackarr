@@ -102,7 +102,7 @@ describe("AchievementsPage", () => {
     expect(screen.queryByText("Member Since")).not.toBeInTheDocument();
     expect(screen.queryByText("Beginner I")).not.toBeInTheDocument();
     expect(screen.getByText("Final Fantasy Origins")).toBeInTheDocument();
-    expect(screen.getByText("38 / 119 achievements · 382 pts")).toBeInTheDocument();
+    expect(screen.getByText("38 / 119 · 382 pts")).toBeInTheDocument();
     // The whole recently-played row links to the in-app game page.
     expect(screen.getByRole("link", { name: /Final Fantasy Origins/ })).toHaveAttribute(
       "href",

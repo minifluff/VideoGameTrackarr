@@ -169,21 +169,19 @@ const AchievementsPage = () => {
                   </Box>
                 </Stack>
                 <Divider sx={{ mb: 2 }} />
-                <Stack direction="row" spacing={4} sx={{ flexWrap: "wrap", rowGap: 1 }}>
-                  <Box>
-                    <Typography variant="h6">{profile.totalPoints.toLocaleString()}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {t("achievements.hardcorePoints")}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="h6">
+                <Stack direction="row" spacing={3} sx={{ flexWrap: "wrap", rowGap: 0.5 }}>
+                  <Typography variant="body2">
+                    <Box component="span" sx={{ fontWeight: 600 }}>
+                      {profile.totalPoints.toLocaleString()}
+                    </Box>{" "}
+                    {t("achievements.hardcorePoints")}
+                  </Typography>
+                  <Typography variant="body2">
+                    <Box component="span" sx={{ fontWeight: 600 }}>
                       {profile.totalSoftcorePoints.toLocaleString()}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {t("achievements.softcorePoints")}
-                    </Typography>
-                  </Box>
+                    </Box>{" "}
+                    {t("achievements.softcorePoints")}
+                  </Typography>
                 </Stack>
               </CardContent>
             </Card>

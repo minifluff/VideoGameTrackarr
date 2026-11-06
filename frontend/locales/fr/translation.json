@@ -100,7 +100,7 @@
     "recentlyPlayed": "Joués récemment",
     "noRecentlyPlayed": "Aucun jeu joué pour le moment.",
     "loadError": "Impossible de charger vos données RetroAchievements.",
-    "progress": "{{achieved}} / {{total}} succès · {{score}} pts",
+    "progress": "{{achieved}} / {{total}} · {{score}} pts",
     "game": {
       "achievementsCount": "Succès : {{achieved}}/{{total}}",
       "pointsCount": "Points : {{achieved}}/{{total}}",
