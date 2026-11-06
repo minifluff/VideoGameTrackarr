@@ -171,7 +171,12 @@ class RetroAchievementsClient:
             total_true_points=self._as_int(payload.get("TotalTruePoints")),
         )
 
-    async def get_user_recently_played_games(self, username: str, count: int = 10) -> list[RARecentlyPlayedGame]:
+    # API_GetUserRecentlyPlayedGames.php caps c at 50.
+    MAX_RECENTLY_PLAYED_GAMES = 50
+
+    async def get_user_recently_played_games(
+        self, username: str, count: int = MAX_RECENTLY_PLAYED_GAMES
+    ) -> list[RARecentlyPlayedGame]:
         payload = await self._call("API_GetUserRecentlyPlayedGames.php", u=username, c=count)
         games: list[RARecentlyPlayedGame] = []
         if isinstance(payload, list):

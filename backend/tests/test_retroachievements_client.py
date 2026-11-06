@@ -116,6 +116,17 @@ async def test_get_user_recently_played_games_maps_progress_fields():
 
 
 @respx.mock
+async def test_get_user_recently_played_games_requests_fifty_games():
+    route = respx.get(f"{RA_API_BASE}/API_GetUserRecentlyPlayedGames.php").mock(
+        return_value=httpx.Response(200, json=RECENTLY_PLAYED_RESPONSE)
+    )
+
+    await make_client().get_user_recently_played_games("Flyingfox")
+
+    assert route.calls[0].request.url.params["c"] == "50"
+
+
+@respx.mock
 async def test_get_user_recent_achievements_maps_badge_and_game():
     respx.get(f"{RA_API_BASE}/API_GetUserRecentAchievements.php").mock(
         return_value=httpx.Response(200, json=RECENT_ACHIEVEMENTS_RESPONSE)
