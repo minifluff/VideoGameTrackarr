@@ -16,6 +16,8 @@ import {
   ListItemAvatar,
   ListItemText,
   Stack,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
@@ -55,6 +57,20 @@ const AchievementsPage = () => {
     refresh,
   } = useRetroAchievementsSummary(status?.configured === true);
   const [refreshing, setRefreshing] = useState(false);
+  const [gamesView, setGamesView] = useState<"recent" | "completion">("recent");
+
+  // Most Completed re-sorts the same recently-played games by % unlocked,
+  // biggest first (ties: more achievements unlocked first).
+  const displayedGames =
+    gamesView === "completion" && summary
+      ? [...summary.recentlyPlayed].sort((a, b) => {
+          const pctA =
+            a.numPossibleAchievements > 0 ? a.numAchieved / a.numPossibleAchievements : 0;
+          const pctB =
+            b.numPossibleAchievements > 0 ? b.numAchieved / b.numPossibleAchievements : 0;
+          return pctB - pctA || b.numAchieved - a.numAchieved;
+        })
+      : summary?.recentlyPlayed ?? [];
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -188,9 +204,19 @@ const AchievementsPage = () => {
               </CardContent>
             </Card>
 
-            <Typography variant="h5" component="h2" sx={{ mb: 1.5 }}>
-              {t("achievements.recentlyPlayed")}
-            </Typography>
+            <ToggleButtonGroup
+              value={gamesView}
+              exclusive
+              onChange={(_event, value) => {
+                if (value === "recent" || value === "completion") setGamesView(value);
+              }}
+              size="small"
+              aria-label={t("achievements.gamesViewLabel")}
+              sx={{ mb: 1.5 }}
+            >
+              <ToggleButton value="recent">{t("achievements.recentlyPlayed")}</ToggleButton>
+              <ToggleButton value="completion">{t("achievements.mostCompleted")}</ToggleButton>
+            </ToggleButtonGroup>
             <Card sx={{ mb: 3 }}>
               {summary.recentlyPlayed.length === 0 ? (
                 <CardContent>
@@ -200,7 +226,7 @@ const AchievementsPage = () => {
                 </CardContent>
               ) : (
                 <List disablePadding>
-                  {summary.recentlyPlayed.map((game, index) => {
+                  {displayedGames.map((game, index) => {
                     const total = game.numPossibleAchievements;
                     const percent = total > 0 ? (game.numAchieved / total) * 100 : 0;
                     return (

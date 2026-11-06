@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import type { RetroAchievementsStatus, RetroAchievementsSummary } from "../../api/achievements";
@@ -44,6 +44,19 @@ const summaryFixture: RetroAchievementsSummary = {
       numAchievedHardcore: 38,
       possibleScore: 945,
       scoreAchieved: 382,
+    },
+    {
+      gameId: 1,
+      consoleName: "NES/Famicom",
+      title: "Super Mario Bros. 3",
+      imageIconUrl: "/Images/000001.png",
+      imageBoxArtUrl: "/Images/000002.png",
+      lastPlayed: "2026-11-01 12:00:00",
+      numPossibleAchievements: 89,
+      numAchieved: 89,
+      numAchievedHardcore: 0,
+      possibleScore: 400,
+      scoreAchieved: 400,
     },
   ],
   recentAchievements: [
@@ -126,5 +139,27 @@ describe("AchievementsPage", () => {
 
     expect(screen.getByText("12")).toBeInTheDocument();
     expect(screen.queryByText("Hardcore Points")).not.toBeInTheDocument();
+  });
+
+  it("sorts by % unlocked in the Most Completed view", () => {
+    status = { configured: true, username: "Flyingfox", apiKeyConfigured: true };
+    summary = summaryFixture;
+
+    render(
+      <MemoryRouter>
+        <AchievementsPage />
+      </MemoryRouter>,
+    );
+
+    const gameLinks = () => screen.getAllByRole("link").slice(1);
+    // Recent view: most recently played first (Final Fantasy Origins, 38/119).
+    expect(gameLinks()[0]).toHaveAttribute("href", "/achievements/game/11332");
+    expect(gameLinks()[1]).toHaveAttribute("href", "/achievements/game/1");
+
+    fireEvent.click(screen.getByRole("button", { name: "Most Completed" }));
+
+    // Most Completed view: 100% Super Mario Bros. 3 first.
+    expect(gameLinks()[0]).toHaveAttribute("href", "/achievements/game/1");
+    expect(gameLinks()[1]).toHaveAttribute("href", "/achievements/game/11332");
   });
 });

@@ -98,6 +98,8 @@
     "hardcorePoints": "Pontos Hardcore",
     "totalPoints": "Pontos Totais",
     "recentlyPlayed": "Jogados recentemente",
+    "gamesViewLabel": "Visualização da lista de jogos",
+    "mostCompleted": "Mais concluídos",
     "noRecentlyPlayed": "Nenhum jogo jogado ainda.",
     "loadError": "Não foi possível carregar seus dados do RetroAchievements.",
     "progress": "{{achieved}} / {{total}} · {{score}} pts",
