@@ -24,8 +24,22 @@ const APP_BAR_HEIGHT = 64;
 const NavDrawer = () => {
   const location = useLocation();
   const { t } = useTranslation();
-  const { hideHardwareMenu } = useAppearance();
-  const navDestinations = getNavDestinations(t, { hideHardwareMenu });
+  const {
+    hideDashboardMenu,
+    hideGamesMenu,
+    hideHardwareMenu,
+    hideEventsMenu,
+    hideAchievementsMenu,
+    hideInsightsMenu,
+  } = useAppearance();
+  const navDestinations = getNavDestinations(t, {
+    hideDashboardMenu,
+    hideGamesMenu,
+    hideHardwareMenu,
+    hideEventsMenu,
+    hideAchievementsMenu,
+    hideInsightsMenu,
+  });
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   // Auto-expand the section containing the current page.

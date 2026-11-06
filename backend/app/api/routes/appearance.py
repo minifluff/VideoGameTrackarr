@@ -29,5 +29,11 @@ def update_appearance(
         app_icon=body.app_icon,
         card_size=body.card_size,
         hide_hardware_menu=body.hide_hardware_menu,
+        hide_dashboard_menu=body.hide_dashboard_menu,
+        hide_games_menu=body.hide_games_menu,
+        hide_events_menu=body.hide_events_menu,
+        hide_achievements_menu=body.hide_achievements_menu,
+        hide_insights_menu=body.hide_insights_menu,
+        start_page=body.start_page,
     )
     return AppearanceSettingsResponse(**settings)

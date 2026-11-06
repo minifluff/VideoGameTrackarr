@@ -6,6 +6,16 @@ export const DEFAULT_APP_TITLE = "VideoGameTrackarr";
 export const DEFAULT_APP_ICON = "default";
 export const DEFAULT_ICON_SRC = "/icon-master.svg";
 export const DEFAULT_CARD_SIZE = 1.0;
+export const DEFAULT_START_PAGE = "/";
+
+// The starting page must be a top-level destination — Settings is excluded, so a
+// bad value can never strand the user on a page with no way back to Navigation.
+export const START_PAGES = ["/", "/games", "/hardware", "/events", "/achievements", "/insights"] as const;
+export type StartPage = (typeof START_PAGES)[number];
+
+export function isValidStartPage(value: string): value is StartPage {
+  return (START_PAGES as readonly string[]).includes(value);
+}
 
 export const APP_ICON_CHOICES = [
   "default", "🎮", "🏆", "⭐", "🎯", "👾", "🕹️",
@@ -23,6 +33,18 @@ interface AppearanceContextValue {
   setCardSize: (size: number) => void;
   hideHardwareMenu: boolean;
   setHideHardwareMenu: (hide: boolean) => void;
+  hideDashboardMenu: boolean;
+  setHideDashboardMenu: (hide: boolean) => void;
+  hideGamesMenu: boolean;
+  setHideGamesMenu: (hide: boolean) => void;
+  hideEventsMenu: boolean;
+  setHideEventsMenu: (hide: boolean) => void;
+  hideAchievementsMenu: boolean;
+  setHideAchievementsMenu: (hide: boolean) => void;
+  hideInsightsMenu: boolean;
+  setHideInsightsMenu: (hide: boolean) => void;
+  startPage: StartPage;
+  setStartPage: (page: StartPage) => void;
   resetAppearance: () => void;
 }
 
@@ -37,6 +59,18 @@ const AppearanceContext = createContext<AppearanceContextValue>({
   setCardSize: () => {},
   hideHardwareMenu: false,
   setHideHardwareMenu: () => {},
+  hideDashboardMenu: false,
+  setHideDashboardMenu: () => {},
+  hideGamesMenu: false,
+  setHideGamesMenu: () => {},
+  hideEventsMenu: false,
+  setHideEventsMenu: () => {},
+  hideAchievementsMenu: false,
+  setHideAchievementsMenu: () => {},
+  hideInsightsMenu: false,
+  setHideInsightsMenu: () => {},
+  startPage: DEFAULT_START_PAGE,
+  setStartPage: () => {},
   resetAppearance: () => {},
 });
 
@@ -47,6 +81,12 @@ const TITLE_STORAGE_KEY = "vgt.appTitle";
 const ICON_STORAGE_KEY = "vgt.appIcon";
 const CARD_SIZE_STORAGE_KEY = "vgt.cardSize";
 const HIDE_HARDWARE_STORAGE_KEY = "vgt.hideHardwareMenu";
+const HIDE_DASHBOARD_STORAGE_KEY = "vgt.hideDashboardMenu";
+const HIDE_GAMES_STORAGE_KEY = "vgt.hideGamesMenu";
+const HIDE_EVENTS_STORAGE_KEY = "vgt.hideEventsMenu";
+const HIDE_ACHIEVEMENTS_STORAGE_KEY = "vgt.hideAchievementsMenu";
+const HIDE_INSIGHTS_STORAGE_KEY = "vgt.hideInsightsMenu";
+const START_PAGE_STORAGE_KEY = "vgt.startPage";
 
 const HEX_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
@@ -81,6 +121,15 @@ export function resolveIconSrc(icon: string): string {
 
 function readStoredHideHardwareMenu(): boolean {
   return localStorage.getItem(HIDE_HARDWARE_STORAGE_KEY) === "true";
+}
+
+function readStoredHideMenu(key: string): boolean {
+  return localStorage.getItem(key) === "true";
+}
+
+function readStoredStartPage(): StartPage {
+  const stored = localStorage.getItem(START_PAGE_STORAGE_KEY);
+  return stored && isValidStartPage(stored) ? stored : DEFAULT_START_PAGE;
 }
 
 function readStoredCardSize(): number {
@@ -133,6 +182,22 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
   const [appIcon, setAppIconState] = useState<string>(readStoredIcon);
   const [cardSize, setCardSizeState] = useState<number>(readStoredCardSize);
   const [hideHardwareMenu, setHideHardwareMenuState] = useState<boolean>(readStoredHideHardwareMenu);
+  const [hideDashboardMenu, setHideDashboardMenuState] = useState<boolean>(() =>
+    readStoredHideMenu(HIDE_DASHBOARD_STORAGE_KEY)
+  );
+  const [hideGamesMenu, setHideGamesMenuState] = useState<boolean>(() =>
+    readStoredHideMenu(HIDE_GAMES_STORAGE_KEY)
+  );
+  const [hideEventsMenu, setHideEventsMenuState] = useState<boolean>(() =>
+    readStoredHideMenu(HIDE_EVENTS_STORAGE_KEY)
+  );
+  const [hideAchievementsMenu, setHideAchievementsMenuState] = useState<boolean>(() =>
+    readStoredHideMenu(HIDE_ACHIEVEMENTS_STORAGE_KEY)
+  );
+  const [hideInsightsMenu, setHideInsightsMenuState] = useState<boolean>(() =>
+    readStoredHideMenu(HIDE_INSIGHTS_STORAGE_KEY)
+  );
+  const [startPage, setStartPageState] = useState<StartPage>(readStoredStartPage);
   const [loadedFromServer, setLoadedFromServer] = useState(false);
 
   // Load from server on mount (overrides localStorage if different)
@@ -163,6 +228,33 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
           setHideHardwareMenuState(settings.hideHardwareMenu);
           localStorage.setItem(HIDE_HARDWARE_STORAGE_KEY, String(settings.hideHardwareMenu));
         }
+        if (typeof settings.hideDashboardMenu === "boolean") {
+          setHideDashboardMenuState(settings.hideDashboardMenu);
+          localStorage.setItem(HIDE_DASHBOARD_STORAGE_KEY, String(settings.hideDashboardMenu));
+        }
+        if (typeof settings.hideGamesMenu === "boolean") {
+          setHideGamesMenuState(settings.hideGamesMenu);
+          localStorage.setItem(HIDE_GAMES_STORAGE_KEY, String(settings.hideGamesMenu));
+        }
+        if (typeof settings.hideEventsMenu === "boolean") {
+          setHideEventsMenuState(settings.hideEventsMenu);
+          localStorage.setItem(HIDE_EVENTS_STORAGE_KEY, String(settings.hideEventsMenu));
+        }
+        if (typeof settings.hideAchievementsMenu === "boolean") {
+          setHideAchievementsMenuState(settings.hideAchievementsMenu);
+          localStorage.setItem(
+            HIDE_ACHIEVEMENTS_STORAGE_KEY,
+            String(settings.hideAchievementsMenu)
+          );
+        }
+        if (typeof settings.hideInsightsMenu === "boolean") {
+          setHideInsightsMenuState(settings.hideInsightsMenu);
+          localStorage.setItem(HIDE_INSIGHTS_STORAGE_KEY, String(settings.hideInsightsMenu));
+        }
+        if (typeof settings.startPage === "string" && isValidStartPage(settings.startPage)) {
+          setStartPageState(settings.startPage);
+          localStorage.setItem(START_PAGE_STORAGE_KEY, settings.startPage);
+        }
         setLoadedFromServer(true);
       })
       .catch(() => {
@@ -177,6 +269,12 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
     appIcon?: string;
     cardSize?: number;
     hideHardwareMenu?: boolean;
+    hideDashboardMenu?: boolean;
+    hideGamesMenu?: boolean;
+    hideEventsMenu?: boolean;
+    hideAchievementsMenu?: boolean;
+    hideInsightsMenu?: boolean;
+    startPage?: StartPage;
   }) => {
     if (!loadedFromServer) return; // don't overwrite server before we've loaded
     updateAppearance(patch).catch(() => {
@@ -225,23 +323,78 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
     persist({ hideHardwareMenu: hide });
   };
 
+  const setHideDashboardMenu = (hide: boolean) => {
+    setHideDashboardMenuState(hide);
+    localStorage.setItem(HIDE_DASHBOARD_STORAGE_KEY, String(hide));
+    persist({ hideDashboardMenu: hide });
+  };
+
+  const setHideGamesMenu = (hide: boolean) => {
+    setHideGamesMenuState(hide);
+    localStorage.setItem(HIDE_GAMES_STORAGE_KEY, String(hide));
+    persist({ hideGamesMenu: hide });
+  };
+
+  const setHideEventsMenu = (hide: boolean) => {
+    setHideEventsMenuState(hide);
+    localStorage.setItem(HIDE_EVENTS_STORAGE_KEY, String(hide));
+    persist({ hideEventsMenu: hide });
+  };
+
+  const setHideAchievementsMenu = (hide: boolean) => {
+    setHideAchievementsMenuState(hide);
+    localStorage.setItem(HIDE_ACHIEVEMENTS_STORAGE_KEY, String(hide));
+    persist({ hideAchievementsMenu: hide });
+  };
+
+  const setHideInsightsMenu = (hide: boolean) => {
+    setHideInsightsMenuState(hide);
+    localStorage.setItem(HIDE_INSIGHTS_STORAGE_KEY, String(hide));
+    persist({ hideInsightsMenu: hide });
+  };
+
+  const setStartPage = (page: StartPage) => {
+    if (!isValidStartPage(page)) return;
+    setStartPageState(page);
+    localStorage.setItem(START_PAGE_STORAGE_KEY, page);
+    persist({ startPage: page });
+  };
+
   const resetAppearance = () => {
     setAccentColorState(SEED_COLOR_HEX);
     setAppTitleState(DEFAULT_APP_TITLE);
     setAppIconState(DEFAULT_APP_ICON);
     setCardSizeState(DEFAULT_CARD_SIZE);
     setHideHardwareMenuState(false);
+    setHideDashboardMenuState(false);
+    setHideGamesMenuState(false);
+    setHideEventsMenuState(false);
+    setHideAchievementsMenuState(false);
+    setHideInsightsMenuState(false);
+    setStartPageState(DEFAULT_START_PAGE);
     localStorage.removeItem(ACCENT_STORAGE_KEY);
     localStorage.removeItem(TITLE_STORAGE_KEY);
     localStorage.removeItem(ICON_STORAGE_KEY);
     localStorage.removeItem(CARD_SIZE_STORAGE_KEY);
     localStorage.removeItem(HIDE_HARDWARE_STORAGE_KEY);
+    localStorage.removeItem(HIDE_DASHBOARD_STORAGE_KEY);
+    localStorage.removeItem(HIDE_GAMES_STORAGE_KEY);
+    localStorage.removeItem(HIDE_EVENTS_STORAGE_KEY);
+    localStorage.removeItem(HIDE_ACHIEVEMENTS_STORAGE_KEY);
+    localStorage.removeItem(HIDE_INSIGHTS_STORAGE_KEY);
+    localStorage.removeItem(START_PAGE_STORAGE_KEY);
     persist({
       accentColor: SEED_COLOR_HEX,
       appTitle: DEFAULT_APP_TITLE,
       appIcon: DEFAULT_APP_ICON,
       cardSize: DEFAULT_CARD_SIZE,
       hideHardwareMenu: false,
+      hideDashboardMenu: false,
+      hideGamesMenu: false,
+      hideEventsMenu: false,
+      hideAchievementsMenu: false,
+      hideInsightsMenu: false,
+      startPage: DEFAULT_START_PAGE,
     });
   };
 
@@ -270,6 +423,18 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
         setCardSize,
         hideHardwareMenu,
         setHideHardwareMenu,
+        hideDashboardMenu,
+        setHideDashboardMenu,
+        hideGamesMenu,
+        setHideGamesMenu,
+        hideEventsMenu,
+        setHideEventsMenu,
+        hideAchievementsMenu,
+        setHideAchievementsMenu,
+        hideInsightsMenu,
+        setHideInsightsMenu,
+        startPage,
+        setStartPage,
         resetAppearance,
       }}
     >

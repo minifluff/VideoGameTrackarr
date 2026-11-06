@@ -27,4 +27,29 @@ describe("getNavDestinations", () => {
     expect(withoutHardware).not.toContain("/hardware");
     expect(withoutHardware).toEqual(withHardware.filter((to) => to !== "/hardware"));
   });
+
+  it.each([
+    [{ hideDashboardMenu: true }, "/"],
+    [{ hideGamesMenu: true }, "/games"],
+    [{ hideEventsMenu: true }, "/events"],
+    [{ hideAchievementsMenu: true }, "/achievements"],
+    [{ hideInsightsMenu: true }, "/insights"],
+  ] as const)("omits only %s when its hide flag is on", (options, hiddenTo) => {
+    const all = getNavDestinations(t).map((destination) => destination.to);
+    const filtered = getNavDestinations(t, options).map((destination) => destination.to);
+    expect(filtered).not.toContain(hiddenTo);
+    expect(filtered).toEqual(all.filter((to) => to !== hiddenTo));
+  });
+
+  it("omits every hidden destination at once, keeping Settings", () => {
+    const filtered = getNavDestinations(t, {
+      hideDashboardMenu: true,
+      hideGamesMenu: true,
+      hideHardwareMenu: true,
+      hideEventsMenu: true,
+      hideAchievementsMenu: true,
+      hideInsightsMenu: true,
+    }).map((destination) => destination.to);
+    expect(filtered).toEqual(["/settings"]);
+  });
 });

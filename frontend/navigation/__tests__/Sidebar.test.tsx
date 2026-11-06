@@ -2,8 +2,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { ThemeProvider } from "@mui/material/styles";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createM3Theme } from "../../theme/createM3Theme";
+import { AppearanceProvider } from "../../theme/AppearanceProvider";
 import Sidebar from "../Sidebar";
 
 // Same M3-theme wrapper as the card tests — production renders always go through
@@ -26,14 +27,46 @@ function renderSidebar(initialPath: string, onNavigate = vi.fn()) {
   return { onNavigate };
 }
 
+// Same harness plus the real AppearanceProvider, so the hide toggles read
+// their localStorage values the way the app does (the server sync fails in
+// jsdom and the local values stand, as in PublicSubNav.test.tsx).
+function renderSidebarWithAppearance(initialPath: string) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={queryClient}>
+      <AppearanceProvider>
+        <ThemeProvider theme={theme}>
+          <MemoryRouter initialEntries={[initialPath]}>
+            <Sidebar />
+          </MemoryRouter>
+        </ThemeProvider>
+      </AppearanceProvider>
+    </QueryClientProvider>
+  );
+}
+
+afterEach(() => {
+  localStorage.removeItem("vgt.hideDashboardMenu");
+  localStorage.removeItem("vgt.hideGamesMenu");
+  localStorage.removeItem("vgt.hideEventsMenu");
+  localStorage.removeItem("vgt.hideAchievementsMenu");
+  localStorage.removeItem("vgt.hideInsightsMenu");
+});
+
 describe("Sidebar", () => {
   it("shows top-level destinations and group headings, hiding sub-items on the dashboard", () => {
     renderSidebar("/");
 
     expect(screen.getByText("Library")).toBeInTheDocument();
-    // "Insights" is both the group heading and the destination link inside it.
-    expect(screen.getAllByText("Insights")).toHaveLength(2);
+    // "Stats" is the group heading; Achievements comes first inside it, then
+    // the Insights destination link (the only "Insights" on the page now).
+    expect(screen.getByText("Stats")).toBeInTheDocument();
+    expect(screen.getAllByText("Insights")).toHaveLength(1);
     expect(screen.getByText("System")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Achievements" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Insights" })).toBeInTheDocument();
+    const linkLabels = screen.getAllByRole("link").map((link) => link.textContent);
+    expect(linkLabels.indexOf("Achievements")).toBeLessThan(linkLabels.indexOf("Insights"));
     expect(screen.getByRole("link", { name: "Games" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Bookshelf" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Playing" })).not.toBeInTheDocument();
@@ -72,5 +105,20 @@ describe("Sidebar", () => {
 
     fireEvent.click(screen.getByRole("link", { name: "Bookshelf" }));
     expect(onNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides menu pages whose toggles are on, including a whole emptied group", () => {
+    localStorage.setItem("vgt.hideGamesMenu", "true");
+    localStorage.setItem("vgt.hideAchievementsMenu", "true");
+    localStorage.setItem("vgt.hideInsightsMenu", "true");
+    renderSidebarWithAppearance("/");
+
+    expect(screen.queryByRole("link", { name: "Games" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Achievements" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Insights" })).not.toBeInTheDocument();
+    // Both Stats destinations hidden, so the Stats heading goes with them.
+    expect(screen.queryByText("Stats")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Events" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Settings" })).toBeInTheDocument();
   });
 });

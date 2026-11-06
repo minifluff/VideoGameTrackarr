@@ -143,11 +143,27 @@ interface SidebarProps {
 const Sidebar = ({ onNavigate }: SidebarProps) => {
   const { t } = useTranslation();
   const { pathname } = useLocation();
-  const { appTitle, appIcon, hideHardwareMenu } = useAppearance();
+  const {
+    appTitle,
+    appIcon,
+    hideDashboardMenu,
+    hideGamesMenu,
+    hideHardwareMenu,
+    hideEventsMenu,
+    hideAchievementsMenu,
+    hideInsightsMenu,
+  } = useAppearance();
   const { data: dashboardStats } = useDashboardStats();
   const { data: hardwareStats } = useHardwareStats();
   const { data: version } = useVersion();
-  const destinations = getNavDestinations(t, { hideHardwareMenu });
+  const destinations = getNavDestinations(t, {
+    hideDashboardMenu,
+    hideGamesMenu,
+    hideHardwareMenu,
+    hideEventsMenu,
+    hideAchievementsMenu,
+    hideInsightsMenu,
+  });
   const byTo = new Map(destinations.map((destination) => [destination.to, destination]));
   const counts: Record<string, number | undefined> = {
     "/games": dashboardStats?.totalTracked,
@@ -212,7 +228,9 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
         aria-label={t("nav.primary")}
         sx={{ px: 1.25, pb: 2, overflowY: "auto", flexGrow: 1 }}
       >
-        {NAV_GROUPS.map((group) => (
+        {/* A group whose every destination is hidden renders nothing — no
+            bare heading over an empty section. */}
+        {NAV_GROUPS.filter((group) => group.items.some((to) => byTo.has(to))).map((group) => (
           <Box key={group.labelKey}>
             <Typography
               variant="overline"

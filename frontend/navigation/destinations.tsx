@@ -49,9 +49,15 @@ export interface NavDestination {
 // Takes `t` rather than being a static array so labels stay reactive to language changes;
 // call from inside a component with useTranslation()'s t.
 export interface NavDestinationOptions {
-  // Settings → Appearance: drop the Hardware destination from every nav surface
+  // Settings → Appearance: drop destinations from every nav surface
   // (drawer, rail, bottom bar). The pages themselves stay reachable by URL.
+  // Settings itself is never hideable — hiding it would hide the toggles too.
+  hideDashboardMenu?: boolean;
+  hideGamesMenu?: boolean;
   hideHardwareMenu?: boolean;
+  hideEventsMenu?: boolean;
+  hideAchievementsMenu?: boolean;
+  hideInsightsMenu?: boolean;
 }
 
 export function getNavDestinations(t: TFunction, options?: NavDestinationOptions): NavDestination[] {
@@ -140,7 +146,14 @@ export function getNavDestinations(t: TFunction, options?: NavDestinationOptions
       ],
     },
   ];
-  return options?.hideHardwareMenu
-    ? destinations.filter((destination) => destination.to !== "/hardware")
+  const hidden = new Set<string>();
+  if (options?.hideDashboardMenu) hidden.add("/");
+  if (options?.hideGamesMenu) hidden.add("/games");
+  if (options?.hideHardwareMenu) hidden.add("/hardware");
+  if (options?.hideEventsMenu) hidden.add("/events");
+  if (options?.hideAchievementsMenu) hidden.add("/achievements");
+  if (options?.hideInsightsMenu) hidden.add("/insights");
+  return hidden.size > 0
+    ? destinations.filter((destination) => !hidden.has(destination.to))
     : destinations;
 }

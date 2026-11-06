@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import DarkModeIcon from "@mui/icons-material/DarkModeOutlined";
 import LightModeIcon from "@mui/icons-material/LightModeOutlined";
@@ -43,9 +43,29 @@ const AppShell = () => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const logoutMutation = useLogout();
-  const { hideHardwareMenu } = useAppearance();
+  const {
+    hideDashboardMenu,
+    hideGamesMenu,
+    hideHardwareMenu,
+    hideEventsMenu,
+    hideAchievementsMenu,
+    hideInsightsMenu,
+    startPage,
+  } = useAppearance();
   useScrollResetOnNavigate();
   useDragToScroll();
+
+  // First load only: opening the app on "/" goes to the chosen starting page
+  // instead. The flag is set on the first run whatever happens, so later trips
+  // to "/" — tapping Dashboard in the menu, for example — stay put.
+  const didStartPageRedirect = useRef(false);
+  useEffect(() => {
+    if (didStartPageRedirect.current) return;
+    didStartPageRedirect.current = true;
+    if (pathname === "/" && startPage !== "/") {
+      navigate(startPage, { replace: true });
+    }
+  }, [pathname, startPage, navigate]);
 
   // A drawer left open on a small screen closes when the page changes — except
   // onto a parent section page, whose sub-items live in the drawer itself. Without
@@ -53,7 +73,14 @@ const AppShell = () => {
   // via navigation even though Sidebar no longer closes it on the tap itself, so
   // the sub-items vanished the moment they should have appeared.
   useEffect(() => {
-    const isParentPage = getNavDestinations(t, { hideHardwareMenu }).some(
+    const isParentPage = getNavDestinations(t, {
+      hideDashboardMenu,
+      hideGamesMenu,
+      hideHardwareMenu,
+      hideEventsMenu,
+      hideAchievementsMenu,
+      hideInsightsMenu,
+    }).some(
       (destination) =>
         destination.subItems &&
         destination.subItems.length > 0 &&
@@ -62,7 +89,16 @@ const AppShell = () => {
     if (!isParentPage) {
       setDrawerOpen(false);
     }
-  }, [pathname, t, hideHardwareMenu]);
+  }, [
+    pathname,
+    t,
+    hideDashboardMenu,
+    hideGamesMenu,
+    hideHardwareMenu,
+    hideEventsMenu,
+    hideAchievementsMenu,
+    hideInsightsMenu,
+  ]);
 
   const handleLogout = () => {
     // Clearing tokens/cache alone doesn't move the user off the current (now-stale)

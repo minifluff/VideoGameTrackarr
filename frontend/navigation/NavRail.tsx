@@ -14,8 +14,22 @@ const APP_BAR_HEIGHT = 64;
 const NavRail = () => {
   const location = useLocation();
   const { t } = useTranslation();
-  const { hideHardwareMenu } = useAppearance();
-  const navDestinations = getNavDestinations(t, { hideHardwareMenu });
+  const {
+    hideDashboardMenu,
+    hideGamesMenu,
+    hideHardwareMenu,
+    hideEventsMenu,
+    hideAchievementsMenu,
+    hideInsightsMenu,
+  } = useAppearance();
+  const navDestinations = getNavDestinations(t, {
+    hideDashboardMenu,
+    hideGamesMenu,
+    hideHardwareMenu,
+    hideEventsMenu,
+    hideAchievementsMenu,
+    hideInsightsMenu,
+  });
 
   return (
     <Drawer

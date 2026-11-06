@@ -14,8 +14,22 @@ const BottomNavBar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { hideHardwareMenu } = useAppearance();
-  const navDestinations = getNavDestinations(t, { hideHardwareMenu });
+  const {
+    hideDashboardMenu,
+    hideGamesMenu,
+    hideHardwareMenu,
+    hideEventsMenu,
+    hideAchievementsMenu,
+    hideInsightsMenu,
+  } = useAppearance();
+  const navDestinations = getNavDestinations(t, {
+    hideDashboardMenu,
+    hideGamesMenu,
+    hideHardwareMenu,
+    hideEventsMenu,
+    hideAchievementsMenu,
+    hideInsightsMenu,
+  });
 
   // Hide on scroll down, show on scroll up — so the nav never blocks content
   // at the bottom of the page (e.g. Save buttons) when the user scrolls there.

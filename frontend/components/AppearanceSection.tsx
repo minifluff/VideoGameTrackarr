@@ -2,7 +2,10 @@ import { useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
+import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
 import Switch from "@mui/material/Switch";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
@@ -11,8 +14,10 @@ import {
   DEFAULT_APP_ICON,
   DEFAULT_APP_TITLE,
   DEFAULT_ICON_SRC,
+  DEFAULT_START_PAGE,
   isCustomIconDataUrl,
   useAppearance,
+  type StartPage,
 } from "../theme/AppearanceProvider";
 import { SEED_COLOR_HEX } from "../theme/m3Colors";
 
@@ -31,6 +36,15 @@ const PRESET_COLORS = [
   "#546E7A", // blue grey
 ];
 
+const START_PAGE_OPTIONS = [
+  { to: "/", labelKey: "nav.dashboard" },
+  { to: "/games", labelKey: "nav.games" },
+  { to: "/hardware", labelKey: "nav.hardware" },
+  { to: "/events", labelKey: "nav.events" },
+  { to: "/achievements", labelKey: "nav.achievements" },
+  { to: "/insights", labelKey: "nav.insights" },
+] as const;
+
 const AppearanceSection = () => {
   const { t } = useTranslation();
   const {
@@ -42,10 +56,63 @@ const AppearanceSection = () => {
     setAppIcon,
     hideHardwareMenu,
     setHideHardwareMenu,
+    hideDashboardMenu,
+    setHideDashboardMenu,
+    hideGamesMenu,
+    setHideGamesMenu,
+    hideEventsMenu,
+    setHideEventsMenu,
+    hideAchievementsMenu,
+    setHideAchievementsMenu,
+    hideInsightsMenu,
+    setHideInsightsMenu,
+    startPage,
+    setStartPage,
     resetAppearance,
   } = useAppearance();
   const [titleDraft, setTitleDraft] = useState(appTitle);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // One toggle per hideable top-level destination, in menu order. Settings
+  // itself is never listed — hiding it would hide these toggles too.
+  const hideMenuToggles = [
+    {
+      labelKey: "settings.appearance.hideDashboardMenu",
+      pageLabelKey: "nav.dashboard",
+      checked: hideDashboardMenu,
+      onChange: setHideDashboardMenu,
+    },
+    {
+      labelKey: "settings.appearance.hideGamesMenu",
+      pageLabelKey: "nav.games",
+      checked: hideGamesMenu,
+      onChange: setHideGamesMenu,
+    },
+    {
+      labelKey: "settings.appearance.hideHardwareMenu",
+      pageLabelKey: "nav.hardware",
+      checked: hideHardwareMenu,
+      onChange: setHideHardwareMenu,
+    },
+    {
+      labelKey: "settings.appearance.hideEventsMenu",
+      pageLabelKey: "nav.events",
+      checked: hideEventsMenu,
+      onChange: setHideEventsMenu,
+    },
+    {
+      labelKey: "settings.appearance.hideAchievementsMenu",
+      pageLabelKey: "nav.achievements",
+      checked: hideAchievementsMenu,
+      onChange: setHideAchievementsMenu,
+    },
+    {
+      labelKey: "settings.appearance.hideInsightsMenu",
+      pageLabelKey: "nav.insights",
+      checked: hideInsightsMenu,
+      onChange: setHideInsightsMenu,
+    },
+  ];
 
   const handleIconUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -85,7 +152,13 @@ const AppearanceSection = () => {
     accentColor !== SEED_COLOR_HEX ||
     appTitle !== DEFAULT_APP_TITLE ||
     appIcon !== DEFAULT_APP_ICON ||
-    hideHardwareMenu;
+    hideHardwareMenu ||
+    hideDashboardMenu ||
+    hideGamesMenu ||
+    hideEventsMenu ||
+    hideAchievementsMenu ||
+    hideInsightsMenu ||
+    startPage !== DEFAULT_START_PAGE;
 
   return (
     <Box>
@@ -265,17 +338,41 @@ const AppearanceSection = () => {
       <Typography variant="subtitle2" gutterBottom>
         {t("settings.appearance.navigationHeading")}
       </Typography>
-      <FormControlLabel
-        control={
-          <Switch
-            checked={hideHardwareMenu}
-            onChange={(event) => setHideHardwareMenu(event.target.checked)}
+      {hideMenuToggles.map((toggle) => (
+        <Box key={toggle.labelKey}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={toggle.checked}
+                onChange={(event) => toggle.onChange(event.target.checked)}
+              />
+            }
+            label={t(toggle.labelKey)}
           />
-        }
-        label={t("settings.appearance.hideHardwareMenu")}
-      />
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
+            {t("settings.appearance.hidePageMenuHelp", { page: t(toggle.pageLabelKey) })}
+          </Typography>
+        </Box>
+      ))}
+
+      <Typography variant="subtitle2" gutterBottom>
+        {t("settings.appearance.startPage")}
+      </Typography>
+      <FormControl fullWidth sx={{ maxWidth: 400, mb: 1 }}>
+        <Select
+          value={startPage}
+          onChange={(event) => setStartPage(event.target.value as StartPage)}
+          aria-label={t("settings.appearance.startPage")}
+        >
+          {START_PAGE_OPTIONS.map((option) => (
+            <MenuItem key={option.to} value={option.to}>
+              {t(option.labelKey)}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
       <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
-        {t("settings.appearance.hideHardwareMenuHelp")}
+        {t("settings.appearance.startPageHelp")}
       </Typography>
 
       {isCustomized && (
