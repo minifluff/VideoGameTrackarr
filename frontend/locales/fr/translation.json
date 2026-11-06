@@ -105,7 +105,13 @@
     "loadError": "Impossible de charger vos données RetroAchievements.",
     "progress": "{{achieved}} / {{total}} succès · {{score}} pts",
     "points": "{{count}} pts",
-    "hardcore": "Hardcore"
+    "hardcore": "Hardcore",
+    "progressNoScore": "{{achieved}} / {{total}} succès",
+    "sourceRetroAchievements": "RetroAchievements",
+    "sourceSteam": "Steam",
+    "steamNotConfiguredTitle": "Steam n'est pas encore connecté",
+    "steamNotConfiguredDescription": "Connectez Steam sur la page Intégrations pour voir vos succès Steam ici aussi.",
+    "steamLoadError": "Impossible de charger vos succès Steam."
   },
   "overview": {
     "tiles": {
