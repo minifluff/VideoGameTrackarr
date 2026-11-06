@@ -163,3 +163,89 @@ async def test_server_error_retries_then_raises():
 def test_ra_media_url_returns_none_for_empty():
     assert ra_media_url(None) is None
     assert ra_media_url("") is None
+
+
+GAME_PROGRESS_RESPONSE = {
+    "ID": 1,
+    "Title": "Sonic the Hedgehog",
+    "ConsoleID": 1,
+    "ConsoleName": "Mega Drive",
+    "ImageIcon": "/Images/067895.png",
+    "ImageBoxArt": "/Images/051872.png",
+    "NumAchievements": 3,
+    "NumAwardedToUser": 1,
+    "NumAwardedToUserHardcore": 1,
+    "Achievements": {
+        "9": {
+            "ID": 9,
+            "NumAwarded": 24273,
+            "NumAwardedHardcore": 10831,
+            "Title": "That Was Easy",
+            "Description": "Complete the first act in Green Hill Zone",
+            "Points": 3,
+            "TrueRatio": 3,
+            "BadgeName": "250336",
+            "DisplayOrder": 1,
+            "DateEarned": "2016-03-12 17:47:29",
+            "DateEarnedHardcore": "2016-03-12 17:47:29",
+        },
+        "10": {
+            "ID": 10,
+            "NumAwarded": 100,
+            "NumAwardedHardcore": 50,
+            "Title": "Locked One",
+            "Description": "Do something hard",
+            "Points": 10,
+            "TrueRatio": 25,
+            "BadgeName": "250337",
+            "DisplayOrder": 0,
+        },
+        "11": {
+            "ID": 11,
+            "NumAwarded": 5,
+            "NumAwardedHardcore": 2,
+            "Title": "Locked Two",
+            "Description": "Do something else",
+            "Points": 5,
+            "TrueRatio": 5,
+            "BadgeName": "250338",
+            "DisplayOrder": 2,
+            "DateEarned": None,
+        },
+    },
+}
+
+
+@respx.mock
+async def test_get_game_info_and_user_progress_maps_achievements_and_scores():
+    respx.get(f"{RA_API_BASE}/API_GetGameInfoAndUserProgress.php").mock(
+        return_value=httpx.Response(200, json=GAME_PROGRESS_RESPONSE)
+    )
+
+    progress = await make_client().get_game_info_and_user_progress("Flyingfox", 1)
+
+    assert progress.game_id == 1
+    assert progress.title == "Sonic the Hedgehog"
+    assert progress.console_name == "Mega Drive"
+    assert progress.image_box_art_url == "https://media.retroachievements.org/Images/051872.png"
+    assert progress.num_possible_achievements == 3
+    assert progress.num_achieved == 1
+    # Scores are summed from the achievement list: 3 earned of 3 + 10 + 5 total.
+    assert progress.score_achieved == 3
+    assert progress.possible_score == 18
+    assert len(progress.achievements) == 3
+
+    earned = progress.achievements[0]
+    assert earned.achievement_id == 9
+    assert earned.badge_url == "https://media.retroachievements.org/Badge/250336.png"
+    assert earned.points == 3
+    assert earned.display_order == 1
+    assert earned.num_awarded == 24273
+    assert earned.date_earned == "2016-03-12 17:47:29"
+    assert earned.date_earned_hardcore == "2016-03-12 17:47:29"
+
+    # DateEarned absent entirely → locked; explicitly null → locked too.
+    locked = {a.achievement_id: a for a in progress.achievements}
+    assert locked[10].date_earned is None
+    assert locked[10].date_earned_hardcore is None
+    assert locked[11].date_earned is None

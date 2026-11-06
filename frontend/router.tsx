@@ -32,6 +32,7 @@ const PlayingGamesPage = lazy(() => import("./components/PlayingGamesPage"));
 const WishlistGamesPage = lazy(() => import("./components/WishlistGamesPage"));
 const HardwarePage = lazy(() => import("./components/HardwarePage"));
 const AchievementsPage = lazy(() => import("./components/AchievementsPage"));
+const AchievementGamePage = lazy(() => import("./components/AchievementGamePage"));
 const InsightsPage = lazy(() => import("./components/InsightsPage"));
 const IntegrationsPage = lazy(() => import("./components/IntegrationsPage"));
 const MissingAddonsPage = lazy(() => import("./components/MissingAddonsPage"));
@@ -84,6 +85,7 @@ import {
   hardwareCrumbs,
   insightsCrumbs,
   achievementsCrumbs,
+  achievementGameCrumbs,
   integrationsCrumbs,
   jobsCrumbs,
   emulationCrumbs,
@@ -240,6 +242,11 @@ const router = createBrowserRouter([
           },
           { path: "/insights", element: <InsightsPage />, handle: { crumbs: insightsCrumbs } },
           { path: "/achievements", element: <AchievementsPage />, handle: { crumbs: achievementsCrumbs } },
+          {
+            path: "/achievements/game/:gameId",
+            element: <AchievementGamePage />,
+            handle: { crumbs: achievementGameCrumbs },
+          },
           {
             path: "/insights/duplicates",
             element: <DuplicatesPage />,

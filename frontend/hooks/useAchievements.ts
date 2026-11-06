@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import {
+  getRetroAchievementsGameProgress,
   getRetroAchievementsStatus,
   getRetroAchievementsSummary,
   updateRetroAchievementsSettings,
@@ -41,4 +42,12 @@ export function useRetroAchievementsSummary(enabled: boolean) {
     return fresh;
   };
   return { ...query, refresh };
+}
+
+export function useRetroAchievementsGameProgress(gameId: string | undefined) {
+  return useQuery({
+    queryKey: ["achievements-game", gameId],
+    queryFn: () => getRetroAchievementsGameProgress(Number(gameId)),
+    enabled: gameId !== undefined && Number.isInteger(Number(gameId)),
+  });
 }

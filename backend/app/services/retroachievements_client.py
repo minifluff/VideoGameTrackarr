@@ -60,6 +60,34 @@ class RARecentlyPlayedGame:
 
 
 @dataclass
+class RAGameAchievement:
+    achievement_id: int
+    title: str
+    description: str | None
+    badge_url: str | None
+    points: int
+    true_ratio: int
+    display_order: int
+    num_awarded: int
+    date_earned: str | None
+    date_earned_hardcore: str | None
+
+
+@dataclass
+class RAGameUserProgress:
+    game_id: int
+    title: str
+    console_name: str
+    image_icon_url: str | None
+    image_box_art_url: str | None
+    num_achieved: int
+    num_possible_achievements: int
+    score_achieved: int
+    possible_score: int
+    achievements: list[RAGameAchievement]
+
+
+@dataclass
 class RARecentAchievement:
     achievement_id: int
     title: str
@@ -195,3 +223,48 @@ class RetroAchievementsClient:
                     )
                 )
         return achievements
+
+    async def get_game_info_and_user_progress(self, username: str, game_id: int) -> RAGameUserProgress:
+        # One call returns the game plus ALL its achievements with the user's
+        # unlock state. The Achievements object is keyed by achievement id, and
+        # DateEarned / DateEarnedHardcore are only present when earned — their
+        # absence is what "locked" means.
+        payload = await self._call("API_GetGameInfoAndUserProgress.php", u=username, g=game_id)
+        assert isinstance(payload, dict)
+        raw_achievements = payload.get("Achievements")
+        achievements: list[RAGameAchievement] = []
+        if isinstance(raw_achievements, dict):
+            for entry in raw_achievements.values():
+                if not isinstance(entry, dict):
+                    continue
+                badge_name = self._as_str(entry.get("BadgeName"))
+                achievements.append(
+                    RAGameAchievement(
+                        achievement_id=self._as_int(entry.get("ID")),
+                        title=str(entry.get("Title") or ""),
+                        description=self._as_str(entry.get("Description")),
+                        badge_url=ra_media_url(f"/Badge/{badge_name}.png") if badge_name else None,
+                        points=self._as_int(entry.get("Points")),
+                        true_ratio=self._as_int(entry.get("TrueRatio")),
+                        display_order=self._as_int(entry.get("DisplayOrder")),
+                        num_awarded=self._as_int(entry.get("NumAwarded")),
+                        date_earned=self._as_str(entry.get("DateEarned")) or None,
+                        date_earned_hardcore=self._as_str(entry.get("DateEarnedHardcore")) or None,
+                    )
+                )
+        num_possible = self._as_int(payload.get("NumAchievements")) or len(achievements)
+        num_achieved = self._as_int(payload.get("NumAwardedToUser")) or sum(
+            1 for a in achievements if a.date_earned
+        )
+        return RAGameUserProgress(
+            game_id=self._as_int(payload.get("ID")) or game_id,
+            title=str(payload.get("Title") or ""),
+            console_name=str(payload.get("ConsoleName") or ""),
+            image_icon_url=ra_media_url(self._as_str(payload.get("ImageIcon"))),
+            image_box_art_url=ra_media_url(self._as_str(payload.get("ImageBoxArt"))),
+            num_achieved=num_achieved,
+            num_possible_achievements=num_possible,
+            score_achieved=sum(a.points for a in achievements if a.date_earned),
+            possible_score=sum(a.points for a in achievements),
+            achievements=achievements,
+        )

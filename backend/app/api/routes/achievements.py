@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user, get_db
 from app.models.system import User
 from app.schemas.achievements import (
+    RAGameUserProgressResponse,
     RetroAchievementsStatusResponse,
     RetroAchievementsSummaryResponse,
     UpdateRetroAchievementsRequest,
@@ -48,3 +49,22 @@ async def get_summary(
     except RetroAchievementsError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
     return RetroAchievementsSummaryResponse.model_validate(summary)
+
+
+@router.get("/game/{game_id}", response_model=RAGameUserProgressResponse)
+async def get_game_progress(
+    game_id: int,
+    refresh: bool = False,
+    current_user: User = Depends(get_current_user),
+) -> RAGameUserProgressResponse:
+    # Same error mapping as the summary: not-configured is a 409, RA rejecting
+    # the key or being unreachable is a 502.
+    try:
+        progress = await retroachievements_service.get_game_progress(
+            current_user, game_id, refresh=refresh
+        )
+    except RetroAchievementsAuthError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+    except RetroAchievementsError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+    return RAGameUserProgressResponse.model_validate(progress)

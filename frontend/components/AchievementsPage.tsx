@@ -1,5 +1,4 @@
 import { useState } from "react";
-import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import {
   Alert,
@@ -8,7 +7,6 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
   CircularProgress,
   Divider,
   LinearProgress,
@@ -32,7 +30,10 @@ function formatRADate(value: string | null, language: string): string {
   if (!value) return "";
   const parsed = new Date(`${value.replace(" ", "T")}Z`);
   if (Number.isNaN(parsed.getTime())) return value;
-  return parsed.toLocaleDateString(language, { dateStyle: "medium" });
+  // Format in UTC so the displayed calendar date is the date RA reports (the
+  // RA app shows the raw UTC date); formatting in local time would shift
+  // near-midnight unlocks to the previous day for western timezones.
+  return parsed.toLocaleDateString(language, { dateStyle: "medium", timeZone: "UTC" });
 }
 
 function errorDetail(error: unknown): string | null {
@@ -172,21 +173,15 @@ const AchievementsPage = () => {
                   <Box>
                     <Typography variant="h6">{profile.totalPoints.toLocaleString()}</Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {t("achievements.totalPoints")}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="h6">{profile.totalTruePoints.toLocaleString()}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {t("achievements.truePoints")}
+                      {t("achievements.hardcorePoints")}
                     </Typography>
                   </Box>
                   <Box>
                     <Typography variant="h6">
-                      {formatRADate(profile.memberSince, i18n.language)}
+                      {profile.totalSoftcorePoints.toLocaleString()}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {t("achievements.memberSince")}
+                      {t("achievements.softcorePoints")}
                     </Typography>
                   </Box>
                 </Stack>
@@ -211,7 +206,11 @@ const AchievementsPage = () => {
                     return (
                       <Box key={game.gameId}>
                         {index > 0 && <Divider component="li" />}
-                        <ListItem sx={{ py: 1.5 }}>
+                        <ListItem
+                          component={RouterLink}
+                          to={`/achievements/game/${game.gameId}`}
+                          sx={{ py: 1.5 }}
+                        >
                           <ListItemAvatar>
                             <Avatar
                               variant="rounded"
@@ -221,16 +220,7 @@ const AchievementsPage = () => {
                             />
                           </ListItemAvatar>
                           <ListItemText
-                            primary={
-                              <Link
-                                href={`https://retroachievements.org/game/${game.gameId}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                underline="hover"
-                              >
-                                {game.title}
-                              </Link>
-                            }
+                            primary={game.title}
                             secondary={game.consoleName}
                             sx={{ minWidth: 0, mr: 2 }}
                           />
@@ -257,82 +247,6 @@ const AchievementsPage = () => {
                       </Box>
                     );
                   })}
-                </List>
-              )}
-            </Card>
-
-            <Typography variant="h5" component="h2" sx={{ mb: 1.5 }}>
-              {t("achievements.recentAchievements")}
-            </Typography>
-            <Card>
-              {summary.recentAchievements.length === 0 ? (
-                <CardContent>
-                  <Typography variant="body2" color="text.secondary">
-                    {t("achievements.noRecentAchievements")}
-                  </Typography>
-                </CardContent>
-              ) : (
-                <List disablePadding>
-                  {summary.recentAchievements.map((achievement, index) => (
-                    <Box key={achievement.achievementId}>
-                      {index > 0 && <Divider component="li" />}
-                      <ListItem sx={{ py: 1.5, alignItems: "flex-start" }}>
-                        <ListItemAvatar>
-                          <Avatar
-                            variant="rounded"
-                            src={achievement.badgeUrl ?? undefined}
-                            alt={achievement.title}
-                            sx={{ width: 40, height: 40 }}
-                          />
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={
-                            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                              <Typography component="span" sx={{ fontWeight: 500 }}>
-                                {achievement.title}
-                              </Typography>
-                              {achievement.hardcore && (
-                                <Chip
-                                  size="small"
-                                  color="warning"
-                                  icon={<EmojiEventsIcon />}
-                                  label={t("achievements.hardcore")}
-                                />
-                              )}
-                            </Stack>
-                          }
-                          secondary={
-                            <>
-                              {achievement.description && (
-                                <Typography
-                                  variant="body2"
-                                  color="text.secondary"
-                                  component="span"
-                                  sx={{ display: "block" }}
-                                >
-                                  {achievement.description}
-                                </Typography>
-                              )}
-                              <Typography variant="body2" color="text.secondary" component="span">
-                                {achievement.gameTitle} · {achievement.consoleName}
-                              </Typography>
-                            </>
-                          }
-                          sx={{ minWidth: 0, mr: 2 }}
-                        />
-                        <Box sx={{ textAlign: "right", flexShrink: 0 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            {t("achievements.points", { count: achievement.points })}
-                          </Typography>
-                          {achievement.dateEarned && (
-                            <Typography variant="body2" color="text.secondary">
-                              {formatRADate(achievement.dateEarned, i18n.language)}
-                            </Typography>
-                          )}
-                        </Box>
-                      </ListItem>
-                    </Box>
-                  ))}
                 </List>
               )}
             </Card>

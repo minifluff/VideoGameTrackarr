@@ -82,7 +82,7 @@ describe("AchievementsPage", () => {
     );
   });
 
-  it("shows the profile header, recently played games and recent achievements", () => {
+  it("shows the profile header and recently played games, without member since or recent achievements", () => {
     status = { configured: true, username: "Flyingfox", apiKeyConfigured: true };
     summary = summaryFixture;
 
@@ -96,11 +96,17 @@ describe("AchievementsPage", () => {
       "href",
       "https://retroachievements.org/user/Flyingfox",
     );
+    // RA's TotalPoints are the hardcore points; softcore is the second stat.
     expect(screen.getByText("399,597")).toBeInTheDocument();
+    expect(screen.getByText("12")).toBeInTheDocument();
+    expect(screen.queryByText("Member Since")).not.toBeInTheDocument();
+    expect(screen.queryByText("Beginner I")).not.toBeInTheDocument();
     expect(screen.getByText("Final Fantasy Origins")).toBeInTheDocument();
     expect(screen.getByText("38 / 119 achievements · 382 pts")).toBeInTheDocument();
-    expect(screen.getByText("Beginner I")).toBeInTheDocument();
-    expect(screen.getByText("Hardcore")).toBeInTheDocument();
-    expect(screen.getByText("5 pts")).toBeInTheDocument();
+    // The whole recently-played row links to the in-app game page.
+    expect(screen.getByRole("link", { name: /Final Fantasy Origins/ })).toHaveAttribute(
+      "href",
+      "/achievements/game/11332",
+    );
   });
 });

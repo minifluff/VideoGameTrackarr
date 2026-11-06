@@ -58,3 +58,29 @@ class RetroAchievementsSummaryResponse(CamelModel):
     profile: RAProfileResponse
     recently_played: list[RARecentlyPlayedGameResponse]
     recent_achievements: list[RARecentAchievementResponse]
+
+
+class RAGameAchievementResponse(CamelModel):
+    achievement_id: int
+    title: str
+    description: str | None
+    badge_url: str | None
+    points: int
+    true_ratio: int
+    display_order: int
+    num_awarded: int
+    date_earned: str | None
+    date_earned_hardcore: str | None
+
+
+class RAGameUserProgressResponse(CamelModel):
+    game_id: int
+    title: str
+    console_name: str
+    image_icon_url: str | None
+    image_box_art_url: str | None
+    num_achieved: int
+    num_possible_achievements: int
+    score_achieved: int
+    possible_score: int
+    achievements: list[RAGameAchievementResponse]

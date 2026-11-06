@@ -52,6 +52,32 @@ export interface RetroAchievementsSummary {
   recentAchievements: RARecentAchievement[];
 }
 
+export interface RAGameAchievement {
+  achievementId: number;
+  title: string;
+  description: string | null;
+  badgeUrl: string | null;
+  points: number;
+  trueRatio: number;
+  displayOrder: number;
+  numAwarded: number;
+  dateEarned: string | null;
+  dateEarnedHardcore: string | null;
+}
+
+export interface RAGameUserProgress {
+  gameId: number;
+  title: string;
+  consoleName: string;
+  imageIconUrl: string | null;
+  imageBoxArtUrl: string | null;
+  numAchieved: number;
+  numPossibleAchievements: number;
+  scoreAchieved: number;
+  possibleScore: number;
+  achievements: RAGameAchievement[];
+}
+
 export async function getRetroAchievementsStatus(): Promise<RetroAchievementsStatus> {
   const response = await apiClient.get<RetroAchievementsStatus>("/api/achievements/status");
   return response.data;
@@ -75,5 +101,16 @@ export async function getRetroAchievementsSummary(
   const response = await apiClient.get<RetroAchievementsSummary>("/api/achievements/summary", {
     params: refresh ? { refresh: true } : undefined,
   });
+  return response.data;
+}
+
+export async function getRetroAchievementsGameProgress(
+  gameId: number,
+  refresh = false,
+): Promise<RAGameUserProgress> {
+  const response = await apiClient.get<RAGameUserProgress>(
+    `/api/achievements/game/${gameId}`,
+    { params: refresh ? { refresh: true } : undefined },
+  );
   return response.data;
 }

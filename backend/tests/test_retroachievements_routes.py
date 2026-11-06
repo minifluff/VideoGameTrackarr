@@ -3,6 +3,7 @@ import respx
 
 from app.services.retroachievements_client import RA_API_BASE
 from tests.test_retroachievements_client import (
+    GAME_PROGRESS_RESPONSE,
     PROFILE_RESPONSE,
     RECENT_ACHIEVEMENTS_RESPONSE,
     RECENTLY_PLAYED_RESPONSE,
@@ -128,5 +129,70 @@ def test_summary_with_a_bad_key_is_a_502(auth_client):
     )
 
     response = auth_client.get("/api/achievements/summary")
+
+    assert response.status_code == 502
+
+
+def test_game_progress_without_credentials_is_a_conflict(auth_client):
+    response = auth_client.get("/api/achievements/game/1")
+
+    assert response.status_code == 409
+
+
+@respx.mock
+def test_game_progress_returns_full_achievement_list(auth_client):
+    _connect(auth_client)
+    respx.get(f"{RA_API_BASE}/API_GetGameInfoAndUserProgress.php").mock(
+        return_value=httpx.Response(200, json=GAME_PROGRESS_RESPONSE)
+    )
+
+    response = auth_client.get("/api/achievements/game/1")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["gameId"] == 1
+    assert body["title"] == "Sonic the Hedgehog"
+    assert body["consoleName"] == "Mega Drive"
+    assert body["numAchieved"] == 1
+    assert body["numPossibleAchievements"] == 3
+    assert body["scoreAchieved"] == 3
+    assert body["possibleScore"] == 18
+    assert len(body["achievements"]) == 3
+    earned = body["achievements"][0]
+    assert earned["title"] == "That Was Easy"
+    assert earned["badgeUrl"] == "https://media.retroachievements.org/Badge/250336.png"
+    assert earned["dateEarned"] == "2016-03-12 17:47:29"
+    locked = {a["achievementId"]: a for a in body["achievements"]}
+    assert locked[10]["dateEarned"] is None
+    assert locked[11]["dateEarned"] is None
+
+
+@respx.mock
+def test_game_progress_is_cached_and_refresh_bypasses_the_cache(auth_client):
+    _connect(auth_client, username="CacheGameUser")
+    # Keep the route handle from the mock itself: calling respx.get() a second
+    # time registers a second, unmocked route that answers with an empty 200.
+    game_route = respx.get(f"{RA_API_BASE}/API_GetGameInfoAndUserProgress.php").mock(
+        return_value=httpx.Response(200, json=GAME_PROGRESS_RESPONSE)
+    )
+
+    first = auth_client.get("/api/achievements/game/1")
+    second = auth_client.get("/api/achievements/game/1")
+    third = auth_client.get("/api/achievements/game/1?refresh=true")
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert third.status_code == 200
+    assert game_route.call_count == 2
+
+
+@respx.mock
+def test_game_progress_with_a_bad_key_is_a_502(auth_client):
+    _connect(auth_client, username="BadGameKeyUser")
+    respx.get(f"{RA_API_BASE}/API_GetGameInfoAndUserProgress.php").mock(
+        return_value=httpx.Response(401, json={"message": "Unauthorized"})
+    )
+
+    response = auth_client.get("/api/achievements/game/1")
 
     assert response.status_code == 502

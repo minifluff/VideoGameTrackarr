@@ -9,6 +9,7 @@ from app.models.system import User
 from app.services.cache import get_cache
 from app.services.exceptions import ConflictError
 from app.services.retroachievements_client import (
+    RAGameUserProgress,
     RARecentAchievement,
     RARecentlyPlayedGame,
     RAUserProfile,
@@ -65,6 +66,10 @@ def _cache_key(username: str) -> str:
     return f"retroachievements:summary:{username.lower()}"
 
 
+def _game_cache_key(username: str, game_id: int) -> str:
+    return f"retroachievements:game:{username.lower()}:{game_id}"
+
+
 async def get_summary(user: User, refresh: bool = False) -> dict[str, object]:
     """Profile + recently played games + recent achievements, as plain dicts ready
     for the response schema. The three RA calls run concurrently; the merged
@@ -103,3 +108,26 @@ def _game_dict(game: RARecentlyPlayedGame) -> dict[str, object]:
 
 def _achievement_dict(achievement: RARecentAchievement) -> dict[str, object]:
     return asdict(achievement)
+
+
+async def get_game_progress(user: User, game_id: int, refresh: bool = False) -> dict[str, object]:
+    """One game's full achievement list with the user's unlock state, cached per
+    username + game for the same 15 minutes as the summary."""
+    username, api_key = _credentials(user)
+    cache = get_cache()
+    key = _game_cache_key(username, game_id)
+    if not refresh:
+        cached = await cache.get(key)
+        if cached is not None:
+            return json.loads(cached)
+
+    async with RetroAchievementsClient(api_key) as ra:
+        progress = await ra.get_game_info_and_user_progress(username, game_id)
+
+    result = _game_progress_dict(progress)
+    await cache.set(key, json.dumps(result), SUMMARY_CACHE_TTL_SECONDS)
+    return result
+
+
+def _game_progress_dict(progress: RAGameUserProgress) -> dict[str, object]:
+    return asdict(progress)

@@ -4,6 +4,7 @@ import type { Params } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAccessoryItem } from "../hooks/useAccessories";
+import { useRetroAchievementsGameProgress } from "../hooks/useAchievements";
 import { useCollection, useFranchise, usePlatform } from "../hooks/useCatalogBrowse";
 import { useEvent } from "../hooks/useEvents";
 import { useGame } from "../hooks/useGames";
@@ -193,6 +194,17 @@ export const editAccessoryCrumbs: CrumbsFn = (params, t) => [
 export const insightsCrumbs: CrumbsFn = (_params, t) => [{ label: t("nav.insights") }];
 
 export const achievementsCrumbs: CrumbsFn = (_params, t) => [{ label: t("nav.achievements") }];
+
+const RAGameCrumbLabel = ({ gameId }: { gameId: string | undefined }) => {
+  const { t } = useTranslation();
+  const { data: progress, isError } = useRetroAchievementsGameProgress(gameId);
+  return <>{isError ? t("achievements.loadError") : (progress?.title ?? t("common.loading"))}</>;
+};
+
+export const achievementGameCrumbs: CrumbsFn = (params, t) => [
+  { label: t("nav.achievements"), to: "/achievements" },
+  { label: <RAGameCrumbLabel gameId={params.gameId} /> },
+];
 
 export const duplicatesCrumbs: CrumbsFn = (_params, t) => [
   { label: t("nav.insights"), to: "/insights" },

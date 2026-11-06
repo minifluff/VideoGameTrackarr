@@ -95,17 +95,22 @@
     "notConfiguredTitle": "RetroAchievements ainda não conectado",
     "notConfiguredDescription": "Conecte sua conta RetroAchievements na página de Integrações para ver seu perfil, jogos recentes e conquistas aqui.",
     "goToIntegrations": "Ir para Integrações",
-    "totalPoints": "Pontos totais",
-    "truePoints": "Pontos reais",
-    "memberSince": "Membro desde",
+    "hardcorePoints": "Pontos Hardcore",
+    "softcorePoints": "Pontos Softcore",
     "recentlyPlayed": "Jogados recentemente",
-    "recentAchievements": "Conquistas recentes",
     "noRecentlyPlayed": "Nenhum jogo jogado ainda.",
-    "noRecentAchievements": "Nenhuma conquista na última semana.",
     "loadError": "Não foi possível carregar seus dados do RetroAchievements.",
     "progress": "{{achieved}} / {{total}} conquistas · {{score}} pts",
-    "points": "{{count}} pts",
-    "hardcore": "Hardcore"
+    "game": {
+      "achievementsCount": "Conquistas: {{achieved}}/{{total}}",
+      "pointsCount": "Pontos: {{achieved}}/{{total}}",
+      "unlockedOn": "Desbloqueado em: {{date}}",
+      "pointsLabel": "Pontos: {{count}}",
+      "notUnlocked": "Ainda não desbloqueado",
+      "viewOnRetroAchievements": "Ver no RetroAchievements",
+      "backToAchievements": "Voltar para Conquistas",
+      "noAchievements": "Este jogo não tem conquistas."
+    }
   },
   "overview": {
     "tiles": {
