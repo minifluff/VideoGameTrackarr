@@ -114,7 +114,7 @@ const AchievementGamePage = () => {
           <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
             <Avatar
               variant="square"
-              src={progress.imageBoxArtUrl ?? progress.imageIconUrl ?? undefined}
+              src={progress.imageIconUrl ?? progress.imageBoxArtUrl ?? undefined}
               alt={progress.title}
               sx={{ width: 96, height: 96 }}
             />
