@@ -96,7 +96,7 @@
     "notConfiguredDescription": "Connect your RetroAchievements account on the Integrations page to see your profile, recently played games and achievements here.",
     "goToIntegrations": "Go to Integrations",
     "hardcorePoints": "Hardcore Points",
-    "softcorePoints": "Softcore Points",
+    "totalPoints": "Total Points",
     "recentlyPlayed": "Recently Played",
     "noRecentlyPlayed": "No games played yet.",
     "loadError": "Couldn't load your RetroAchievements data.",

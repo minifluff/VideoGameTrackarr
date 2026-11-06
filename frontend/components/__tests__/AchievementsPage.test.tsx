@@ -96,9 +96,10 @@ describe("AchievementsPage", () => {
       "href",
       "https://retroachievements.org/user/Flyingfox",
     );
-    // RA's TotalPoints are the hardcore points; softcore is the second stat.
+    // Total is hardcore + softcore (RA keeps them as separate buckets);
+    // hardcore only shows when it is above zero.
+    expect(screen.getByText("399,609")).toBeInTheDocument();
     expect(screen.getByText("399,597")).toBeInTheDocument();
-    expect(screen.getByText("12")).toBeInTheDocument();
     expect(screen.queryByText("Member Since")).not.toBeInTheDocument();
     expect(screen.queryByText("Beginner I")).not.toBeInTheDocument();
     expect(screen.getByText("Final Fantasy Origins")).toBeInTheDocument();
@@ -108,5 +109,22 @@ describe("AchievementsPage", () => {
       "href",
       "/achievements/game/11332",
     );
+  });
+
+  it("hides the hardcore stat when there are no hardcore points", () => {
+    status = { configured: true, username: "Flyingfox", apiKeyConfigured: true };
+    summary = {
+      ...summaryFixture,
+      profile: { ...summaryFixture.profile, totalPoints: 0 },
+    };
+
+    render(
+      <MemoryRouter>
+        <AchievementsPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("12")).toBeInTheDocument();
+    expect(screen.queryByText("Hardcore Points")).not.toBeInTheDocument();
   });
 });

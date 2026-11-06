@@ -6,6 +6,12 @@ import {
   updateRetroAchievementsSettings,
 } from "../api/achievements";
 
+// The server caches both RA responses for 15 minutes, so polling on the same
+// cadence keeps the pages fresh without hammering the RA API — each tick lands
+// just as the cache expires. The interval pauses while the tab is hidden
+// (TanStack default); coming back to the tab refetches on focus instead.
+export const ACHIEVEMENTS_AUTO_REFRESH_MS = 15 * 60 * 1000;
+
 export function useRetroAchievementsStatus() {
   return useQuery({ queryKey: ["achievements-status"], queryFn: getRetroAchievementsStatus });
 }
@@ -33,6 +39,7 @@ export function useRetroAchievementsSummary(enabled: boolean) {
     queryKey: ["achievements-summary"],
     queryFn: () => getRetroAchievementsSummary(false),
     enabled,
+    refetchInterval: ACHIEVEMENTS_AUTO_REFRESH_MS,
   });
   // Refresh skips the server's 15-minute cache once and writes the fresh result
   // straight into the query — a plain refetch would keep serving the cache.
@@ -49,5 +56,6 @@ export function useRetroAchievementsGameProgress(gameId: string | undefined) {
     queryKey: ["achievements-game", gameId],
     queryFn: () => getRetroAchievementsGameProgress(Number(gameId)),
     enabled: gameId !== undefined && Number.isInteger(Number(gameId)),
+    refetchInterval: ACHIEVEMENTS_AUTO_REFRESH_MS,
   });
 }

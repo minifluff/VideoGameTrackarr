@@ -172,16 +172,18 @@ const AchievementsPage = () => {
                 <Stack direction="row" spacing={3} sx={{ flexWrap: "wrap", rowGap: 0.5 }}>
                   <Typography variant="body2">
                     <Box component="span" sx={{ fontWeight: 600 }}>
-                      {profile.totalPoints.toLocaleString()}
+                      {(profile.totalPoints + profile.totalSoftcorePoints).toLocaleString()}
                     </Box>{" "}
-                    {t("achievements.hardcorePoints")}
+                    {t("achievements.totalPoints")}
                   </Typography>
-                  <Typography variant="body2">
-                    <Box component="span" sx={{ fontWeight: 600 }}>
-                      {profile.totalSoftcorePoints.toLocaleString()}
-                    </Box>{" "}
-                    {t("achievements.softcorePoints")}
-                  </Typography>
+                  {profile.totalPoints > 0 && (
+                    <Typography variant="body2">
+                      <Box component="span" sx={{ fontWeight: 600 }}>
+                        {profile.totalPoints.toLocaleString()}
+                      </Box>{" "}
+                      {t("achievements.hardcorePoints")}
+                    </Typography>
+                  )}
                 </Stack>
               </CardContent>
             </Card>

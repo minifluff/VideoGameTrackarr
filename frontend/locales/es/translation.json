@@ -96,7 +96,7 @@
     "notConfiguredDescription": "Conecta tu cuenta de RetroAchievements en la página de Integraciones para ver tu perfil, tus juegos recientes y tus logros aquí.",
     "goToIntegrations": "Ir a Integraciones",
     "hardcorePoints": "Puntos Hardcore",
-    "softcorePoints": "Puntos Softcore",
+    "totalPoints": "Puntos Totales",
     "recentlyPlayed": "Jugados recientemente",
     "noRecentlyPlayed": "Aún no hay juegos jugados.",
     "loadError": "No se pudieron cargar tus datos de RetroAchievements.",
