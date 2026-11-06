@@ -113,7 +113,7 @@ const AchievementGamePage = () => {
         <CardContent>
           <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
             <Avatar
-              variant="rounded"
+              variant="square"
               src={progress.imageBoxArtUrl ?? progress.imageIconUrl ?? undefined}
               alt={progress.title}
               sx={{ width: 96, height: 96 }}
@@ -168,13 +168,23 @@ const AchievementGamePage = () => {
               return (
                 <Box key={achievement.achievementId}>
                   {index > 0 && <Divider component="li" />}
-                  <ListItem sx={{ py: 1.5, alignItems: "flex-start" }}>
+                  <ListItem
+                    sx={{
+                      py: 1.5,
+                      alignItems: "flex-start",
+                      ...(unlocked ? {} : { opacity: 0.55 }),
+                    }}
+                  >
                     <ListItemAvatar>
                       <Avatar
-                        variant="rounded"
+                        variant="square"
                         src={achievement.badgeUrl ?? undefined}
                         alt={achievement.title}
-                        sx={{ width: 40, height: 40 }}
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          ...(unlocked ? {} : { filter: "grayscale(1)" }),
+                        }}
                       />
                     </ListItemAvatar>
                     <ListItemText

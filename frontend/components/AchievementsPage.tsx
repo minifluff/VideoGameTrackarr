@@ -211,7 +211,7 @@ const AchievementsPage = () => {
                         >
                           <ListItemAvatar>
                             <Avatar
-                              variant="rounded"
+                              variant="square"
                               src={game.imageBoxArtUrl ?? game.imageIconUrl ?? undefined}
                               alt={game.title}
                               sx={{ width: 48, height: 48 }}
