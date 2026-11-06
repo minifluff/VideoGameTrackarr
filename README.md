@@ -173,6 +173,7 @@ GPL-3.0 — see [LICENSE](LICENSE).
 - Added simple Andoid app. Downloadable from settings.
 - Display Mode added. Displays cover art, Screenshot, Artwork and Videos in slideshow
 - Added BookShelf. Shows games in a Bookshelf format and can be customized with Spine art.
+- Achievement tracking
 
 ## Support
 
