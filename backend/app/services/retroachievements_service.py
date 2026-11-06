@@ -4,7 +4,6 @@ from dataclasses import asdict
 
 from sqlalchemy.orm import Session
 
-from app.core.config import get_settings
 from app.core.security import decrypt_smb_password, encrypt_smb_password
 from app.models.system import User
 from app.services.cache import get_cache
@@ -32,9 +31,6 @@ def get_status(user: User) -> dict[str, object]:
         "configured": bool(user.retroachievements_username and user.retroachievements_api_key),
         "username": user.retroachievements_username,
         "api_key_configured": bool(user.retroachievements_api_key),
-        # Steam is the page's second source — same shape as the Integrations page's
-        # steam_api_key_configured + a saved SteamID64.
-        "steam_configured": bool(get_settings().steam_api_key and user.steam_id_64),
     }
 
 

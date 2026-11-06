@@ -5,9 +5,6 @@ class RetroAchievementsStatusResponse(CamelModel):
     configured: bool
     username: str | None
     api_key_configured: bool
-    # Steam is a second source on the same page — the status carries whether it's
-    # connected too, so the page knows which summaries to fetch.
-    steam_configured: bool = False
 
 
 class UpdateRetroAchievementsRequest(CamelModel):
@@ -61,30 +58,3 @@ class RetroAchievementsSummaryResponse(CamelModel):
     profile: RAProfileResponse
     recently_played: list[RARecentlyPlayedGameResponse]
     recent_achievements: list[RARecentAchievementResponse]
-
-
-class SteamRecentlyPlayedGameResponse(CamelModel):
-    appid: int
-    name: str
-    icon_url: str | None
-    last_played: str | None
-    playtime_forever_minutes: int
-    playtime_2weeks_minutes: int
-    unlocked_count: int
-    total_count: int
-
-
-class SteamRecentAchievementResponse(CamelModel):
-    apiname: str
-    display_name: str
-    description: str | None
-    icon_url: str | None
-    unlocked_at: str | None
-    game_name: str
-    appid: int
-
-
-class SteamAchievementsSummaryResponse(CamelModel):
-    configured: bool
-    games: list[SteamRecentlyPlayedGameResponse]
-    recent_achievements: list[SteamRecentAchievementResponse]

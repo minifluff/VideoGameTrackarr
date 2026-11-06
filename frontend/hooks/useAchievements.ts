@@ -2,7 +2,6 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import {
   getRetroAchievementsStatus,
   getRetroAchievementsSummary,
-  getSteamAchievementsSummary,
   updateRetroAchievementsSettings,
 } from "../api/achievements";
 
@@ -39,22 +38,6 @@ export function useRetroAchievementsSummary(enabled: boolean) {
   const refresh = async () => {
     const fresh = await getRetroAchievementsSummary(true);
     queryClient.setQueryData(["achievements-summary"], fresh);
-    return fresh;
-  };
-  return { ...query, refresh };
-}
-
-export function useSteamAchievementsSummary(enabled: boolean) {
-  const queryClient = useQueryClient();
-  const query = useQuery({
-    queryKey: ["steam-achievements-summary"],
-    queryFn: () => getSteamAchievementsSummary(false),
-    enabled,
-  });
-  // Same refresh contract as the RA summary — bypass the server cache once.
-  const refresh = async () => {
-    const fresh = await getSteamAchievementsSummary(true);
-    queryClient.setQueryData(["steam-achievements-summary"], fresh);
     return fresh;
   };
   return { ...query, refresh };

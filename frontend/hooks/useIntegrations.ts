@@ -26,13 +26,7 @@ export function useUpdateSteamId() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateSteamId,
-    onSuccess: (status) => {
-      queryClient.setQueryData(["integrations-status"], status);
-      // The Steam ID drives the Achievements page's Steam summary (and its
-      // steamConfigured flag) — a changed ID must bust both queries.
-      queryClient.invalidateQueries({ queryKey: ["achievements-status"] });
-      queryClient.invalidateQueries({ queryKey: ["steam-achievements-summary"] });
-    },
+    onSuccess: (status) => queryClient.setQueryData(["integrations-status"], status),
   });
 }
 

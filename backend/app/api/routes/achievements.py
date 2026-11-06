@@ -6,17 +6,12 @@ from app.models.system import User
 from app.schemas.achievements import (
     RetroAchievementsStatusResponse,
     RetroAchievementsSummaryResponse,
-    SteamAchievementsSummaryResponse,
     UpdateRetroAchievementsRequest,
 )
-from app.services import retroachievements_service, steam_achievements_service
+from app.services import retroachievements_service
 from app.services.retroachievements_client import (
     RetroAchievementsAuthError,
     RetroAchievementsError,
-)
-from app.services.steam_achievements_client import (
-    SteamAchievementsAuthError,
-    SteamAchievementsError,
 )
 
 router = APIRouter(prefix="/api/achievements", tags=["achievements"], dependencies=[Depends(get_current_user)])
@@ -53,19 +48,3 @@ async def get_summary(
     except RetroAchievementsError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
     return RetroAchievementsSummaryResponse.model_validate(summary)
-
-
-@router.get("/steam/summary", response_model=SteamAchievementsSummaryResponse)
-async def get_steam_summary(
-    refresh: bool = False,
-    current_user: User = Depends(get_current_user),
-) -> SteamAchievementsSummaryResponse:
-    # Same contract as the RA summary: not-configured is a 409 via the app-wide
-    # ConflictError handler, Steam being down or rejecting the key is a 502.
-    try:
-        summary = await steam_achievements_service.get_summary(current_user, refresh=refresh)
-    except SteamAchievementsAuthError as exc:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
-    except SteamAchievementsError as exc:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
-    return SteamAchievementsSummaryResponse.model_validate(summary)

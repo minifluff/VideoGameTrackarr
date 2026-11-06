@@ -4,7 +4,6 @@ export interface RetroAchievementsStatus {
   configured: boolean;
   username: string | null;
   apiKeyConfigured: boolean;
-  steamConfigured: boolean;
 }
 
 export interface RAProfile {
@@ -76,44 +75,5 @@ export async function getRetroAchievementsSummary(
   const response = await apiClient.get<RetroAchievementsSummary>("/api/achievements/summary", {
     params: refresh ? { refresh: true } : undefined,
   });
-  return response.data;
-}
-
-export interface SteamRecentlyPlayedGame {
-  appid: number;
-  name: string;
-  iconUrl: string | null;
-  lastPlayed: string | null;
-  playtimeForeverMinutes: number;
-  playtime2WeeksMinutes: number;
-  unlockedCount: number;
-  totalCount: number;
-}
-
-export interface SteamRecentAchievement {
-  apiname: string;
-  displayName: string;
-  description: string | null;
-  iconUrl: string | null;
-  unlockedAt: string | null;
-  gameName: string;
-  appid: number;
-}
-
-export interface SteamAchievementsSummary {
-  configured: boolean;
-  games: SteamRecentlyPlayedGame[];
-  recentAchievements: SteamRecentAchievement[];
-}
-
-export async function getSteamAchievementsSummary(
-  refresh = false,
-): Promise<SteamAchievementsSummary> {
-  const response = await apiClient.get<SteamAchievementsSummary>(
-    "/api/achievements/steam/summary",
-    {
-      params: refresh ? { refresh: true } : undefined,
-    },
-  );
   return response.data;
 }
