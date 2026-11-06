@@ -19,6 +19,7 @@
     "required": "Obligatorio",
     "optional": "Opcional",
     "retry": "Reintentar",
+    "refresh": "Actualizar",
     "none": "Ninguno",
     "unknown": "Desconocido",
     "logOut": "Cerrar sesión",
@@ -52,6 +53,7 @@
     "groups": {
       "library": "Biblioteca",
       "insights": "Estadísticas",
+      "achievements": "Logros",
       "system": "Sistema"
     },
     "primary": "Navegación principal",
@@ -66,6 +68,7 @@
     "addDevice": "Añadir dispositivo",
     "addAccessory": "Añadir accesorio",
     "insights": "Estadísticas",
+    "achievements": "Logros",
     "duplicates": "Duplicados",
     "missingAddons": "Complementos faltantes",
     "orphanedAccessories": "Accesorios huérfanos",
@@ -87,6 +90,22 @@
     "playing": "Playing",
     "wishlist": "Wishlist",
     "gamesList": "Juegos individuales"
+  },
+  "achievements": {
+    "notConfiguredTitle": "RetroAchievements no está conectado aún",
+    "notConfiguredDescription": "Conecta tu cuenta de RetroAchievements en la página de Integraciones para ver tu perfil, tus juegos recientes y tus logros aquí.",
+    "goToIntegrations": "Ir a Integraciones",
+    "totalPoints": "Puntos totales",
+    "truePoints": "Puntos reales",
+    "memberSince": "Miembro desde",
+    "recentlyPlayed": "Jugados recientemente",
+    "recentAchievements": "Logros recientes",
+    "noRecentlyPlayed": "Aún no hay juegos jugados.",
+    "noRecentAchievements": "Sin logros en la última semana.",
+    "loadError": "No se pudieron cargar tus datos de RetroAchievements.",
+    "progress": "{{achieved}} / {{total}} logros · {{score}} pts",
+    "points": "{{count}} pts",
+    "hardcore": "Hardcore"
   },
   "overview": {
     "tiles": {
@@ -563,7 +582,17 @@
       "playniteClearCacheConfirm": "Clear cache",
       "playniteClearingCache": "Clearing…",
       "playniteClearCacheSuccess": "Cleared {{cleared}} cached entries",
-      "playniteClearCacheError": "Failed to clear the cache"
+      "playniteClearCacheError": "Failed to clear the cache",
+      "retroachievementsHeading": "RetroAchievements",
+      "retroachievementsDescription": "Muestra tu perfil de RetroAchievements en la página de Logros. Encuentra tu clave de API web en <1>Keys</1> dentro de la configuración de RetroAchievements.",
+      "retroachievementsUsernameHelper": "El nombre de usuario de RetroAchievements cuyo perfil, juegos recientes y logros se muestran.",
+      "retroachievementsUsernameLabel": "Nombre de usuario de RetroAchievements",
+      "retroachievementsUsernamePlaceholder": "p. ej. Flyingfox",
+      "retroachievementsApiKeyLabel": "Clave de API web",
+      "retroachievementsApiKeyPlaceholder": "Pega tu clave de API web",
+      "retroachievementsApiKeySet": "La clave de API está guardada (déjala en blanco para conservarla)",
+      "retroachievementsSaved": "Configuración de RetroAchievements guardada.",
+      "retroachievementsSaveError": "No se pudo guardar la configuración de RetroAchievements. Inténtalo de nuevo."
     },
     "emulation": {
       "description": "Algunos sistemas necesitan la BIOS de la consola para jugar en el navegador. Súbela aquí una vez y todos los juegos de ese sistema podrán usarla.",

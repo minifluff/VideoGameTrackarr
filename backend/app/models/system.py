@@ -31,6 +31,14 @@ class User(TimestampMixin, Base):
     steam_id_64: Mapped[str | None] = mapped_column(
         String(32), comment="Steam profile SteamID64, used for Steam Web API sync"
     )
+    retroachievements_username: Mapped[str | None] = mapped_column(
+        String(64), comment="RetroAchievements username shown on the Achievements page"
+    )
+    retroachievements_api_key: Mapped[str | None] = mapped_column(
+        String(255),
+        comment="RetroAchievements Web API key, pasted on the Integrations page; "
+        "encrypted with the SMB Fernet key when one is configured, else plaintext like the SMB passwords",
+    )
     playnite_smb_path: Mapped[str | None] = mapped_column(
         String(1024), comment="SMB/network path to the Playnite data folder (e.g. \\\\server\\share\\Playnite)"
     )

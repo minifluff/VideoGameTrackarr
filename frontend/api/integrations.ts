@@ -8,6 +8,8 @@ export interface IntegrationsStatus {
   itadCountry: string;
   platpricesConfigured: boolean;
   platpricesRegion: string;
+  retroachievementsConfigured: boolean;
+  retroachievementsUsername: string | null;
 }
 
 export async function getIntegrationsStatus(): Promise<IntegrationsStatus> {

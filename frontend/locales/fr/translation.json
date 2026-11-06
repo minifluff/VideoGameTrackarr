@@ -19,6 +19,7 @@
     "required": "Obligatoire",
     "optional": "Facultatif",
     "retry": "Réessayer",
+    "refresh": "Actualiser",
     "none": "Aucun",
     "unknown": "Inconnu",
     "logOut": "Déconnexion",
@@ -52,6 +53,7 @@
     "groups": {
       "library": "Bibliothèque",
       "insights": "Statistiques",
+      "achievements": "Succès",
       "system": "Système"
     },
     "primary": "Navigation principale",
@@ -66,6 +68,7 @@
     "addDevice": "Ajouter un appareil",
     "addAccessory": "Ajouter un accessoire",
     "insights": "Statistiques",
+    "achievements": "Succès",
     "duplicates": "Doublons",
     "missingAddons": "Extensions manquantes",
     "orphanedAccessories": "Accessoires orphelins",
@@ -87,6 +90,22 @@
     "playing": "Playing",
     "wishlist": "Wishlist",
     "gamesList": "Jeux individuels"
+  },
+  "achievements": {
+    "notConfiguredTitle": "RetroAchievements n'est pas encore connecté",
+    "notConfiguredDescription": "Connectez votre compte RetroAchievements depuis la page Intégrations pour voir votre profil, vos jeux récents et vos succès ici.",
+    "goToIntegrations": "Aller aux intégrations",
+    "totalPoints": "Points totaux",
+    "truePoints": "Points réels",
+    "memberSince": "Membre depuis",
+    "recentlyPlayed": "Joués récemment",
+    "recentAchievements": "Succès récents",
+    "noRecentlyPlayed": "Aucun jeu joué pour le moment.",
+    "noRecentAchievements": "Aucun succès au cours de la dernière semaine.",
+    "loadError": "Impossible de charger vos données RetroAchievements.",
+    "progress": "{{achieved}} / {{total}} succès · {{score}} pts",
+    "points": "{{count}} pts",
+    "hardcore": "Hardcore"
   },
   "overview": {
     "tiles": {
@@ -563,7 +582,17 @@
       "playniteClearCacheConfirm": "Clear cache",
       "playniteClearingCache": "Clearing…",
       "playniteClearCacheSuccess": "Cleared {{cleared}} cached entries",
-      "playniteClearCacheError": "Failed to clear the cache"
+      "playniteClearCacheError": "Failed to clear the cache",
+      "retroachievementsHeading": "RetroAchievements",
+      "retroachievementsDescription": "Affiche votre profil RetroAchievements sur la page Succès. Trouvez votre clé API Web sous <1>Keys</1> dans vos paramètres RetroAchievements.",
+      "retroachievementsUsernameHelper": "Le nom d'utilisateur RetroAchievements dont le profil, les jeux récents et les succès sont affichés.",
+      "retroachievementsUsernameLabel": "Nom d'utilisateur RetroAchievements",
+      "retroachievementsUsernamePlaceholder": "p. ex. Flyingfox",
+      "retroachievementsApiKeyLabel": "Clé API Web",
+      "retroachievementsApiKeyPlaceholder": "Collez votre clé API Web",
+      "retroachievementsApiKeySet": "La clé API est enregistrée (laissez vide pour la conserver)",
+      "retroachievementsSaved": "Paramètres RetroAchievements enregistrés.",
+      "retroachievementsSaveError": "Impossible d'enregistrer les paramètres RetroAchievements. Veuillez réessayer."
     },
     "emulation": {
       "description": "Certains systèmes ont besoin du BIOS de la console pour jouer dans le navigateur. Envoyez-le ici une fois et tous les jeux de ce système pourront l'utiliser.",

@@ -12,6 +12,8 @@ class IntegrationsStatusResponse(CamelModel):
     platprices_configured: bool
     platprices_region: str
     playnite_configured: bool
+    retroachievements_configured: bool
+    retroachievements_username: str | None
 
 
 class UpdateSteamIdRequest(CamelModel):

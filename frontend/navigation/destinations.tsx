@@ -7,6 +7,7 @@ import CableIcon from "@mui/icons-material/Cable";
 import CollectionsIcon from "@mui/icons-material/Collections";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DashboardIcon from "@mui/icons-material/Dashboard";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import EventIcon from "@mui/icons-material/Event";
 import ExtensionOffIcon from "@mui/icons-material/ExtensionOff";
 import GamesIcon from "@mui/icons-material/Games";
@@ -96,6 +97,13 @@ export function getNavDestinations(t: TFunction, options?: NavDestinationOptions
         { to: "/insights/on-sale", label: t("nav.onSale"), icon: <SellIcon /> },
         { to: "/insights/unlinked-games", label: t("nav.unlinkedGames"), icon: <LinkIcon /> },
       ],
+    },
+    {
+      // Own system, separate from games: RetroAchievements data, Exophase-style
+      // profile layout. No sub-items — the page is one view.
+      to: "/achievements",
+      label: t("nav.achievements"),
+      icon: <EmojiEventsIcon />,
     },
     {
       to: "/settings",

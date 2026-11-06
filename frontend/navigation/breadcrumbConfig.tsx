@@ -192,6 +192,8 @@ export const editAccessoryCrumbs: CrumbsFn = (params, t) => [
 
 export const insightsCrumbs: CrumbsFn = (_params, t) => [{ label: t("nav.insights") }];
 
+export const achievementsCrumbs: CrumbsFn = (_params, t) => [{ label: t("nav.achievements") }];
+
 export const duplicatesCrumbs: CrumbsFn = (_params, t) => [
   { label: t("nav.insights"), to: "/insights" },
   { label: t("nav.duplicates") },

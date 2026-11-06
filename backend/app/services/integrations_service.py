@@ -16,6 +16,8 @@ def get_status(user: User) -> IntegrationsStatusResponse:
         platprices_configured=bool(settings.platprices_api_key),
         platprices_region=settings.platprices_region,
         playnite_configured=bool(user.playnite_smb_path),
+        retroachievements_configured=bool(user.retroachievements_username and user.retroachievements_api_key),
+        retroachievements_username=user.retroachievements_username,
     )
 
 

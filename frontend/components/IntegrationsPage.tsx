@@ -23,6 +23,10 @@ import itadLogo from "../assets/isthereanydeal-logo.png";
 import platpricesLogo from "../assets/platprices-logo.png";
 import steamLogo from "../assets/steam-logo.png";
 import { useIntegrationsStatus, useUpdateSteamId } from "../hooks/useIntegrations";
+import {
+  useRetroAchievementsStatus,
+  useUpdateRetroAchievementsSettings,
+} from "../hooks/useAchievements";
 import { useClearPlayniteCache, usePlayniteConfig, useTestPlayniteConnection, useUpdatePlayniteConfig } from "../hooks/usePlaynite";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 
@@ -208,6 +212,101 @@ const ClearPlayniteCacheSection = () => {
   );
 };
 
+// RetroAchievements powers the Achievements page: the username picks whose profile
+// is shown, the Web API key authorizes the calls. The key is never sent back to the
+// browser — an empty field keeps the saved one (same pattern as the Playnite password).
+const RetroAchievementsSection = () => {
+  const { t } = useTranslation();
+  const { data: status } = useRetroAchievementsStatus();
+  const updateSettings = useUpdateRetroAchievementsSettings();
+  const [username, setUsername] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [touched, setTouched] = useState(false);
+
+  useEffect(() => {
+    if (!touched) setUsername(status?.username ?? "");
+  }, [status?.username, touched]);
+
+  const usernameChanged = username.trim() !== (status?.username ?? "");
+  const apiKeyChanged = apiKey.trim() !== "";
+  const handleSave = async () => {
+    try {
+      await updateSettings.mutateAsync({
+        username: username.trim() === "" ? null : username.trim(),
+        // Undefined keeps the saved key; "" would clear it.
+        apiKey: apiKeyChanged ? apiKey.trim() : undefined,
+      });
+      setApiKey("");
+      setTouched(false);
+      toast.success(t("settings.integrations.retroachievementsSaved"), TOAST_OPTIONS);
+    } catch (error) {
+      console.error("Error saving RetroAchievements settings:", error);
+      toast.error(t("settings.integrations.retroachievementsSaveError"), TOAST_OPTIONS);
+    }
+  };
+
+  return (
+    <>
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
+        <Typography variant="subtitle1">{t("settings.integrations.retroachievementsHeading")}</Typography>
+        <ConfiguredChip configured={status?.configured} />
+      </Stack>
+      <Alert severity="info" sx={{ mb: 2 }}>
+        <Trans
+          i18nKey="settings.integrations.retroachievementsDescription"
+          components={{
+            1: (
+              <Link
+                href="https://retroachievements.org/settings"
+                target="_blank"
+                rel="noopener noreferrer"
+              />
+            ),
+          }}
+        />
+      </Alert>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+        {t("settings.integrations.retroachievementsUsernameHelper")}
+      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+        <TextField
+          label={t("settings.integrations.retroachievementsUsernameLabel")}
+          placeholder={t("settings.integrations.retroachievementsUsernamePlaceholder")}
+          value={username}
+          onChange={(e) => {
+            setUsername(e.target.value);
+            setTouched(true);
+          }}
+          sx={{ minWidth: 220 }}
+        />
+        <TextField
+          label={t("settings.integrations.retroachievementsApiKeyLabel")}
+          placeholder={
+            status?.apiKeyConfigured
+              ? t("settings.integrations.retroachievementsApiKeySet")
+              : t("settings.integrations.retroachievementsApiKeyPlaceholder")
+          }
+          value={apiKey}
+          type="password"
+          autoComplete="off"
+          onChange={(e) => {
+            setApiKey(e.target.value);
+            setTouched(true);
+          }}
+          sx={{ minWidth: 280 }}
+        />
+        <Button
+          variant="contained"
+          onClick={handleSave}
+          disabled={updateSettings.isPending || (!usernameChanged && !apiKeyChanged)}
+        >
+          {t("common.save")}
+        </Button>
+      </Box>
+    </>
+  );
+};
+
 // The store region prices are fetched for (ITAD_COUNTRY / PLATPRICES_REGION), so a region
 // that doesn't match what you expect is visible here rather than only in the prices.
 const RegionChip = ({ configured, region }: { configured: boolean | undefined; region: string | undefined }) => {
@@ -330,6 +429,10 @@ const IntegrationsPage = () => {
           <Divider sx={{ my: 3 }} />
 
           <PlayniteSection />
+
+          <Divider sx={{ my: 3 }} />
+
+          <RetroAchievementsSection />
 
           <Divider sx={{ my: 3 }} />
 

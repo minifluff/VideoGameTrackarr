@@ -17,6 +17,7 @@ from starlette.types import Scope
 
 from app.api.routes import (
     accessories,
+    achievements,
     appearance,
     auth,
     catalog_resync,
@@ -313,6 +314,7 @@ app.include_router(share.router)
 app.include_router(share.public_router)
 app.include_router(system.router)
 app.include_router(integrations.router)
+app.include_router(achievements.router)
 app.include_router(sales_tracking.router)
 app.include_router(roms.router)
 app.include_router(roms.content_router)

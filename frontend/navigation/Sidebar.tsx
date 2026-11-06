@@ -129,6 +129,7 @@ function isInSection(pathname: string, to: string): boolean {
 const NAV_GROUPS: { labelKey: string; items: string[] }[] = [
   { labelKey: "nav.groups.library", items: ["/", "/games", "/hardware", "/events"] },
   { labelKey: "nav.groups.insights", items: ["/insights"] },
+  { labelKey: "nav.groups.achievements", items: ["/achievements"] },
   { labelKey: "nav.groups.system", items: ["/settings"] },
 ];
 
