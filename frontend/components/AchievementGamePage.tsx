@@ -175,7 +175,7 @@ const AchievementGamePage = () => {
                       ...(unlocked ? {} : { opacity: 0.55 }),
                     }}
                   >
-                    <ListItemAvatar>
+                    <ListItemAvatar sx={{ mt: "4px" }}>
                       <Avatar
                         variant="square"
                         src={achievement.badgeUrl ?? undefined}
@@ -231,7 +231,7 @@ const AchievementGamePage = () => {
                           </Typography>
                         </>
                       }
-                      sx={{ minWidth: 0, mr: 2 }}
+                      sx={{ minWidth: 0, mr: 2, my: 0 }}
                     />
                   </ListItem>
                 </Box>
