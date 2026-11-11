@@ -1287,6 +1287,8 @@
       "title": "Bookshelf",
       "summary": "{{cases}} cases on the shelf",
       "searchPlaceholder": "Search the shelf…",
+      "mixed": "Mixed",
+      "mixedHelp": "Mix all cases together instead of grouping by platform.",
       "empty": "Nothing on the shelf yet — own some games first.",
       "template": {
         "title": "Spine template · {{platform}}",

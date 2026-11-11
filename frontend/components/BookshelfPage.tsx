@@ -1,14 +1,33 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import CheckIcon from "@mui/icons-material/Check";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
+import SortIcon from "@mui/icons-material/Sort";
+import TuneIcon from "@mui/icons-material/Tune";
+import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import Divider from "@mui/material/Divider";
 import FormControl from "@mui/material/FormControl";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Grid from "@mui/material/Grid";
+import IconButton from "@mui/material/IconButton";
 import InputLabel from "@mui/material/InputLabel";
+import ListItemText from "@mui/material/ListItemText";
+import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Select from "@mui/material/Select";
+import Slider from "@mui/material/Slider";
 import Stack from "@mui/material/Stack";
+import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { fetchBookshelfEntries } from "../api/games";
@@ -151,6 +170,100 @@ export function resolvePlatformCaseSizes(
   return sizes;
 }
 
+export type ShelfSortField = "name" | "platform";
+export type ShelfSortDirection = "asc" | "desc";
+
+export function sortShelfCases(
+  cases: ShelfCase[],
+  field: ShelfSortField,
+  direction: ShelfSortDirection
+): ShelfCase[] {
+  const sorted = [...cases];
+  sorted.sort((a, b) =>
+    field === "platform"
+      ? a.platform.localeCompare(b.platform) || a.game.name.localeCompare(b.game.name)
+      : a.game.name.localeCompare(b.game.name)
+  );
+  if (direction === "desc") sorted.reverse();
+  return sorted;
+}
+
+export interface VisibleShelvesOptions {
+  keyword: string;
+  platformFilter: string;
+  formatFilter: string;
+  caseFormats: Map<string, Set<string>>;
+  sortField: ShelfSortField;
+  sortDirection: ShelfSortDirection;
+  mixed: boolean;
+}
+
+// Search + filters + sort + grouping as one pure step, so the shelf math
+// stays testable without rendering: grouped shelves keep their platform
+// order (reversed for a platform-desc sort); "mixed" merges every visible
+// case into a single ungrouped run.
+export function buildVisibleShelves(shelves: Shelf[], options: VisibleShelvesOptions): Shelf[] {
+  const { keyword, platformFilter, formatFilter, caseFormats, sortField, sortDirection, mixed } =
+    options;
+  const filtered = shelves
+    .filter((shelf) => platformFilter === "all" || shelf.platform === platformFilter)
+    .map((shelf) => ({
+      ...shelf,
+      cases: sortShelfCases(
+        shelf.cases.filter((entry) => {
+          if (keyword && !entry.game.name.toLowerCase().includes(keyword)) return false;
+          if (
+            formatFilter !== "all" &&
+            !caseFormats.get(caseFormatsKey(entry.game.id, entry.platform))?.has(formatFilter)
+          )
+            return false;
+          return true;
+        }),
+        sortField,
+        sortDirection
+      ),
+    }))
+    .filter((shelf) => shelf.cases.length > 0);
+  if (sortField === "platform") {
+    filtered.sort((a, b) =>
+      sortDirection === "desc"
+        ? b.platform.localeCompare(a.platform)
+        : a.platform.localeCompare(b.platform)
+    );
+  }
+  if (!mixed) return filtered;
+  const allCases = sortShelfCases(
+    filtered.flatMap((shelf) => shelf.cases),
+    sortField,
+    sortDirection
+  );
+  return allCases.length > 0 ? [{ platform: "", cases: allCases }] : [];
+}
+
+// Display preferences persist across visits (localStorage, like the
+// appearance settings) — the shelf is a view, not a filter session.
+const BOOKSHELF_CASE_SCALE_KEY = "vgt.bookshelfCaseScale";
+const BOOKSHELF_MIXED_KEY = "vgt.bookshelfMixed";
+const BOOKSHELF_SORT_FIELD_KEY = "vgt.bookshelfSortField";
+const BOOKSHELF_SORT_DIRECTION_KEY = "vgt.bookshelfSortDirection";
+
+function readStoredCaseScale(): number {
+  const parsed = parseFloat(localStorage.getItem(BOOKSHELF_CASE_SCALE_KEY) ?? "");
+  return !isNaN(parsed) && parsed >= 0.5 && parsed <= 2.0 ? parsed : 1.0;
+}
+
+function readStoredMixed(): boolean {
+  return localStorage.getItem(BOOKSHELF_MIXED_KEY) === "true";
+}
+
+function readStoredSortField(): ShelfSortField {
+  return localStorage.getItem(BOOKSHELF_SORT_FIELD_KEY) === "platform" ? "platform" : "name";
+}
+
+function readStoredSortDirection(): ShelfSortDirection {
+  return localStorage.getItem(BOOKSHELF_SORT_DIRECTION_KEY) === "desc" ? "desc" : "asc";
+}
+
 const BookshelfPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -165,6 +278,42 @@ const BookshelfPage = () => {
   const [platformFilter, setPlatformFilter] = useState("all");
   const [formatFilter, setFormatFilter] = useState("all");
   const [templatePlatform, setTemplatePlatform] = useState<PlatformResponse | null>(null);
+  const [caseScale, setCaseScaleState] = useState<number>(readStoredCaseScale);
+  const [mixed, setMixedState] = useState<boolean>(readStoredMixed);
+  const [sortField, setSortFieldState] = useState<ShelfSortField>(readStoredSortField);
+  const [sortDirection, setSortDirectionState] =
+    useState<ShelfSortDirection>(readStoredSortDirection);
+  const [optionsMenuAnchor, setOptionsMenuAnchor] = useState<HTMLElement | null>(null);
+  const [sortMenuAnchor, setSortMenuAnchor] = useState<HTMLElement | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const setCaseScale = (scale: number) => {
+    const clamped = Math.max(0.5, Math.min(2.0, scale));
+    setCaseScaleState(clamped);
+    localStorage.setItem(BOOKSHELF_CASE_SCALE_KEY, String(clamped));
+  };
+
+  const setMixed = (next: boolean) => {
+    setMixedState(next);
+    localStorage.setItem(BOOKSHELF_MIXED_KEY, String(next));
+  };
+
+  const setSortField = (field: ShelfSortField) => {
+    setSortFieldState(field);
+    localStorage.setItem(BOOKSHELF_SORT_FIELD_KEY, field);
+  };
+
+  const setSortDirection = (direction: ShelfSortDirection) => {
+    setSortDirectionState(direction);
+    localStorage.setItem(BOOKSHELF_SORT_DIRECTION_KEY, direction);
+  };
+
+  const activeFilterCount =
+    (platformFilter !== "all" ? 1 : 0) + (formatFilter !== "all" ? 1 : 0);
+  const handleClearFilters = () => {
+    setPlatformFilter("all");
+    setFormatFilter("all");
+  };
 
   const { data: platforms } = usePlatforms();
   const caseFormats = useMemo(() => buildCaseFormatsFromEntries(entries), [entries]);
@@ -193,22 +342,16 @@ const BookshelfPage = () => {
   );
   const visibleShelves = useMemo(
     () =>
-      shelves
-        .filter((shelf) => platformFilter === "all" || shelf.platform === platformFilter)
-        .map((shelf) => ({
-          ...shelf,
-          cases: shelf.cases.filter((entry) => {
-            if (keyword && !entry.game.name.toLowerCase().includes(keyword)) return false;
-            if (
-              formatFilter !== "all" &&
-              !caseFormats.get(caseFormatsKey(entry.game.id, entry.platform))?.has(formatFilter)
-            )
-              return false;
-            return true;
-          }),
-        }))
-        .filter((shelf) => shelf.cases.length > 0),
-    [shelves, keyword, platformFilter, formatFilter, caseFormats]
+      buildVisibleShelves(shelves, {
+        keyword,
+        platformFilter,
+        formatFilter,
+        caseFormats,
+        sortField,
+        sortDirection,
+        mixed,
+      }),
+    [shelves, keyword, platformFilter, formatFilter, caseFormats, sortField, sortDirection, mixed]
   );
 
 
@@ -219,8 +362,12 @@ const BookshelfPage = () => {
   // shelf element (re)mounts — see useShelfWidth in BookshelfGrid.
   const { shelfRef, shelfWidth } = useShelfWidth();
   const rows = useMemo(
-    () => packRows(visibleShelves, Math.max(shelfWidth - 16, 200), platformCaseSizes),
-    [visibleShelves, shelfWidth, platformCaseSizes]
+    () =>
+      packRows(visibleShelves, Math.max(shelfWidth - 16, 200), platformCaseSizes, {
+        mixed,
+        caseScale,
+      }),
+    [visibleShelves, shelfWidth, platformCaseSizes, mixed, caseScale]
   );
 
   // Rows render in capped chunks (see useProgressiveRows): painting ~7,000
@@ -244,7 +391,11 @@ const BookshelfPage = () => {
             {t("games.bookshelf.summary", { cases: totalCases })}
           </Typography>
         </Box>
-        <Stack spacing={1.5} sx={{ width: "100%", flex: { sm: 1 }, maxWidth: { sm: 620 } }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ alignItems: "center", width: "100%", flex: { sm: 1 }, maxWidth: { sm: 620 } }}
+        >
           <TextField
             size="small"
             fullWidth
@@ -252,40 +403,179 @@ const BookshelfPage = () => {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
-          <Stack direction="row" spacing={1.5}>
-            <FormControl size="small" sx={{ flex: 1, minWidth: 0 }}>
-              <InputLabel>{t("games.listPage.platformColumn")}</InputLabel>
-              <Select
-                value={platformFilter}
-                label={t("games.listPage.platformColumn")}
-                onChange={(event) => setPlatformFilter(event.target.value)}
-              >
-                <MenuItem value="all">{t("common.all")}</MenuItem>
-                {shelves.map((shelf) => (
-                  <MenuItem key={shelf.platform} value={shelf.platform}>
-                    {platformFilterLabel(platformsByLabel, shelf.platform)}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ flex: 1, minWidth: 0 }}>
-              <InputLabel>{t("games.listPage.formatColumn")}</InputLabel>
-              <Select
-                value={formatFilter}
-                label={t("games.listPage.formatColumn")}
-                onChange={(event) => setFormatFilter(event.target.value)}
-              >
-                <MenuItem value="all">{t("common.all")}</MenuItem>
-                {formatOptions.map((format) => (
-                  <MenuItem key={format} value={format}>
-                    {format}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Stack>
+          <Tooltip title={t("games.listToolbar.optionsButton")}>
+            <IconButton
+              onClick={(event) => setOptionsMenuAnchor(event.currentTarget)}
+              aria-label={t("games.listToolbar.optionsButton")}
+              aria-haspopup="menu"
+              aria-expanded={optionsMenuAnchor !== null}
+              sx={{ alignSelf: "center" }}
+            >
+              <TuneIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={t("games.listToolbar.sortByLabel")}>
+            <IconButton
+              onClick={(event) => setSortMenuAnchor(event.currentTarget)}
+              aria-label={t("games.listToolbar.sortByLabel")}
+              aria-haspopup="menu"
+              aria-expanded={sortMenuAnchor !== null}
+              sx={{ alignSelf: "center" }}
+            >
+              <SortIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={t("games.listToolbar.filtersButtonLabel")}>
+            <IconButton
+              onClick={() => setFiltersOpen(true)}
+              aria-label={t("games.listToolbar.filtersButtonLabel")}
+              sx={{ alignSelf: "center" }}
+            >
+              <Badge badgeContent={activeFilterCount} color="primary">
+                <FilterAltIcon />
+              </Badge>
+            </IconButton>
+          </Tooltip>
         </Stack>
       </Stack>
+      <Menu
+        anchorEl={optionsMenuAnchor}
+        open={optionsMenuAnchor !== null}
+        onClose={() => setOptionsMenuAnchor(null)}
+      >
+        <Box sx={{ px: 2, py: 1.5, width: 240 }}>
+          <Typography variant="subtitle2" gutterBottom>
+            {t("games.bookshelf.caseSize.label")}
+          </Typography>
+          <Box sx={{ px: 1 }}>
+            <Slider
+              value={caseScale}
+              onChange={(_event, value) => setCaseScale(value as number)}
+              min={0.5}
+              max={2.0}
+              step={0.1}
+              marks={[
+                { value: 0.5, label: t("settings.appearance.cardSizeSmall") },
+                { value: 1.0, label: t("settings.appearance.cardSizeMedium") },
+                { value: 2.0, label: t("settings.appearance.cardSizeLarge") },
+              ]}
+              valueLabelDisplay="auto"
+              valueLabelFormat={(value) => `${Math.round(value * 100)}%`}
+              aria-label={t("games.bookshelf.caseSize.label")}
+            />
+          </Box>
+          <Typography variant="caption" color="text.secondary">
+            {t("games.listToolbar.cardSizePageNote")}
+          </Typography>
+          <Divider sx={{ my: 1.5 }} />
+          <FormControlLabel
+            control={
+              <Switch checked={mixed} onChange={(event) => setMixed(event.target.checked)} />
+            }
+            label={t("games.bookshelf.mixed")}
+          />
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+            {t("games.bookshelf.mixedHelp")}
+          </Typography>
+        </Box>
+      </Menu>
+      <Menu
+        anchorEl={sortMenuAnchor}
+        open={sortMenuAnchor !== null}
+        onClose={() => setSortMenuAnchor(null)}
+      >
+        {(
+          [
+            { field: "name", labelKey: "games.listView.columnName" },
+            { field: "platform", labelKey: "games.listView.columnPlatforms" },
+          ] as const
+        ).map((option) => {
+          const selected = option.field === sortField;
+          return (
+            <MenuItem
+              key={option.field}
+              selected={selected}
+              onClick={() => {
+                setSortField(option.field);
+                setSortMenuAnchor(null);
+              }}
+            >
+              <ListItemText>{t(option.labelKey)}</ListItemText>
+              {selected ? <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} /> : null}
+            </MenuItem>
+          );
+        })}
+        <Divider />
+        <MenuItem
+          selected={sortDirection === "asc"}
+          onClick={() => {
+            setSortDirection("asc");
+            setSortMenuAnchor(null);
+          }}
+        >
+          <ListItemText>{t("games.listView.sortAscending")}</ListItemText>
+          {sortDirection === "asc" ? <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} /> : null}
+        </MenuItem>
+        <MenuItem
+          selected={sortDirection === "desc"}
+          onClick={() => {
+            setSortDirection("desc");
+            setSortMenuAnchor(null);
+          }}
+        >
+          <ListItemText>{t("games.listView.sortDescending")}</ListItemText>
+          {sortDirection === "desc" ? <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} /> : null}
+        </MenuItem>
+      </Menu>
+      <Dialog open={filtersOpen} onClose={() => setFiltersOpen(false)} fullWidth maxWidth="md">
+        <DialogTitle>{t("games.listToolbar.filtersButtonLabel")}</DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          <Grid container spacing={2} sx={{ mt: 0.5, pt: 0.5 }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FormControl size="small" fullWidth>
+                <InputLabel>{t("games.listPage.platformColumn")}</InputLabel>
+                <Select
+                  value={platformFilter}
+                  label={t("games.listPage.platformColumn")}
+                  onChange={(event) => setPlatformFilter(event.target.value)}
+                >
+                  <MenuItem value="all">{t("common.all")}</MenuItem>
+                  {shelves.map((shelf) => (
+                    <MenuItem key={shelf.platform} value={shelf.platform}>
+                      {platformFilterLabel(platformsByLabel, shelf.platform)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FormControl size="small" fullWidth>
+                <InputLabel>{t("games.listPage.formatColumn")}</InputLabel>
+                <Select
+                  value={formatFilter}
+                  label={t("games.listPage.formatColumn")}
+                  onChange={(event) => setFormatFilter(event.target.value)}
+                >
+                  <MenuItem value="all">{t("common.all")}</MenuItem>
+                  {formatOptions.map((format) => (
+                    <MenuItem key={format} value={format}>
+                      {format}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClearFilters} disabled={activeFilterCount === 0}>
+            {t("games.listToolbar.clearFiltersButton")}
+          </Button>
+          <Button onClick={() => setFiltersOpen(false)} variant="contained">
+            {t("common.close")}
+          </Button>
+        </DialogActions>
+      </Dialog>
       {isLoading ? (
         <Paper sx={{ p: 3, textAlign: "center" }}>{t("common.loading")}</Paper>
       ) : rows.length === 0 ? (

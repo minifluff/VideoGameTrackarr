@@ -131,27 +131,42 @@ const CASE_GAP = 3;
 // packed greedily against the measured shelf width so EVERY row sits on its
 // own shelf board. A platform's bookend tile leads its first case and is
 // never left orphaned at a row's end.
+export interface PackRowsOptions {
+  // "Mixed" drops the platform bookends, so every platform's cases flow into
+  // one continuous run instead of grouped shelves.
+  mixed?: boolean;
+  // Uniform scale for every case (and bookend) on the shelf, 1 = the
+  // rendered size. Applied here so resolved sizes and flat-spine fallbacks
+  // scale together.
+  caseScale?: number;
+}
+
 export function packRows(
   shelves: Shelf[],
   maxWidth: number,
-  caseSizes?: Map<string, { width: number; height: number }>
+  caseSizes?: Map<string, { width: number; height: number }>,
+  options?: PackRowsOptions
 ): ShelfRowItem[][] {
+  const mixed = options?.mixed ?? false;
+  const scale = options?.caseScale ?? 1;
   const items: ShelfRowItem[] = [];
   for (const shelf of shelves) {
-    items.push({
-      kind: "bookend",
-      platform: shelf.platform,
-      width: BOOKEND_WIDTH,
-      height: spineStyle(shelf.platform, 0).height,
-    });
+    if (!mixed) {
+      items.push({
+        kind: "bookend",
+        platform: shelf.platform,
+        width: BOOKEND_WIDTH,
+        height: Math.max(1, Math.round(spineStyle(shelf.platform, 0).height * scale)),
+      });
+    }
     for (const entry of shelf.cases) {
       const size = caseSize(entry.platform, entry.game.id, caseSizes?.get(entry.platform));
       items.push({
         kind: "case",
         platform: shelf.platform,
         entry,
-        width: size.width,
-        height: size.height,
+        width: Math.max(1, Math.round(size.width * scale)),
+        height: Math.max(1, Math.round(size.height * scale)),
       });
     }
   }
@@ -324,7 +339,6 @@ const BookshelfGrid = ({
     <Box sx={{ display: "flex", alignItems: "flex-end", gap: "3px", px: 1 }}>
       {row.map((item) => {
         if (item.kind === "bookend") {
-          const style = spineStyle(item.platform, 0);
           const record = platformsByLabel.get(item.platform);
           return (
             <Box
@@ -334,7 +348,7 @@ const BookshelfGrid = ({
               onClick={onBookendClick && record ? () => onBookendClick(record) : undefined}
               sx={{
                 width: BOOKEND_WIDTH,
-                height: style.height,
+                height: item.height,
                 flexShrink: 0,
                 p: 0,
                 cursor: "pointer",

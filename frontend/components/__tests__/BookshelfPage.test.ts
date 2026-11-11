@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { BookshelfEntry, PlatformResponse } from "../../api/types";
-import { buildCaseFormatsFromEntries, buildShelvesFromEntries, buildTemplateCaseSizes, caseFormatsKey, caseSize, contrastTextColor, indexPlatformsByLabel, packRows, platformFilterLabel, resolvePlatformCaseSizes, spineStyle, TITLE_BOTTOM_INSET, TITLE_TOP_INSET, titleBandLight } from "../BookshelfPage";
+import { buildCaseFormatsFromEntries, buildShelvesFromEntries, buildTemplateCaseSizes, buildVisibleShelves, caseFormatsKey, caseSize, contrastTextColor, indexPlatformsByLabel, packRows, platformFilterLabel, resolvePlatformCaseSizes, sortShelfCases, spineStyle, TITLE_BOTTOM_INSET, TITLE_TOP_INSET, titleBandLight } from "../BookshelfPage";
+import { BOOKEND_WIDTH } from "../BookshelfGrid";
 import { presetForDimensions } from "../../utils/caseSizes";
 
 const entry = (overrides: Partial<BookshelfEntry>): BookshelfEntry => ({
@@ -326,5 +327,123 @@ describe("spineStyle", () => {
   it("is deterministic per game id", () => {
     expect(spineStyle("PC", 42)).toEqual(spineStyle("PC", 42));
     expect(spineStyle("Unknown Deck", 3).width).toBeGreaterThanOrEqual(24);
+  });
+});
+
+describe("packRows mixed mode", () => {
+  it("drops the platform bookends and flows every case into one run", () => {
+    const shelves = buildShelvesFromEntries([
+      entry({ gameId: 14, name: "A One", platformLabel: "Alpha" }),
+      entry({ gameId: 28, name: "B One", platformLabel: "Beta" }),
+    ]);
+    const rows = packRows(shelves, 1000, undefined, { mixed: true });
+    expect(rows).toHaveLength(1);
+    expect(rows[0].map((item) => item.kind)).toEqual(["case", "case"]);
+    expect(rows[0].map((item) => item.platform)).toEqual(["Alpha", "Beta"]);
+  });
+});
+
+describe("packRows case scale", () => {
+  it("scales every case, and the bookend's height, by the same factor", () => {
+    const shelves = buildShelvesFromEntries([
+      entry({ gameId: 14, name: "A One", platformLabel: "Alpha" }),
+    ]);
+    const plain = packRows(shelves, 1000);
+    const doubled = packRows(shelves, 1000, undefined, { caseScale: 2 });
+    expect(doubled[0].map((item) => item.kind)).toEqual(plain[0].map((item) => item.kind));
+    const [plainBookend, plainCase] = plain[0];
+    const [doubledBookend, doubledCase] = doubled[0];
+    // The divider keeps its fixed width; only its height follows the scale.
+    expect(doubledBookend.width).toBe(BOOKEND_WIDTH);
+    expect(doubledBookend.height).toBe(plainBookend.height * 2);
+    expect(doubledCase.width).toBe(plainCase.width * 2);
+    expect(doubledCase.height).toBe(plainCase.height * 2);
+  });
+});
+
+describe("sortShelfCases", () => {
+  const shelves = buildShelvesFromEntries([
+    entry({ gameId: 1, name: "Zelda", platformLabel: "Nintendo Switch" }),
+    entry({ gameId: 2, name: "Mario", platformLabel: "Nintendo Switch" }),
+    entry({ gameId: 3, name: "A Link", platformLabel: "Wii U" }),
+  ]);
+  const switchCases = shelves[0].cases;
+
+  it("sorts by name ascending", () => {
+    expect(sortShelfCases(switchCases, "name", "asc").map((c) => c.game.name)).toEqual([
+      "Mario",
+      "Zelda",
+    ]);
+  });
+
+  it("reverses by name descending", () => {
+    expect(sortShelfCases(switchCases, "name", "desc").map((c) => c.game.name)).toEqual([
+      "Zelda",
+      "Mario",
+    ]);
+  });
+
+  it("sorts by platform, then name", () => {
+    const all = shelves.flatMap((shelf) => shelf.cases);
+    expect(sortShelfCases(all, "platform", "asc").map((c) => `${c.platform}:${c.game.name}`)).toEqual([
+      "Nintendo Switch:Mario",
+      "Nintendo Switch:Zelda",
+      "Wii U:A Link",
+    ]);
+  });
+});
+
+describe("buildVisibleShelves", () => {
+  const entries = [
+    entry({ gameId: 1, name: "Zelda", platformLabel: "Nintendo Switch", formats: ["physical"] }),
+    entry({ gameId: 2, name: "Mario", platformLabel: "Nintendo Switch", formats: ["digital"] }),
+    entry({ gameId: 3, name: "Metroid", platformLabel: "Wii U", formats: ["physical"] }),
+  ];
+  const shelves = buildShelvesFromEntries(entries);
+  const caseFormats = buildCaseFormatsFromEntries(entries);
+  const options = {
+    keyword: "",
+    platformFilter: "all",
+    formatFilter: "all",
+    caseFormats,
+    sortField: "name" as const,
+    sortDirection: "asc" as const,
+    mixed: false,
+  };
+
+  it("keeps platform grouping by default", () => {
+    const visible = buildVisibleShelves(shelves, options);
+    expect(visible.map((shelf) => shelf.platform)).toEqual(["Nintendo Switch", "Wii U"]);
+    expect(visible[0].cases.map((c) => c.game.name)).toEqual(["Mario", "Zelda"]);
+  });
+
+  it("merges every visible case into one ungrouped run when mixed", () => {
+    const visible = buildVisibleShelves(shelves, { ...options, mixed: true });
+    expect(visible).toHaveLength(1);
+    expect(visible[0].cases.map((c) => c.game.name)).toEqual(["Mario", "Metroid", "Zelda"]);
+  });
+
+  it("still honours the platform filter while mixed", () => {
+    const visible = buildVisibleShelves(shelves, {
+      ...options,
+      mixed: true,
+      platformFilter: "Wii U",
+    });
+    expect(visible).toHaveLength(1);
+    expect(visible[0].cases.map((c) => c.game.name)).toEqual(["Metroid"]);
+  });
+
+  it("reverses shelf order on a platform-desc sort", () => {
+    const visible = buildVisibleShelves(shelves, {
+      ...options,
+      sortField: "platform",
+      sortDirection: "desc",
+    });
+    expect(visible.map((shelf) => shelf.platform)).toEqual(["Wii U", "Nintendo Switch"]);
+  });
+
+  it("returns nothing when a filter matches no case", () => {
+    expect(buildVisibleShelves(shelves, { ...options, keyword: "zzz" })).toEqual([]);
+    expect(buildVisibleShelves(shelves, { ...options, mixed: true, keyword: "zzz" })).toEqual([]);
   });
 });
