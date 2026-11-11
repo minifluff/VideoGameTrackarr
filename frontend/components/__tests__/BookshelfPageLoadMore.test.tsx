@@ -4,7 +4,7 @@
 // progressive auto-load in useProgressiveRows — the file is kept because
 // snapshot pushes cannot delete files.)
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, fireEvent, render, screen, waitForElementToBeRemoved, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { BookshelfEntry } from "../../api/types";
@@ -104,13 +104,12 @@ describe("BookshelfPage progressive loading", () => {
   });
 });
 
-// Toolbar (same three icons as the Games page): Options holds the case-size
-// slider and the Mixed switch, Sort holds the sort menu, Filters opens the
-// filters dialog the Platform/Format dropdowns moved into.
+// Toolbar: Options holds the case-size slider and the Mixed switch; Platform
+// and Format each get their own icon with a popout menu, like Options.
 describe("BookshelfPage toolbar", () => {
   const toolbarEntries = (): BookshelfEntry[] => [
     { gameId: 1, gameSlug: "zelda", gameUuid: "uuid-1", name: "Zelda", platformLabel: "PS5", formats: ["physical"] },
-    { gameId: 2, gameSlug: "mario", gameUuid: "uuid-2", name: "Mario", platformLabel: "PS5", formats: ["physical"] },
+    { gameId: 2, gameSlug: "mario", gameUuid: "uuid-2", name: "Mario", platformLabel: "PS5", formats: ["digital"] },
     { gameId: 3, gameSlug: "metroid", gameUuid: "uuid-3", name: "Metroid", platformLabel: "Switch", formats: ["physical"] },
   ];
 
@@ -121,12 +120,14 @@ describe("BookshelfPage toolbar", () => {
     mockFetchEntries.mockResolvedValue(toolbarEntries());
   });
 
-  it("shows the Options, Sort By and Filters buttons next to the search field", async () => {
+  it("shows the Options, Platform and Format buttons next to the search field", async () => {
     renderPage();
     expect(await screen.findByPlaceholderText("Search the shelf…")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Options" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sort By" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Filters" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Platform" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Format" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sort By" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Filters" })).not.toBeInTheDocument();
   });
 
   it("opens the options menu with the case-size slider and the Mixed switch", async () => {
@@ -151,32 +152,24 @@ describe("BookshelfPage toolbar", () => {
     expect(screen.getByTitle("Metroid — Switch")).toBeInTheDocument();
   });
 
-  it("sorts by name descending from the sort menu", async () => {
+  it("filters by platform from its popout", async () => {
     renderPage();
     await screen.findByTitle("Zelda — PS5");
-    fireEvent.click(screen.getByRole("button", { name: "Sort By" }));
-    fireEvent.click(await screen.findByRole("menuitem", { name: "Descending" }));
-    const titles = screen.getAllByTitle(/ — (PS5|Switch)$/).map((el) => el.getAttribute("title"));
-    // Name desc within each platform shelf (PS5 shelf first, then Switch).
-    expect(titles).toEqual(["Zelda — PS5", "Mario — PS5", "Metroid — Switch"]);
-  });
-
-  it("filters by platform from the filters dialog", async () => {
-    renderPage();
-    await screen.findByTitle("Zelda — PS5");
-    fireEvent.click(screen.getByRole("button", { name: "Filters" }));
-    // The dialog's only two comboboxes are the Platform and Format dropdowns.
-    const selects = await screen.findAllByRole("combobox");
-    expect(selects).toHaveLength(2);
-    fireEvent.mouseDown(selects[0]);
-    fireEvent.click(await screen.findByRole("option", { name: "Switch" }));
-    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.click(screen.getByRole("button", { name: "Platform" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Switch" }));
     expect(await screen.findByTitle("Metroid — Switch")).toBeInTheDocument();
     expect(screen.queryByTitle("Zelda — PS5")).not.toBeInTheDocument();
-    // The dialog's exit transition keeps the page aria-hidden until it
-    // unmounts; only then is the header button queryable again.
-    await waitForElementToBeRemoved(() => screen.queryByRole("dialog"));
-    // The filter badge on the Filters button counts the active filter.
-    expect(within(screen.getByRole("button", { name: "Filters" })).getByText("1")).toBeInTheDocument();
+    // The badge on the Platform button marks the active filter.
+    expect(within(screen.getByRole("button", { name: "Platform" })).getByText("1")).toBeInTheDocument();
+  });
+
+  it("filters by format from its popout", async () => {
+    renderPage();
+    await screen.findByTitle("Zelda — PS5");
+    fireEvent.click(screen.getByRole("button", { name: "Format" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "digital" }));
+    expect(await screen.findByTitle("Mario — PS5")).toBeInTheDocument();
+    expect(screen.queryByTitle("Zelda — PS5")).not.toBeInTheDocument();
+    expect(screen.queryByTitle("Metroid — Switch")).not.toBeInTheDocument();
   });
 });

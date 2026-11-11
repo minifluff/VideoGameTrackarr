@@ -1,28 +1,19 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import AlbumIcon from "@mui/icons-material/Album";
 import CheckIcon from "@mui/icons-material/Check";
-import FilterAltIcon from "@mui/icons-material/FilterAlt";
-import SortIcon from "@mui/icons-material/Sort";
+import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import TuneIcon from "@mui/icons-material/Tune";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
-import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
-import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
-import InputLabel from "@mui/material/InputLabel";
 import ListItemText from "@mui/material/ListItemText";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
-import Select from "@mui/material/Select";
 import Slider from "@mui/material/Slider";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
@@ -244,8 +235,6 @@ export function buildVisibleShelves(shelves: Shelf[], options: VisibleShelvesOpt
 // appearance settings) — the shelf is a view, not a filter session.
 const BOOKSHELF_CASE_SCALE_KEY = "vgt.bookshelfCaseScale";
 const BOOKSHELF_MIXED_KEY = "vgt.bookshelfMixed";
-const BOOKSHELF_SORT_FIELD_KEY = "vgt.bookshelfSortField";
-const BOOKSHELF_SORT_DIRECTION_KEY = "vgt.bookshelfSortDirection";
 
 function readStoredCaseScale(): number {
   const parsed = parseFloat(localStorage.getItem(BOOKSHELF_CASE_SCALE_KEY) ?? "");
@@ -254,14 +243,6 @@ function readStoredCaseScale(): number {
 
 function readStoredMixed(): boolean {
   return localStorage.getItem(BOOKSHELF_MIXED_KEY) === "true";
-}
-
-function readStoredSortField(): ShelfSortField {
-  return localStorage.getItem(BOOKSHELF_SORT_FIELD_KEY) === "platform" ? "platform" : "name";
-}
-
-function readStoredSortDirection(): ShelfSortDirection {
-  return localStorage.getItem(BOOKSHELF_SORT_DIRECTION_KEY) === "desc" ? "desc" : "asc";
 }
 
 const BookshelfPage = () => {
@@ -280,12 +261,9 @@ const BookshelfPage = () => {
   const [templatePlatform, setTemplatePlatform] = useState<PlatformResponse | null>(null);
   const [caseScale, setCaseScaleState] = useState<number>(readStoredCaseScale);
   const [mixed, setMixedState] = useState<boolean>(readStoredMixed);
-  const [sortField, setSortFieldState] = useState<ShelfSortField>(readStoredSortField);
-  const [sortDirection, setSortDirectionState] =
-    useState<ShelfSortDirection>(readStoredSortDirection);
   const [optionsMenuAnchor, setOptionsMenuAnchor] = useState<HTMLElement | null>(null);
-  const [sortMenuAnchor, setSortMenuAnchor] = useState<HTMLElement | null>(null);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [platformMenuAnchor, setPlatformMenuAnchor] = useState<HTMLElement | null>(null);
+  const [formatMenuAnchor, setFormatMenuAnchor] = useState<HTMLElement | null>(null);
 
   const setCaseScale = (scale: number) => {
     const clamped = Math.max(0.5, Math.min(2.0, scale));
@@ -296,23 +274,6 @@ const BookshelfPage = () => {
   const setMixed = (next: boolean) => {
     setMixedState(next);
     localStorage.setItem(BOOKSHELF_MIXED_KEY, String(next));
-  };
-
-  const setSortField = (field: ShelfSortField) => {
-    setSortFieldState(field);
-    localStorage.setItem(BOOKSHELF_SORT_FIELD_KEY, field);
-  };
-
-  const setSortDirection = (direction: ShelfSortDirection) => {
-    setSortDirectionState(direction);
-    localStorage.setItem(BOOKSHELF_SORT_DIRECTION_KEY, direction);
-  };
-
-  const activeFilterCount =
-    (platformFilter !== "all" ? 1 : 0) + (formatFilter !== "all" ? 1 : 0);
-  const handleClearFilters = () => {
-    setPlatformFilter("all");
-    setFormatFilter("all");
   };
 
   const { data: platforms } = usePlatforms();
@@ -347,11 +308,11 @@ const BookshelfPage = () => {
         platformFilter,
         formatFilter,
         caseFormats,
-        sortField,
-        sortDirection,
+        sortField: "name",
+        sortDirection: "asc",
         mixed,
       }),
-    [shelves, keyword, platformFilter, formatFilter, caseFormats, sortField, sortDirection, mixed]
+    [shelves, keyword, platformFilter, formatFilter, caseFormats, mixed]
   );
 
 
@@ -414,25 +375,29 @@ const BookshelfPage = () => {
               <TuneIcon />
             </IconButton>
           </Tooltip>
-          <Tooltip title={t("games.listToolbar.sortByLabel")}>
+          <Tooltip title={t("games.listPage.platformColumn")}>
             <IconButton
-              onClick={(event) => setSortMenuAnchor(event.currentTarget)}
-              aria-label={t("games.listToolbar.sortByLabel")}
+              onClick={(event) => setPlatformMenuAnchor(event.currentTarget)}
+              aria-label={t("games.listPage.platformColumn")}
               aria-haspopup="menu"
-              aria-expanded={sortMenuAnchor !== null}
+              aria-expanded={platformMenuAnchor !== null}
               sx={{ alignSelf: "center" }}
             >
-              <SortIcon />
+              <Badge badgeContent={platformFilter !== "all" ? 1 : 0} color="primary">
+                <SportsEsportsIcon />
+              </Badge>
             </IconButton>
           </Tooltip>
-          <Tooltip title={t("games.listToolbar.filtersButtonLabel")}>
+          <Tooltip title={t("games.listPage.formatColumn")}>
             <IconButton
-              onClick={() => setFiltersOpen(true)}
-              aria-label={t("games.listToolbar.filtersButtonLabel")}
+              onClick={(event) => setFormatMenuAnchor(event.currentTarget)}
+              aria-label={t("games.listPage.formatColumn")}
+              aria-haspopup="menu"
+              aria-expanded={formatMenuAnchor !== null}
               sx={{ alignSelf: "center" }}
             >
-              <Badge badgeContent={activeFilterCount} color="primary">
-                <FilterAltIcon />
+              <Badge badgeContent={formatFilter !== "all" ? 1 : 0} color="primary">
+                <AlbumIcon />
               </Badge>
             </IconButton>
           </Tooltip>
@@ -480,102 +445,73 @@ const BookshelfPage = () => {
         </Box>
       </Menu>
       <Menu
-        anchorEl={sortMenuAnchor}
-        open={sortMenuAnchor !== null}
-        onClose={() => setSortMenuAnchor(null)}
+        anchorEl={platformMenuAnchor}
+        open={platformMenuAnchor !== null}
+        onClose={() => setPlatformMenuAnchor(null)}
       >
-        {(
-          [
-            { field: "name", labelKey: "games.listView.columnName" },
-            { field: "platform", labelKey: "games.listView.columnPlatforms" },
-          ] as const
-        ).map((option) => {
-          const selected = option.field === sortField;
+        <MenuItem
+          selected={platformFilter === "all"}
+          onClick={() => {
+            setPlatformFilter("all");
+            setPlatformMenuAnchor(null);
+          }}
+        >
+          <ListItemText>{t("common.all")}</ListItemText>
+          {platformFilter === "all" ? (
+            <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} />
+          ) : null}
+        </MenuItem>
+        {shelves.map((shelf) => {
+          const selected = shelf.platform === platformFilter;
           return (
             <MenuItem
-              key={option.field}
+              key={shelf.platform}
               selected={selected}
               onClick={() => {
-                setSortField(option.field);
-                setSortMenuAnchor(null);
+                setPlatformFilter(shelf.platform);
+                setPlatformMenuAnchor(null);
               }}
             >
-              <ListItemText>{t(option.labelKey)}</ListItemText>
+              <ListItemText>{platformFilterLabel(platformsByLabel, shelf.platform)}</ListItemText>
               {selected ? <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} /> : null}
             </MenuItem>
           );
         })}
-        <Divider />
-        <MenuItem
-          selected={sortDirection === "asc"}
-          onClick={() => {
-            setSortDirection("asc");
-            setSortMenuAnchor(null);
-          }}
-        >
-          <ListItemText>{t("games.listView.sortAscending")}</ListItemText>
-          {sortDirection === "asc" ? <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} /> : null}
-        </MenuItem>
-        <MenuItem
-          selected={sortDirection === "desc"}
-          onClick={() => {
-            setSortDirection("desc");
-            setSortMenuAnchor(null);
-          }}
-        >
-          <ListItemText>{t("games.listView.sortDescending")}</ListItemText>
-          {sortDirection === "desc" ? <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} /> : null}
-        </MenuItem>
       </Menu>
-      <Dialog open={filtersOpen} onClose={() => setFiltersOpen(false)} fullWidth maxWidth="md">
-        <DialogTitle>{t("games.listToolbar.filtersButtonLabel")}</DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
-          <Grid container spacing={2} sx={{ mt: 0.5, pt: 0.5 }}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormControl size="small" fullWidth>
-                <InputLabel>{t("games.listPage.platformColumn")}</InputLabel>
-                <Select
-                  value={platformFilter}
-                  label={t("games.listPage.platformColumn")}
-                  onChange={(event) => setPlatformFilter(event.target.value)}
-                >
-                  <MenuItem value="all">{t("common.all")}</MenuItem>
-                  {shelves.map((shelf) => (
-                    <MenuItem key={shelf.platform} value={shelf.platform}>
-                      {platformFilterLabel(platformsByLabel, shelf.platform)}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormControl size="small" fullWidth>
-                <InputLabel>{t("games.listPage.formatColumn")}</InputLabel>
-                <Select
-                  value={formatFilter}
-                  label={t("games.listPage.formatColumn")}
-                  onChange={(event) => setFormatFilter(event.target.value)}
-                >
-                  <MenuItem value="all">{t("common.all")}</MenuItem>
-                  {formatOptions.map((format) => (
-                    <MenuItem key={format} value={format}>
-                      {format}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClearFilters} disabled={activeFilterCount === 0}>
-            {t("games.listToolbar.clearFiltersButton")}
-          </Button>
-          <Button onClick={() => setFiltersOpen(false)} variant="contained">
-            {t("common.close")}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <Menu
+        anchorEl={formatMenuAnchor}
+        open={formatMenuAnchor !== null}
+        onClose={() => setFormatMenuAnchor(null)}
+      >
+        <MenuItem
+          selected={formatFilter === "all"}
+          onClick={() => {
+            setFormatFilter("all");
+            setFormatMenuAnchor(null);
+          }}
+        >
+          <ListItemText>{t("common.all")}</ListItemText>
+          {formatFilter === "all" ? (
+            <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} />
+          ) : null}
+        </MenuItem>
+        {formatOptions.map((format) => {
+          const selected = format === formatFilter;
+          return (
+            <MenuItem
+              key={format}
+              selected={selected}
+              onClick={() => {
+                setFormatFilter(format);
+                setFormatMenuAnchor(null);
+              }}
+            >
+              <ListItemText>{format}</ListItemText>
+              {selected ? <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} /> : null}
+            </MenuItem>
+          );
+        })}
+      </Menu>
       {isLoading ? (
         <Paper sx={{ p: 3, textAlign: "center" }}>{t("common.loading")}</Paper>
       ) : rows.length === 0 ? (
