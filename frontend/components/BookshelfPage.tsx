@@ -232,16 +232,17 @@ export function buildVisibleShelves(shelves: Shelf[], options: VisibleShelvesOpt
 }
 
 // Display preferences persist across visits (localStorage, like the
-// appearance settings) — the shelf is a view, not a filter session.
-const BOOKSHELF_CASE_SCALE_KEY = "vgt.bookshelfCaseScale";
-const BOOKSHELF_MIXED_KEY = "vgt.bookshelfMixed";
+// appearance settings) — the shelf is a view, not a filter session. The
+// public shelf shares them: one shelf preference per browser.
+export const BOOKSHELF_CASE_SCALE_KEY = "vgt.bookshelfCaseScale";
+export const BOOKSHELF_MIXED_KEY = "vgt.bookshelfMixed";
 
-function readStoredCaseScale(): number {
+export function readStoredCaseScale(): number {
   const parsed = parseFloat(localStorage.getItem(BOOKSHELF_CASE_SCALE_KEY) ?? "");
   return !isNaN(parsed) && parsed >= 0.5 && parsed <= 2.0 ? parsed : 1.0;
 }
 
-function readStoredMixed(): boolean {
+export function readStoredMixed(): boolean {
   return localStorage.getItem(BOOKSHELF_MIXED_KEY) === "true";
 }
 

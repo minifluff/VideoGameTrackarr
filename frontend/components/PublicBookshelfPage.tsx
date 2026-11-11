@@ -1,25 +1,39 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import AlbumIcon from "@mui/icons-material/Album";
+import CheckIcon from "@mui/icons-material/Check";
+import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
+import TuneIcon from "@mui/icons-material/Tune";
+import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
+import Divider from "@mui/material/Divider";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import IconButton from "@mui/material/IconButton";
+import ListItemText from "@mui/material/ListItemText";
+import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
-import Select from "@mui/material/Select";
+import Slider from "@mui/material/Slider";
 import Stack from "@mui/material/Stack";
+import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { fetchPublicBookshelf } from "../api/public";
 import type { PlatformResponse } from "../api/types";
 import {
+  BOOKSHELF_CASE_SCALE_KEY,
+  BOOKSHELF_MIXED_KEY,
   buildCaseFormatsFromEntries,
   buildShelvesFromEntries,
   buildTemplateCaseSizes,
-  caseFormatsKey,
+  buildVisibleShelves,
   indexPlatformsByLabel,
   platformFilterLabel,
+  readStoredCaseScale,
+  readStoredMixed,
   resolvePlatformCaseSizes,
   TEMPLATE_TARGET_HEIGHT,
 } from "./BookshelfPage";
@@ -41,6 +55,22 @@ const PublicBookshelfPage = () => {
   const [search, setSearch] = useState("");
   const [platformFilter, setPlatformFilter] = useState("all");
   const [formatFilter, setFormatFilter] = useState("all");
+  const [caseScale, setCaseScaleState] = useState<number>(readStoredCaseScale);
+  const [mixed, setMixedState] = useState<boolean>(readStoredMixed);
+  const [optionsMenuAnchor, setOptionsMenuAnchor] = useState<HTMLElement | null>(null);
+  const [platformMenuAnchor, setPlatformMenuAnchor] = useState<HTMLElement | null>(null);
+  const [formatMenuAnchor, setFormatMenuAnchor] = useState<HTMLElement | null>(null);
+
+  const setCaseScale = (scale: number) => {
+    const clamped = Math.max(0.5, Math.min(2.0, scale));
+    setCaseScaleState(clamped);
+    localStorage.setItem(BOOKSHELF_CASE_SCALE_KEY, String(clamped));
+  };
+
+  const setMixed = (next: boolean) => {
+    setMixedState(next);
+    localStorage.setItem(BOOKSHELF_MIXED_KEY, String(next));
+  };
 
   const entries = data?.entries;
   // The public payload's platform records carry only display fields; widen
@@ -89,22 +119,16 @@ const PublicBookshelfPage = () => {
   );
   const visibleShelves = useMemo(
     () =>
-      shelves
-        .filter((shelf) => platformFilter === "all" || shelf.platform === platformFilter)
-        .map((shelf) => ({
-          ...shelf,
-          cases: shelf.cases.filter((entry) => {
-            if (keyword && !entry.game.name.toLowerCase().includes(keyword)) return false;
-            if (
-              formatFilter !== "all" &&
-              !caseFormats.get(caseFormatsKey(entry.game.id, entry.platform))?.has(formatFilter)
-            )
-              return false;
-            return true;
-          }),
-        }))
-        .filter((shelf) => shelf.cases.length > 0),
-    [shelves, keyword, platformFilter, formatFilter, caseFormats]
+      buildVisibleShelves(shelves, {
+        keyword,
+        platformFilter,
+        formatFilter,
+        caseFormats,
+        sortField: "name",
+        sortDirection: "asc",
+        mixed,
+      }),
+    [shelves, keyword, platformFilter, formatFilter, caseFormats, mixed]
   );
 
 
@@ -113,8 +137,12 @@ const PublicBookshelfPage = () => {
   // useShelfWidth in BookshelfGrid).
   const { shelfRef, shelfWidth } = useShelfWidth();
   const rows = useMemo(
-    () => packRows(visibleShelves, Math.max(shelfWidth - 16, 200), platformCaseSizes),
-    [visibleShelves, shelfWidth, platformCaseSizes]
+    () =>
+      packRows(visibleShelves, Math.max(shelfWidth - 16, 200), platformCaseSizes, {
+        mixed,
+        caseScale,
+      }),
+    [visibleShelves, shelfWidth, platformCaseSizes, mixed, caseScale]
   );
 
   // Same progressive rendering as the private shelf (shared hook).
@@ -135,7 +163,11 @@ const PublicBookshelfPage = () => {
             {t("games.bookshelf.summary", { cases: totalCases })}
           </Typography>
         </Box>
-        <Stack spacing={1.5} sx={{ width: "100%", flex: { sm: 1 }, maxWidth: { sm: 620 } }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ alignItems: "center", width: "100%", flex: { sm: 1 }, maxWidth: { sm: 620 } }}
+        >
           <TextField
             size="small"
             fullWidth
@@ -143,40 +175,154 @@ const PublicBookshelfPage = () => {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
-          <Stack direction="row" spacing={1.5}>
-            <FormControl size="small" sx={{ flex: 1, minWidth: 0 }}>
-              <InputLabel>{t("games.listPage.platformColumn")}</InputLabel>
-              <Select
-                value={platformFilter}
-                label={t("games.listPage.platformColumn")}
-                onChange={(event) => setPlatformFilter(event.target.value)}
-              >
-                <MenuItem value="all">{t("common.all")}</MenuItem>
-                {shelves.map((shelf) => (
-                  <MenuItem key={shelf.platform} value={shelf.platform}>
-                    {platformFilterLabel(platformsByLabel, shelf.platform)}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ flex: 1, minWidth: 0 }}>
-              <InputLabel>{t("games.listPage.formatColumn")}</InputLabel>
-              <Select
-                value={formatFilter}
-                label={t("games.listPage.formatColumn")}
-                onChange={(event) => setFormatFilter(event.target.value)}
-              >
-                <MenuItem value="all">{t("common.all")}</MenuItem>
-                {formatOptions.map((format) => (
-                  <MenuItem key={format} value={format}>
-                    {format}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Stack>
+          <Tooltip title={t("games.listToolbar.optionsButton")}>
+            <IconButton
+              onClick={(event) => setOptionsMenuAnchor(event.currentTarget)}
+              aria-label={t("games.listToolbar.optionsButton")}
+              aria-haspopup="menu"
+              aria-expanded={optionsMenuAnchor !== null}
+              sx={{ alignSelf: "center" }}
+            >
+              <TuneIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={t("games.listPage.platformColumn")}>
+            <IconButton
+              onClick={(event) => setPlatformMenuAnchor(event.currentTarget)}
+              aria-label={t("games.listPage.platformColumn")}
+              aria-haspopup="menu"
+              aria-expanded={platformMenuAnchor !== null}
+              sx={{ alignSelf: "center" }}
+            >
+              <Badge badgeContent={platformFilter !== "all" ? 1 : 0} color="primary">
+                <SportsEsportsIcon />
+              </Badge>
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={t("games.listPage.formatColumn")}>
+            <IconButton
+              onClick={(event) => setFormatMenuAnchor(event.currentTarget)}
+              aria-label={t("games.listPage.formatColumn")}
+              aria-haspopup="menu"
+              aria-expanded={formatMenuAnchor !== null}
+              sx={{ alignSelf: "center" }}
+            >
+              <Badge badgeContent={formatFilter !== "all" ? 1 : 0} color="primary">
+                <AlbumIcon />
+              </Badge>
+            </IconButton>
+          </Tooltip>
         </Stack>
       </Stack>
+      <Menu
+        anchorEl={optionsMenuAnchor}
+        open={optionsMenuAnchor !== null}
+        onClose={() => setOptionsMenuAnchor(null)}
+      >
+        <Box sx={{ px: 2, py: 1.5, width: 240 }}>
+          <Typography variant="subtitle2" gutterBottom>
+            {t("games.bookshelf.caseSize.label")}
+          </Typography>
+          <Box sx={{ px: 1 }}>
+            <Slider
+              value={caseScale}
+              onChange={(_event, value) => setCaseScale(value as number)}
+              min={0.5}
+              max={2.0}
+              step={0.1}
+              marks={[
+                { value: 0.5, label: t("settings.appearance.cardSizeSmall") },
+                { value: 1.0, label: t("settings.appearance.cardSizeMedium") },
+                { value: 2.0, label: t("settings.appearance.cardSizeLarge") },
+              ]}
+              valueLabelDisplay="auto"
+              valueLabelFormat={(value) => `${Math.round(value * 100)}%`}
+              aria-label={t("games.bookshelf.caseSize.label")}
+            />
+          </Box>
+          <Typography variant="caption" color="text.secondary">
+            {t("games.listToolbar.cardSizePageNote")}
+          </Typography>
+          <Divider sx={{ my: 1.5 }} />
+          <FormControlLabel
+            control={
+              <Switch checked={mixed} onChange={(event) => setMixed(event.target.checked)} />
+            }
+            label={t("games.bookshelf.mixed")}
+          />
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+            {t("games.bookshelf.mixedHelp")}
+          </Typography>
+        </Box>
+      </Menu>
+      <Menu
+        anchorEl={platformMenuAnchor}
+        open={platformMenuAnchor !== null}
+        onClose={() => setPlatformMenuAnchor(null)}
+      >
+        <MenuItem
+          selected={platformFilter === "all"}
+          onClick={() => {
+            setPlatformFilter("all");
+            setPlatformMenuAnchor(null);
+          }}
+        >
+          <ListItemText>{t("common.all")}</ListItemText>
+          {platformFilter === "all" ? (
+            <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} />
+          ) : null}
+        </MenuItem>
+        {shelves.map((shelf) => {
+          const selected = shelf.platform === platformFilter;
+          return (
+            <MenuItem
+              key={shelf.platform}
+              selected={selected}
+              onClick={() => {
+                setPlatformFilter(shelf.platform);
+                setPlatformMenuAnchor(null);
+              }}
+            >
+              <ListItemText>{platformFilterLabel(platformsByLabel, shelf.platform)}</ListItemText>
+              {selected ? <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} /> : null}
+            </MenuItem>
+          );
+        })}
+      </Menu>
+      <Menu
+        anchorEl={formatMenuAnchor}
+        open={formatMenuAnchor !== null}
+        onClose={() => setFormatMenuAnchor(null)}
+      >
+        <MenuItem
+          selected={formatFilter === "all"}
+          onClick={() => {
+            setFormatFilter("all");
+            setFormatMenuAnchor(null);
+          }}
+        >
+          <ListItemText>{t("common.all")}</ListItemText>
+          {formatFilter === "all" ? (
+            <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} />
+          ) : null}
+        </MenuItem>
+        {formatOptions.map((format) => {
+          const selected = format === formatFilter;
+          return (
+            <MenuItem
+              key={format}
+              selected={selected}
+              onClick={() => {
+                setFormatFilter(format);
+                setFormatMenuAnchor(null);
+              }}
+            >
+              <ListItemText>{format}</ListItemText>
+              {selected ? <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} /> : null}
+            </MenuItem>
+          );
+        })}
+      </Menu>
       {isLoading ? (
         <Paper sx={{ p: 3, textAlign: "center" }}>{t("common.loading")}</Paper>
       ) : rows.length === 0 ? (

@@ -32,6 +32,7 @@ const PublicGamesPage = () => {
   const [formats, setFormats] = useSessionState<string[]>("public.games.formats", []);
   const [playStatuses, setPlayStatuses] = useSessionState<string[]>("public.games.playStatuses", []);
   const [ownershipStatuses, setOwnershipStatuses] = useSessionState<OwnershipStatus[]>("public.games.ownershipStatuses", []);
+  const [cardSize, setCardSize] = useSessionState<number>("public.games.cardSize", 1.0);
   const debouncedSearch = useDebouncedValue(search.trim(), 500);
   // Hide on scroll down, reappear on scroll up — same as the public list page.
   const hideSearchBar = useScrollDirection(80);
@@ -159,6 +160,8 @@ const PublicGamesPage = () => {
         ownershipStatuses={ownershipStatuses}
         onOwnershipStatusesChange={setOwnershipStatuses}
         onClearFilters={clearAllFilters}
+        cardSize={cardSize}
+        onCardSizeChange={setCardSize}
 
       />
       </Box>
@@ -178,6 +181,7 @@ const PublicGamesPage = () => {
           items={games}
           getKey={getGameKey}
           renderItem={renderGameCard}
+          cardSize={cardSize}
         />
       )}
     </>
