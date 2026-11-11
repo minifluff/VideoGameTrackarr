@@ -72,6 +72,7 @@ const PublicDeviceList = ({
           owned={device.owned}
           wishlisted={device.wishlisted}
           ownedQuantity={device.ownedQuantity}
+          isCustom={device.isCustom}
         />
       )}
     />

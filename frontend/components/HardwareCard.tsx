@@ -17,6 +17,9 @@ interface HardwareCardProps {
   owned: boolean;
   wishlisted: boolean;
   ownedQuantity: number;
+  // Not linked to a hardware reference catalog entry: a "Custom" chip, styled like
+  // GameCard's for a game with no IGDB link.
+  isCustom?: boolean;
   // Optional so a read-only context (the public share-link view) can render a non-clickable
   // card without a dummy handler.
   onClick?: () => void;
@@ -29,7 +32,17 @@ interface HardwareCardProps {
 // subtitle, owned/wishlist badges, a quantity chip) but neither maps cleanly onto
 // GameCard's game-specific fields (release year, play status, addon type), so this is
 // its own component rather than a GameCard reuse.
-const HardwareCard = ({ name, subtitle, imageUrl, owned, wishlisted, ownedQuantity, onClick, dateLine }: HardwareCardProps) => {
+const HardwareCard = ({
+  name,
+  subtitle,
+  imageUrl,
+  owned,
+  wishlisted,
+  ownedQuantity,
+  isCustom = false,
+  onClick,
+  dateLine,
+}: HardwareCardProps) => {
   const theme = useTheme();
   const { t } = useTranslation();
   const isClickable = Boolean(onClick);
@@ -86,6 +99,34 @@ const HardwareCard = ({ name, subtitle, imageUrl, owned, wishlisted, ownedQuanti
             <Typography variant="caption">{t("hardware.card.noImage")}</Typography>
           </Box>
         )}
+        {isCustom ? (
+          // Bottom-left: the bottom-right corner is the quantity badge's. Colours match
+          // GameCard's Custom chip.
+          <Box
+            component="span"
+            sx={{
+              position: "absolute",
+              left: 7,
+              bottom: 7,
+              maxWidth: "calc(100% - 64px)",
+              height: 22,
+              px: 1,
+              borderRadius: 999,
+              bgcolor: "#5d6673",
+              color: "#fff",
+              fontSize: 11.5,
+              fontWeight: 650,
+              lineHeight: "22px",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              boxShadow: "0 0 0 1px rgba(255, 255, 255, 0.16)",
+              pointerEvents: "none",
+            }}
+          >
+            {t("hardware.card.customLabel")}
+          </Box>
+        ) : null}
       </Box>
 
       <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>

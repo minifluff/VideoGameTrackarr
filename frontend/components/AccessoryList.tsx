@@ -59,6 +59,7 @@ const AccessoryList = ({ searchKeyword, status, sort, manufacturerIds, accessory
               owned={item.owned}
               wishlisted={item.wishlisted}
               ownedQuantity={item.ownedQuantity}
+              isCustom={item.isCustom}
               onClick={() => navigate(`/hardware/accessory/${hardwareIdentifier(item.officialName, item.uuid)}`)}
             />
           )}

@@ -241,6 +241,7 @@ export interface PublicDeviceSummary {
   manufacturerName: string;
   hardwarePlatformName: string | null;
   imageUrl: string | null;
+  isCustom: boolean;
   owned: boolean;
   wishlisted: boolean;
   ownedQuantity: number;
@@ -251,6 +252,7 @@ export interface PublicAccessorySummary {
   officialName: string;
   manufacturerName: string;
   imageUrl: string | null;
+  isCustom: boolean;
   owned: boolean;
   wishlisted: boolean;
   ownedQuantity: number;
@@ -861,6 +863,11 @@ export interface InsightAccessoryRef {
   officialName: string;
   imageUrl: string | null;
   manufacturerName: string;
+  // No hardware reference catalog entry (the "Custom" chip).
+  isCustom: boolean;
+  // Always owned (the page's premise); also wishlisted, and how many copies are owned.
+  wishlisted: boolean;
+  ownedQuantity: number;
 }
 
 export interface AuthTokens {
@@ -952,6 +959,9 @@ export interface DeviceSummary {
   colorName: string | null;
   ratingBoard: RatingBoard | null;
   imageUrl: string | null;
+  // Not linked to a hardware reference catalog entry; shown with a "Custom" chip, like a
+  // game with no igdbId.
+  isCustom: boolean;
   owned: boolean;
   wishlisted: boolean;
   ownedQuantity: number;
@@ -1012,6 +1022,9 @@ export interface AccessorySummary {
   ratingBoard: RatingBoard | null;
   imageUrl: string | null;
   summary: string | null;
+  // Made with Add Accessory's Custom mode (no hardware reference catalog entry); shown with a
+  // "Custom" chip, like a game with no igdbId.
+  isCustom: boolean;
   owned: boolean;
   wishlisted: boolean;
   ownedQuantity: number;

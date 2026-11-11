@@ -89,6 +89,7 @@ const ReleaseCalendarSection = ({ scope, title, cardSize, columnWidth }: Release
               owned={item.device.owned}
               wishlisted={item.device.wishlisted}
               ownedQuantity={item.device.ownedQuantity}
+              isCustom={item.device.isCustom}
               dateLine={releaseDateLabel(item)}
               onClick={() =>
                 navigate(
@@ -109,6 +110,7 @@ const ReleaseCalendarSection = ({ scope, title, cardSize, columnWidth }: Release
               owned={item.accessory.owned}
               wishlisted={item.accessory.wishlisted}
               ownedQuantity={item.accessory.ownedQuantity}
+              isCustom={item.accessory.isCustom}
               dateLine={releaseDateLabel(item)}
               onClick={() =>
                 navigate(

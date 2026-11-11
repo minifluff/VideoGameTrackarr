@@ -78,7 +78,6 @@ const AccessoryDetails = () => {
   // Accessory always creates exactly one alongside the catalog row — this page shows that one
   // record rather than a list, preferring an owned copy over a wishlisted one if both exist.
   const primaryOwnership = ownershipRows?.find((row) => row.status === "owned") ?? ownershipRows?.[0] ?? null;
-  const isCustom = !accessory.hardwareReference;
   const releaseDate = accessory.releaseDate ?? accessory.hardwareReference?.releaseDate ?? null;
   const summaryText = accessory.hardwareReference?.summary ?? accessory.summary;
 
@@ -131,9 +130,9 @@ const AccessoryDetails = () => {
         <Stack spacing={3}>
           <Card sx={sectionCardSx}>
             <CardContent>
-              {isCustom ? (
-                <Tooltip title={t("hardware.accessoryDetails.customTooltip")}>
-                  <Chip label={t("hardware.accessoryDetails.customLabel")} size="small" variant="outlined" sx={{ mb: 1 }} />
+              {accessory.isCustom ? (
+                <Tooltip title={t("hardware.detailsShared.customTooltip")}>
+                  <Chip label={t("hardware.card.customLabel")} size="small" variant="outlined" sx={{ mb: 1 }} />
                 </Tooltip>
               ) : null}
               <Typography variant="h4" component="h1">

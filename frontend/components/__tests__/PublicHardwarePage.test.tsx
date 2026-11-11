@@ -22,6 +22,7 @@ const devices: PublicDeviceSummary[] = [
     manufacturerName: "Nintendo",
     hardwarePlatformName: "Nintendo Switch",
     imageUrl: null,
+    isCustom: false,
     owned: true,
     wishlisted: false,
     ownedQuantity: 1,
@@ -32,6 +33,7 @@ const devices: PublicDeviceSummary[] = [
     manufacturerName: "Sony",
     hardwarePlatformName: "PlayStation 5",
     imageUrl: null,
+    isCustom: true,
     owned: false,
     wishlisted: true,
     ownedQuantity: 0,
@@ -44,6 +46,7 @@ const accessories: PublicAccessorySummary[] = [
     officialName: "Zelda Case",
     manufacturerName: "Nintendo",
     imageUrl: null,
+    isCustom: false,
     owned: true,
     wishlisted: false,
     ownedQuantity: 1,
@@ -111,6 +114,14 @@ describe("PublicHardwarePage toolbar", () => {
     await user.keyboard("{Escape}");
     await waitForElementToBeRemoved(() => screen.queryByRole("dialog"));
     expect(within(screen.getByRole("button", { name: "Filters" })).getByText("1")).toBeInTheDocument();
+  });
+
+  it("shows a Custom chip only on hardware with no reference catalog entry", async () => {
+    renderPage();
+
+    expect(await screen.findByText("Astro Pad")).toBeInTheDocument();
+    // Exactly one Custom chip on the page — on the Astro Pad card.
+    expect(screen.getAllByText("Custom")).toHaveLength(1);
   });
 
   it("filters by manufacturer from the filters dialog", async () => {

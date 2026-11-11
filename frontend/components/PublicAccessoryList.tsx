@@ -63,6 +63,7 @@ const PublicAccessoryList = ({
           owned={accessory.owned}
           wishlisted={accessory.wishlisted}
           ownedQuantity={accessory.ownedQuantity}
+          isCustom={accessory.isCustom}
         />
       )}
     />

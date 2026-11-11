@@ -6,10 +6,12 @@ import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import CardHeader from "@mui/material/CardHeader";
+import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
@@ -124,6 +126,11 @@ const DeviceDetails = () => {
         <Stack spacing={3}>
           <Card sx={sectionCardSx}>
             <CardContent>
+              {device.isCustom ? (
+                <Tooltip title={t("hardware.detailsShared.customTooltip")}>
+                  <Chip label={t("hardware.card.customLabel")} size="small" variant="outlined" sx={{ mb: 1 }} />
+                </Tooltip>
+              ) : null}
               <Typography variant="h4" component="h1">
                 {device.officialName}
                 {device.hardwareReference?.releaseDate ? (

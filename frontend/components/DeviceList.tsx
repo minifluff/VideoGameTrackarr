@@ -57,6 +57,7 @@ const DeviceList = ({ searchKeyword, status, sort, manufacturerIds, deviceTypeId
               owned={item.owned}
               wishlisted={item.wishlisted}
               ownedQuantity={item.ownedQuantity}
+              isCustom={item.isCustom}
               onClick={() => navigate(`/hardware/device/${hardwareIdentifier(item.officialName, item.uuid)}`)}
             />
           )}

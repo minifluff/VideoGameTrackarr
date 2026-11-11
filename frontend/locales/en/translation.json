@@ -1629,15 +1629,14 @@
       "statusWishlist": "Wishlist",
       "conditionLabel": "Condition",
       "inventoryNotTracked": "Not tracked yet.",
-      "linkedAccessoriesTitle": "Linked Accessories"
+      "linkedAccessoriesTitle": "Linked Accessories",
+      "customTooltip": "Added by hand, not linked to a reference catalog entry."
     },
     "accessoryDetails": {
       "removeSuccess": "Accessory removed.",
       "removeError": "Error deleting accessory. Please try again.",
       "editButton": "Edit Accessory",
       "removeButton": "Remove Accessory",
-      "customTooltip": "Added by hand, not linked to a reference catalog entry.",
-      "customLabel": "Custom",
       "linkedDevicesTitle": "Linked Devices",
       "noLinkedDevices": "No devices linked yet.",
       "noLinkedAccessories": "No accessories linked yet.",
@@ -1711,7 +1710,8 @@
       "empty": "No accessories found — every owned accessory is linked to hardware you own."
     },
     "card": {
-      "noImage": "No image"
+      "noImage": "No image",
+      "customLabel": "Custom"
     },
     "coverCard": {
       "noImageAvailable": "No Image Available"
