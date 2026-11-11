@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
@@ -127,18 +127,56 @@ describe("GamesListPage selection", () => {
   });
 });
 
-describe("GamesListPage filter sizes", () => {
-  it("renders the Platform and Format dropdowns at the search bar's small height", async () => {
+describe("GamesListPage toolbar", () => {
+  it("shows the Options, Platform and Format buttons next to the search field", async () => {
     renderPage();
 
-    // The page's only two comboboxes are the Platform and Format dropdowns
-    // (the search field itself is a plain text input).
-    const selects = await screen.findAllByRole("combobox");
-    expect(selects).toHaveLength(2);
-    const search = screen.getByLabelText("Search games");
-    for (const input of [...selects, search]) {
-      expect(input.closest(".MuiInputBase-root")).toHaveClass("MuiInputBase-sizeSmall");
-    }
+    const search = await screen.findByLabelText("Search games");
+    expect(search.closest(".MuiInputBase-root")).toHaveClass("MuiInputBase-sizeSmall");
+    expect(screen.getByRole("button", { name: "Options" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Platform" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Format" })).toBeInTheDocument();
+    // The inline filter dropdowns are gone — no comboboxes on the page.
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+  });
+
+  it("filters by platform from its popout", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Platform" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Nintendo Switch" }));
+    expect(await screen.findByText("Zelda: Tears of the Kingdom")).toBeInTheDocument();
+    expect(screen.queryByText("Astro Bot")).not.toBeInTheDocument();
+    // The badge on the Platform button marks the active filter — the table's
+    // Platform column header is a second button with the same name, so pick
+    // the one carrying the badge.
+    const toolbarButton = screen
+      .getAllByRole("button", { name: "Platform" })
+      .find((button) => button.querySelector(".MuiBadge-root"));
+    expect(toolbarButton).toBeTruthy();
+    expect(within(toolbarButton as HTMLElement).getByText("1")).toBeInTheDocument();
+  });
+
+  it("filters by format from its popout", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Format" }));
+    await user.click(await screen.findByRole("menuitem", { name: "digital" }));
+    expect(await screen.findByText("Zelda: Tears of the Kingdom")).toBeInTheDocument();
+    expect(screen.queryByText("Astro Bot")).not.toBeInTheDocument();
+  });
+
+  it("changes rows per page from the options popout", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Options" }));
+    await user.click(await screen.findByRole("menuitem", { name: "25" }));
+    // Reopen: the new choice carries the checkmark.
+    await user.click(screen.getByRole("button", { name: "Options" }));
+    expect(await screen.findByRole("menuitem", { name: "25" })).toHaveClass("Mui-selected");
   });
 });
 

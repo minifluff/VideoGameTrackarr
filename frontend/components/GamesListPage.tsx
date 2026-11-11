@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import AlbumIcon from "@mui/icons-material/Album";
 import CheckIcon from "@mui/icons-material/Check";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DriveFileMoveIcon from "@mui/icons-material/DriveFileMove";
 import EditIcon from "@mui/icons-material/Edit";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import SearchIcon from "@mui/icons-material/Search";
+import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
+import TuneIcon from "@mui/icons-material/Tune";
 import Alert from "@mui/material/Alert";
+import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
@@ -15,13 +19,12 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Collapse from "@mui/material/Collapse";
-import FormControl from "@mui/material/FormControl";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
-import InputLabel from "@mui/material/InputLabel";
+import ListItemText from "@mui/material/ListItemText";
+import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
-import Select from "@mui/material/Select";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -56,6 +59,9 @@ const GamesListPage = () => {
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [platformFilter, setPlatformFilter] = useState<string>("all");
   const [formatFilter, setFormatFilter] = useState<string>("all");
+  const [optionsMenuAnchor, setOptionsMenuAnchor] = useState<HTMLElement | null>(null);
+  const [platformMenuAnchor, setPlatformMenuAnchor] = useState<HTMLElement | null>(null);
+  const [formatMenuAnchor, setFormatMenuAnchor] = useState<HTMLElement | null>(null);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<number>>(new Set());
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
@@ -260,13 +266,13 @@ const GamesListPage = () => {
           ) : null}
         </Collapse>
         <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
-            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", flexDirection: { xs: "column", sm: "row" } }}>
+            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
               <TextField
                 label={t("games.listPage.searchLabel")}
                 size="small"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                sx={{ flexGrow: 1, minWidth: 200 }}
+                sx={{ flexGrow: 1, minWidth: 0 }}
                 slotProps={{
                   input: {
                     startAdornment: (
@@ -277,36 +283,139 @@ const GamesListPage = () => {
                   },
                 }}
               />
-              <Box sx={{ display: "flex", gap: 2, flex: { xs: "1 1 100%", sm: "0 1 auto" } }}>
-              <FormControl size="small" sx={{ minWidth: 140, flex: 1 }}>
-                <InputLabel>{t("games.listPage.platformColumn")}</InputLabel>
-                <Select
-                  value={platformFilter}
-                  label={t("games.listPage.platformColumn")}
-                  onChange={(e) => setPlatformFilter(e.target.value)}
+              <Tooltip title={t("games.listToolbar.optionsButton")}>
+                <IconButton
+                  onClick={(event) => setOptionsMenuAnchor(event.currentTarget)}
+                  aria-label={t("games.listToolbar.optionsButton")}
+                  aria-haspopup="menu"
+                  aria-expanded={optionsMenuAnchor !== null}
+                  sx={{ alignSelf: "center" }}
                 >
-                  <MenuItem value="all">{t("common.all")}</MenuItem>
-                  {platforms.map((p) => (
-                    <MenuItem key={p} value={p}>{p}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl size="small" sx={{ minWidth: 140, flex: 1 }}>
-                <InputLabel>{t("games.listPage.formatColumn")}</InputLabel>
-                <Select
-                  value={formatFilter}
-                  label={t("games.listPage.formatColumn")}
-                  onChange={(e) => setFormatFilter(e.target.value)}
+                  <TuneIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={t("games.listPage.platformColumn")}>
+                <IconButton
+                  onClick={(event) => setPlatformMenuAnchor(event.currentTarget)}
+                  aria-label={t("games.listPage.platformColumn")}
+                  aria-haspopup="menu"
+                  aria-expanded={platformMenuAnchor !== null}
+                  sx={{ alignSelf: "center" }}
                 >
-                  <MenuItem value="all">{t("common.all")}</MenuItem>
-                  {formats.map((f) => (
-                    <MenuItem key={f} value={f}>{f}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              </Box>
+                  <Badge badgeContent={platformFilter !== "all" ? 1 : 0} color="primary">
+                    <SportsEsportsIcon />
+                  </Badge>
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={t("games.listPage.formatColumn")}>
+                <IconButton
+                  onClick={(event) => setFormatMenuAnchor(event.currentTarget)}
+                  aria-label={t("games.listPage.formatColumn")}
+                  aria-haspopup="menu"
+                  aria-expanded={formatMenuAnchor !== null}
+                  sx={{ alignSelf: "center" }}
+                >
+                  <Badge badgeContent={formatFilter !== "all" ? 1 : 0} color="primary">
+                    <AlbumIcon />
+                  </Badge>
+                </IconButton>
+              </Tooltip>
             </Box>
           </Paper>
+      <Menu
+        anchorEl={optionsMenuAnchor}
+        open={optionsMenuAnchor !== null}
+        onClose={() => setOptionsMenuAnchor(null)}
+      >
+        <Typography variant="subtitle2" sx={{ px: 2, pt: 1.5, pb: 0.5 }}>
+          {t("games.listPage.rowsPerPage")}
+        </Typography>
+        {[25, 50, 100, 250].map((count) => {
+          const selected = rowsPerPage === count;
+          return (
+            <MenuItem
+              key={count}
+              selected={selected}
+              onClick={() => {
+                setRowsPerPage(count);
+                setPage(0);
+                setOptionsMenuAnchor(null);
+              }}
+            >
+              <ListItemText>{count}</ListItemText>
+              {selected ? <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} /> : null}
+            </MenuItem>
+          );
+        })}
+      </Menu>
+      <Menu
+        anchorEl={platformMenuAnchor}
+        open={platformMenuAnchor !== null}
+        onClose={() => setPlatformMenuAnchor(null)}
+      >
+        <MenuItem
+          selected={platformFilter === "all"}
+          onClick={() => {
+            setPlatformFilter("all");
+            setPlatformMenuAnchor(null);
+          }}
+        >
+          <ListItemText>{t("common.all")}</ListItemText>
+          {platformFilter === "all" ? (
+            <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} />
+          ) : null}
+        </MenuItem>
+        {platforms.map((platform) => {
+          const selected = platform === platformFilter;
+          return (
+            <MenuItem
+              key={platform}
+              selected={selected}
+              onClick={() => {
+                setPlatformFilter(platform);
+                setPlatformMenuAnchor(null);
+              }}
+            >
+              <ListItemText>{platform}</ListItemText>
+              {selected ? <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} /> : null}
+            </MenuItem>
+          );
+        })}
+      </Menu>
+      <Menu
+        anchorEl={formatMenuAnchor}
+        open={formatMenuAnchor !== null}
+        onClose={() => setFormatMenuAnchor(null)}
+      >
+        <MenuItem
+          selected={formatFilter === "all"}
+          onClick={() => {
+            setFormatFilter("all");
+            setFormatMenuAnchor(null);
+          }}
+        >
+          <ListItemText>{t("common.all")}</ListItemText>
+          {formatFilter === "all" ? (
+            <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} />
+          ) : null}
+        </MenuItem>
+        {formats.map((format) => {
+          const selected = format === formatFilter;
+          return (
+            <MenuItem
+              key={format}
+              selected={selected}
+              onClick={() => {
+                setFormatFilter(format);
+                setFormatMenuAnchor(null);
+              }}
+            >
+              <ListItemText>{format}</ListItemText>
+              {selected ? <CheckIcon fontSize="small" color="primary" sx={{ ml: 2 }} /> : null}
+            </MenuItem>
+          );
+        })}
+      </Menu>
       </Box>
 
       {error ? (

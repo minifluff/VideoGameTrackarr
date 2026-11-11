@@ -1242,6 +1242,7 @@
     "listPage": {
       "title": "Jeux individuels",
       "searchLabel": "Search games",
+      "rowsPerPage": "Rows per page",
       "nameColumn": "Name",
       "statusColumn": "Status",
       "platformColumn": "Platform",
