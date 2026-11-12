@@ -16,9 +16,9 @@ import { TOAST_OPTIONS } from "../utils/toastOptions";
 
 interface GogInstallersSectionProps {
   gameId: number;
-  // Only GOG-imported games have installers — the game page only mounts this section
+  // Only GOG-imported games have installers — the dialog only mounts this section
   // (and fires the query) when a library item carries the GOG storefront, so every
-  // other game page skips the request entirely.
+  // other dialog skips the request entirely.
   hasGogItem: boolean;
 }
 

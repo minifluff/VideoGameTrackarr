@@ -22,7 +22,6 @@ import GameAddonsSection from "./GameAddonsSection";
 import GameCoverCard from "./GameCoverCard";
 import GameLibrarySection from "./GameLibrarySection";
 import GameProgressSection from "./GameProgressSection";
-import GogInstallersSection from "./GogInstallersSection";
 import NotesSection from "./NotesSection";
 import NotFoundPage from "./NotFoundPage";
 import TagsSection from "./TagsSection";
@@ -129,10 +128,6 @@ const GameDetails = () => {
     navigate(`/addon/${gameIdentifier(addon)}`);
   };
 
-  // Installer downloads only exist for games imported by the GOG sync — the section
-  // (and its query) only mounts when a library item carries the GOG storefront.
-  const hasGogItem = (libraryItems ?? []).some((item) => item.digitalStorefront === "GOG");
-
   return (
     <Grid container spacing={{ xs: 2, md: 3 }} sx={{ alignItems: "flex-start" }}>
       <Grid size={{ xs: 12, md: 3 }}>
@@ -188,11 +183,6 @@ const GameDetails = () => {
                 gameCategory={game.category}
                 hideFromPublic={game.hideFromPublic}
               />
-            </Card>
-          ) : null}
-          {!isAutoDiscovered && hasGogItem ? (
-            <Card id="gog-installers" sx={sectionCardSx}>
-              <GogInstallersSection gameId={gameId} hasGogItem={hasGogItem} />
             </Card>
           ) : null}
           {!hasParentGame ? (

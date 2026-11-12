@@ -1,10 +1,18 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { ThemeProvider } from "@mui/material/styles";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createM3Theme } from "../../theme/createM3Theme";
 import type { LibraryItem, PlatformResponse } from "../../api/types";
 import GameLibrarySection from "../GameLibrarySection";
+
+// The GOG Installers section inside the edit dialog reads these hooks.
+let gogInstallersData: import("../../api/integrations").GogInstallers | undefined;
+vi.mock("../../hooks/useIntegrations", () => ({
+  useGogInstallers: () => ({ data: gogInstallersData, isError: false }),
+  useQueueGogInstallerDownload: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useGogInstallerFileLink: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
 
 // Same wrapper as the DashboardPage test: the section's mutation hooks need a
 // QueryClient, and with no server in jsdom the queries fail into their error state.
@@ -51,6 +59,19 @@ const wishlistedItem = {
   salePriceCurrency: "USD",
   saleShopName: "Steam",
   saleCut: 50,
+} as unknown as LibraryItem;
+
+const gogItem = {
+  id: 3,
+  status: "owned",
+  platformId: 1,
+  platformName: "PC",
+  format: "digital",
+  digitalStorefront: "GOG",
+  edition: null,
+  steelbook: false,
+  roms: [],
+  isOnSale: false,
 } as unknown as LibraryItem;
 
 const baseProps = {
@@ -132,5 +153,53 @@ describe("GameLibrarySection", () => {
     renderSection(<GameLibrarySection {...baseProps} libraryItems={[]} />);
 
     expect(screen.getByText("Not in your library yet.")).toBeInTheDocument();
+  });
+
+  it("shows the GOG Installers section in the edit dialog for a GOG copy", () => {
+    gogInstallersData = {
+      gameId: 1,
+      gogProductId: 1207658695,
+      groups: [
+        {
+          productId: 1207658695,
+          title: "Absolute Drift",
+          installers: [
+            {
+              id: "installer_windows_en",
+              os: "windows",
+              language: "en",
+              version: "1.0",
+              totalSize: 20,
+              files: [
+                {
+                  id: "en1installer0",
+                  size: 20,
+                  downloadState: "not_downloaded",
+                  downloadedBytes: 0,
+                  downloadError: null,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[gogItem]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "PC" }));
+
+    expect(screen.getByText("Update game in your collection")).toBeInTheDocument();
+    expect(screen.getByText("GOG Installers")).toBeInTheDocument();
+    expect(screen.getByText("Absolute Drift")).toBeInTheDocument();
+  });
+
+  it("does not show the GOG Installers section in the edit dialog for a non-GOG copy", () => {
+    gogInstallersData = undefined;
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[ownedItem]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "PlayStation 5" }));
+
+    expect(screen.getByText("Update game in your collection")).toBeInTheDocument();
+    expect(screen.queryByText("GOG Installers")).not.toBeInTheDocument();
   });
 });

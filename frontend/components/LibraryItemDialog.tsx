@@ -44,6 +44,7 @@ import type {
 } from "../api/types";
 import { useEmulationConfig } from "../hooks/useLibrary";
 import { useCurrency } from "../theme/CurrencyProvider";
+import GogInstallersSection from "./GogInstallersSection";
 import { getCurrencySymbol } from "../utils/currency";
 import { resolveStorefront } from "../utils/digitalStorefronts";
 import { RATING_BOARD_LABELS } from "../utils/hardwareLabels";
@@ -151,6 +152,11 @@ interface LibraryItemDialogProps {
   // keeps the Move action instead, so the ROM-deletion warning still applies there.
   showStatusToggle?: boolean;
   onStatusChange?: (status: LibraryStatus) => void;
+  // The game this copy belongs to — when set and the game has a GOG-imported copy,
+  // the GOG Installers section renders at the bottom of the dialog, like the ROM
+  // section above it. Games without a GOG copy render nothing here.
+  gameId?: number;
+  showGogInstallers?: boolean;
   platforms: PlatformResponse[];
   regions: RegionResponse[];
   gameCategory?: GameCategory | null;
@@ -171,6 +177,8 @@ const LibraryItemDialog = ({
   status,
   showStatusToggle = false,
   onStatusChange,
+  gameId,
+  showGogInstallers = false,
   platforms,
   regions,
   gameCategory,
@@ -885,6 +893,9 @@ const LibraryItemDialog = ({
             )}
           />
         </FormControl>
+        {showGogInstallers && gameId != null ? (
+          <GogInstallersSection gameId={gameId} hasGogItem={showGogInstallers} />
+        ) : null}
       </DialogContent>
       <DialogActions>
         {showStatusToggle && onStatusChange ? (

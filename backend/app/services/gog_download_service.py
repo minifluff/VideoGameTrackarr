@@ -138,6 +138,14 @@ def set_progress(db: Session, download: GogDownload, downloaded_bytes: int) -> N
     db.commit()
 
 
+def set_total_size(db: Session, download: GogDownload, total_size: int) -> None:
+    """Corrects the row's expected size to the bytes actually downloaded — GOG's
+    API sizes are rounded to whole megabytes, so the queued size is only ever an
+    estimate until the file is on disk (see gog_jobs._download_one)."""
+    download.total_size = total_size
+    db.commit()
+
+
 def set_filename(db: Session, download: GogDownload, filename: str) -> None:
     download.filename = filename
     db.commit()

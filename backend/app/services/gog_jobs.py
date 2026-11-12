@@ -316,17 +316,30 @@ async def _download_one(
     target_dir.mkdir(parents=True, exist_ok=True)
     final_path = target_dir / filename
     tmp_path = target_dir / f"{filename}.part"
+    # GOG's API file sizes are rounded to whole megabytes, so the queued total is
+    # only an estimate — the served file is up to ~1 MB bigger, and exact-matching
+    # against it fails every download. Trust the HTTP layer instead: ask for the
+    # file uncompressed (httpx would otherwise transparently decode a gzipped
+    # response, so the decoded byte count overshoots the Content-Length), and treat
+    # Content-Length as authoritative only when nothing re-encoded the body. A
+    # completed stream with no usable Content-Length is accepted as-is, and the
+    # row's total is corrected to the bytes actually written, so the on-disk
+    # verification and the UI agree on the true size afterwards.
     total = row.total_size
+    expected_size: int | None = None
     downloaded_bytes = 0
     last_flush_bytes = 0
     last_flush_at = time.monotonic()
     try:
         timeout = httpx.Timeout(connect=10.0, read=300.0, write=10.0, pool=10.0)
         async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as http:
-            async with http.stream("GET", url) as response:
+            async with http.stream("GET", url, headers={"Accept-Encoding": "identity"}) as response:
                 response.raise_for_status()
-                if total <= 0:
-                    total = int(response.headers.get("content-length", 0))
+                content_length = int(response.headers.get("content-length", 0))
+                content_encoding = (response.headers.get("content-encoding") or "").lower()
+                if content_length > 0 and content_encoding in ("", "identity"):
+                    expected_size = content_length
+                    total = expected_size
                 with open(tmp_path, "wb") as handle:
                     async for chunk in response.aiter_bytes(_DOWNLOAD_CHUNK_BYTES):
                         handle.write(chunk)
@@ -340,10 +353,11 @@ async def _download_one(
                             gog_download_service.set_progress(db, row, downloaded_bytes)
                             last_flush_bytes = downloaded_bytes
                             last_flush_at = now
-        if total > 0 and downloaded_bytes != total:
-            raise OSError(f"Downloaded {downloaded_bytes} bytes, expected {total}")
+        if expected_size is not None and downloaded_bytes != expected_size:
+            raise OSError(f"Downloaded {downloaded_bytes} bytes, expected {expected_size}")
         tmp_path.replace(final_path)
         gog_download_service.set_progress(db, row, downloaded_bytes)
+        gog_download_service.set_total_size(db, row, downloaded_bytes)
         gog_download_service.set_status(db, row, GogDownloadStatus.COMPLETED)
     except BaseException:
         tmp_path.unlink(missing_ok=True)

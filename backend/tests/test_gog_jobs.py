@@ -1,3 +1,5 @@
+import gzip
+
 import httpx
 import pytest
 import respx
@@ -299,3 +301,182 @@ def test_download_drain_resets_stale_rows_and_isolates_a_failure(
     assert (
         tmp_path / "uploads" / "gog-installers" / "1207658885" / "setup_cyberpunk.exe"
     ).read_bytes() == b"fake-installer-bytes"
+
+def _mock_token():
+    respx.get(f"{GOG_AUTH_BASE}/token").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "access_token": "access-1",
+                "expires_in": 3600,
+                "token_type": "Bearer",
+                "refresh_token": "refresh-1",
+                "user_id": "424242",
+            },
+        )
+    )
+
+
+def _mock_cdn_product(product_id, title, cdn_url, cdn_response):
+    """A product whose installer downlink resolves to the given CDN response."""
+    respx.get(f"https://api.gog.com/products/{product_id}").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "id": product_id,
+                "title": title,
+                "downloads": {
+                    "installers": [
+                        {
+                            "id": "installer_windows_en",
+                            "os": "windows",
+                            "language": "en",
+                            "version": "1.0",
+                            "total_size": 15,
+                            "files": [
+                                {
+                                    "id": "en1installer0",
+                                    "size": 15,
+                                    "downlink": f"https://api.gog.com/products/{product_id}/downlink/installer/en1installer0",
+                                }
+                            ],
+                        }
+                    ]
+                },
+                "expanded_dlcs": [],
+            },
+        )
+    )
+    respx.get(f"https://api.gog.com/products/{product_id}/downlink/installer/en1installer0").mock(
+        return_value=httpx.Response(200, json={"downlink": cdn_url})
+    )
+    respx.get(cdn_url).mock(return_value=cdn_response)
+
+
+def _seed_download_row(db_session, game_id, product_id, total_size):
+    from app.models.gog import GogDownload, GogDownloadStatus
+
+    db_session.add(
+        GogDownload(
+            game_id=game_id,
+            gog_product_id=product_id,
+            installer_id="installer_windows_en",
+            file_id="en1installer0",
+            total_size=total_size,
+            status=GogDownloadStatus.QUEUED,
+        )
+    )
+    db_session.commit()
+
+
+@respx.mock
+def test_download_drain_accepts_file_bigger_than_rounded_api_size(
+    db_session, test_user, tmp_path, monkeypatch
+):
+    """GOG's API file sizes are rounded to whole megabytes, so the queued total
+    (15 bytes here, standing in for a whole-MB-rounded size) is smaller than the
+    file the CDN actually serves (20 bytes). The download must still complete —
+    trusting the CDN's Content-Length — and correct the row's total to the bytes
+    actually written, so the on-disk check and the UI agree afterwards. The same
+    run also covers a chunked response with no Content-Length at all."""
+    from app.models.gog import GogDownloadStatus
+    from app.services import gog_download_service
+
+    monkeypatch.setattr(gog_download_service, "UPLOADS_DIR", tmp_path / "uploads")
+    _configure_gog(test_user, db_session)
+    game = _seed_game(db_session, igdb_id=233, name="The Witcher 3")
+    game_id = game.id
+    _seed_download_row(db_session, game_id, 1207658695, total_size=15)
+    _seed_download_row(db_session, game_id, 1207658885, total_size=15)
+    _mock_token()
+    _mock_cdn_product(
+        1207658695,
+        "The Witcher 3",
+        "https://cdn.gog.com/setup_witcher.exe",
+        httpx.Response(200, content=b"fake-installer-bytes"),
+    )
+    chunked = httpx.Response(200, content=b"fake-installer-bytes")
+    del chunked.headers["content-length"]
+    _mock_cdn_product(
+        1207658885,
+        "Cyberpunk 2077",
+        "https://cdn.gog.com/setup_cyberpunk.exe",
+        chunked,
+    )
+
+    result = gog_jobs.run_download(lambda: db_session)
+
+    assert result == {"downloaded": 2, "failed": 0, "failures": []}
+    for product_id in (1207658695, 1207658885):
+        done = gog_download_service.get_download(db_session, product_id, "en1installer0")
+        assert done.status == GogDownloadStatus.COMPLETED
+        assert done.total_size == 20  # corrected from the rounded 15
+        assert done.downloaded_bytes == 20
+        assert (
+            tmp_path / "uploads" / "gog-installers" / str(product_id) / done.filename
+        ).read_bytes() == b"fake-installer-bytes"
+
+
+@respx.mock
+def test_download_drain_accepts_gzipped_cdn_response(
+    db_session, test_user, tmp_path, monkeypatch
+):
+    """When the CDN gzips the body, the decoded byte count overshoots the
+    Content-Length, so the length must not be treated as authoritative — the
+    completed stream is the file, and its true size is recorded."""
+    from app.models.gog import GogDownloadStatus
+    from app.services import gog_download_service
+
+    monkeypatch.setattr(gog_download_service, "UPLOADS_DIR", tmp_path / "uploads")
+    _configure_gog(test_user, db_session)
+    game = _seed_game(db_session, igdb_id=233, name="The Witcher 3")
+    _seed_download_row(db_session, game.id, 1207658695, total_size=15)
+    _mock_token()
+    compressed = gzip.compress(b"fake-installer-bytes")
+    _mock_cdn_product(
+        1207658695,
+        "The Witcher 3",
+        "https://cdn.gog.com/setup_witcher.exe",
+        httpx.Response(200, content=compressed, headers={"Content-Encoding": "gzip"}),
+    )
+
+    result = gog_jobs.run_download(lambda: db_session)
+
+    assert result == {"downloaded": 1, "failed": 0, "failures": []}
+    done = gog_download_service.get_download(db_session, 1207658695, "en1installer0")
+    assert done.status == GogDownloadStatus.COMPLETED
+    assert done.total_size == 20
+    assert (
+        tmp_path / "uploads" / "gog-installers" / "1207658695" / done.filename
+    ).read_bytes() == b"fake-installer-bytes"
+
+
+@respx.mock
+def test_download_drain_still_fails_a_truncated_file(
+    db_session, test_user, tmp_path, monkeypatch
+):
+    """The size check still protects against a genuinely short file: a
+    Content-Length of 100 with only 20 bytes delivered fails the row instead of
+    being kept as a complete download."""
+    from app.models.gog import GogDownloadStatus
+    from app.services import gog_download_service
+
+    monkeypatch.setattr(gog_download_service, "UPLOADS_DIR", tmp_path / "uploads")
+    _configure_gog(test_user, db_session)
+    game = _seed_game(db_session, igdb_id=233, name="The Witcher 3")
+    _seed_download_row(db_session, game.id, 1207658695, total_size=15)
+    _mock_token()
+    _mock_cdn_product(
+        1207658695,
+        "The Witcher 3",
+        "https://cdn.gog.com/setup_witcher.exe",
+        httpx.Response(200, content=b"fake-installer-bytes", headers={"Content-Length": "100"}),
+    )
+
+    result = gog_jobs.run_download(lambda: db_session)
+
+    assert result["downloaded"] == 0
+    assert result["failed"] == 1
+    failed = gog_download_service.get_download(db_session, 1207658695, "en1installer0")
+    assert failed.status == GogDownloadStatus.FAILED
+    assert failed.error

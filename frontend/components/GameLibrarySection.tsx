@@ -407,6 +407,8 @@ const GameLibrarySection = ({
           status={dialogStatus}
           showStatusToggle={dialogItem == null}
           onStatusChange={setDialogStatus}
+          gameId={gameId}
+          showGogInstallers={(libraryItems ?? []).some((item) => item.digitalStorefront === "GOG")}
           platforms={platforms ?? []}
           regions={regions ?? []}
           gameCategory={gameCategory}
