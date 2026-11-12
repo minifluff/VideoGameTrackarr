@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { ThemeProvider } from "@mui/material/styles";
 import { describe, expect, it } from "vitest";
 import { createM3Theme } from "../../theme/createM3Theme";
@@ -106,12 +106,26 @@ describe("GameLibrarySection", () => {
     expect(await screen.findByText("Move library item")).toBeInTheDocument();
   });
 
-  it("opens the Add copy menu with collection and wishlist entries", () => {
+  it("opens the Add copy dialog directly with a wishlist checkbox in the bottom-right", () => {
     renderSection(<GameLibrarySection {...baseProps} libraryItems={[]} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Add copy" }));
-    expect(screen.getByRole("menuitem", { name: "To your collection" })).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "To your wishlist" })).toBeInTheDocument();
+
+    // No popup menu anymore — the dialog opens straight away, owned by default.
+    expect(screen.queryByRole("menuitem", { name: "To your wishlist" })).not.toBeInTheDocument();
+    expect(screen.getByText("Add game to your collection")).toBeInTheDocument();
+    const wishlistCheckbox = screen.getByLabelText("To your wishlist");
+    expect(wishlistCheckbox).not.toBeChecked();
+    // The checkbox sits in the dialog's bottom-right actions row, next to Cancel.
+    expect(wishlistCheckbox.closest(".MuiDialogActions-root")).not.toBeNull();
+    expect(within(screen.getByRole("dialog")).getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+
+    fireEvent.click(wishlistCheckbox);
+    expect(screen.getByText("Add game to your wishlist")).toBeInTheDocument();
+    expect(screen.getByLabelText("To your wishlist")).toBeChecked();
+
+    fireEvent.click(screen.getByLabelText("To your wishlist"));
+    expect(screen.getByText("Add game to your collection")).toBeInTheDocument();
   });
 
   it("shows the empty line when there are no copies", () => {

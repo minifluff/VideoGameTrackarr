@@ -146,6 +146,11 @@ interface LibraryItemDialogProps {
   open: boolean;
   title: string;
   status: LibraryStatus;
+  // Add flow only: a "To your wishlist" checkbox in the dialog's bottom-right corner
+  // flips the copy between owned and wishlist without leaving the dialog. Edit flow
+  // keeps the Move action instead, so the ROM-deletion warning still applies there.
+  showStatusToggle?: boolean;
+  onStatusChange?: (status: LibraryStatus) => void;
   platforms: PlatformResponse[];
   regions: RegionResponse[];
   gameCategory?: GameCategory | null;
@@ -164,6 +169,8 @@ const LibraryItemDialog = ({
   open,
   title,
   status,
+  showStatusToggle = false,
+  onStatusChange,
   platforms,
   regions,
   gameCategory,
@@ -880,6 +887,17 @@ const LibraryItemDialog = ({
         </FormControl>
       </DialogContent>
       <DialogActions>
+        {showStatusToggle && onStatusChange ? (
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={status === "wishlist"}
+                onChange={(event) => onStatusChange(event.target.checked ? "wishlist" : "owned")}
+              />
+            }
+            label={t("games.library.addToWishlist")}
+          />
+        ) : null}
         <Button onClick={onClose} color="primary" disabled={isUploading}>
           {t("common.cancel")}
         </Button>

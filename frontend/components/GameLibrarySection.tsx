@@ -14,9 +14,6 @@ import CardHeader from "@mui/material/CardHeader";
 import Checkbox from "@mui/material/Checkbox";
 import CircularProgress from "@mui/material/CircularProgress";
 import FormControlLabel from "@mui/material/FormControlLabel";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
 import Tooltip from "@mui/material/Tooltip";
 import { isAxiosError } from "axios";
 import { useTranslation } from "react-i18next";
@@ -87,7 +84,6 @@ const GameLibrarySection = ({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogItem, setDialogItem] = useState<LibraryItem | null>(null);
   const [dialogStatus, setDialogStatus] = useState<LibraryStatus>("owned");
-  const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null);
 
   // Fork-only: Subscription is a first-class media format here (migration mf5ub5cr1ptn),
   // so it keeps its label where upstream's format list has no such entry.
@@ -322,37 +318,12 @@ const GameLibrarySection = ({
             <SectionAction
               icon={<AddIcon />}
               label={t("games.library.addCopy")}
-              onClick={(event) => setAddMenuAnchor(event.currentTarget)}
-              aria-haspopup="menu"
+              onClick={() => handleAddClick("owned")}
             />
           </Box>
         }
       />
       <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
-        <Menu anchorEl={addMenuAnchor} open={addMenuAnchor !== null} onClose={() => setAddMenuAnchor(null)}>
-          <MenuItem
-            onClick={() => {
-              setAddMenuAnchor(null);
-              handleAddClick("owned");
-            }}
-          >
-            <ListItemIcon>
-              <CheckIcon fontSize="small" />
-            </ListItemIcon>
-            {t("games.library.addToCollection")}
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              setAddMenuAnchor(null);
-              handleAddClick("wishlist");
-            }}
-          >
-            <ListItemIcon>
-              <FavoriteIcon fontSize="small" />
-            </ListItemIcon>
-            {t("games.library.addToWishlist")}
-          </MenuItem>
-        </Menu>
         {visibleItems.length === 0 ? (
           <EmptyLine>{t("games.library.empty")}</EmptyLine>
         ) : (
@@ -434,6 +405,8 @@ const GameLibrarySection = ({
               : t("games.library.addDialogTitle", { phrase: statusPhrase[dialogStatus] })
           }
           status={dialogStatus}
+          showStatusToggle={dialogItem == null}
+          onStatusChange={setDialogStatus}
           platforms={platforms ?? []}
           regions={regions ?? []}
           gameCategory={gameCategory}
