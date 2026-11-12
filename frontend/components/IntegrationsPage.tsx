@@ -22,7 +22,13 @@ import igdbLogo from "../assets/igdb-logo.png";
 import itadLogo from "../assets/isthereanydeal-logo.png";
 import platpricesLogo from "../assets/platprices-logo.png";
 import steamLogo from "../assets/steam-logo.png";
-import { useIntegrationsStatus, useUpdateSteamId } from "../hooks/useIntegrations";
+import {
+  useConnectGog,
+  useDisconnectGog,
+  useGogStatus,
+  useIntegrationsStatus,
+  useUpdateSteamId,
+} from "../hooks/useIntegrations";
 import {
   useRetroAchievementsStatus,
   useUpdateRetroAchievementsSettings,
@@ -334,6 +340,98 @@ const ConfiguredChip = ({ configured }: { configured: boolean | undefined }) => 
   );
 };
 
+const GogSection = () => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { data: status } = useIntegrationsStatus();
+  const { data: gogStatus } = useGogStatus();
+  const connectGog = useConnectGog();
+  const disconnectGog = useDisconnectGog();
+  const [redirectUrl, setRedirectUrl] = useState("");
+
+  const configured = gogStatus?.configured ?? status?.gogConfigured ?? false;
+  const username = gogStatus?.username ?? status?.gogUsername;
+
+  const handleConnect = async () => {
+    try {
+      await connectGog.mutateAsync(redirectUrl.trim());
+      setRedirectUrl("");
+      toast.success(t("settings.integrations.gogConnectSuccessToast"), TOAST_OPTIONS);
+    } catch {
+      toast.error(t("settings.integrations.gogConnectErrorToast"), TOAST_OPTIONS);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    try {
+      await disconnectGog.mutateAsync();
+      toast.success(t("settings.integrations.gogDisconnectSuccessToast"), TOAST_OPTIONS);
+    } catch {
+      toast.error(t("settings.integrations.gogDisconnectErrorToast"), TOAST_OPTIONS);
+    }
+  };
+
+  return (
+    <>
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
+        <Typography variant="subtitle1">{t("settings.integrations.gogHeading")}</Typography>
+        <ConfiguredChip configured={configured} />
+        <Box sx={{ flexGrow: 1 }} />
+        {configured && (
+          <Button variant="outlined" onClick={() => navigate("/settings/gog-sync")}>
+            {t("nav.gogSync")}
+          </Button>
+        )}
+      </Stack>
+      <Alert severity="info" sx={{ mb: 2 }}>
+        {t("settings.integrations.gogDescription")}
+      </Alert>
+      {configured ? (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+          <Typography variant="body2" color="text.secondary">
+            {t("settings.integrations.gogConnectedAs", { username: username ?? "" })}
+          </Typography>
+          <Button variant="outlined" onClick={handleDisconnect} disabled={disconnectGog.isPending}>
+            {t("settings.integrations.gogDisconnectButton")}
+          </Button>
+        </Box>
+      ) : (
+        <Stack spacing={2} sx={{ maxWidth: 500 }}>
+          <Typography variant="body2" color="text.secondary">
+            {t("settings.integrations.gogConnectSteps")}
+          </Typography>
+          <Box>
+            <Button
+              variant="contained"
+              onClick={() => window.open(gogStatus?.authorizeUrl, "_blank", "noopener,noreferrer")}
+              disabled={!gogStatus?.authorizeUrl}
+            >
+              {t("settings.integrations.gogSignInButton")}
+            </Button>
+          </Box>
+          <TextField
+            label={t("settings.integrations.gogRedirectUrlLabel")}
+            placeholder={t("settings.integrations.gogRedirectUrlPlaceholder")}
+            value={redirectUrl}
+            onChange={(e) => setRedirectUrl(e.target.value)}
+            helperText={t("settings.integrations.gogRedirectUrlHelper")}
+            fullWidth
+          />
+          <Box>
+            <Button
+              variant="contained"
+              onClick={handleConnect}
+              disabled={connectGog.isPending || redirectUrl.trim() === ""}
+            >
+              {t("settings.integrations.gogConnectButton")}
+            </Button>
+          </Box>
+        </Stack>
+      )}
+    </>
+  );
+};
+
 const IntegrationsPage = () => {
   const { t } = useTranslation();
   const { data: status } = useIntegrationsStatus();
@@ -425,6 +523,10 @@ const IntegrationsPage = () => {
               {t("common.save")}
             </Button>
           </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          <GogSection />
 
           <Divider sx={{ my: 3 }} />
 

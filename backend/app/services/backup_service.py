@@ -325,7 +325,13 @@ def export_full_backup_zip(db: Session) -> Path:
     """A full backup: backup.json plus every ROM, save state, screenshot, in-game save and
     BIOS file under files/<stored path>. Written to a temp file (the caller streams it out
     and deletes it) so memory stays flat however many GB of ROMs there are. ROM data is
-    stored, not re-compressed — it's mostly already compressed, and deflating GBs is slow."""
+    stored, not re-compressed — it's mostly already compressed, and deflating GBs is slow.
+
+    Only files named in the backup payload are ever archived — nothing is swept from
+    disk. That is what keeps GOG installer downloads out of backups by design: the
+    multi-GB installers under uploads/gog-installers are never part of the payload, so
+    no backup (manual, scheduled SMB export, or safety snapshot) ever includes them.
+    See test_full_backup.test_full_backup_excludes_gog_installer_downloads."""
     payload = build_backup_payload(db, include_files=True)
     handle, name = tempfile.mkstemp(prefix="vgt-full-backup-", suffix=".zip")
     os.close(handle)

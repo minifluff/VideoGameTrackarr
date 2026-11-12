@@ -55,6 +55,7 @@ const Settings = lazy(() => import("./components/Settings"));
 const SalesIgnoredListPage = lazy(() => import("./components/SalesIgnoredListPage"));
 const SaleTrackedPage = lazy(() => import("./components/SaleTrackedPage"));
 const SteamSyncPage = lazy(() => import("./components/SteamSyncPage"));
+const GogSyncPage = lazy(() => import("./components/GogSyncPage"));
 const RemoveGamesPage = lazy(() => import("./components/RemoveGamesPage"));
 const PlayniteSyncPage = lazy(() => import("./components/PlayniteSyncPage"));
 const OnSalePage = lazy(() => import("./components/OnSalePage"));
@@ -101,6 +102,7 @@ import {
   seriesCrumbs,
   settingsCrumbs,
   steamSyncCrumbs,
+  gogSyncCrumbs,
   removeGamesCrumbs,
   playniteSyncCrumbs,
   tagManagerCrumbs,
@@ -299,6 +301,11 @@ const router = createBrowserRouter([
             path: "/settings/steam-sync",
             element: <SteamSyncPage />,
             handle: { crumbs: steamSyncCrumbs },
+          },
+          {
+            path: "/settings/gog-sync",
+            element: <GogSyncPage />,
+            handle: { crumbs: gogSyncCrumbs },
           },
           {
             path: "/settings/remove-games",

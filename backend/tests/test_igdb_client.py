@@ -293,3 +293,55 @@ def test_extract_store_urls_handles_a_game_with_no_websites():
         "epic_games_store_url": None,
         "gog_store_url": None,
     }
+
+
+@respx.mock
+async def test_get_igdb_id_for_external_returns_the_matched_game_id():
+    respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/external_games").mock(
+        return_value=httpx.Response(
+            200,
+            json=[
+                {
+                    "id": 15165,
+                    "game": 233,
+                    "uid": "1207658695",
+                    "url": "https://www.gog.com/game/the_witcher_3_wild_hunt",
+                    "external_game_source": 5,
+                }
+            ],
+        )
+    )
+
+    igdb_id = await make_client().get_igdb_id_for_external(5, "1207658695")
+
+    assert igdb_id == 233
+
+
+@respx.mock
+async def test_get_igdb_id_for_external_returns_none_when_unmatched():
+    respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/external_games").mock(return_value=httpx.Response(200, json=[]))
+
+    igdb_id = await make_client().get_igdb_id_for_external(5, "1207658695")
+
+    assert igdb_id is None
+
+
+@respx.mock
+async def test_get_igdb_ids_for_external_batches_into_one_query():
+    respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    external_route = respx.post(f"{IGDB_API_BASE}/external_games").mock(
+        return_value=httpx.Response(
+            200,
+            json=[
+                {"id": 15165, "game": 233, "uid": "1207658695", "external_game_source": 5},
+                {"id": 15166, "game": 245, "uid": "1207658885", "external_game_source": 5},
+            ],
+        )
+    )
+
+    mapping = await make_client().get_igdb_ids_for_external(5, [1207658695, 1207658885])
+
+    assert external_route.call_count == 1
+    assert mapping == {1207658695: 233, 1207658885: 245}

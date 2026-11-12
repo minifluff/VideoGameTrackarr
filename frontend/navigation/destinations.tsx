@@ -7,6 +7,7 @@ import CableIcon from "@mui/icons-material/Cable";
 import CollectionsIcon from "@mui/icons-material/Collections";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DashboardIcon from "@mui/icons-material/Dashboard";
+import DownloadIcon from "@mui/icons-material/Download";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import EventIcon from "@mui/icons-material/Event";
 import ExtensionOffIcon from "@mui/icons-material/ExtensionOff";
@@ -126,6 +127,11 @@ export function getNavDestinations(t: TFunction, options?: NavDestinationOptions
           label: t("nav.steamSync"),
           icon: <SteamIcon />,
           separatorBefore: true,
+        },
+        {
+          to: "/settings/gog-sync",
+          label: t("nav.gogSync"),
+          icon: <DownloadIcon />,
         },
         {
           to: "/settings/sale-tracked",

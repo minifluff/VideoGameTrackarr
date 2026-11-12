@@ -39,6 +39,18 @@ class User(TimestampMixin, Base):
         comment="RetroAchievements Web API key, pasted on the Integrations page; "
         "encrypted with the SMB Fernet key when one is configured, else plaintext like the SMB passwords",
     )
+    gog_refresh_token: Mapped[str | None] = mapped_column(
+        String(255),
+        comment="GOG Galaxy OAuth refresh token, saved on connect from the Integrations page; "
+        "encrypted with the SMB Fernet key when one is configured, else plaintext like the SMB passwords. "
+        "The refresh token rotates on every use — the stored value is replaced whenever a refresh returns a new one",
+    )
+    gog_user_id: Mapped[str | None] = mapped_column(
+        String(64), comment="GOG account id from the OAuth token response, used for the GOG Sync job"
+    )
+    gog_username: Mapped[str | None] = mapped_column(
+        String(64), comment="GOG username shown on the Integrations page"
+    )
     playnite_smb_path: Mapped[str | None] = mapped_column(
         String(1024), comment="SMB/network path to the Playnite data folder (e.g. \\\\server\\share\\Playnite)"
     )

@@ -209,3 +209,44 @@ def test_full_backup_download_link(client, auth_client, test_user, nes_item):
         assert "backup.json" in archive.namelist()
     bad = f"/api/export/backup/full/{create_access_token(test_user.id)}/x.zip"
     assert client.get(bad).status_code == 401
+
+
+def test_full_backup_excludes_gog_installer_downloads(db_session, seed_game, tmp_path, monkeypatch):
+    """GOG installer downloads are never part of any backup: the multi-GB files under
+    uploads/gog-installers are not in the backup payload, so neither the JSON export
+    nor the full zip (nor the scheduled SMB export built from the same functions)
+    includes them — even when a completed download row and its file exist."""
+    from app.models.gog import GogDownload, GogDownloadStatus
+    from app.services import gog_download_service
+
+    monkeypatch.setattr(gog_download_service, "UPLOADS_DIR", tmp_path / "uploads")
+    installer_bytes = b"fake-installer-bytes"
+    target = tmp_path / "uploads" / "gog-installers" / "1207658695" / "setup_game.exe"
+    target.parent.mkdir(parents=True)
+    target.write_bytes(installer_bytes)
+    db_session.add(
+        GogDownload(
+            game_id=seed_game.id,
+            gog_product_id=1207658695,
+            installer_id="installer_windows_en",
+            file_id="en1installer0",
+            filename="setup_game.exe",
+            total_size=len(installer_bytes),
+            downloaded_bytes=len(installer_bytes),
+            status=GogDownloadStatus.COMPLETED,
+        )
+    )
+    db_session.commit()
+
+    payload_json = backup_service.export_backup_json(db_session)
+    assert "gog-installers" not in payload_json
+    assert "setup_game.exe" not in payload_json
+
+    path = backup_service.export_full_backup_zip(db_session)
+    try:
+        with zipfile.ZipFile(path) as archive:
+            names = archive.namelist()
+        assert not any("gog-installers" in name for name in names)
+        assert not any("setup_game.exe" in name for name in names)
+    finally:
+        path.unlink(missing_ok=True)

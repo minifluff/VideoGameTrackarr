@@ -18,6 +18,8 @@ def get_status(user: User) -> IntegrationsStatusResponse:
         playnite_configured=bool(user.playnite_smb_path),
         retroachievements_configured=bool(user.retroachievements_username and user.retroachievements_api_key),
         retroachievements_username=user.retroachievements_username,
+        gog_configured=bool(user.gog_refresh_token),
+        gog_username=user.gog_username,
     )
 
 
