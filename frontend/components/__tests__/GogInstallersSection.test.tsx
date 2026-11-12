@@ -92,14 +92,14 @@ describe("GogInstallersSection", () => {
     expect(screen.getByText("The Witcher 3")).toBeInTheDocument();
     expect(screen.getByText("Hearts of Stone")).toBeInTheDocument();
     expect(screen.getByText("windows · en · 1.32 · 117.7 MB")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Download to NAS" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cache Download" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Download" })).toBeInTheDocument();
   });
 
-  it("queues a NAS download when Download to NAS is clicked", async () => {
+  it("queues a NAS download when Cache Download is clicked", async () => {
     renderSection();
 
-    fireEvent.click(screen.getByRole("button", { name: "Download to NAS" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cache Download" }));
 
     await waitFor(() =>
       expect(queueDownload).toHaveBeenCalledWith({

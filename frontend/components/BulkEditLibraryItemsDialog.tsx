@@ -18,6 +18,7 @@ import { useBulkUpdateLibraryItems } from "../hooks/useLibrary";
 import { useGames } from "../hooks/useGames";
 import { usePlatforms } from "../hooks/usePlatforms";
 import { useRegions } from "../hooks/useRegions";
+import { ALL_DIGITAL_STOREFRONTS } from "../utils/digitalStorefronts";
 
 const FORMAT_OPTIONS: { value: MediaFormat; labelKey: string }[] = [
   { value: "physical", labelKey: "dialogs.libraryItem.formatPhysical" },
@@ -37,6 +38,7 @@ const FIELD_KEYS: { value: BulkLibraryField; labelKey: string }[] = [
   { value: "edition", labelKey: "games.listPage.bulkEdit.fields.edition" },
   { value: "notes", labelKey: "games.listPage.bulkEdit.fields.notes" },
   { value: "game", labelKey: "games.listPage.bulkEdit.fields.game" },
+  { value: "digital_storefront", labelKey: "games.listPage.bulkEdit.fields.digitalStorefront" },
 ];
 
 interface BulkEditLibraryItemsDialogProps {
@@ -78,7 +80,7 @@ const BulkEditLibraryItemsDialog = ({
     }
   }, [open ]);
 
-  const isTextField = field === "edition" || field === "notes";
+  const isTextField = field === "edition" || field === "notes" || field === "digital_storefront";
   const canApply =
     field === "game" ? selectedGameId !== null : isTextField || value !== "";
 
@@ -212,7 +214,24 @@ const BulkEditLibraryItemsDialog = ({
           />
         )}
 
-        {isTextField && (
+        {field === "digital_storefront" && (
+          <Autocomplete
+            freeSolo
+            options={ALL_DIGITAL_STOREFRONTS}
+            inputValue={value}
+            onInputChange={(_, text) => setValue(text)}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label={t("games.listPage.bulkEdit.valueLabel")}
+                helperText={t("games.listPage.bulkEdit.blankClears")}
+                fullWidth
+              />
+            )}
+          />
+        )}
+
+        {isTextField && field !== "digital_storefront" && (
           <TextField
             label={t("games.listPage.bulkEdit.valueLabel")}
             value={value}

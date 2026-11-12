@@ -486,7 +486,7 @@ describe("LibraryItemDialog", () => {
 
     expect(screen.getByText("GOG Installers")).toBeInTheDocument();
     expect(screen.getByText("The Witcher 3")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Download to NAS" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cache Download" })).toBeInTheDocument();
   });
 
   it("hides the GOG Installers section without a GOG copy", () => {

@@ -110,7 +110,7 @@ const GogInstallersSection = ({ gameId, hasGogItem }: GogInstallersSectionProps)
             onClick={() => void handleQueue(installerId, file.id)}
             disabled={queueDownload.isPending}
           >
-            {t("games.gogInstallers.downloadToNasButton")}
+            {t("games.gogInstallers.cacheDownloadButton")}
           </Button>
         );
     }

@@ -42,6 +42,7 @@ def _library_item_to_dict(item: LibraryItem, game: Game) -> dict:
         "date_added": None,
         "tag_names": [],
         "notes": item.notes,
+        "digital_storefront": item.digital_storefront,
     }
 
 
@@ -114,7 +115,7 @@ def update_library_item(db: Session, item_id: int, **fields: Any) -> LibraryItem
 # Fields the List page's bulk edit may set on many items at once — exactly one
 # field per call, applied through update_library_item so its invariants (ROM
 # detach when a copy stops being ROM-capable, etc.) hold for bulk edits too.
-BULK_UPDATE_FIELDS = ("format", "platform", "region", "status", "edition", "notes")
+BULK_UPDATE_FIELDS = ("format", "platform", "region", "status", "edition", "notes", "digital_storefront")
 
 
 def bulk_update_library_items(
@@ -140,7 +141,7 @@ def bulk_update_library_items(
         fields = {"region_id": value}
     elif field == "status":
         fields = {"status": value}
-    elif field in ("edition", "notes"):
+    elif field in ("edition", "notes", "digital_storefront"):
         text = str(value).strip() if value is not None else None
         fields = {field: text or None}
     elif field == "game":

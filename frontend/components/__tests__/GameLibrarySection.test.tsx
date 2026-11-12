@@ -202,4 +202,74 @@ describe("GameLibrarySection", () => {
     expect(screen.getByText("Update game in your collection")).toBeInTheDocument();
     expect(screen.queryByText("GOG Installers")).not.toBeInTheDocument();
   });
+
+  it("shows the ROM gamepad icon on a GOG row with a downloaded installer", () => {
+    gogInstallersData = {
+      gameId: 1,
+      gogProductId: 1207658695,
+      groups: [
+        {
+          productId: 1207658695,
+          title: "Absolute Drift",
+          installers: [
+            {
+              id: "installer_windows_en",
+              os: "windows",
+              language: "en",
+              version: "1.0",
+              totalSize: 20,
+              files: [
+                {
+                  id: "en1installer0",
+                  size: 20,
+                  downloadState: "completed",
+                  downloadedBytes: 20,
+                  downloadError: null,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[gogItem]} />);
+
+    expect(
+      screen.getByLabelText("GOG installer downloaded to the NAS: windows · en · 1.0")
+    ).toBeInTheDocument();
+  });
+
+  it("shows no GOG icon on a GOG row whose installer has not finished downloading", () => {
+    gogInstallersData = {
+      gameId: 1,
+      gogProductId: 1207658695,
+      groups: [
+        {
+          productId: 1207658695,
+          title: "Absolute Drift",
+          installers: [
+            {
+              id: "installer_windows_en",
+              os: "windows",
+              language: "en",
+              version: "1.0",
+              totalSize: 20,
+              files: [
+                {
+                  id: "en1installer0",
+                  size: 20,
+                  downloadState: "not_downloaded",
+                  downloadedBytes: 0,
+                  downloadError: null,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[gogItem]} />);
+
+    expect(screen.queryByLabelText(/GOG installer downloaded/)).not.toBeInTheDocument();
+  });
 });

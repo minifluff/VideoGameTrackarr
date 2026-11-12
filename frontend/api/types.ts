@@ -628,6 +628,7 @@ export interface LibraryListItem {
   dateAdded: string | null;
   tagNames: string[];
   notes: string | null;
+  digitalStorefront: string | null;
 }
 
 export type RomUnplayableReason = "unsupported_platform" | "unsupported_file_type" | "missing_bios";

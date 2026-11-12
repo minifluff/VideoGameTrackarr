@@ -47,6 +47,14 @@ export interface StorefrontResolution {
   digitalStorefrontOptions: string[];
 }
 
+// Every known digital storefront, for places (like the List page bulk edit) that
+// set a storefront without knowing one platform — free text still works for
+// anything not on the list.
+export const ALL_DIGITAL_STOREFRONTS: string[] = [
+  ...Object.keys(DIGITAL_STOREFRONT_PLATFORM_SLUGS),
+  ...FIXED_DIGITAL_STOREFRONTS.map((entry) => entry.storefront),
+];
+
 export function resolveStorefront(
   platform: PlatformResponse | undefined,
   _isDigital: boolean

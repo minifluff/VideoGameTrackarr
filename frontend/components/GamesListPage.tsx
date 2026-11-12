@@ -46,7 +46,7 @@ import MoveLibraryItemDialog from "./MoveLibraryItemDialog";
 import type { LibraryListItem } from "../api/types";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 
-type SortColumn = "gameName" | "status" | "platformName" | "edition" | "format" | "notes";
+type SortColumn = "gameName" | "status" | "platformName" | "edition" | "format" | "notes" | "digitalStorefront";
 type SortDirection = "asc" | "desc";
 
 const GamesListPage = () => {
@@ -137,6 +137,7 @@ const GamesListPage = () => {
           item.edition ?? "",
           item.format ?? "",
           item.notes ?? "",
+          item.digitalStorefront ?? "",
         ]
           .join(" ")
           .toLowerCase();
@@ -171,6 +172,10 @@ const GamesListPage = () => {
         case "notes":
           aVal = a.notes;
           bVal = b.notes;
+          break;
+        case "digitalStorefront":
+          aVal = a.digitalStorefront;
+          bVal = b.digitalStorefront;
           break;
       }
       if (aVal == null && bVal == null) return 0;
@@ -224,9 +229,22 @@ const GamesListPage = () => {
 
 
 
+  // The Digital Storefront column only earns its space when the rows in view
+  // actually have storefronts — a platform whose copies were all bought
+  // elsewhere (or have no storefront recorded) gets a clean table with no
+  // column of dashes. Recomputed from the filtered set, so filtering to a
+  // platform with storefronts shows it and filtering away hides it again.
+  const showStorefrontColumn = useMemo(
+    () => filteredAndSorted.some((item) => item.digitalStorefront != null && item.digitalStorefront !== ""),
+    [filteredAndSorted]
+  );
+
   const columns: { key: SortColumn; label: string }[] = [
     { key: "gameName", label: t("games.listPage.nameColumn") },
     { key: "platformName", label: t("games.listPage.platformColumn") },
+    ...(showStorefrontColumn
+      ? [{ key: "digitalStorefront" as SortColumn, label: t("games.listPage.storefrontColumn") }]
+      : []),
     { key: "format", label: t("games.listPage.formatColumn") },
     { key: "edition", label: t("games.listPage.editionColumn") },
     { key: "status", label: t("games.listPage.statusColumn") },
@@ -514,6 +532,9 @@ const GamesListPage = () => {
                   </TableCell>
                   <TableCell>{item.gameName}</TableCell>
                   <TableCell>{item.platformName ?? "—"}</TableCell>
+                  {showStorefrontColumn ? (
+                    <TableCell>{item.digitalStorefront ?? "—"}</TableCell>
+                  ) : null}
                   <TableCell>{item.format ?? "—"}</TableCell>
                   <TableCell>{item.edition ?? "—"}</TableCell>
                   <TableCell>

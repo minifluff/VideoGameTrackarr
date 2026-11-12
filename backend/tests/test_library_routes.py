@@ -361,6 +361,46 @@ def test_bulk_update_format_across_items(auth_client, seed_game, seed_platform, 
     assert {item["format"] for item in items} == {"subscription"}
 
 
+def test_bulk_update_digital_storefront_sets_and_clears(auth_client, seed_game, seed_platform):
+    first = _add_item(auth_client, seed_game.id, seed_platform.id, "digital")
+    second = _add_item(auth_client, seed_game.id, seed_platform.id, "digital")
+
+    response = auth_client.post(
+        "/api/library/bulk-update",
+        json={"item_ids": [first, second], "field": "digital_storefront", "value": "GOG"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"updated": 2}
+    items = auth_client.get(f"/api/games/{seed_game.id}/library").json()
+    assert {item["digitalStorefront"] for item in items} == {"GOG"}
+
+    # Blank clears the storefront on every selected item.
+    response = auth_client.post(
+        "/api/library/bulk-update",
+        json={"item_ids": [first, second], "field": "digital_storefront", "value": "  "},
+    )
+
+    assert response.status_code == 200
+    items = auth_client.get(f"/api/games/{seed_game.id}/library").json()
+    assert {item["digitalStorefront"] for item in items} == {None}
+
+
+def test_list_items_includes_digital_storefront(auth_client, seed_game, seed_platform):
+    item_id = _add_item(auth_client, seed_game.id, seed_platform.id, "digital")
+    auth_client.post(
+        "/api/library/bulk-update",
+        json={"item_ids": [item_id], "field": "digital_storefront", "value": "GOG"},
+    )
+
+    response = auth_client.get("/api/library/items")
+
+    assert response.status_code == 200
+    rows = [row for row in response.json() if row["id"] == item_id]
+    assert len(rows) == 1
+    assert rows[0]["digitalStorefront"] == "GOG"
+
+
 def test_bulk_update_platform_and_status(auth_client, seed_game, seed_platform, db_session):
     from app.models.catalog import Platform
 

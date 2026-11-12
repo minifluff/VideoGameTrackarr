@@ -99,6 +99,7 @@ class LibraryListItemResponse(CamelModel):
     date_added: datetime | None
     tag_names: list[str]
     notes: str | None
+    digital_storefront: str | None
 
 
 def library_item_from_orm(

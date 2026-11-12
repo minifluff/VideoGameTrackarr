@@ -1126,10 +1126,10 @@
     },
     "gogInstallers": {
       "heading": "GOG Installers",
-      "description": "Offline installers from GOG. Download to NAS saves the file on this server (never part of backups); once it's there, Download sends it to this device.",
+      "description": "Offline installers from GOG. Cache Download saves the file on this server (never part of backups); once it's there, Download sends it to this device.",
       "installerLabel": "{{os}} · {{language}} · {{version}} · {{size}}",
       "fileLabel": "{{size}}",
-      "downloadToNasButton": "Download to NAS",
+      "cacheDownloadButton": "Cache Download",
       "downloadButton": "Download",
       "retryButton": "Retry",
       "downloadingLabel": "Downloading… {{downloaded}} of {{total}}",
@@ -1172,6 +1172,8 @@
       "moveWithRomConfirm": "Mover e excluir ROM",
       "romAttachedTooltip_one": "ROM: {{name}}",
       "romAttachedTooltip_other": "{{count}} ROMs: {{name}}",
+      "gogInstallerDownloadedTooltip_one": "GOG installer downloaded to the NAS: {{name}}",
+      "gogInstallerDownloadedTooltip_other": "{{count}} GOG installers downloaded to the NAS: {{name}}",
       "romSaveErrorDetailToast": "A cópia foi salva, mas nem todas as alterações de ROM: {{detail}}",
       "moveWithRomDescription_one": "Esta cópia tem uma ROM ({{name}}). Cópias da lista de desejos não podem ter ROM, então ela será excluída.",
       "moveWithRomDescription_other": "Esta cópia tem {{count}} ROMs ({{name}}). Cópias da lista de desejos não podem ter ROMs, então elas serão excluídas.",
@@ -1281,6 +1283,7 @@
       "emptyState": "No games found",
       "selectedCount": "{{count}} selected",
       "notesColumn": "Notes",
+      "storefrontColumn": "Digital Storefront",
       "bulkEdit": {
         "editButton": "Edit",
         "clearButton": "Clear selection",
@@ -1300,7 +1303,8 @@
           "status": "Status",
           "edition": "Edition",
           "notes": "Notes",
-          "game": "Move to game"
+          "game": "Move to game",
+          "digitalStorefront": "Digital Storefront"
         },
         "statusOwned": "Owned",
         "statusWishlist": "Wishlist",

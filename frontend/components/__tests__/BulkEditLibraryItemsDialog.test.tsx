@@ -125,4 +125,42 @@ describe("BulkEditLibraryItemsDialog", () => {
       value: "Collector's",
     });
   });
+
+  it("applies a Digital Storefront pick from the known storefronts", async () => {
+    const user = userEvent.setup();
+    render(
+      <BulkEditLibraryItemsDialog open itemIds={[11, 12]} onClose={vi.fn()} onApplied={vi.fn()} />
+    );
+
+    await user.click(screen.getByRole("combobox", { name: "Field" }));
+    await user.click(await screen.findByRole("option", { name: "Digital Storefront" }));
+    await user.click(screen.getByRole("combobox", { name: "New value" }));
+    await user.click(await screen.findByRole("option", { name: "GOG" }));
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    expect(mutateAsync).toHaveBeenCalledWith({
+      itemIds: [11, 12],
+      field: "digital_storefront",
+      value: "GOG",
+    });
+  });
+
+  it("clears the Digital Storefront when Apply is hit with a blank value", async () => {
+    const user = userEvent.setup();
+    render(
+      <BulkEditLibraryItemsDialog open itemIds={[11]} onClose={vi.fn()} onApplied={vi.fn()} />
+    );
+
+    await user.click(screen.getByRole("combobox", { name: "Field" }));
+    await user.click(await screen.findByRole("option", { name: "Digital Storefront" }));
+    // Blank is allowed for a storefront (same as Edition/Notes) — Apply stays enabled.
+    expect(screen.getByRole("button", { name: "Apply" })).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    expect(mutateAsync).toHaveBeenCalledWith({
+      itemIds: [11],
+      field: "digital_storefront",
+      value: "",
+    });
+  });
 });

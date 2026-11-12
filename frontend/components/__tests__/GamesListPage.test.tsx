@@ -20,6 +20,7 @@ const items: LibraryListItem[] = [
     dateAdded: null,
     tagNames: [],
     notes: null,
+    digitalStorefront: null,
   },
   {
     id: 2,
@@ -34,6 +35,7 @@ const items: LibraryListItem[] = [
     dateAdded: null,
     tagNames: [],
     notes: null,
+    digitalStorefront: null,
   },
 ];
 
@@ -271,5 +273,36 @@ describe("GamesListPage bulk delete pagination", () => {
     // The delete resets the page: the first page's items are visible again
     // instead of a blank second page.
     expect(await screen.findByText("Game 01")).toBeInTheDocument();
+  });
+
+  it("shows the Digital Storefront column after Platform when a row has one", async () => {
+    mockListItems.mockResolvedValueOnce([
+      { ...items[0], digitalStorefront: "GOG" },
+      items[1],
+    ]);
+    renderPage();
+
+    await screen.findByText("Astro Bot");
+    const headers = screen.getAllByRole("columnheader").map((cell) => cell.textContent);
+    expect(headers).toEqual([
+      "",
+      "Name",
+      "Platform",
+      "Digital Storefront",
+      "Format",
+      "Edition",
+      "Status",
+      "Notes",
+      "",
+    ]);
+    expect(screen.getByText("GOG")).toBeInTheDocument();
+  });
+
+  it("hides the Digital Storefront column when no row has one", async () => {
+    renderPage();
+
+    await screen.findByText("Astro Bot");
+    const headers = screen.getAllByRole("columnheader").map((cell) => cell.textContent);
+    expect(headers).not.toContain("Digital Storefront");
   });
 });
