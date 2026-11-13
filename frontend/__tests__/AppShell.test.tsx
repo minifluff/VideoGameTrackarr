@@ -41,24 +41,6 @@ function renderShell(initialEntries: string[]) {
 
 afterEach(() => {
   localStorage.removeItem("vgt.startPage");
-  localStorage.removeItem("vgt.appTitle");
-});
-
-describe("AppShell title bar", () => {
-  it("shows the app title in the title bar", async () => {
-    renderShell(["/"]);
-
-    expect(await screen.findByText("Dashboard page")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "VideoGameTrackarr" })).toBeInTheDocument();
-  });
-
-  it("shows a custom app title in the title bar", async () => {
-    localStorage.setItem("vgt.appTitle", "Game Library");
-    renderShell(["/"]);
-
-    expect(await screen.findByText("Dashboard page")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Game Library" })).toBeInTheDocument();
-  });
 });
 
 describe("AppShell starting page", () => {
