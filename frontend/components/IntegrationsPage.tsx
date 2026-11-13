@@ -378,7 +378,7 @@ const GogSection = () => {
         <ConfiguredChip configured={configured} />
         <Box sx={{ flexGrow: 1 }} />
         {configured && (
-          <Button variant="outlined" onClick={() => navigate("/settings/gog-sync")}>
+          <Button variant="outlined" onClick={() => navigate("/settings/sync?tab=gog")}>
             {t("nav.gogSync")}
           </Button>
         )}

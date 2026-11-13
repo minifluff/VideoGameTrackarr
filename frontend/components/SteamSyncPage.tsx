@@ -153,7 +153,7 @@ function buildTrees(owned: SteamEntry[], wishlist: SteamWishlistEntry[]): TreeRo
   }));
 }
 
-const SteamSyncPage = () => {
+const SteamSyncPage = ({ hideHeading = false }: { hideHeading?: boolean }) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const navigate = useNavigate();
@@ -640,11 +640,13 @@ const SteamSyncPage = () => {
   return (
     <>
       <Box sx={{ mb: 3, display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2 }}>
-        <Box>
-          <Typography variant="h4" component="h1" gutterBottom>
-            {t("insights.steamSync.heading")}
-          </Typography>
-        </Box>
+        {hideHeading ? null : (
+          <Box>
+            <Typography variant="h4" component="h1" gutterBottom>
+              {t("insights.steamSync.heading")}
+            </Typography>
+          </Box>
+        )}
         <Box sx={{ display: "flex", flexDirection: "column", flexShrink: 0, minWidth: 180 }}>
           <Button
             variant="outlined"

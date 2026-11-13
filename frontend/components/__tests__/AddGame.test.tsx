@@ -134,8 +134,8 @@ function LocationProbe() {
   return <div data-testid="location">{location.pathname}</div>;
 }
 
-describe("AddGame sync buttons", () => {
-  it("shows a GOG Sync button under Steam Sync that goes to the GOG sync page", async () => {
+describe("AddGame sync button", () => {
+  it("shows a single Integration Sync button that goes to the sync page", async () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/games/add"]}>
@@ -144,12 +144,11 @@ describe("AddGame sync buttons", () => {
       </MemoryRouter>
     );
 
-    const steamButton = await screen.findByRole("button", { name: "Steam Sync" });
-    const gogButton = screen.getByRole("button", { name: "GOG Sync" });
-    // GOG Sync renders after Steam Sync in the header stack — i.e. below it.
-    expect(steamButton.compareDocumentPosition(gogButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const syncButton = await screen.findByRole("button", { name: "Integration Sync" });
+    expect(screen.queryByRole("button", { name: "Steam Sync" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "GOG Sync" })).not.toBeInTheDocument();
 
-    await user.click(gogButton);
-    expect(screen.getByTestId("location")).toHaveTextContent("/settings/gog-sync");
+    await user.click(syncButton);
+    expect(screen.getByTestId("location")).toHaveTextContent("/settings/sync");
   });
 });

@@ -82,11 +82,11 @@ function wishlistEntry(
   };
 }
 
-function renderPage() {
+function renderPage(props: { hideHeading?: boolean } = {}) {
   return render(
     <ThemeProvider theme={createM3Theme("light", "normal")}>
       <MemoryRouter>
-        <SteamSyncPage />
+        <SteamSyncPage {...props} />
       </MemoryRouter>
     </ThemeProvider>
   );
@@ -333,5 +333,19 @@ describe("SteamSyncPage import progress", { timeout: 20_000 }, () => {
 
     expect(screen.getByRole("progressbar")).toBeInTheDocument();
     expect(screen.queryByText("42 of 100")).not.toBeInTheDocument();
+  });
+});
+
+describe("SteamSyncPage hideHeading", () => {
+  it("hides the page heading when embedded in the tabbed sync page", () => {
+    renderPage({ hideHeading: true });
+
+    expect(screen.queryByRole("heading", { name: "Steam Sync" })).not.toBeInTheDocument();
+  });
+
+  it("shows the page heading when rendered on its own", () => {
+    renderPage();
+
+    expect(screen.getByRole("heading", { name: "Steam Sync" })).toBeInTheDocument();
   });
 });

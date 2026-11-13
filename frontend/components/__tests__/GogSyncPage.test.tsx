@@ -52,11 +52,11 @@ function makeEntries(syncable: number): GogEntry[] {
   return [...list, entry(1, "Zzz Unmatched A", "no_match"), entry(2, "Zzz Unmatched B", "no_match")];
 }
 
-function renderPage() {
+function renderPage(props: { hideHeading?: boolean } = {}) {
   return render(
     <ThemeProvider theme={createM3Theme("light", "normal")}>
       <MemoryRouter>
-        <GogSyncPage />
+        <GogSyncPage {...props} />
       </MemoryRouter>
     </ThemeProvider>
   );
@@ -263,5 +263,19 @@ describe("GogSyncPage import progress", { timeout: 20_000 }, () => {
 
     expect(screen.getByRole("progressbar")).toBeInTheDocument();
     expect(screen.queryByText("42 of 100")).not.toBeInTheDocument();
+  });
+});
+
+describe("GogSyncPage hideHeading", () => {
+  it("hides the page heading when embedded in the tabbed sync page", () => {
+    renderPage({ hideHeading: true });
+
+    expect(screen.queryByRole("heading", { name: "GOG Sync" })).not.toBeInTheDocument();
+  });
+
+  it("shows the page heading when rendered on its own", () => {
+    renderPage();
+
+    expect(screen.getByRole("heading", { name: "GOG Sync" })).toBeInTheDocument();
   });
 });

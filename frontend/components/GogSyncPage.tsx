@@ -116,7 +116,7 @@ function buildTrees(entries: GogEntry[]): TreeRow[] {
   }));
 }
 
-const GogSyncPage = () => {
+const GogSyncPage = ({ hideHeading = false }: { hideHeading?: boolean }) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const { data: entries } = useGogEntries();
@@ -452,14 +452,13 @@ const GogSyncPage = () => {
   return (
     <>
       <Box sx={{ mb: 3, display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2 }}>
-        <Box>
-          <Typography variant="h4" component="h1" gutterBottom>
-            {t("insights.gogSync.heading")}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {t("insights.gogSync.description")}
-          </Typography>
-        </Box>
+        {hideHeading ? null : (
+          <Box>
+            <Typography variant="h4" component="h1" gutterBottom>
+              {t("insights.gogSync.heading")}
+            </Typography>
+          </Box>
+        )}
         <Box sx={{ display: "flex", flexDirection: "column", flexShrink: 0, minWidth: 180 }}>
           <Button
             variant="outlined"

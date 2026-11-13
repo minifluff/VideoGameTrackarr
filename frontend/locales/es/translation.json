@@ -73,6 +73,7 @@
     "orphanedAccessories": "Accesorios huérfanos",
     "steamSync": "Sincronización Steam",
     "gogSync": "GOG Sync",
+    "integrationSync": "Integration Sync",
     "saleTracked": "Ofertas - seguidas",
     "salesIgnored": "Ofertas - ignoradas",
     "onSale": "En oferta",
@@ -1000,8 +1001,7 @@
       "bulkImportInProgressMessage": "Se están añadiendo juegos, vuelve más tarde.",
       "bulkImportCompletedToast": "Adición masiva finalizada — {{succeeded}} añadidos, {{failed}} fallidos.",
       "bulkImportFailedToast": "La adición masiva falló. Inténtalo de nuevo.",
-      "steamSyncButton": "Steam Sync",
-      "gogSyncButton": "GOG Sync"
+      "integrationSyncButton": "Integration Sync"
     },
     "suggestionsDialog": {
       "title": "¿Ya está este juego en IGDB?",
@@ -1139,7 +1139,7 @@
       "installersHeading": "Installers",
       "uploadedFileLabel": "{{name}} · {{size}}",
       "uploadButton": "Upload",
-      "uploadingLabel": "Uploading {{name}} \u2014 {{percent}}%",
+      "uploadingLabel": "Uploading {{name}} — {{percent}}%",
       "uploadErrorToast": "Could not upload this installer. Please try again.",
       "deleteInstallerLabel": "Delete {{name}}",
       "deleteDialogTitle": "Delete installer?",
@@ -1546,7 +1546,6 @@
     },
     "gogSync": {
       "heading": "GOG Sync",
-      "description": "Every game GOG knows you own, matched against your VGT catalog. Nothing changes here until you explicitly Sync a row — Import only fetches and matches, it never writes to your library on its own. GOG has no wishlist sync and no playtime.",
       "tableHeading": "GOG Library",
       "emptyState": "Nothing here yet. Connect GOG in Settings → Integrations, then run Import.",
       "columnName": "Name",

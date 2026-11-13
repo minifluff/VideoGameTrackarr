@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 
 // Route pages are code-split (React.lazy) so the entry bundle only carries the
 // shell + framework — each page (and its page-only dependencies) downloads and
@@ -54,8 +54,7 @@ const PublicHardwarePage = lazy(() => import("./components/PublicHardwarePage"))
 const Settings = lazy(() => import("./components/Settings"));
 const SalesIgnoredListPage = lazy(() => import("./components/SalesIgnoredListPage"));
 const SaleTrackedPage = lazy(() => import("./components/SaleTrackedPage"));
-const SteamSyncPage = lazy(() => import("./components/SteamSyncPage"));
-const GogSyncPage = lazy(() => import("./components/GogSyncPage"));
+const SyncPage = lazy(() => import("./components/SyncPage"));
 const RemoveGamesPage = lazy(() => import("./components/RemoveGamesPage"));
 const PlayniteSyncPage = lazy(() => import("./components/PlayniteSyncPage"));
 const OnSalePage = lazy(() => import("./components/OnSalePage"));
@@ -101,8 +100,7 @@ import {
   salesIgnoredCrumbs,
   seriesCrumbs,
   settingsCrumbs,
-  steamSyncCrumbs,
-  gogSyncCrumbs,
+  syncCrumbs,
   removeGamesCrumbs,
   playniteSyncCrumbs,
   tagManagerCrumbs,
@@ -298,14 +296,18 @@ const router = createBrowserRouter([
             handle: { crumbs: emulationCrumbs },
           },
           {
+            path: "/settings/sync",
+            element: <SyncPage />,
+            handle: { crumbs: syncCrumbs },
+          },
+          {
+            // Old per-store routes now land on the tabbed page, on the matching tab.
             path: "/settings/steam-sync",
-            element: <SteamSyncPage />,
-            handle: { crumbs: steamSyncCrumbs },
+            element: <Navigate to="/settings/sync?tab=steam" replace />,
           },
           {
             path: "/settings/gog-sync",
-            element: <GogSyncPage />,
-            handle: { crumbs: gogSyncCrumbs },
+            element: <Navigate to="/settings/sync?tab=gog" replace />,
           },
           {
             path: "/settings/remove-games",

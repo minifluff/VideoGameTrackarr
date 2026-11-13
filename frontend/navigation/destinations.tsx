@@ -7,7 +7,6 @@ import CableIcon from "@mui/icons-material/Cable";
 import CollectionsIcon from "@mui/icons-material/Collections";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DashboardIcon from "@mui/icons-material/Dashboard";
-import DownloadIcon from "@mui/icons-material/Download";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import EventIcon from "@mui/icons-material/Event";
 import ExtensionOffIcon from "@mui/icons-material/ExtensionOff";
@@ -24,8 +23,8 @@ import SellIcon from "@mui/icons-material/Sell";
 import LinkIcon from "@mui/icons-material/Link";
 import SettingsIcon from "@mui/icons-material/SettingsOutlined";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
+import SyncIcon from "@mui/icons-material/Sync";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import SteamIcon from "../icons/SteamIcon";
 
 export interface NavSubDestination {
   to: string;
@@ -123,15 +122,10 @@ export function getNavDestinations(t: TFunction, options?: NavDestinationOptions
         { to: "/settings/integrations", label: t("nav.integrations"), icon: <CableIcon /> },
         { to: "/settings/emulation", label: t("nav.emulation"), icon: <SportsEsportsIcon /> },
         {
-          to: "/settings/steam-sync",
-          label: t("nav.steamSync"),
-          icon: <SteamIcon />,
+          to: "/settings/sync",
+          label: t("nav.integrationSync"),
+          icon: <SyncIcon />,
           separatorBefore: true,
-        },
-        {
-          to: "/settings/gog-sync",
-          label: t("nav.gogSync"),
-          icon: <DownloadIcon />,
         },
         {
           to: "/settings/sale-tracked",
