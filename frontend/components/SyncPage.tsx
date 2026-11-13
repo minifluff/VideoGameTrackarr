@@ -31,8 +31,8 @@ const SyncPage = () => {
         </Typography>
       </Box>
       <Tabs value={tab} onChange={handleTabChange} aria-label={t("nav.integrationSync")} sx={{ mb: 2 }}>
-        <Tab value="steam" label={t("nav.steamSync")} />
-        <Tab value="gog" label={t("nav.gogSync")} />
+        <Tab value="steam" label={t("nav.steamTab")} />
+        <Tab value="gog" label={t("nav.gogTab")} />
       </Tabs>
       {tab === "steam" ? <SteamSyncPage hideHeading /> : <GogSyncPage hideHeading />}
     </>

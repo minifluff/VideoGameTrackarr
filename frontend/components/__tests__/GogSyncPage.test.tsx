@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@mui/material/styles";
 import { MemoryRouter } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -25,10 +26,17 @@ vi.mock("../../hooks/useIntegrations", () => ({
   useUnignoreGogEntry: () => ({ mutateAsync: unignoreGog, isPending: false }),
   useUnlinkGogEntry: () => idleMutation(),
 }));
-vi.mock("../../hooks/useJobs", () => ({
-  useJobsList: () => ({ data: jobsList }),
-  useRunJob: () => idleMutation(),
-}));
+// The real useInvalidateOnJobFinish stays in play (via importOriginal) so the
+// import-finish refetch is genuinely wired; only the jobs list and the run-job
+// mutation are stubbed.
+vi.mock("../../hooks/useJobs", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../hooks/useJobs")>();
+  return {
+    ...actual,
+    useJobsList: () => ({ data: jobsList }),
+    useRunJob: () => idleMutation(),
+  };
+});
 vi.mock("../RelinkGogEntryDialog", () => ({ default: () => null }));
 
 function entry(productId: number, name: string, status: GogEntry["status"]): GogEntry {
@@ -53,13 +61,21 @@ function makeEntries(syncable: number): GogEntry[] {
 }
 
 function renderPage(props: { hideHeading?: boolean } = {}) {
-  return render(
-    <ThemeProvider theme={createM3Theme("light", "normal")}>
-      <MemoryRouter>
-        <GogSyncPage {...props} />
-      </MemoryRouter>
-    </ThemeProvider>
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  // A fresh element per render: rerendering with the identical element object
+  // lets React bail out of the whole tree, so the page would never see the
+  // changed jobs list.
+  const buildElement = () => (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider theme={createM3Theme("light", "normal")}>
+        <MemoryRouter>
+          <GogSyncPage {...props} />
+        </MemoryRouter>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
+  const result = render(buildElement());
+  return { ...result, queryClient, rerenderPage: () => result.rerender(buildElement()) };
 }
 
 const headerCheckbox = () => within(screen.getAllByRole("rowgroup")[0]).getByRole("checkbox");
@@ -243,6 +259,19 @@ describe("GogSyncPage import progress", { timeout: 20_000 }, () => {
     schedule: { enabled: false, cronExpression: null, nextRunAt: null },
   });
 
+  const finishedJob = {
+    id: "gog_import",
+    run: {
+      status: "completed" as const,
+      startedAt: null,
+      finishedAt: "2026-11-13T10:00:00Z",
+      result: {},
+      error: null,
+      progress: null,
+    },
+    schedule: { enabled: false, cronExpression: null, nextRunAt: null },
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     gogEntries = [];
@@ -263,6 +292,21 @@ describe("GogSyncPage import progress", { timeout: 20_000 }, () => {
 
     expect(screen.getByRole("progressbar")).toBeInTheDocument();
     expect(screen.queryByText("42 of 100")).not.toBeInTheDocument();
+  });
+
+  it("refetches the entries when the import finishes, so the new rows appear", async () => {
+    jobsList = [runningJob({ current: 42, total: 100 })];
+    const { rerenderPage, queryClient } = renderPage();
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+
+    expect(screen.getByRole("button", { name: "Importing…" })).toBeDisabled();
+
+    jobsList = [finishedJob];
+    rerenderPage();
+
+    await waitFor(() => {
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["gog-entries"] });
+    });
   });
 });
 

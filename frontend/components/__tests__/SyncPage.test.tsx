@@ -32,14 +32,14 @@ describe("SyncPage", () => {
     expect(screen.getByRole("heading", { name: "Integration Sync" })).toBeInTheDocument();
     expect(screen.getByText("Steam panel")).toBeInTheDocument();
     expect(screen.queryByText("GOG panel")).not.toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Steam Sync" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Steam" })).toHaveAttribute("aria-selected", "true");
   });
 
   it("switches to the GOG tab on click and writes ?tab=gog to the URL", async () => {
     const user = userEvent.setup();
     renderSync("/settings/sync");
 
-    await user.click(screen.getByRole("tab", { name: "GOG Sync" }));
+    await user.click(screen.getByRole("tab", { name: "GOG" }));
 
     expect(screen.getByText("GOG panel")).toBeInTheDocument();
     expect(screen.queryByText("Steam panel")).not.toBeInTheDocument();
@@ -51,6 +51,6 @@ describe("SyncPage", () => {
 
     expect(screen.getByText("GOG panel")).toBeInTheDocument();
     expect(screen.queryByText("Steam panel")).not.toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "GOG Sync" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "GOG" })).toHaveAttribute("aria-selected", "true");
   });
 });

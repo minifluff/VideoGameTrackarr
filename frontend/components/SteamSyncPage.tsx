@@ -55,7 +55,7 @@ import {
   useUnlinkSteamEntry,
   useUnlinkSteamWishlistEntry,
 } from "../hooks/useIntegrations";
-import { useJobsList, useRunJob } from "../hooks/useJobs";
+import { useJobsList, useInvalidateOnJobFinish, useRunJob } from "../hooks/useJobs";
 import { useSessionState } from "../hooks/useSessionState";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import ConfirmDialog from "./ConfirmDialog";
@@ -188,6 +188,9 @@ const SteamSyncPage = ({ hideHeading = false }: { hideHeading?: boolean }) => {
 
   const importJob = jobs?.find((job) => job.id === STEAM_IMPORT_JOB_ID);
   const isImporting = importJob?.run.status === "running";
+  // The import writes the review rows — refetch them when it finishes so the
+  // new rows appear without a manual refresh (see useInvalidateOnJobFinish).
+  useInvalidateOnJobFinish(isImporting, [["steam-entries"], ["steam-wishlist-entries"]]);
   // Same shape JobsSection shows for a running job; useJobsList polls every 3s
   // while any job runs, so this bar moves without any extra polling here. Note the
   // backend restarts the count at each import phase (owned upserts, then matching,
