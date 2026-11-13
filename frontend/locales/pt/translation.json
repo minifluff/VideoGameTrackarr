@@ -1141,7 +1141,13 @@
       "uploadedHeading": "Uploaded installers",
       "uploadedFileLabel": "{{name}} \u00b7 {{size}}",
       "uploadButton": "Upload installer",
-      "uploadErrorToast": "Could not upload this installer. Please try again."
+      "uploadErrorToast": "Could not upload this installer. Please try again.",
+      "deleteInstallerLabel": "Delete {{name}}",
+      "deleteDialogTitle": "Delete installer?",
+      "deleteDialogGogDescription": "This deletes {{name}} from the NAS. You can cache it again with Cache Download.",
+      "deleteDialogUploadedDescription": "This deletes {{name}} from the NAS. You'll need to upload it again.",
+      "deleteDialogConfirm": "Delete",
+      "deleteErrorToast": "Couldn't delete the installer. Please try again."
     },
     "coverCard": {
       "noImageAvailable": "Imagem Não Disponível"

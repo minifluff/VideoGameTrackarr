@@ -1,13 +1,21 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import IconButton from "@mui/material/IconButton";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import Close from "@mui/icons-material/Close";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import type { GogInstallerFile } from "../api/integrations";
 import {
+  useDeleteGogInstaller,
   useGogInstallerFileLink,
   useGogInstallers,
   useQueueGogInstallerDownload,
@@ -29,17 +37,24 @@ interface GogInstallersSectionProps {
 // Offline installers for a GOG-imported game: the NAS downloads each file in the
 // background (uploads/gog-installers, never part of backups), and once a file is on
 // the NAS the button serves it to this device instead. Copies that take uploads
-// get the same treatment, except the file comes from the user: they upload it
-// here and Download sends it back. The section stays hidden whenever there is
-// nothing to show (a GOG game with no installers and no uploads, and no copy to
-// upload for).
+// get the same treatment from their own folder (uploads/uploaded-installers),
+// except the file comes from the user: they upload it here and Download sends it
+// back. The section stays hidden whenever there is nothing to show (a GOG game with
+// no installers and no uploads, and no copy to upload for).
 const GogInstallersSection = ({ gameId, hasGogItem, hasUploadableItem }: GogInstallersSectionProps) => {
   const { t } = useTranslation();
   const { data: installers, isError } = useGogInstallers(gameId, hasGogItem || hasUploadableItem);
   const queueDownload = useQueueGogInstallerDownload(gameId);
   const fileLink = useGogInstallerFileLink();
   const uploadInstaller = useUploadGogInstaller(gameId);
+  const deleteInstaller = useDeleteGogInstaller(gameId);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // The file waiting in the delete warning — null while no delete is in flight.
+  const [pendingDelete, setPendingDelete] = useState<{
+    fileId: string;
+    filename: string;
+    uploaded: boolean;
+  } | null>(null);
 
   if (!hasGogItem && !hasUploadableItem) return null;
   if (isError || !installers) return null;
@@ -76,7 +91,18 @@ const GogInstallersSection = ({ gameId, hasGogItem, hasUploadableItem }: GogInst
     }
   };
 
-  const renderFileAction = (installerId: string, file: GogInstallerFile) => {
+  const handleDeleteConfirm = async () => {
+    if (!pendingDelete) return;
+    try {
+      await deleteInstaller.mutateAsync(pendingDelete.fileId);
+      setPendingDelete(null);
+    } catch (error) {
+      console.error(`Error deleting installer file ${pendingDelete.fileId}:`, error);
+      toast.error(t("games.gogInstallers.deleteErrorToast"), TOAST_OPTIONS);
+    }
+  };
+
+  const renderFileAction = (installerId: string, file: GogInstallerFile, displayName: string) => {
     switch (file.downloadState) {
       case "queued":
       case "downloading":
@@ -96,14 +122,24 @@ const GogInstallersSection = ({ gameId, hasGogItem, hasUploadableItem }: GogInst
         );
       case "completed":
         return (
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => void handleDownload(file.id)}
-            disabled={fileLink.isPending}
-          >
-            {t("games.gogInstallers.downloadButton")}
-          </Button>
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => void handleDownload(file.id)}
+              disabled={fileLink.isPending}
+            >
+              {t("games.gogInstallers.downloadButton")}
+            </Button>
+            <IconButton
+              size="small"
+              aria-label={t("games.gogInstallers.deleteInstallerLabel", { name: displayName })}
+              onClick={() => setPendingDelete({ fileId: file.id, filename: displayName, uploaded: false })}
+              disabled={deleteInstaller.isPending}
+            >
+              <Close fontSize="small" />
+            </IconButton>
+          </Stack>
         );
       case "failed":
         return (
@@ -186,14 +222,32 @@ const GogInstallersSection = ({ gameId, hasGogItem, hasUploadableItem }: GogInst
                   size: formatFileSize(uploaded.size),
                 })}
               </Typography>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => void handleDownload(uploaded.fileId)}
-                disabled={fileLink.isPending}
-              >
-                {t("games.gogInstallers.downloadButton")}
-              </Button>
+              <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => void handleDownload(uploaded.fileId)}
+                  disabled={fileLink.isPending}
+                >
+                  {t("games.gogInstallers.downloadButton")}
+                </Button>
+                <IconButton
+                  size="small"
+                  aria-label={t("games.gogInstallers.deleteInstallerLabel", {
+                    name: uploaded.filename ?? uploaded.fileId,
+                  })}
+                  onClick={() =>
+                    setPendingDelete({
+                      fileId: uploaded.fileId,
+                      filename: uploaded.filename ?? uploaded.fileId,
+                      uploaded: true,
+                    })
+                  }
+                  disabled={deleteInstaller.isPending}
+                >
+                  <Close fontSize="small" />
+                </IconButton>
+              </Stack>
             </Stack>
           ))}
         </Box>
@@ -223,13 +277,42 @@ const GogInstallersSection = ({ gameId, hasGogItem, hasUploadableItem }: GogInst
                   <Typography variant="body2" color="text.secondary">
                     {t("games.gogInstallers.fileLabel", { size: formatFileSize(file.size) })}
                   </Typography>
-                  {renderFileAction(installer.id, file)}
+                  {renderFileAction(
+                    installer.id,
+                    file,
+                    t("games.gogInstallers.installerLabel", {
+                      os: installer.os,
+                      language: installer.language,
+                      version: installer.version ?? "",
+                      size: formatFileSize(installer.totalSize),
+                    })
+                  )}
                 </Stack>
               ))}
             </Box>
           ))}
         </Box>
       ))}
+      <Dialog open={pendingDelete != null} onClose={() => setPendingDelete(null)}>
+        <DialogTitle>{t("games.gogInstallers.deleteDialogTitle")}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {pendingDelete?.uploaded
+              ? t("games.gogInstallers.deleteDialogUploadedDescription", {
+                  name: pendingDelete.filename,
+                })
+              : t("games.gogInstallers.deleteDialogGogDescription", {
+                  name: pendingDelete?.filename ?? "",
+                })}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPendingDelete(null)}>{t("common.cancel")}</Button>
+          <Button color="error" onClick={() => void handleDeleteConfirm()} disabled={deleteInstaller.isPending}>
+            {t("games.gogInstallers.deleteDialogConfirm")}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

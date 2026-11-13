@@ -401,6 +401,31 @@ def get_download_file_path(db: Session, game_id: int, file_id: str) -> "Path":
     return path
 
 
+def delete_installer(db: Session, game_id: int, file_id: str) -> None:
+    """Deletes a completed installer from the NAS and drops its row, so the game
+    goes back to offering Cache Download (GOG) or Upload (copies that take
+    uploads). Only completed rows have a file to delete — a queued, downloading
+    or failed row is a 404 here. The gate is the same as the download one, so a
+    GOG file needs the GOG-imported copy and an upload needs a copy that takes
+    uploads. A file already gone from disk is fine — the row is the record."""
+    download = next(
+        (d for d in gog_download_service.list_downloads_for_game(db, game_id) if d.file_id == file_id),
+        None,
+    )
+    if download is None or download.status != GogDownloadStatus.COMPLETED:
+        raise NotFoundError("That installer isn't downloaded to the NAS")
+    if download.gog_product_id is None:
+        if _find_uploadable_library_item(db, game_id) is None:
+            raise NotFoundError("That installer isn't downloaded to the NAS")
+    else:
+        _require_imported_product_id(db, game_id)
+    path = gog_download_service.download_file_path(download)
+    db.delete(download)
+    db.commit()
+    if path is not None:
+        path.unlink(missing_ok=True)
+
+
 def _download_state(download: "GogDownload | None") -> dict[str, Any]:
     if download is None:
         return {"download_state": "not_downloaded", "downloaded_bytes": 0, "download_error": None}

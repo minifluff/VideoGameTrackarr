@@ -2,7 +2,7 @@
 
 Uploaded installers have no GOG product behind them, so gog_product_id is
 nullable now — NULL marks an upload (stored under
-gog-installers/uploads/<game_id>/, see gog_download_service), while a set
+uploaded-installers/<game_id>/, see gog_download_service), while a set
 product id still means a GOG CDN download queued by the drainer. Batch mode:
 plain ALTER COLUMN is not valid SQLite, and the app database is SQLite.
 

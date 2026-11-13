@@ -36,6 +36,7 @@ vi.mock("../../hooks/useIntegrations", () => ({
   useQueueGogInstallerDownload: () => ({ mutateAsync: queueGogDownload, isPending: false }),
   useGogInstallerFileLink: () => ({ mutateAsync: gogFileLink, isPending: false }),
   useUploadGogInstaller: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useDeleteGogInstaller: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
 const nesRom: RomFileSummary = {

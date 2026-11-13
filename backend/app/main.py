@@ -69,17 +69,23 @@ mimetypes.add_type("application/vnd.android.package-archive", ".apk")
 
 
 class UploadsStaticFiles(StaticFiles):
-    """The public /uploads mount, minus the roms/ and gog-installers/ subfolders. Covers and
-    accessory images are fine to serve unauthenticated (they're shown on public share pages
-    too), but uploaded ROMs live under the same directory (see rom_service.get_rom_dir) and
-    must only ever be reachable through the signed-URL route in app/api/routes/roms.py —
-    and GOG installer downloads (see gog_download_service) must only ever be reachable
-    through the authenticated file route, gated to games imported by the GOG sync."""
+    """The public /uploads mount, minus the roms/, gog-installers/ and
+    uploaded-installers/ subfolders. Covers and accessory images are fine to serve
+    unauthenticated (they're shown on public share pages too), but uploaded ROMs
+    live under the same directory (see rom_service.get_rom_dir) and must only ever
+    be reachable through the signed-URL route in app/api/routes/roms.py — and GOG
+    installer downloads and uploaded installers (see gog_download_service) must
+    only ever be reachable through the authenticated file route, gated to games
+    imported by the GOG sync or with a copy that takes uploads."""
 
     def get_path(self, scope: Scope) -> str:
         path = super().get_path(scope)
         first_segment = path.replace("\\", "/").lstrip("/").split("/", 1)[0]
-        if first_segment.lower() in (rom_service.ROMS_SUBDIR, gog_download_service.GOG_DOWNLOADS_SUBDIR):
+        if first_segment.lower() in (
+            rom_service.ROMS_SUBDIR,
+            gog_download_service.GOG_DOWNLOADS_SUBDIR,
+            gog_download_service.UPLOADED_INSTALLERS_SUBDIR,
+        ):
             raise StarletteHTTPException(status_code=404)
         return path
 

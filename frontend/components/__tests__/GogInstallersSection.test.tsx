@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, waitForElementToBeRemoved } from "@testing-library/react";
 import { ThemeProvider } from "@mui/material/styles";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { GogInstallers } from "../../api/integrations";
@@ -10,11 +10,13 @@ let installersError = false;
 const queueDownload = vi.fn();
 const fileLink = vi.fn();
 const uploadInstaller = vi.fn();
+const deleteInstaller = vi.fn();
 vi.mock("../../hooks/useIntegrations", () => ({
   useGogInstallers: () => ({ data: installers, isError: installersError }),
   useQueueGogInstallerDownload: () => ({ mutateAsync: queueDownload, isPending: false }),
   useGogInstallerFileLink: () => ({ mutateAsync: fileLink, isPending: false }),
   useUploadGogInstaller: () => ({ mutateAsync: uploadInstaller, isPending: false }),
+  useDeleteGogInstaller: () => ({ mutateAsync: deleteInstaller, isPending: false }),
 }));
 
 function makeInstallers(): GogInstallers {
@@ -220,5 +222,49 @@ describe("GogInstallersSection", () => {
 
     await waitFor(() => expect(uploadInstaller).toHaveBeenCalledTimes(1));
     expect(uploadInstaller.mock.calls[0][0].name).toBe("setup_game_1.0.exe");
+  });
+
+  it("shows an X next to a completed GOG installer and deletes it after confirming", async () => {
+    renderSection();
+
+    // Only the completed file (Hearts of Stone) gets an X — the not-downloaded
+    // one only offers Cache Download.
+    expect(screen.getByRole("button", { name: /Delete windows · en · 1\.0/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Delete windows · en · 1\.32/ })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Delete windows · en · 1\.0/ }));
+    expect(screen.getByText("Delete installer?")).toBeInTheDocument();
+    expect(screen.getByText(/You can cache it again with Cache Download/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    await waitFor(() => expect(deleteInstaller).toHaveBeenCalledWith("en1installer0"));
+  });
+
+  it("cancelling the delete warning deletes nothing", async () => {
+    renderSection();
+
+    fireEvent.click(screen.getByRole("button", { name: /Delete windows · en · 1\.0/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(deleteInstaller).not.toHaveBeenCalled();
+    // MUI keeps the dialog mounted through its exit transition.
+    await waitForElementToBeRemoved(() => screen.queryByRole("dialog"));
+  });
+
+  it("shows an X next to an uploaded installer and deletes it after confirming", async () => {
+    installers = {
+      gameId: 1,
+      gogProductId: null,
+      groups: [],
+      uploadedFiles: [{ fileId: "upload-abc", filename: "setup_game_1.0.exe", size: 20 }],
+    };
+    renderSection(false, true);
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete setup_game_1.0.exe" }));
+    expect(screen.getByText("Delete installer?")).toBeInTheDocument();
+    expect(screen.getByText(/You'll need to upload it again/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    await waitFor(() => expect(deleteInstaller).toHaveBeenCalledWith("upload-abc"));
   });
 });

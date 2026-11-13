@@ -328,9 +328,10 @@ def export_full_backup_zip(db: Session) -> Path:
     stored, not re-compressed — it's mostly already compressed, and deflating GBs is slow.
 
     Only files named in the backup payload are ever archived — nothing is swept from
-    disk. That is what keeps GOG installer downloads out of backups by design: the
-    multi-GB installers under uploads/gog-installers are never part of the payload, so
-    no backup (manual, scheduled SMB export, or safety snapshot) ever includes them.
+    disk. That is what keeps installer files out of backups by design: the
+    multi-GB installers under uploads/gog-installers and uploads/uploaded-installers
+    are never part of the payload, so no backup (manual, scheduled SMB export, or
+    safety snapshot) ever includes them.
     See test_full_backup.test_full_backup_excludes_gog_installer_downloads."""
     payload = build_backup_payload(db, include_files=True)
     handle, name = tempfile.mkstemp(prefix="vgt-full-backup-", suffix=".zip")

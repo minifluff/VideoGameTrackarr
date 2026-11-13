@@ -13,6 +13,7 @@ vi.mock("../../hooks/useIntegrations", () => ({
   useQueueGogInstallerDownload: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useGogInstallerFileLink: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useUploadGogInstaller: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useDeleteGogInstaller: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
 // Same wrapper as the DashboardPage test: the section's mutation hooks need a

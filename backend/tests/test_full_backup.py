@@ -215,7 +215,8 @@ def test_full_backup_excludes_gog_installer_downloads(db_session, seed_game, tmp
     """GOG installer downloads are never part of any backup: the multi-GB files under
     uploads/gog-installers are not in the backup payload, so neither the JSON export
     nor the full zip (nor the scheduled SMB export built from the same functions)
-    includes them — even when a completed download row and its file exist."""
+    includes them — even when a completed download row and its file exist. The same
+    holds for uploaded installers under uploads/uploaded-installers."""
     from app.models.gog import GogDownload, GogDownloadStatus
     from app.services import gog_download_service
 
@@ -236,11 +237,28 @@ def test_full_backup_excludes_gog_installer_downloads(db_session, seed_game, tmp
             status=GogDownloadStatus.COMPLETED,
         )
     )
+    uploaded_target = tmp_path / "uploads" / "uploaded-installers" / str(seed_game.id) / "setup_upload.exe"
+    uploaded_target.parent.mkdir(parents=True)
+    uploaded_target.write_bytes(installer_bytes)
+    db_session.add(
+        GogDownload(
+            game_id=seed_game.id,
+            gog_product_id=None,
+            installer_id="upload",
+            file_id="upload-abc",
+            filename="setup_upload.exe",
+            total_size=len(installer_bytes),
+            downloaded_bytes=len(installer_bytes),
+            status=GogDownloadStatus.COMPLETED,
+        )
+    )
     db_session.commit()
 
     payload_json = backup_service.export_backup_json(db_session)
     assert "gog-installers" not in payload_json
     assert "setup_game.exe" not in payload_json
+    assert "uploaded-installers" not in payload_json
+    assert "setup_upload.exe" not in payload_json
 
     path = backup_service.export_full_backup_zip(db_session)
     try:
@@ -248,5 +266,7 @@ def test_full_backup_excludes_gog_installer_downloads(db_session, seed_game, tmp
             names = archive.namelist()
         assert not any("gog-installers" in name for name in names)
         assert not any("setup_game.exe" in name for name in names)
+        assert not any("uploaded-installers" in name for name in names)
+        assert not any("setup_upload.exe" in name for name in names)
     finally:
         path.unlink(missing_ok=True)

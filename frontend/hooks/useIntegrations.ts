@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   connectGog,
+  deleteGogInstaller,
   disconnectGog,
   getGogEntries,
   getGogInstallers,
@@ -278,6 +279,14 @@ export function useUploadGogInstaller(gameId: number) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (file: File) => uploadGogInstaller(gameId, file),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["gog-installers", gameId] }),
+  });
+}
+
+export function useDeleteGogInstaller(gameId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (fileId: string) => deleteGogInstaller(gameId, fileId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["gog-installers", gameId] }),
   });
 }

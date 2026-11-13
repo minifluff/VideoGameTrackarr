@@ -346,3 +346,7 @@ export async function uploadGogInstaller(gameId: number, file: File): Promise<Go
   );
   return response.data;
 }
+
+export async function deleteGogInstaller(gameId: number, fileId: string): Promise<void> {
+  await apiClient.delete(`/api/integrations/gog/games/${gameId}/installers/${fileId}`);
+}

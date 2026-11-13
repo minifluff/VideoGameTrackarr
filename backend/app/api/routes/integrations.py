@@ -316,6 +316,22 @@ def create_gog_installer_file_link(
     )
 
 
+@router.delete(
+    "/api/integrations/gog/games/{game_id}/installers/{file_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_gog_installer(
+    game_id: int,
+    file_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> None:
+    """Deletes a completed installer from the NAS and drops its row — the game
+    goes back to offering Cache Download (GOG) or Upload. Only completed
+    installers can be deleted; the frontend asks first."""
+    gog_service.delete_installer(db, game_id, file_id)
+
+
 # The tokenized file route carries no Authorization header (plain browser navigation),
 # so it lives on its own router without the router-wide get_current_user dependency —
 # same shape as import_export.download_router.

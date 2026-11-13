@@ -113,6 +113,54 @@ def test_upload_installer_replaces_same_filename(auth_client, db_session, tmp_pa
     assert len(listed["uploadedFiles"]) == 1
 
 
+def test_delete_uploaded_installer_removes_file_and_row(auth_client, db_session, tmp_path, monkeypatch):
+    monkeypatch.setattr(gog_download_service, "UPLOADS_DIR", tmp_path / "uploads")
+    game = _seed_drm_free_game(db_session)
+    assert _upload(auth_client, game.id).status_code == 201
+    file_id = auth_client.get(f"/api/integrations/gog/games/{game.id}/installers").json()["uploadedFiles"][0][
+        "fileId"
+    ]
+    disk_path = (
+        tmp_path / "uploads" / "uploaded-installers" / str(game.id) / FILENAME
+    )
+    assert disk_path.is_file()
+
+    response = auth_client.delete(f"/api/integrations/gog/games/{game.id}/installers/{file_id}")
+
+    assert response.status_code == 204
+    assert not disk_path.exists()
+    assert db_session.query(GogDownload).filter_by(game_id=game.id).all() == []
+    listed = auth_client.get(f"/api/integrations/gog/games/{game.id}/installers").json()
+    assert listed["uploadedFiles"] == []
+
+
+def test_delete_uploaded_installer_without_uploadable_copy_is_404(
+    auth_client, db_session, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(gog_download_service, "UPLOADS_DIR", tmp_path / "uploads")
+    game = _seed_drm_free_game(db_session)
+    assert _upload(auth_client, game.id).status_code == 201
+    file_id = auth_client.get(f"/api/integrations/gog/games/{game.id}/installers").json()["uploadedFiles"][0][
+        "fileId"
+    ]
+    # The copy stops being uploadable (format changed) — the file is no longer
+    # this game's to delete.
+    db_session.query(LibraryItem).filter_by(game_id=game.id).update({"format": MediaFormat.PHYSICAL})
+    db_session.commit()
+
+    response = auth_client.delete(f"/api/integrations/gog/games/{game.id}/installers/{file_id}")
+
+    assert response.status_code == 404
+
+
+def test_delete_unknown_installer_is_404(auth_client, db_session):
+    game = _seed_drm_free_game(db_session)
+
+    response = auth_client.delete(f"/api/integrations/gog/games/{game.id}/installers/no-such-file")
+
+    assert response.status_code == 404
+
+
 def test_upload_installer_requires_uploadable_copy(auth_client, db_session, tmp_path, monkeypatch):
     monkeypatch.setattr(gog_download_service, "UPLOADS_DIR", tmp_path / "uploads")
     plain = _seed_plain_game(db_session)

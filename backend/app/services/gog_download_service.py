@@ -16,9 +16,10 @@ from app.models.gog import GogDownload, GogDownloadStatus
 # only ever served through the authenticated file route.
 GOG_DOWNLOADS_SUBDIR = "gog-installers"
 
-# Uploaded installers (DRM-Free copies — no GOG product behind them) live apart
-# from the per-product CDN downloads, under their game id instead.
-UPLOADED_DOWNLOADS_SUBDIR = "uploads"
+# Uploaded installers (DRM-Free / Abandonware / Other copies — no GOG product
+# behind them) live in their own top-level folder, apart from the GOG downloads,
+# under their game id instead.
+UPLOADED_INSTALLERS_SUBDIR = "uploaded-installers"
 
 
 def get_downloads_dir() -> Path:
@@ -26,7 +27,7 @@ def get_downloads_dir() -> Path:
 
 
 def get_uploaded_downloads_dir(game_id: int) -> Path:
-    return get_downloads_dir() / UPLOADED_DOWNLOADS_SUBDIR / str(game_id)
+    return UPLOADS_DIR / UPLOADED_INSTALLERS_SUBDIR / str(game_id)
 
 
 def sanitize_filename(raw: str) -> str:

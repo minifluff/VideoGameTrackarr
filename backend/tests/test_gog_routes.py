@@ -7,7 +7,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.main import UploadsStaticFiles
 from app.models.catalog import Game, GameCategory, Platform
-from app.models.gog import GogLibraryEntry
+from app.models.gog import GogDownload, GogLibraryEntry
 from app.models.library import LibraryItem, LibraryStatus, MediaFormat
 from app.services import gog_download_service
 from app.services.gog_client import GOG_API_BASE, GOG_AUTH_BASE, GOG_EMBED_BASE, GOG_USERS_BASE
@@ -363,6 +363,56 @@ def test_nas_download_flow_serves_the_file_to_the_device(
     assert on_disk.read_bytes() == INSTALLER_BYTES
 
 
+def _seed_completed_download(db_session, game):
+    download = gog_download_service.create_or_reuse_download(
+        db_session, game.id, PRODUCT_ID, "installer_windows_en", "en1installer0", len(INSTALLER_BYTES)
+    )
+    download.filename = "setup_witcher3.exe"
+    db_session.commit()
+    gog_download_service.set_status(db_session, download, "completed")
+    gog_download_service.set_total_size(db_session, download, len(INSTALLER_BYTES))
+    path = gog_download_service.download_file_path(download)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(INSTALLER_BYTES)
+    return download, path
+
+
+def test_delete_completed_gog_installer_removes_file_and_row(
+    auth_client, db_session, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(gog_download_service, "UPLOADS_DIR", tmp_path / "uploads")
+    game = _seed_matched_entry(db_session)
+    platform = _seed_gog_platform(db_session)
+    _seed_gog_library_item(db_session, game, platform)
+    download, path = _seed_completed_download(db_session, game)
+    assert path.is_file()
+
+    response = auth_client.delete(f"/api/integrations/gog/games/{game.id}/installers/en1installer0")
+
+    assert response.status_code == 204
+    assert not path.exists()
+    db_session.expire_all()
+    assert db_session.get(GogDownload, download.id) is None
+    assert (
+        auth_client.post(f"/api/integrations/gog/games/{game.id}/installers/en1installer0/file-link").status_code
+        == 404
+    )
+
+
+def test_delete_queued_gog_installer_is_404(auth_client, db_session, tmp_path, monkeypatch):
+    monkeypatch.setattr(gog_download_service, "UPLOADS_DIR", tmp_path / "uploads")
+    game = _seed_matched_entry(db_session)
+    platform = _seed_gog_platform(db_session)
+    _seed_gog_library_item(db_session, game, platform)
+    gog_download_service.create_or_reuse_download(
+        db_session, game.id, PRODUCT_ID, "installer_windows_en", "en1installer0", 20
+    )
+
+    response = auth_client.delete(f"/api/integrations/gog/games/{game.id}/installers/en1installer0")
+
+    assert response.status_code == 404
+
+
 def test_uploads_mount_blocks_gog_installers(tmp_path):
     """The public /uploads mount must never serve an installer — the tokenized file
     route is the only way one leaves the NAS. Covers are still served."""
@@ -371,6 +421,9 @@ def test_uploads_mount_blocks_gog_installers(tmp_path):
     with pytest.raises(StarletteHTTPException) as excinfo:
         static.get_path({"type": "http", "path": "/gog-installers/1207658695/setup_game.exe"})
     assert excinfo.value.status_code == 404
+
+    with pytest.raises(StarletteHTTPException):
+        static.get_path({"type": "http", "path": "/uploaded-installers/1/setup_game.exe"})
 
     with pytest.raises(StarletteHTTPException):
         static.get_path({"type": "http", "path": "/roms/game.nes"})
