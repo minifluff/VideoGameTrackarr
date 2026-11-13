@@ -222,7 +222,32 @@ describe("GogInstallersSection", () => {
     });
 
     await waitFor(() => expect(uploadInstaller).toHaveBeenCalledTimes(1));
-    expect(uploadInstaller.mock.calls[0][0].name).toBe("setup_game_1.0.exe");
+    expect(uploadInstaller.mock.calls[0][0].file.name).toBe("setup_game_1.0.exe");
+  });
+
+  it("shows a progress bar with the filename while an installer upload is in flight", async () => {
+    installers = { gameId: 1, gogProductId: null, groups: [], uploadedFiles: [] };
+    let resolveUpload: (value: unknown) => void = () => {};
+    uploadInstaller.mockImplementation(
+      (variables: { file: File; onProgress?: (fraction: number) => void }) => {
+        variables.onProgress?.(0.5);
+        return new Promise((resolve) => {
+          resolveUpload = resolve;
+        });
+      }
+    );
+    const { container } = renderSection(false, true);
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(input, {
+      target: { files: [new File(["bytes"], "setup_game_1.0.exe")] },
+    });
+
+    expect(await screen.findByRole("progressbar")).toBeInTheDocument();
+    expect(screen.getByText("Uploading setup_game_1.0.exe — 50%")).toBeInTheDocument();
+
+    resolveUpload({ fileId: "upload-abc", status: "completed" });
+    await waitFor(() => expect(screen.queryByRole("progressbar")).not.toBeInTheDocument());
   });
 
   it("shows an X next to a completed GOG installer and deletes it after confirming", async () => {

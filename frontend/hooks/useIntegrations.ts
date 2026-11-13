@@ -278,7 +278,8 @@ export function useGogInstallerFileLink() {
 export function useUploadGogInstaller(gameId: number) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (file: File) => uploadGogInstaller(gameId, file),
+    mutationFn: ({ file, onProgress }: { file: File; onProgress?: (fraction: number) => void }) =>
+      uploadGogInstaller(gameId, file, onProgress),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["gog-installers", gameId] }),
   });
 }

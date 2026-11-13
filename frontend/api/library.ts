@@ -60,7 +60,7 @@ export async function bulkUpdateLibraryItems(
   return response.data;
 }
 
-function progressHandler(onProgress?: (fraction: number) => void) {
+export function progressHandler(onProgress?: (fraction: number) => void) {
   return {
     onUploadProgress: (event: { loaded: number; total?: number }) => {
       if (onProgress && event.total) {

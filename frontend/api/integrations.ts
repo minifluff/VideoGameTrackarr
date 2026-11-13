@@ -1,4 +1,5 @@
 import { apiClient } from "./client";
+import { progressHandler } from "./library";
 
 export interface IntegrationsStatus {
   igdbConfigured: boolean;
@@ -337,12 +338,17 @@ export async function getGogInstallerFileLink(gameId: number, fileId: string): P
   return response.data.url;
 }
 
-export async function uploadGogInstaller(gameId: number, file: File): Promise<GogDownload> {
+export async function uploadGogInstaller(
+  gameId: number,
+  file: File,
+  onProgress?: (fraction: number) => void
+): Promise<GogDownload> {
   const form = new FormData();
   form.append("file", file, file.name);
   const response = await apiClient.post<GogDownload>(
     `/api/integrations/gog/games/${gameId}/installers/upload`,
-    form
+    form,
+    progressHandler(onProgress)
   );
   return response.data;
 }

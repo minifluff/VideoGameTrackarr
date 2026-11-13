@@ -1138,6 +1138,7 @@
       "installersHeading": "Installers",
       "uploadedFileLabel": "{{name}} · {{size}}",
       "uploadButton": "Upload",
+      "uploadingLabel": "Uploading {{name}} \u2014 {{percent}}%",
       "uploadErrorToast": "Could not upload this installer. Please try again.",
       "deleteInstallerLabel": "Delete {{name}}",
       "deleteDialogTitle": "Delete installer?",

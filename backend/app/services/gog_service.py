@@ -300,14 +300,30 @@ async def get_installers(db: Session, user: User, game_id: int) -> dict[str, Any
     page can show Download to NAS, a progress bar, or a download-from-NAS link.
     Uploaded installers (DRM-Free copies) ride along in `uploaded_files` — a
     DRM-Free game has no GOG product, so its list is uploads only and never
-    touches the GOG API (no GOG account needed for it)."""
+    touches the GOG API (no GOG account needed for it). Files dropped straight
+    into the uploaded-installers folder are adopted on the read (see
+    `adopt_orphaned_uploads`), so they show up here like uploads."""
+    entry = gog_repository.get_entry_by_game_id(db, game_id)
+    gog_item = _find_gog_library_item(db, game_id)
+    if entry is not None and gog_item is not None:
+        has_gog = True
+    elif entry is not None or gog_item is not None:
+        # Matched but not synced (or vice versa) — keep the precise GOG error.
+        _require_imported_product_id(db, game_id)
+    elif _find_uploadable_library_item(db, game_id) is None:
+        raise NotFoundError(
+            "This game has no copy that takes installers — GOG-imported games, DRM-Free "
+            "digital copies, and Abandonware/Other copies"
+        )
+    else:
+        has_gog = False
+    # The game takes installers — adopt folder-dropped files before listing.
+    gog_download_service.adopt_orphaned_uploads(db, game_id)
     uploaded_files = [
         _uploaded_file_dict(download)
         for download in gog_download_service.list_uploads_for_game(db, game_id)
     ]
-    entry = gog_repository.get_entry_by_game_id(db, game_id)
-    gog_item = _find_gog_library_item(db, game_id)
-    if entry is not None and gog_item is not None:
+    if has_gog:
         product_id = entry.gog_product_id
         async with client_for_user(user) as client:
             groups = await client.get_product_downloads(product_id)
@@ -322,14 +338,6 @@ async def get_installers(db: Session, user: User, game_id: int) -> dict[str, Any
             "groups": [_group_dict(group, downloads) for group in groups],
             "uploaded_files": uploaded_files,
         }
-    if entry is not None or gog_item is not None:
-        # Matched but not synced (or vice versa) — keep the precise GOG error.
-        _require_imported_product_id(db, game_id)
-    if _find_uploadable_library_item(db, game_id) is None:
-        raise NotFoundError(
-            "This game has no copy that takes installers — GOG-imported games, DRM-Free "
-            "digital copies, and Abandonware/Other copies"
-        )
     return {"game_id": game_id, "gog_product_id": None, "groups": [], "uploaded_files": uploaded_files}
 
 

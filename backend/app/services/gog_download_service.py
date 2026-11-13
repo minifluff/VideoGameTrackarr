@@ -93,6 +93,53 @@ def list_uploads_for_game(db: Session, game_id: int) -> list[GogDownload]:
     ]
 
 
+def adopt_orphaned_uploads(db: Session, game_id: int) -> list[GogDownload]:
+    """Adopts files dropped straight into the game's uploaded-installers folder
+    (NAS file browser, rsync, ...) instead of going through the Upload button.
+    They have no row, so the installers list never sees them — one COMPLETED
+    row per file on disk with no row, same shape as an upload, so Download,
+    Delete and the row icon all work for them. Skips subdirectories, dotfiles
+    and `.part` files (an upload still in flight). Re-uploading the same
+    filename later reuses the adopted row, like any other upload."""
+    target_dir = get_uploaded_downloads_dir(game_id)
+    if not target_dir.is_dir():
+        return []
+    known = {
+        download.filename
+        for download in db.scalars(
+            select(GogDownload).where(
+                GogDownload.game_id == game_id, GogDownload.gog_product_id.is_(None)
+            )
+        )
+    }
+    adopted: list[GogDownload] = []
+    for path in sorted(target_dir.iterdir()):
+        if not path.is_file() or path.name.startswith(".") or path.name.endswith(".part"):
+            continue
+        if path.name in known:
+            continue
+        # The on-disk name is used verbatim — it is already the file's name,
+        # and the download route serves the row's filename from this folder.
+        size = path.stat().st_size
+        download = GogDownload(
+            game_id=game_id,
+            gog_product_id=None,
+            installer_id="manual",
+            file_id=uuid.uuid4().hex,
+            filename=path.name,
+            total_size=size,
+            downloaded_bytes=size,
+            status=GogDownloadStatus.COMPLETED,
+        )
+        db.add(download)
+        adopted.append(download)
+    if adopted:
+        db.commit()
+        for download in adopted:
+            db.refresh(download)
+    return adopted
+
+
 def save_uploaded_installer(
     db: Session, game_id: int, source: BinaryIO, original_filename: str
 ) -> GogDownload:

@@ -55,6 +55,11 @@ const GogInstallersSection = ({ gameId, hasGogItem, hasUploadableItem }: GogInst
     filename: string;
     uploaded: boolean;
   } | null>(null);
+  // Upload progress, 0..1 while an installer upload is in flight — null
+  // otherwise. Installers run to many GB, so without this the Upload button
+  // just sits disabled with no sign anything is happening.
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadingFilename, setUploadingFilename] = useState<string | null>(null);
 
   if (!hasGogItem && !hasUploadableItem) return null;
   if (isError || !installers) return null;
@@ -83,11 +88,16 @@ const GogInstallersSection = ({ gameId, hasGogItem, hasUploadableItem }: GogInst
 
   const handleUpload = async (file: File | undefined) => {
     if (!file) return;
+    setUploadingFilename(file.name);
+    setUploadProgress(0);
     try {
-      await uploadInstaller.mutateAsync(file);
+      await uploadInstaller.mutateAsync({ file, onProgress: setUploadProgress });
     } catch (error) {
       console.error("Error uploading installer:", error);
       toast.error(t("games.gogInstallers.uploadErrorToast"), TOAST_OPTIONS);
+    } finally {
+      setUploadProgress(null);
+      setUploadingFilename(null);
     }
   };
 
@@ -203,6 +213,17 @@ const GogInstallersSection = ({ gameId, hasGogItem, hasUploadableItem }: GogInst
           </>
         ) : null}
       </Stack>
+      {uploadProgress != null ? (
+        <Box sx={{ mb: 2 }}>
+          <LinearProgress variant="determinate" value={Math.round(uploadProgress * 100)} />
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+            {t("games.gogInstallers.uploadingLabel", {
+              name: uploadingFilename ?? "",
+              percent: Math.round(uploadProgress * 100),
+            })}
+          </Typography>
+        </Box>
+      ) : null}
       {installers.uploadedFiles.length > 0 ? (
         <Box sx={{ mb: 2 }}>
           {installers.uploadedFiles.map((uploaded) => (

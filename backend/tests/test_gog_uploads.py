@@ -268,3 +268,78 @@ def test_uploaded_file_link_is_404_before_any_upload(auth_client, db_session):
     )
 
     assert response.status_code == 404
+
+
+def test_installers_list_adopts_files_dropped_in_folder(
+    client, auth_client, db_session, tmp_path, monkeypatch
+):
+    """Files dropped straight into uploaded-installers/<game_id>/ (NAS file
+    browser, rsync) show up in the list with a working Download link — no
+    re-upload needed. A second read adopts nothing twice."""
+    monkeypatch.setattr(gog_download_service, "UPLOADS_DIR", tmp_path / "uploads")
+    game = _seed_drm_free_game(db_session)
+    folder = gog_download_service.get_uploaded_downloads_dir(game.id)
+    folder.mkdir(parents=True)
+    (folder / "ZootycoonCd1.iso").write_bytes(b"cd-one-bytes")
+    (folder / "ZootycoonCd2.iso").write_bytes(b"cd-two-bytes-longer")
+
+    listed = auth_client.get(f"/api/integrations/gog/games/{game.id}/installers")
+
+    assert listed.status_code == 200
+    uploaded = listed.json()["uploadedFiles"]
+    assert {f["filename"]: f["size"] for f in uploaded} == {
+        "ZootycoonCd1.iso": len(b"cd-one-bytes"),
+        "ZootycoonCd2.iso": len(b"cd-two-bytes-longer"),
+    }
+    rows = db_session.query(GogDownload).filter_by(game_id=game.id).all()
+    assert {row.filename for row in rows} == {"ZootycoonCd1.iso", "ZootycoonCd2.iso"}
+
+    # A second read adopts nothing twice.
+    again = auth_client.get(f"/api/integrations/gog/games/{game.id}/installers").json()
+    assert len(again["uploadedFiles"]) == 2
+    assert db_session.query(GogDownload).filter_by(game_id=game.id).count() == 2
+
+    # The adopted files download through the tokenized link like uploads.
+    # (Last — like the upload file-link test, the plain download below pops the
+    # Authorization header off the shared client.)
+    file_id = next(f["fileId"] for f in uploaded if f["filename"] == "ZootycoonCd1.iso")
+    link = auth_client.post(
+        f"/api/integrations/gog/games/{game.id}/installers/{file_id}/file-link"
+    )
+    assert link.status_code == 200
+    client.headers.pop("Authorization", None)
+    downloaded = client.get(link.json()["url"])
+    assert downloaded.status_code == 200
+    assert downloaded.content == b"cd-one-bytes"
+
+
+def test_installers_list_ignores_part_files_and_dotfiles(
+    auth_client, db_session, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(gog_download_service, "UPLOADS_DIR", tmp_path / "uploads")
+    game = _seed_drm_free_game(db_session)
+    folder = gog_download_service.get_uploaded_downloads_dir(game.id)
+    folder.mkdir(parents=True)
+    (folder / "setup_game_1.0.exe.part").write_bytes(b"partial")
+    (folder / ".DS_Store").write_bytes(b"junk")
+    (folder / "real-file.bin").write_bytes(b"real")
+
+    listed = auth_client.get(f"/api/integrations/gog/games/{game.id}/installers").json()
+
+    assert [f["filename"] for f in listed["uploadedFiles"]] == ["real-file.bin"]
+    assert db_session.query(GogDownload).filter_by(game_id=game.id).count() == 1
+
+
+def test_installers_list_does_not_adopt_for_game_without_uploadable_copy(
+    auth_client, db_session, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(gog_download_service, "UPLOADS_DIR", tmp_path / "uploads")
+    plain = _seed_plain_game(db_session)
+    folder = gog_download_service.get_uploaded_downloads_dir(plain.id)
+    folder.mkdir(parents=True)
+    (folder / "setup_game_1.0.exe").write_bytes(b"bytes")
+
+    response = auth_client.get(f"/api/integrations/gog/games/{plain.id}/installers")
+
+    assert response.status_code == 404
+    assert db_session.query(GogDownload).filter_by(game_id=plain.id).all() == []
