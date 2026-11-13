@@ -138,9 +138,10 @@ const AppShell = () => {
       <AppBar position="fixed" sx={{ zIndex: (t) => t.zIndex.drawer + 1 }}>
         <Toolbar
           sx={{
-            // Three grid cells — logo/title | search | controls — so the search sits
-            // centred on the screen, not just in the space left over by the title.
-            // On phone widths the title drops out so the search stays visible.
+            // Three grid cells — menu | search | controls — so the search sits
+            // centred on the screen, not just in the space left over by the rest.
+            // The app title is not in this bar: it lives in the sidebar header,
+            // which the drawer shows below the bar on small screens.
             display: "grid",
             gridTemplateColumns: { xs: "auto 1fr auto", sm: "1fr auto 1fr" },
             alignItems: "center",
@@ -203,7 +204,19 @@ const AppShell = () => {
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
           slotProps={{
-            paper: { sx: { width: SIDEBAR_WIDTH + 24, borderRight: 1, borderColor: "divider" } },
+            paper: {
+              sx: {
+                width: SIDEBAR_WIDTH + 24,
+                borderRight: 1,
+                borderColor: "divider",
+                // Start below the fixed AppBar, like the permanent drawer on
+                // desktop — otherwise the drawer's top (the sidebar header
+                // with the app title) slides underneath the bar and the title
+                // is hidden.
+                top: appBarHeight,
+                height: `calc(100% - ${appBarHeight}px)`,
+              },
+            },
           }}
         >
           <Sidebar onNavigate={() => setDrawerOpen(false)} />

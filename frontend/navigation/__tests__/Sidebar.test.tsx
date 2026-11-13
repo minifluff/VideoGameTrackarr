@@ -57,6 +57,9 @@ describe("Sidebar", () => {
   it("shows top-level destinations and group headings, hiding sub-items on the dashboard", () => {
     renderSidebar("/");
 
+    // The sidebar keeps its branding header on desktop — the title bar only
+    // carries the title below `md`, where this sidebar is a collapsed drawer.
+    expect(screen.getByRole("link", { name: "VideoGameTrackarr" })).toBeInTheDocument();
     expect(screen.getByText("Library")).toBeInTheDocument();
     // "Stats" is the group heading; Achievements comes first inside it, then
     // the Insights destination link (the only "Insights" on the page now).

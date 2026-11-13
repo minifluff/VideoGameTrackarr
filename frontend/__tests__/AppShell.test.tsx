@@ -41,6 +41,40 @@ function renderShell(initialEntries: string[]) {
 
 afterEach(() => {
   localStorage.removeItem("vgt.startPage");
+  localStorage.removeItem("vgt.appTitle");
+});
+
+describe("AppShell drawer title", () => {
+  // The app title is not in the title bar — it lives in the sidebar header,
+  // which the drawer shows below the bar on small screens. jsdom renders the
+  // below-`md` layout (no desktop media query match), so the hamburger is
+  // present and the drawer behaviour is testable here.
+  it("does not show the app title in the title bar", async () => {
+    renderShell(["/"]);
+
+    expect(await screen.findByText("Dashboard page")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "VideoGameTrackarr" })).not.toBeInTheDocument();
+  });
+
+  it("shows the app title in the drawer when the menu opens", async () => {
+    renderShell(["/"]);
+
+    expect(await screen.findByText("Dashboard page")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "VideoGameTrackarr" })).not.toBeInTheDocument();
+
+    screen.getByRole("button", { name: "Open menu" }).click();
+    expect(await screen.findByRole("link", { name: "VideoGameTrackarr" })).toBeInTheDocument();
+  });
+
+  it("shows a custom app title in the drawer", async () => {
+    localStorage.setItem("vgt.appTitle", "Game Library");
+    renderShell(["/"]);
+
+    expect(await screen.findByText("Dashboard page")).toBeInTheDocument();
+
+    screen.getByRole("button", { name: "Open menu" }).click();
+    expect(await screen.findByRole("link", { name: "Game Library" })).toBeInTheDocument();
+  });
 });
 
 describe("AppShell starting page", () => {
