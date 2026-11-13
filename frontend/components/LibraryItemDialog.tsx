@@ -46,7 +46,7 @@ import { useEmulationConfig } from "../hooks/useLibrary";
 import { useCurrency } from "../theme/CurrencyProvider";
 import GogInstallersSection from "./GogInstallersSection";
 import { getCurrencySymbol } from "../utils/currency";
-import { resolveStorefront } from "../utils/digitalStorefronts";
+import { ALL_DIGITAL_STOREFRONTS, resolveStorefront } from "../utils/digitalStorefronts";
 import { RATING_BOARD_LABELS } from "../utils/hardwareLabels";
 import { downloadFromUrl } from "../utils/download";
 import { canHoldRom, fileExtension, formatFileSize } from "../utils/roms";
@@ -729,8 +729,10 @@ const LibraryItemDialog = ({
             />
           </FormControl>
         ) : (
-          // Storefront field is always visible — free text for physical copies or
-          // platforms without a predefined storefront list.
+          // Storefront field is always visible — the full known-storefronts list
+          // (same dropdown as the List page bulk edit) for physical copies or
+          // platforms without a predefined per-platform list, so it's a pick
+          // rather than free text. Free text still works for anything not listed.
           <FormControl fullWidth sx={{ margin: "10px 0 20px 0" }}>
             <Controller
               name="digitalStorefront"
@@ -738,7 +740,7 @@ const LibraryItemDialog = ({
               render={({ field }) => (
                 <Autocomplete
                   freeSolo
-                  options={[]}
+                  options={ALL_DIGITAL_STOREFRONTS}
                   value={field.value ?? null}
                   inputValue={field.value ?? ""}
                   onChange={(_event, value) => field.onChange(value ?? undefined)}

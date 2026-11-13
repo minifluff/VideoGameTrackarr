@@ -90,6 +90,43 @@ describe("LibraryItemDialog", () => {
     expect(await screen.findByLabelText("Digital Storefront")).toBeInTheDocument();
   });
 
+  it("offers the full known storefronts — including DRM-Free — before a platform is picked", async () => {
+    const user = userEvent.setup();
+    render(
+      <LibraryItemDialog
+        open
+        title="Add game to your collection"
+        status="owned"
+        platforms={platforms}
+        regions={regions}
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+        submitLabel="Add"
+      />
+    );
+
+    await user.click(screen.getByLabelText("Digital Storefront"));
+    const options = await screen.findAllByRole("option");
+    expect(options.map((option) => option.textContent)).toEqual([
+      "Steam",
+      "GOG",
+      "Epic Games Store",
+      "Ubisoft Connect",
+      "EA App",
+      "Battle.net",
+      "Microsoft Store",
+      "itch.io",
+      "DRM-Free",
+      "PlayStation Store",
+      "Xbox Store",
+      "Google Play",
+      "App Store",
+    ]);
+
+    await user.click(screen.getByRole("option", { name: "DRM-Free" }));
+    expect(screen.getByLabelText("Digital Storefront")).toHaveValue("DRM-Free");
+  });
+
   it("shows Digital Storefront when format is picked before platform", async () => {
     const user = userEvent.setup();
     render(

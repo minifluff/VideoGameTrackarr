@@ -27,6 +27,10 @@ export const DIGITAL_STOREFRONT_PLATFORM_SLUGS: Record<string, ReadonlySet<strin
   "Battle.net": new Set(["win"]),
   "Microsoft Store": new Set(["win"]),
   "itch.io": new Set(["win"]),
+  // Not a store — a label for DRM-free copies (GOG-style, itch.io, direct
+  // downloads). Kept in this map so it shows in every storefront dropdown
+  // alongside the stores, on the PC platforms where those copies live.
+  "DRM-Free": new Set(["win", "mac", "linux"]),
 };
 
 // Everything outside the PC family only ever has one real digital storefront — shown as a
