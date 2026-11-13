@@ -45,29 +45,46 @@ def get_by_slug(db: Session, slug: str) -> Collection | None:
     return db.scalars(select(Collection).where(Collection.slug == slug)).first()
 
 
-def list_collections_with_counts(db: Session) -> list[tuple[Collection, int]]:
+def list_collections_with_counts(db: Session) -> list[tuple[Collection, int, int]]:
     """Every collection with at least one locally-known, browsable (non-addon) game — same
     _is_browsable_game/parent_game_id filter as list_games_for_collection below; a collection
     whose only locally-known members are addons is excluded entirely rather than showing a
     count that leads to an empty Details page. The count itself is OWNED games only (a
     wishlisted or "what's missing" discovered member doesn't count): the CASE yields the
     game id only for owned members, and count(distinct ...) ignores the NULLs — so a
-    collection can legitimately show 0 while still being listed."""
+    collection can legitimately show 0 while still being listed. The third element is how
+    many of those owned games are hidden (hide_from_public): when it equals the count, the
+    whole collection is hidden and the index page / header search leave it out unless
+    Show Hidden is checked."""
     owned_member_id = case(
         (
             exists().where(LibraryItem.game_id == Game.id, LibraryItem.status == LibraryStatus.OWNED),
             GameCollection.game_id,
         ),
     )
+    hidden_owned_member_id = case(
+        (
+            exists().where(
+                LibraryItem.game_id == Game.id,
+                LibraryItem.status == LibraryStatus.OWNED,
+                Game.hide_from_public.is_(True),
+            ),
+            GameCollection.game_id,
+        ),
+    )
     stmt = (
-        select(Collection, func.count(func.distinct(owned_member_id)))
+        select(
+            Collection,
+            func.count(func.distinct(owned_member_id)),
+            func.count(func.distinct(hidden_owned_member_id)),
+        )
         .join(GameCollection, GameCollection.collection_id == Collection.id)
         .join(Game, Game.id == GameCollection.game_id)
         .where(Game.parent_game_id.is_(None), _is_browsable_game(Game.category))
         .group_by(Collection.id)
         .order_by(Collection.name)
     )
-    return [(collection, count) for collection, count in db.execute(stmt)]
+    return [(collection, count, hidden_count) for collection, count, hidden_count in db.execute(stmt)]
 
 
 def list_games_for_collection(db: Session, collection_id: int) -> list[GameWithStatus]:

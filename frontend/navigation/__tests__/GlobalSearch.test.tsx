@@ -29,8 +29,15 @@ vi.mock("../../hooks/useDevice", () => ({
 }));
 vi.mock("../../hooks/useAccessories", () => ({ useAccessoryList: () => ({ data: [] }) }));
 vi.mock("../../hooks/useCatalogBrowse", () => ({
-  useFranchises: () => ({ data: [{ id: 7, name: "The Legend of Zelda", slug: "zelda" }] }),
-  useCollections: () => ({ data: [] }),
+  useFranchises: () => ({
+    data: [
+      { id: 7, name: "The Legend of Zelda", slug: "zelda", gameCount: 3, hiddenGameCount: 0 },
+      { id: 8, name: "Hidden Series", slug: "hidden-series", gameCount: 2, hiddenGameCount: 2 },
+    ],
+  }),
+  useCollections: () => ({
+    data: [{ id: 9, name: "Hidden Collection", slug: "hidden-collection", gameCount: 1, hiddenGameCount: 1 }],
+  }),
 }));
 
 const Shows = ({ label }: { label: string }) => {
@@ -101,6 +108,15 @@ describe("GlobalSearch", () => {
 
     expect(await screen.findByText("Zelda: Breath of the Wild")).toBeInTheDocument();
     expect(screen.queryByText("Zelda: Hidden Gem")).not.toBeInTheDocument();
+  });
+
+  it("hides series and collections whose games are all hidden", async () => {
+    renderSearch();
+    await userEvent.type(screen.getByRole("combobox", { name: "Search" }), "hidden");
+
+    expect(await screen.findByText("Search IGDB for “hidden”")).toBeInTheDocument();
+    expect(screen.queryByText("Hidden Series")).not.toBeInTheDocument();
+    expect(screen.queryByText("Hidden Collection")).not.toBeInTheDocument();
   });
 
   it("filters the Games list by the text on Enter, applying it once", async () => {

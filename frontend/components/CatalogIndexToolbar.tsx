@@ -2,6 +2,10 @@ import { useState } from "react";
 import ClearIcon from "@mui/icons-material/Clear";
 import SearchIcon from "@mui/icons-material/Search";
 import SortIcon from "@mui/icons-material/Sort";
+import TuneIcon from "@mui/icons-material/Tune";
+import Box from "@mui/material/Box";
+import Checkbox from "@mui/material/Checkbox";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import Menu from "@mui/material/Menu";
@@ -30,6 +34,10 @@ interface CatalogIndexToolbarProps {
   onSearchKeywordChange: (value: string) => void;
   sort: CatalogSortOption;
   onSortChange: (value: CatalogSortOption) => void;
+  // Same shared "Show Hidden" preference as the Games, Bookshelf and List
+  // pages — entries whose games are all hidden stay out unless this is checked.
+  showHidden: boolean;
+  onShowHiddenChange: (value: boolean) => void;
 }
 
 // Trimmed sibling of GameListToolbar — Collections/Series/Platforms are just a name +
@@ -43,9 +51,12 @@ const CatalogIndexToolbar = ({
   onSearchKeywordChange,
   sort,
   onSortChange,
+  showHidden,
+  onShowHiddenChange,
 }: CatalogIndexToolbarProps) => {
   const { t } = useTranslation();
   const [sortMenuAnchor, setSortMenuAnchor] = useState<HTMLElement | null>(null);
+  const [optionsMenuAnchor, setOptionsMenuAnchor] = useState<HTMLElement | null>(null);
   const currentSortOption = SORT_OPTIONS.find((option) => option.value === sort);
   const sortTooltip = currentSortOption
     ? t(currentSortOption.labelKey)
@@ -97,6 +108,17 @@ const CatalogIndexToolbar = ({
             <SortIcon />
           </IconButton>
         </Tooltip>
+        <Tooltip title={t("games.listToolbar.optionsButton")}>
+          <IconButton
+            onClick={(event) => setOptionsMenuAnchor(event.currentTarget)}
+            aria-label={t("games.listToolbar.optionsButton")}
+            aria-haspopup="menu"
+            aria-expanded={optionsMenuAnchor !== null}
+            sx={{ alignSelf: "center" }}
+          >
+            <TuneIcon />
+          </IconButton>
+        </Tooltip>
       </Stack>
       <Menu
         anchorEl={sortMenuAnchor}
@@ -115,6 +137,20 @@ const CatalogIndexToolbar = ({
             {t(option.labelKey)}
           </MenuItem>
         ))}
+      </Menu>
+      <Menu
+        anchorEl={optionsMenuAnchor}
+        open={optionsMenuAnchor !== null}
+        onClose={() => setOptionsMenuAnchor(null)}
+      >
+        <Box sx={{ px: 2, py: 1 }}>
+          <FormControlLabel
+            control={
+              <Checkbox checked={showHidden} onChange={(event) => onShowHiddenChange(event.target.checked)} />
+            }
+            label={t("games.listToolbar.showHidden")}
+          />
+        </Box>
       </Menu>
     </>
   );

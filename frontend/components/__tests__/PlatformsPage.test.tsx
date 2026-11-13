@@ -41,7 +41,7 @@ vi.mock("../VirtualGameGrid", () => ({
   ),
 }));
 
-function platform(id: number, name: string, slug: string | null, owned: number, wishlisted = 0): LibraryPlatform {
+function platform(id: number, name: string, slug: string | null, owned: number, wishlisted = 0, hidden = 0): LibraryPlatform {
   return {
     id,
     name,
@@ -51,6 +51,7 @@ function platform(id: number, name: string, slug: string | null, owned: number, 
     storefront: null,
     ownedCount: owned,
     wishlistedCount: wishlisted,
+    hiddenGameCount: hidden,
   };
 }
 
@@ -76,6 +77,7 @@ const cardNames = () => screen.getAllByTestId("grid-item").map((item) => within(
 describe("PlatformsPage", () => {
   beforeEach(() => {
     window.sessionStorage.clear();
+    localStorage.clear();
     platforms = [
       platform(1, "PlayStation 5", "ps5", 2, 1),
       platform(2, "Nintendo Switch", "switch", 5),
@@ -140,12 +142,28 @@ describe("PlatformsPage", () => {
 
     expect(screen.getByText("Platform page ps5")).toBeInTheDocument();
   });
+
+  it("hides a platform whose games are all hidden unless Show Hidden is checked", () => {
+    platforms = [
+      platform(1, "PlayStation 5", "ps5", 2, 1),
+      platform(2, "Hidden Platform", "hidden", 1, 0, 1),
+    ];
+    renderPage();
+
+    expect(cardNames()).toEqual(["PlayStation 5"]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Options" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Show Hidden" }));
+
+    expect(cardNames()).toEqual(["Hidden Platform", "PlayStation 5"]);
+  });
 });
 
 describe("PlatformsPage PC storefront cards", () => {
   beforeEach(() => {
     window.sessionStorage.clear();
-    const pc = { id: 9, name: "PC (Microsoft Windows)", slug: "win", abbreviation: "PC", wishlistedCount: 0 };
+    localStorage.clear();
+    const pc = { id: 9, name: "PC (Microsoft Windows)", slug: "win", abbreviation: "PC", wishlistedCount: 0, hiddenGameCount: 0 };
     platforms = [
       { ...pc, format: "digital", storefront: "Steam", ownedCount: 12 },
       { ...pc, format: "digital", storefront: "itch.io", ownedCount: 2 },

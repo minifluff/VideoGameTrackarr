@@ -20,6 +20,7 @@ import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useDeviceList } from "../hooks/useDevice";
 import { useGames } from "../hooks/useGames";
 import { gameIdentifier, hardwareIdentifier } from "../utils/identifiers";
+import { isAllHiddenCatalogRef } from "../utils/showHiddenGames";
 
 type Kind = "game" | "device" | "accessory" | "series" | "collection" | "igdb";
 
@@ -129,6 +130,10 @@ const GlobalSearch = () => {
     const matches = (name: string) => name.toLowerCase().includes(needle);
     const firstFew = <T,>(list: T[] | undefined, name: (item: T) => string) =>
       (list ?? []).filter((item) => matches(name(item))).slice(0, PER_KIND);
+    // Series and collections whose games are all hidden stay out of search,
+    // same as on their index pages — the header has no Show Hidden toggle.
+    const visibleFranchises = (franchises ?? []).filter((franchise) => !isAllHiddenCatalogRef(franchise));
+    const visibleCollections = (collections ?? []).filter((collection) => !isAllHiddenCatalogRef(collection));
 
     return [
       // Hidden games stay out of search, unconditionally — the header has no
@@ -168,14 +173,14 @@ const GlobalSearch = () => {
         detail: accessory.accessoryTypeName,
         to: `/hardware/accessory/${hardwareIdentifier(accessory.officialName, accessory.uuid)}`,
       })),
-      ...firstFew(franchises, (franchise) => franchise.name).map((franchise) => ({
+      ...firstFew(visibleFranchises, (franchise) => franchise.name).map((franchise) => ({
         kind: "series" as const,
         id: franchise.id,
         label: franchise.name,
         detail: "",
         to: `/games/series/${franchise.slug ?? ""}`,
       })),
-      ...firstFew(collections, (collection) => collection.name).map((collection) => ({
+      ...firstFew(visibleCollections, (collection) => collection.name).map((collection) => ({
         kind: "collection" as const,
         id: collection.id,
         label: collection.name,

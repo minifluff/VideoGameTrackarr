@@ -527,3 +527,60 @@ def test_list_collections_puts_undated_games_after_dated_ones(auth_client, db_se
     [entry] = auth_client.get("/api/collections").json()
 
     assert entry["coverUrls"] == ["https://img.example/202.jpg", "https://img.example/201.jpg"]
+
+def test_index_counts_hidden_owned_games(auth_client, db_session, seed_game, seed_platform):
+    """hiddenGameCount on the Collections/Series index is the OWNED members that are
+    hidden — the index page and the header search use it to drop an entry whose
+    games are all hidden unless Show Hidden is checked."""
+    visible = Game(igdb_id=5013, name="Visible Member", category=GameCategory.MAIN_GAME)
+    hidden = Game(
+        igdb_id=5014, name="Hidden Member", category=GameCategory.MAIN_GAME, hide_from_public=True
+    )
+    db_session.add_all([visible, hidden])
+    collection = Collection(igdb_id=73, name="Mixed Hidden", slug="mixed-hidden")
+    all_hidden = Collection(igdb_id=74, name="All Hidden", slug="all-hidden")
+    franchise = Franchise(igdb_id=981, name="Mixed Hidden Series", slug="mixed-hidden-series")
+    db_session.add_all([collection, all_hidden, franchise])
+    db_session.commit()
+    for game in (seed_game, visible, hidden):
+        db_session.add(GameCollection(game_id=game.id, collection_id=collection.id))
+        db_session.add(GameFranchise(game_id=game.id, franchise_id=franchise.id))
+    db_session.add(GameCollection(game_id=hidden.id, collection_id=all_hidden.id))
+    db_session.add_all(
+        [
+            LibraryItem(game_id=seed_game.id, platform_id=seed_platform.id, status=LibraryStatus.OWNED),
+            LibraryItem(game_id=visible.id, platform_id=seed_platform.id, status=LibraryStatus.OWNED),
+            LibraryItem(game_id=hidden.id, platform_id=seed_platform.id, status=LibraryStatus.OWNED),
+        ]
+    )
+    db_session.commit()
+
+    collections = {entry["slug"]: entry for entry in auth_client.get("/api/collections").json()}
+    franchises = {entry["slug"]: entry for entry in auth_client.get("/api/franchises").json()}
+
+    assert collections["mixed-hidden"]["gameCount"] == 3
+    assert collections["mixed-hidden"]["hiddenGameCount"] == 1
+    assert collections["all-hidden"]["gameCount"] == 1
+    assert collections["all-hidden"]["hiddenGameCount"] == 1
+    assert franchises["mixed-hidden-series"]["gameCount"] == 3
+    assert franchises["mixed-hidden-series"]["hiddenGameCount"] == 1
+
+
+def test_list_franchises_leaves_hidden_games_out_of_covers(auth_client, db_session, seed_platform):
+    """A hidden game's cover never shows on its series card — the card would
+    otherwise display a game the list hides."""
+    franchise = Franchise(igdb_id=597, name="Hidden Covers", slug="hidden-covers")
+    db_session.add(franchise)
+    db_session.commit()
+    visible = _covered_game(db_session, 111, "Visible Game", 1000000000)
+    hidden = _covered_game(db_session, 112, "Hidden Game", 900000000)
+    hidden.hide_from_public = True
+    db_session.commit()
+    for game in (visible, hidden):
+        db_session.add(GameFranchise(game_id=game.id, franchise_id=franchise.id))
+    db_session.add(LibraryItem(game_id=visible.id, platform_id=seed_platform.id, status=LibraryStatus.OWNED))
+    db_session.commit()
+
+    [entry] = auth_client.get("/api/franchises").json()
+
+    assert entry["coverUrls"] == ["https://img.example/111.jpg"]

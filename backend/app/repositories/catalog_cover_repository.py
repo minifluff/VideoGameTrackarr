@@ -14,7 +14,8 @@ MAX_COVERS = 4
 def _cover_urls_by_owner(db: Session, owner_column: Any, junction_game_id: Any) -> dict[int, list[str]]:
     """Up to MAX_COVERS cover URLs per collection/franchise: games you have a copy of (owned or
     wishlisted) first, then the earliest released, with undated games last. Only browsable,
-    top-level games with a cover, the same games the card's count and page cover."""
+    top-level games with a cover, the same games the card's count and page cover. Hidden
+    games never supply a cover — their art on the card would show a game the list hides."""
     has_copy = exists().where(LibraryItem.game_id == Game.id)
     rank = (
         func.row_number()
@@ -32,7 +33,12 @@ def _cover_urls_by_owner(db: Session, owner_column: Any, junction_game_id: Any) 
     ranked = (
         select(owner_column.label("owner_id"), Game.cover_url.label("cover_url"), rank)
         .join(Game, Game.id == junction_game_id)
-        .where(Game.parent_game_id.is_(None), _is_browsable_game(Game.category), Game.cover_url.is_not(None))
+        .where(
+            Game.parent_game_id.is_(None),
+            _is_browsable_game(Game.category),
+            Game.cover_url.is_not(None),
+            Game.hide_from_public.is_(False),
+        )
         .subquery()
     )
     stmt = (

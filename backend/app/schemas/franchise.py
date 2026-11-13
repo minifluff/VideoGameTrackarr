@@ -17,6 +17,10 @@ class FranchiseSummaryResponse(CamelModel):
     name: str
     slug: str | None
     game_count: int
+    # How many of the counted (owned) games are hidden — when it equals
+    # game_count the whole franchise is hidden from the index page and the
+    # header search unless Show Hidden is checked.
+    hidden_game_count: int
     # Up to 4, for the card's cover grid (see catalog_cover_repository).
     cover_urls: list[str]
 
@@ -37,12 +41,13 @@ def franchise_detail_from_orm(
 
 
 def franchise_summary_from_orm(
-    franchise: Franchise, game_count: int, cover_urls: list[str] | None = None
+    franchise: Franchise, game_count: int, cover_urls: list[str] | None = None, hidden_game_count: int = 0
 ) -> FranchiseSummaryResponse:
     return FranchiseSummaryResponse(
         id=franchise.id,
         name=franchise.name,
         slug=franchise.slug,
         game_count=game_count,
+        hidden_game_count=hidden_game_count,
         cover_urls=cover_urls or [],
     )

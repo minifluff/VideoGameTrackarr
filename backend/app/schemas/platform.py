@@ -21,3 +21,7 @@ class LibraryPlatformResponse(CamelModel):
     storefront: str | None
     owned_count: int
     wishlisted_count: int
+    # How many distinct games with a copy on this card (owned or wishlisted) are
+    # hidden — when it covers owned_count + wishlisted_count the whole card is
+    # hidden from the Platforms page unless Show Hidden is checked.
+    hidden_game_count: int

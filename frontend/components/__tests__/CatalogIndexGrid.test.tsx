@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // jsdom doesn't implement ResizeObserver — VirtualGameGrid.tsx needs it once entries render.
 class ResizeObserverStub {
@@ -105,5 +105,46 @@ describe("CatalogIndexGrid min-games slider", () => {
 
     expect(screen.queryByText("Empty")).not.toBeInTheDocument();
     expect(screen.getByText("Solo")).toBeInTheDocument();
+  });
+});
+
+describe("CatalogIndexGrid Show Hidden", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("hides all-hidden entries unless Show Hidden is checked in Options", () => {
+    const entries = [
+      { id: 1, name: "Visible", coverUrls: [] },
+      { id: 2, name: "All Hidden", coverUrls: [] },
+      { id: 3, name: "Part Hidden", coverUrls: [] },
+    ];
+    const allHidden = new Set([2]);
+
+    render(
+      <MemoryRouter>
+        <CatalogIndexGrid
+          stateKey="collections-hidden"
+          title="Collections"
+          emptyMessage="None"
+          searchLabel="Search collections"
+          searchPlaceholder="Enter collection name"
+          entries={entries}
+          isLoading={false}
+          getCount={() => 3}
+          getHref={() => "/"}
+          isAllHidden={(entry) => allHidden.has(entry.id)}
+        />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText("Visible")).toBeInTheDocument();
+    expect(screen.getByText("Part Hidden")).toBeInTheDocument();
+    expect(screen.queryByText("All Hidden")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Options" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Show Hidden" }));
+
+    expect(screen.getByText("All Hidden")).toBeInTheDocument();
   });
 });

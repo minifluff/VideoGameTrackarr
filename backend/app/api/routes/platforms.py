@@ -41,6 +41,7 @@ def list_library_platforms(db: Session = Depends(get_db)) -> list[LibraryPlatfor
             storefront=row.storefront,
             owned_count=row.owned,
             wishlisted_count=row.wishlisted,
+            hidden_game_count=row.hidden,
         )
         for row in platform_service.list_library_platforms(db)
     ]

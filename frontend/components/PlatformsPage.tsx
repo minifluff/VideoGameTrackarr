@@ -4,6 +4,7 @@ import type { LibraryPlatform } from "../api/types";
 import { useLibraryPlatforms } from "../hooks/usePlatforms";
 import { platformIdentifier } from "../utils/platformLogos";
 import { platformDisplayName, platformScopeQuery, type PlatformScope } from "../utils/platformScope";
+import { isAllHiddenPlatform } from "../utils/showHiddenGames";
 import CatalogIndexGrid from "./CatalogIndexGrid";
 import PlatformCard from "./PlatformCard";
 
@@ -56,6 +57,7 @@ const PlatformsPage = () => {
         isLoading={isLoading}
         getKey={(entry) => entry.key}
         getCount={totalGames}
+        isAllHidden={isAllHiddenPlatform}
         showMinGamesFilter
         minGamesDefault={1}
         getHref={(entry) => `/games/platforms/${platformIdentifier(entry)}${platformScopeQuery(entry.scope)}`}

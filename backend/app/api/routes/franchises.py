@@ -18,8 +18,8 @@ router = APIRouter(prefix="/api/franchises", tags=["franchises"], dependencies=[
 @router.get("", response_model=list[FranchiseSummaryResponse])
 def list_franchises(db: Session = Depends(get_db)) -> list[FranchiseSummaryResponse]:
     return [
-        franchise_summary_from_orm(franchise, count, covers)
-        for franchise, count, covers in franchise_service.list_franchises(db)
+        franchise_summary_from_orm(franchise, count, covers, hidden_game_count=hidden_count)
+        for franchise, count, hidden_count, covers in franchise_service.list_franchises(db)
     ]
 
 

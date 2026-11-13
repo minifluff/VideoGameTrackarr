@@ -45,29 +45,46 @@ def get_by_slug(db: Session, slug: str) -> Franchise | None:
     return db.scalars(select(Franchise).where(Franchise.slug == slug)).first()
 
 
-def list_franchises_with_counts(db: Session) -> list[tuple[Franchise, int]]:
+def list_franchises_with_counts(db: Session) -> list[tuple[Franchise, int, int]]:
     """Every franchise with at least one locally-known, browsable (non-addon) game — same
     _is_browsable_game/parent_game_id filter as list_games_for_franchise below; a franchise
     whose only locally-known members are addons is excluded entirely rather than showing a
     count that leads to an empty Details page. The count itself is OWNED games only (a
     wishlisted or "what's missing" discovered member doesn't count): the CASE yields the
     game id only for owned members, and count(distinct ...) ignores the NULLs — so a
-    franchise can legitimately show 0 while still being listed."""
+    franchise can legitimately show 0 while still being listed. The third element is how
+    many of those owned games are hidden (hide_from_public): when it equals the count, the
+    whole franchise is hidden and the index page / header search leave it out unless
+    Show Hidden is checked."""
     owned_member_id = case(
         (
             exists().where(LibraryItem.game_id == Game.id, LibraryItem.status == LibraryStatus.OWNED),
             GameFranchise.game_id,
         ),
     )
+    hidden_owned_member_id = case(
+        (
+            exists().where(
+                LibraryItem.game_id == Game.id,
+                LibraryItem.status == LibraryStatus.OWNED,
+                Game.hide_from_public.is_(True),
+            ),
+            GameFranchise.game_id,
+        ),
+    )
     stmt = (
-        select(Franchise, func.count(func.distinct(owned_member_id)))
+        select(
+            Franchise,
+            func.count(func.distinct(owned_member_id)),
+            func.count(func.distinct(hidden_owned_member_id)),
+        )
         .join(GameFranchise, GameFranchise.franchise_id == Franchise.id)
         .join(Game, Game.id == GameFranchise.game_id)
         .where(Game.parent_game_id.is_(None), _is_browsable_game(Game.category))
         .group_by(Franchise.id)
         .order_by(Franchise.name)
     )
-    return [(franchise, count) for franchise, count in db.execute(stmt)]
+    return [(franchise, count, hidden_count) for franchise, count, hidden_count in db.execute(stmt)]
 
 
 def list_games_for_franchise(db: Session, franchise_id: int) -> list[GameWithStatus]:

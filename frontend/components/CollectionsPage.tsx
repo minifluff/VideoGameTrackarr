@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useCollections } from "../hooks/useCatalogBrowse";
+import { isAllHiddenCatalogRef } from "../utils/showHiddenGames";
 import CatalogIndexGrid from "./CatalogIndexGrid";
 
 const CollectionsPage = () => {
@@ -17,6 +18,7 @@ const CollectionsPage = () => {
         entries={collections}
         isLoading={isLoading}
         getCount={(entry) => entry.gameCount}
+        isAllHidden={isAllHiddenCatalogRef}
         showMinGamesFilter
         getHref={(entry) => `/games/collections/${entry.slug ?? ""}`}
       />

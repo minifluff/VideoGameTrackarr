@@ -13,3 +13,20 @@ export function readStoredShowHidden(): boolean {
 export function storeShowHidden(value: boolean): void {
   localStorage.setItem(SHOW_HIDDEN_GAMES_KEY, String(value));
 }
+
+// A collection/series is all-hidden when every counted (owned) game in it is
+// hidden — a zero-game entry is never all-hidden, so it stays visible.
+export function isAllHiddenCatalogRef(entry: { gameCount: number; hiddenGameCount: number }): boolean {
+  return entry.gameCount > 0 && entry.hiddenGameCount >= entry.gameCount;
+}
+
+// A platform card is all-hidden when every game with a copy on it (owned or
+// wishlisted) is hidden.
+export function isAllHiddenPlatform(entry: {
+  ownedCount: number;
+  wishlistedCount: number;
+  hiddenGameCount: number;
+}): boolean {
+  const total = entry.ownedCount + entry.wishlistedCount;
+  return total > 0 && entry.hiddenGameCount >= total;
+}

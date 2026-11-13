@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Collapse from "@mui/material/Collapse";
@@ -12,6 +12,7 @@ import CatalogRefCard from "./CatalogRefCard";
 import VirtualGameGrid from "./VirtualGameGrid";
 import { useSessionState } from "../hooks/useSessionState";
 import { useScrollCollapse } from "../hooks/useScrollCollapse";
+import { readStoredShowHidden, storeShowHidden } from "../utils/showHiddenGames";
 
 interface CatalogIndexEntry {
   id: number;
@@ -32,6 +33,10 @@ interface CatalogIndexGridProps<T extends CatalogIndexEntry> {
   getKey?: (entry: T) => number | string;
   // What the "Most games" sort orders by.
   getCount: (entry: T) => number;
+  // When provided, entries it flags as all-hidden stay out unless Show Hidden
+  // is checked — Collections/Series/Platforms each pass their own rule, since
+  // what "all games" means differs per page (owned count vs owned+wishlisted).
+  isAllHidden?: (entry: T) => boolean;
   // Defaults to a plain name + game count CatalogRefCard.
   renderCard?: (entry: T, onClick: () => void) => ReactNode;
   estimateRowHeight?: (columns: number) => number;
@@ -60,6 +65,7 @@ const CatalogIndexGrid = <T extends CatalogIndexEntry>({
   getHref,
   getKey,
   getCount,
+  isAllHidden,
   renderCard,
   estimateRowHeight,
   stateKey,
@@ -74,6 +80,13 @@ const CatalogIndexGrid = <T extends CatalogIndexEntry>({
   // On a big library many entries hold a single game, and the page is more useful
   // opening on the ones with at least a couple (Platforms opts down to 1).
   const [minGames, setMinGames] = useSessionState(`${stateKey}.minGames`, minGamesDefault);
+  // Same shared "Show Hidden" preference as the Games, Bookshelf and List
+  // pages — one toggle for the whole app.
+  const [showHidden, setShowHiddenState] = useState(readStoredShowHidden);
+  const setShowHidden = (next: boolean) => {
+    setShowHiddenState(next);
+    storeShowHidden(next);
+  };
 
   const maxGameCount = useMemo(
     () => (entries ?? []).reduce((max, entry) => Math.max(max, getCount(entry)), 0),
@@ -86,6 +99,13 @@ const CatalogIndexGrid = <T extends CatalogIndexEntry>({
     let filtered = trimmed
       ? entries.filter((entry) => entry.name.toLowerCase().includes(trimmed))
       : entries;
+    // Entries whose games are all hidden stay out unless Show Hidden is
+    // checked. The card's game count itself is unchanged (it still counts the
+    // hidden games), so the min-games slider and "Most games" sort keep
+    // working off the same numbers as before.
+    if (!showHidden && isAllHidden) {
+      filtered = filtered.filter((entry) => !isAllHidden(entry));
+    }
     if (showMinGamesFilter) {
       filtered = filtered.filter((entry) => getCount(entry) >= minGames);
     }
@@ -94,7 +114,7 @@ const CatalogIndexGrid = <T extends CatalogIndexEntry>({
     // Stable sort, so entries with the same count stay in name order.
     if (sort === "count_desc") sorted.sort((a, b) => getCount(b) - getCount(a));
     return sorted;
-  }, [entries, searchKeyword, sort, getCount, showMinGamesFilter, minGames]);
+  }, [entries, searchKeyword, sort, getCount, showMinGamesFilter, minGames, showHidden, isAllHidden]);
 
   return (
     <>
@@ -155,6 +175,8 @@ const CatalogIndexGrid = <T extends CatalogIndexEntry>({
           onSearchKeywordChange={setSearchKeyword}
           sort={sort}
           onSortChange={setSort}
+          showHidden={showHidden}
+          onShowHiddenChange={setShowHidden}
         />
       </Box>
       {isLoading ? (

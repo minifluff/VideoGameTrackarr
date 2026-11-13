@@ -29,13 +29,16 @@ STOREFRONT_SPLIT_IGDB_PLATFORM_IDS = frozenset({6})
 class LibraryPlatformCount:
     """One Games → Platforms card. media_format/storefront are only set for a split platform:
     a digital storefront card (DIGITAL + storefront, or DIGITAL + None for "no storefront
-    set") or a card for another format (storefront None)."""
+    set") or a card for another format (storefront None). `hidden` is how many distinct
+    games with a copy on this card (owned or wishlisted) are hidden — when it covers the
+    card's whole owned+wishlisted count, the card is all-hidden."""
 
     platform: Platform
     media_format: MediaFormat | None
     storefront: str | None
     owned: int
     wishlisted: int
+    hidden: int
 
 
 def list_platforms(db: Session) -> list[Platform]:
@@ -149,6 +152,11 @@ def _count(status: LibraryStatus) -> Any:
     return func.count(func.distinct(case((LibraryItem.status == status, LibraryItem.game_id))))
 
 
+def _count_hidden() -> Any:
+    # Distinct games with a copy on this platform (any status) that are hidden.
+    return func.count(func.distinct(case((Game.hide_from_public.is_(True), LibraryItem.game_id))))
+
+
 def list_library_platforms_with_counts(db: Session) -> list[LibraryPlatformCount]:
     """Every platform with at least one library copy (owned or wishlisted) of a browsable,
     top-level game, with how many distinct such games are owned and wishlisted on it — split
@@ -164,11 +172,11 @@ def list_library_platforms_with_counts(db: Session) -> list[LibraryPlatformCount
         .where(Game.parent_game_id.is_(None), _is_browsable_game(Game.category))
     )
 
-    whole = in_library.add_columns(_count(LibraryStatus.OWNED), _count(LibraryStatus.WISHLIST))
+    whole = in_library.add_columns(_count(LibraryStatus.OWNED), _count(LibraryStatus.WISHLIST), _count_hidden())
     whole = whole.where(~is_split).group_by(Platform.id)
     results = [
-        LibraryPlatformCount(platform, None, None, owned, wishlisted)
-        for platform, owned, wishlisted in db.execute(whole)
+        LibraryPlatformCount(platform, None, None, owned, wishlisted, hidden)
+        for platform, owned, wishlisted, hidden in db.execute(whole)
     ]
 
     # Blank storefronts count as "none set", like platform_copy_exists' coalesce.
@@ -177,19 +185,20 @@ def list_library_platforms_with_counts(db: Session) -> list[LibraryPlatformCount
         else_=None,
     )
     split = in_library.add_columns(
-        LibraryItem.format, storefront, _count(LibraryStatus.OWNED), _count(LibraryStatus.WISHLIST)
+        LibraryItem.format, storefront, _count(LibraryStatus.OWNED), _count(LibraryStatus.WISHLIST), _count_hidden()
     )
     split = split.where(is_split).group_by(Platform.id, LibraryItem.format, storefront)
     merged: dict[tuple[int, MediaFormat, str | None], LibraryPlatformCount] = {}
-    for platform, media_format, store, owned, wishlisted in db.execute(split):
+    for platform, media_format, store, owned, wishlisted, hidden in db.execute(split):
         # A copy with no format is treated as "other" (see platform_copy_exists), which can
         # mean two grouped rows for one card.
         key = (platform.id, media_format or MediaFormat.OTHER, store)
         if key in merged:
             merged[key].owned += owned
             merged[key].wishlisted += wishlisted
+            merged[key].hidden += hidden
         else:
-            merged[key] = LibraryPlatformCount(platform, key[1], store, owned, wishlisted)
+            merged[key] = LibraryPlatformCount(platform, key[1], store, owned, wishlisted, hidden)
     results.extend(merged.values())
 
     results.sort(key=lambda row: (row.platform.name.lower(), row.media_format is not None, row.storefront or ""))

@@ -63,6 +63,7 @@ def test_list_library_platforms_counts_owned_and_wishlisted_games(auth_client, d
         "storefront": None,
         "ownedCount": 1,
         "wishlistedCount": 1,
+        "hiddenGameCount": 0,
     }
     assert by_slug["switch"]["ownedCount"] == 1
     assert by_slug["switch"]["wishlistedCount"] == 0
@@ -225,3 +226,23 @@ def test_list_platform_addons_scopes_to_one_pc_storefront(auth_client, db_sessio
     )
 
     assert [addon["name"] for addon in response.json()] == ["Far Harbor", "Nuka-World"]
+
+def test_list_library_platforms_counts_hidden_games(auth_client, db_session):
+    """hiddenGameCount on a Platforms card is the distinct games with a copy on it
+    (owned or wishlisted) that are hidden — the page uses it to drop a card whose
+    games are all hidden unless Show Hidden is checked."""
+    ps5, switch, _unused = _platforms(db_session)
+    astro = _game(db_session, 1, "Astro Bot")
+    hidden = _game(db_session, 2, "Hidden Game")
+    hidden.hide_from_public = True
+    db_session.commit()
+    _copy(db_session, astro, ps5)
+    _copy(db_session, hidden, ps5)
+    _copy(db_session, hidden, switch, LibraryStatus.WISHLIST)
+
+    response = auth_client.get("/api/platforms/library")
+
+    assert response.status_code == 200
+    by_slug = {entry["slug"]: entry for entry in response.json()}
+    assert by_slug["ps5"]["hiddenGameCount"] == 1
+    assert by_slug["switch"]["hiddenGameCount"] == 1

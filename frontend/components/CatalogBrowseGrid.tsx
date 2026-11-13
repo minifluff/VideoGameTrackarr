@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Collapse from "@mui/material/Collapse";
@@ -26,6 +26,7 @@ import { useTags } from "../hooks/useTags";
 import { gameIdentifier } from "../utils/identifiers";
 import type { PlatformScope } from "../utils/platformScope";
 import { matchesOwnership } from "../utils/ownershipFilter";
+import { readStoredShowHidden, storeShowHidden } from "../utils/showHiddenGames";
 import { ALL_KNOWN_STOREFRONTS } from "../utils/storefronts";
 import CatalogResyncButton from "./CatalogResyncButton";
 import GameCard from "./GameCard";
@@ -42,7 +43,8 @@ function filterByOwnershipAndMissing(
   ownershipStatuses: OwnershipStatus[],
   ownershipExclude: boolean,
   ownershipMatchAll: boolean | undefined,
-  showMissing: boolean
+  showMissing: boolean,
+  showHidden: boolean
 ): GameSummary[] {
   let result = list ?? [];
   if (ownershipStatuses.length > 0) {
@@ -52,6 +54,12 @@ function filterByOwnershipAndMissing(
   }
   if (!showMissing) {
     result = result.filter((game) => game.owned || game.wishlisted);
+  }
+  // Hidden games stay out of the grid (and the Addons section below) unless
+  // Show Hidden is checked in Options — same shared preference as the Games,
+  // Bookshelf and List pages.
+  if (!showHidden) {
+    result = result.filter((game) => !game.hideFromPublic);
   }
   return result;
 }
@@ -131,6 +139,13 @@ const CatalogBrowseGrid = ({
   // one of your copies — so this default only ever affects Collection/Series pages.)
   const [showMissing, setShowMissing] = useSessionState(`${stateKey}.showMissing`, false);
   const [includeAddons, setIncludeAddons] = useSessionState(`${stateKey}.includeAddons`, false);
+  // Same shared "Show Hidden" preference as the Games, Bookshelf and List
+  // pages — one toggle for the whole app, not per collection/series/platform.
+  const [showHidden, setShowHiddenState] = useState(readStoredShowHidden);
+  const setShowHidden = (next: boolean) => {
+    setShowHiddenState(next);
+    storeShowHidden(next);
+  };
 
   const trimmedKeyword = searchKeyword.trim();
   const debouncedKeyword = useDebouncedValue(trimmedKeyword, 500);
@@ -256,12 +271,12 @@ const CatalogBrowseGrid = ({
       : isFranchiseAddonsLoading;
 
   const visibleGames = useMemo(
-    () => filterByOwnershipAndMissing(games, ownershipStatuses, ownershipExclude, matchAll.ownership, showMissing),
-    [games, ownershipStatuses, ownershipExclude, matchAll.ownership, showMissing]
+    () => filterByOwnershipAndMissing(games, ownershipStatuses, ownershipExclude, matchAll.ownership, showMissing, showHidden),
+    [games, ownershipStatuses, ownershipExclude, matchAll.ownership, showMissing, showHidden]
   );
   const visibleAddons = useMemo(
-    () => filterByOwnershipAndMissing(addons, ownershipStatuses, ownershipExclude, matchAll.ownership, showMissing),
-    [addons, ownershipStatuses, ownershipExclude, matchAll.ownership, showMissing]
+    () => filterByOwnershipAndMissing(addons, ownershipStatuses, ownershipExclude, matchAll.ownership, showMissing, showHidden),
+    [addons, ownershipStatuses, ownershipExclude, matchAll.ownership, showMissing, showHidden]
   );
 
   const handleGameClick = (game: GameSummary) => navigate(`/game/${gameIdentifier(game)}`);
@@ -376,6 +391,8 @@ const CatalogBrowseGrid = ({
             onShowMissingChange={isPlatform ? undefined : setShowMissing}
             includeAddons={includeAddons}
             onIncludeAddonsChange={setIncludeAddons}
+            showHidden={showHidden}
+            onShowHiddenChange={setShowHidden}
           />
         </Box>
       ) : null}

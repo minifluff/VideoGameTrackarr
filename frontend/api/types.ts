@@ -44,6 +44,10 @@ export interface LibraryPlatform {
   storefront: string | null;
   ownedCount: number;
   wishlistedCount: number;
+  // How many distinct games with a copy on this card (owned or wishlisted) are
+  // hidden — when it covers ownedCount + wishlistedCount the whole card is
+  // hidden unless Show Hidden is checked.
+  hiddenGameCount: number;
 }
 
 export interface RegionResponse {
@@ -267,6 +271,9 @@ export interface CatalogRef {
 
 export interface CatalogRefSummary extends CatalogRef {
   gameCount: number;
+  // How many of the counted (owned) games are hidden — when it equals
+  // gameCount the whole collection/series is hidden unless Show Hidden is checked.
+  hiddenGameCount: number;
   // Up to 4: games you have first, then the earliest released.
   coverUrls: string[];
 }
