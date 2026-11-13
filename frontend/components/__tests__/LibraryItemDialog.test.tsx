@@ -35,6 +35,7 @@ vi.mock("../../hooks/useIntegrations", () => ({
   useGogInstallers: () => ({ data: gogInstallersData, isError: false }),
   useQueueGogInstallerDownload: () => ({ mutateAsync: queueGogDownload, isPending: false }),
   useGogInstallerFileLink: () => ({ mutateAsync: gogFileLink, isPending: false }),
+  useUploadGogInstaller: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
 const nesRom: RomFileSummary = {
@@ -505,6 +506,7 @@ describe("LibraryItemDialog", () => {
           ],
         },
       ],
+      uploadedFiles: [],
     };
     render(
       <LibraryItemDialog

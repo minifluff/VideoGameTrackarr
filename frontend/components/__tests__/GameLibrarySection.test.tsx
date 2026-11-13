@@ -12,6 +12,7 @@ vi.mock("../../hooks/useIntegrations", () => ({
   useGogInstallers: () => ({ data: gogInstallersData, isError: false }),
   useQueueGogInstallerDownload: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useGogInstallerFileLink: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useUploadGogInstaller: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
 // Same wrapper as the DashboardPage test: the section's mutation hooks need a
@@ -68,6 +69,19 @@ const gogItem = {
   platformName: "PC",
   format: "digital",
   digitalStorefront: "GOG",
+  edition: null,
+  steelbook: false,
+  roms: [],
+  isOnSale: false,
+} as unknown as LibraryItem;
+
+const drmFreeItem = {
+  id: 4,
+  status: "owned",
+  platformId: 1,
+  platformName: "PC",
+  format: "digital",
+  digitalStorefront: "DRM-Free",
   edition: null,
   steelbook: false,
   roms: [],
@@ -183,6 +197,7 @@ describe("GameLibrarySection", () => {
           ],
         },
       ],
+      uploadedFiles: [],
     };
     renderSection(<GameLibrarySection {...baseProps} libraryItems={[gogItem]} />);
 
@@ -231,6 +246,7 @@ describe("GameLibrarySection", () => {
           ],
         },
       ],
+      uploadedFiles: [],
     };
     renderSection(<GameLibrarySection {...baseProps} libraryItems={[gogItem]} />);
 
@@ -267,9 +283,40 @@ describe("GameLibrarySection", () => {
           ],
         },
       ],
+      uploadedFiles: [],
     };
     renderSection(<GameLibrarySection {...baseProps} libraryItems={[gogItem]} />);
 
     expect(screen.queryByLabelText(/GOG installer downloaded/)).not.toBeInTheDocument();
+  });
+
+  it("shows the Installers section with an upload button in the edit dialog for a DRM-Free copy", () => {
+    gogInstallersData = { gameId: 1, gogProductId: null, groups: [], uploadedFiles: [] };
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[drmFreeItem]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "PC" }));
+
+    expect(screen.getByText("Update game in your collection")).toBeInTheDocument();
+    expect(screen.getByText("Installers")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Upload installer" })).toBeInTheDocument();
+  });
+
+  it("shows the gamepad icon on a DRM-Free row with an uploaded installer", () => {
+    gogInstallersData = {
+      gameId: 1,
+      gogProductId: null,
+      groups: [],
+      uploadedFiles: [{ fileId: "upload-abc", filename: "setup_game_1.0.exe", size: 20 }],
+    };
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[drmFreeItem]} />);
+
+    expect(screen.getByLabelText("Installer downloaded: setup_game_1.0.exe")).toBeInTheDocument();
+  });
+
+  it("shows no icon on a DRM-Free row with nothing uploaded", () => {
+    gogInstallersData = { gameId: 1, gogProductId: null, groups: [], uploadedFiles: [] };
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[drmFreeItem]} />);
+
+    expect(screen.queryByLabelText(/Installer downloaded/)).not.toBeInTheDocument();
   });
 });

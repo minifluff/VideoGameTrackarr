@@ -155,10 +155,19 @@ class GogInstallerGroupResponse(CamelModel):
     installers: list[GogInstallerResponse]
 
 
+class GogUploadedInstallerFileResponse(CamelModel):
+    # An installer the user uploaded themselves for a DRM-Free copy — already on
+    # the NAS, so it downloads straight to the device with no queue step.
+    file_id: str
+    filename: str | None
+    size: int
+
+
 class GogInstallersResponse(CamelModel):
     game_id: int
-    gog_product_id: int
+    gog_product_id: int | None
     groups: list[GogInstallerGroupResponse]
+    uploaded_files: list[GogUploadedInstallerFileResponse] = []
 
 
 class GogQueueDownloadRequest(CamelModel):

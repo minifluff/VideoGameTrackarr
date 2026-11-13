@@ -1,5 +1,7 @@
 import re
+import uuid
 from pathlib import Path
+from typing import BinaryIO
 from urllib.parse import unquote, urlparse
 
 from sqlalchemy import select
@@ -14,9 +16,17 @@ from app.models.gog import GogDownload, GogDownloadStatus
 # only ever served through the authenticated file route.
 GOG_DOWNLOADS_SUBDIR = "gog-installers"
 
+# Uploaded installers (DRM-Free copies — no GOG product behind them) live apart
+# from the per-product CDN downloads, under their game id instead.
+UPLOADED_DOWNLOADS_SUBDIR = "uploads"
+
 
 def get_downloads_dir() -> Path:
     return UPLOADS_DIR / GOG_DOWNLOADS_SUBDIR
+
+
+def get_uploaded_downloads_dir(game_id: int) -> Path:
+    return get_downloads_dir() / UPLOADED_DOWNLOADS_SUBDIR / str(game_id)
 
 
 def sanitize_filename(raw: str) -> str:
@@ -36,6 +46,9 @@ def filename_from_url(url: str, fallback: str) -> str:
 def download_file_path(download: GogDownload) -> Path | None:
     if not download.filename:
         return None
+    # Uploads have no GOG product id (NULL) — they live under uploads/<game_id>/.
+    if download.gog_product_id is None:
+        return get_uploaded_downloads_dir(download.game_id) / download.filename
     return get_downloads_dir() / str(download.gog_product_id) / download.filename
 
 
@@ -49,6 +62,90 @@ def get_download(db: Session, gog_product_id: int, file_id: str) -> GogDownload 
 
 def list_downloads_for_game(db: Session, game_id: int) -> list[GogDownload]:
     return list(db.scalars(select(GogDownload).where(GogDownload.game_id == game_id)))
+
+
+def get_upload_download(db: Session, game_id: int, filename: str) -> GogDownload | None:
+    """The uploaded-installer row for this game + filename, if one exists — uploads
+    have no GOG product id, so they are keyed on the game and the sanitized
+    filename instead of (product, file)."""
+    return db.scalars(
+        select(GogDownload).where(
+            GogDownload.game_id == game_id,
+            GogDownload.gog_product_id.is_(None),
+            GogDownload.filename == filename,
+        )
+    ).first()
+
+
+def list_uploads_for_game(db: Session, game_id: int) -> list[GogDownload]:
+    """Uploaded installers for the game whose file is actually on disk — a row
+    whose file went missing (deleted from the NAS) is dropped from the list, and
+    re-uploading the same filename restores it."""
+    return [
+        download
+        for download in db.scalars(
+            select(GogDownload).where(
+                GogDownload.game_id == game_id, GogDownload.gog_product_id.is_(None)
+            )
+        )
+        if verify_completed_file(download)
+    ]
+
+
+def save_uploaded_installer(
+    db: Session, game_id: int, source: BinaryIO, original_filename: str
+) -> GogDownload:
+    """Streams an uploaded installer to disk (never read whole into memory —
+    installers run to many GB, so there is deliberately no size cap here, unlike
+    ROM uploads) and records it as a completed download. Re-uploading the same
+    filename replaces the file and reuses the row, so the download link keeps
+    working."""
+    filename = sanitize_filename(original_filename)
+    if not filename:
+        raise ValueError("That file has no usable name")
+    target_dir = get_uploaded_downloads_dir(game_id)
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target = target_dir / filename
+    part = target.with_suffix(target.suffix + ".part")
+    size = 0
+    try:
+        with open(part, "wb") as out:
+            while True:
+                chunk = source.read(1024 * 1024)
+                if not chunk:
+                    break
+                out.write(chunk)
+                size += len(chunk)
+        part.replace(target)
+    except BaseException:
+        if part.exists():
+            part.unlink()
+        raise
+
+    existing = get_upload_download(db, game_id, filename)
+    if existing is not None:
+        existing.total_size = size
+        existing.downloaded_bytes = size
+        existing.status = GogDownloadStatus.COMPLETED
+        existing.error = None
+        db.commit()
+        db.refresh(existing)
+        return existing
+
+    download = GogDownload(
+        game_id=game_id,
+        gog_product_id=None,
+        installer_id="manual",
+        file_id=uuid.uuid4().hex,
+        filename=filename,
+        total_size=size,
+        downloaded_bytes=size,
+        status=GogDownloadStatus.COMPLETED,
+    )
+    db.add(download)
+    db.commit()
+    db.refresh(download)
+    return download
 
 
 def create_or_reuse_download(

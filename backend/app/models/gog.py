@@ -47,7 +47,7 @@ class GogDownload(TimestampMixin, Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     game_id: Mapped[int] = mapped_column(ForeignKey("games.id"), nullable=False)
-    gog_product_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    gog_product_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     installer_id: Mapped[str] = mapped_column(String(64), nullable=False)
     file_id: Mapped[str] = mapped_column(String(64), nullable=False)
     filename: Mapped[str | None] = mapped_column(String(255))

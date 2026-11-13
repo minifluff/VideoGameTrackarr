@@ -231,10 +231,17 @@ export interface GogInstallerGroup {
   installers: GogInstaller[];
 }
 
+export interface GogUploadedInstallerFile {
+  fileId: string;
+  filename: string | null;
+  size: number;
+}
+
 export interface GogInstallers {
   gameId: number;
-  gogProductId: number;
+  gogProductId: number | null;
   groups: GogInstallerGroup[];
+  uploadedFiles: GogUploadedInstallerFile[];
 }
 
 export interface GogDownload {
@@ -328,4 +335,14 @@ export async function getGogInstallerFileLink(gameId: number, fileId: string): P
     `/api/integrations/gog/games/${gameId}/installers/${fileId}/file-link`
   );
   return response.data.url;
+}
+
+export async function uploadGogInstaller(gameId: number, file: File): Promise<GogDownload> {
+  const form = new FormData();
+  form.append("file", file, file.name);
+  const response = await apiClient.post<GogDownload>(
+    `/api/integrations/gog/games/${gameId}/installers/upload`,
+    form
+  );
+  return response.data;
 }

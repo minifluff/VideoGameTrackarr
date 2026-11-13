@@ -29,6 +29,7 @@ import {
   unlinkSteamEntry,
   unlinkSteamWishlistEntry,
   updateSteamId,
+  uploadGogInstaller,
 } from "../api/integrations";
 
 export function useIntegrationsStatus() {
@@ -270,5 +271,13 @@ export function useGogInstallerFileLink() {
   return useMutation({
     mutationFn: ({ gameId, fileId }: { gameId: number; fileId: string }) =>
       getGogInstallerFileLink(gameId, fileId),
+  });
+}
+
+export function useUploadGogInstaller(gameId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => uploadGogInstaller(gameId, file),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["gog-installers", gameId] }),
   });
 }

@@ -1135,7 +1135,13 @@
       "retryButton": "Retry",
       "downloadingLabel": "Downloading… {{downloaded}} of {{total}}",
       "queueErrorToast": "Could not queue this download. Please try again.",
-      "linkErrorToast": "Could not get the download link. Please try again."
+      "linkErrorToast": "Could not get the download link. Please try again.",
+      "installersHeading": "Installers",
+      "uploadedDescription": "Uploaded installers live on this server (never part of backups); Download sends one to this device.",
+      "uploadedHeading": "Uploaded installers",
+      "uploadedFileLabel": "{{name}} \u00b7 {{size}}",
+      "uploadButton": "Upload installer",
+      "uploadErrorToast": "Could not upload this installer. Please try again."
     },
     "coverCard": {
       "noImageAvailable": "No Image Available"
@@ -1175,6 +1181,8 @@
       "romAttachedTooltip_other": "{{count}} ROMs: {{name}}",
       "gogInstallerDownloadedTooltip_one": "GOG installer downloaded: {{name}}",
       "gogInstallerDownloadedTooltip_other": "{{count}} GOG installers downloaded: {{name}}",
+      "drmFreeInstallerUploadedTooltip_one": "Installer downloaded: {{name}}",
+      "drmFreeInstallerUploadedTooltip_other": "{{count}} installers downloaded: {{name}}",
       "romSaveErrorDetailToast": "The copy was saved, but not every ROM change could be: {{detail}}",
       "moveWithRomDescription_one": "This copy has a ROM attached ({{name}}). Wishlist copies can't hold a ROM, so it will be deleted.",
       "moveWithRomDescription_other": "This copy has {{count}} ROMs attached ({{name}}). Wishlist copies can't hold ROMs, so they will be deleted.",

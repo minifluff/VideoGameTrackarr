@@ -9,10 +9,12 @@ let installers: GogInstallers | undefined;
 let installersError = false;
 const queueDownload = vi.fn();
 const fileLink = vi.fn();
+const uploadInstaller = vi.fn();
 vi.mock("../../hooks/useIntegrations", () => ({
   useGogInstallers: () => ({ data: installers, isError: installersError }),
   useQueueGogInstallerDownload: () => ({ mutateAsync: queueDownload, isPending: false }),
   useGogInstallerFileLink: () => ({ mutateAsync: fileLink, isPending: false }),
+  useUploadGogInstaller: () => ({ mutateAsync: uploadInstaller, isPending: false }),
 }));
 
 function makeInstallers(): GogInstallers {
@@ -65,13 +67,14 @@ function makeInstallers(): GogInstallers {
         ],
       },
     ],
+    uploadedFiles: [],
   };
 }
 
-function renderSection(hasGogItem = true) {
+function renderSection(hasGogItem = true, hasDrmFreeItem = false) {
   return render(
     <ThemeProvider theme={createM3Theme("light", "normal")}>
-      <GogInstallersSection gameId={1} hasGogItem={hasGogItem} />
+      <GogInstallersSection gameId={1} hasGogItem={hasGogItem} hasDrmFreeItem={hasDrmFreeItem} />
     </ThemeProvider>
   );
 }
@@ -168,8 +171,54 @@ describe("GogInstallersSection", () => {
   });
 
   it("renders nothing when GOG has no installers for the game", () => {
-    installers = { gameId: 1, gogProductId: 1207658695, groups: [] };
+    installers = { gameId: 1, gogProductId: 1207658695, groups: [], uploadedFiles: [] };
     const { container } = renderSection();
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("shows the upload button for a DRM-Free copy with nothing uploaded yet", () => {
+    installers = { gameId: 1, gogProductId: null, groups: [], uploadedFiles: [] };
+    renderSection(false, true);
+
+    expect(screen.getByText("Installers")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Upload installer" })).toBeInTheDocument();
+    expect(screen.queryByText("GOG Installers")).not.toBeInTheDocument();
+  });
+
+  it("shows an uploaded installer with a Download button for a DRM-Free copy", async () => {
+    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+    installers = {
+      gameId: 1,
+      gogProductId: null,
+      groups: [],
+      uploadedFiles: [{ fileId: "upload-abc", filename: "setup_game_1.0.exe", size: 20 }],
+    };
+    renderSection(false, true);
+
+    expect(screen.getByText("Uploaded installers")).toBeInTheDocument();
+    expect(screen.getByText("setup_game_1.0.exe · 20 B")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Download" }));
+
+    await waitFor(() => expect(fileLink).toHaveBeenCalledWith({ gameId: 1, fileId: "upload-abc" }));
+    expect(open).toHaveBeenCalledWith(
+      "/api/integrations/gog/games/1/installers/en1installer0/file/token/setup.exe",
+      "_blank",
+      "noopener,noreferrer"
+    );
+    open.mockRestore();
+  });
+
+  it("uploads the picked file when the upload button is used", async () => {
+    installers = { gameId: 1, gogProductId: null, groups: [], uploadedFiles: [] };
+    uploadInstaller.mockResolvedValue({ fileId: "upload-abc", status: "completed" });
+    const { container } = renderSection(false, true);
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(input, {
+      target: { files: [new File(["bytes"], "setup_game_1.0.exe")] },
+    });
+
+    await waitFor(() => expect(uploadInstaller).toHaveBeenCalledTimes(1));
+    expect(uploadInstaller.mock.calls[0][0].name).toBe("setup_game_1.0.exe");
   });
 });

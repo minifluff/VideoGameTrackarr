@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import LinearProgress from "@mui/material/LinearProgress";
@@ -10,30 +11,41 @@ import {
   useGogInstallerFileLink,
   useGogInstallers,
   useQueueGogInstallerDownload,
+  useUploadGogInstaller,
 } from "../hooks/useIntegrations";
 import { formatFileSize } from "../utils/roms";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 
 interface GogInstallersSectionProps {
   gameId: number;
-  // Only GOG-imported games have installers — the dialog only mounts this section
-  // (and fires the query) when a library item carries the GOG storefront, so every
-  // other dialog skips the request entirely.
+  // Only GOG-imported games have installers from the CDN, and only DRM-Free
+  // copies take uploads — the dialog only mounts this section (and fires the
+  // query) when a library item carries one of those storefronts, so every other
+  // dialog skips the request entirely.
   hasGogItem: boolean;
+  hasDrmFreeItem: boolean;
 }
 
 // Offline installers for a GOG-imported game: the NAS downloads each file in the
 // background (uploads/gog-installers, never part of backups), and once a file is on
-// the NAS the button serves it to this device instead. The section stays hidden
-// whenever GOG has no installers for the game (e.g. a GOG Connect key that has no
-// offline installer).
-const GogInstallersSection = ({ gameId, hasGogItem }: GogInstallersSectionProps) => {
+// the NAS the button serves it to this device instead. DRM-Free copies get the
+// same treatment, except the file comes from the user: they upload it here and
+// Download sends it back. The section stays hidden whenever there is nothing to
+// show (a GOG game with no installers and no uploads, and no DRM-Free copy to
+// upload for).
+const GogInstallersSection = ({ gameId, hasGogItem, hasDrmFreeItem }: GogInstallersSectionProps) => {
   const { t } = useTranslation();
-  const { data: installers, isError } = useGogInstallers(gameId, hasGogItem);
+  const { data: installers, isError } = useGogInstallers(gameId, hasGogItem || hasDrmFreeItem);
   const queueDownload = useQueueGogInstallerDownload(gameId);
   const fileLink = useGogInstallerFileLink();
+  const uploadInstaller = useUploadGogInstaller(gameId);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  if (!hasGogItem || isError || !installers || installers.groups.length === 0) return null;
+  if (!hasGogItem && !hasDrmFreeItem) return null;
+  if (isError || !installers) return null;
+  if (installers.groups.length === 0 && installers.uploadedFiles.length === 0 && !hasDrmFreeItem) {
+    return null;
+  }
 
   const handleQueue = async (installerId: string, fileId: string) => {
     try {
@@ -51,6 +63,16 @@ const GogInstallersSection = ({ gameId, hasGogItem }: GogInstallersSectionProps)
     } catch (error) {
       console.error(`Error fetching GOG installer download link for ${fileId}:`, error);
       toast.error(t("games.gogInstallers.linkErrorToast"), TOAST_OPTIONS);
+    }
+  };
+
+  const handleUpload = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      await uploadInstaller.mutateAsync(file);
+    } catch (error) {
+      console.error("Error uploading installer:", error);
+      toast.error(t("games.gogInstallers.uploadErrorToast"), TOAST_OPTIONS);
     }
   };
 
@@ -119,11 +141,63 @@ const GogInstallersSection = ({ gameId, hasGogItem }: GogInstallersSectionProps)
   return (
     <Box sx={{ p: 2 }}>
       <Typography variant="h6" component="h2" gutterBottom>
-        {t("games.gogInstallers.heading")}
+        {t(hasGogItem ? "games.gogInstallers.heading" : "games.gogInstallers.installersHeading")}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        {t("games.gogInstallers.description")}
+        {t(hasGogItem ? "games.gogInstallers.description" : "games.gogInstallers.uploadedDescription")}
       </Typography>
+      {hasDrmFreeItem ? (
+        <Box sx={{ mb: 2 }}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            hidden
+            onChange={(event) => {
+              void handleUpload(event.target.files?.[0]);
+              // Reset so the same file can be picked again (re-upload replaces it).
+              event.target.value = "";
+            }}
+          />
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadInstaller.isPending}
+          >
+            {t("games.gogInstallers.uploadButton")}
+          </Button>
+        </Box>
+      ) : null}
+      {installers.uploadedFiles.length > 0 ? (
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle1" sx={{ mb: 1 }}>
+            {t("games.gogInstallers.uploadedHeading")}
+          </Typography>
+          {installers.uploadedFiles.map((uploaded) => (
+            <Stack
+              key={uploaded.fileId}
+              direction="row"
+              spacing={1}
+              sx={{ alignItems: "center", justifyContent: "space-between", pl: 1, py: 0.5 }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                {t("games.gogInstallers.uploadedFileLabel", {
+                  name: uploaded.filename ?? uploaded.fileId,
+                  size: formatFileSize(uploaded.size),
+                })}
+              </Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => void handleDownload(uploaded.fileId)}
+                disabled={fileLink.isPending}
+              >
+                {t("games.gogInstallers.downloadButton")}
+              </Button>
+            </Stack>
+          ))}
+        </Box>
+      ) : null}
       {installers.groups.map((group) => (
         <Box key={group.productId} sx={{ mb: 2 }}>
           <Typography variant="subtitle1" sx={{ mb: 1 }}>

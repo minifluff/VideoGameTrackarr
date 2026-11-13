@@ -2,7 +2,7 @@ import enum
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO
 from urllib.parse import parse_qs, urlparse
 
 from sqlalchemy.orm import Session
@@ -297,20 +297,53 @@ def persist_refresh_token(db: Session, user: User, client: GogClient) -> None:
 async def get_installers(db: Session, user: User, game_id: int) -> dict[str, Any]:
     """The base game plus each DLC's installers, each file carrying its NAS download
     state (not_downloaded / queued / downloading / completed / failed) so the game
-    page can show Download to NAS, a progress bar, or a download-from-NAS link."""
-    product_id = _require_imported_product_id(db, game_id)
-    async with client_for_user(user) as client:
-        groups = await client.get_product_downloads(product_id)
-        persist_refresh_token(db, user, client)
-    downloads = {
-        download.file_id: download
-        for download in gog_download_service.list_downloads_for_game(db, game_id)
-    }
-    return {
-        "game_id": game_id,
-        "gog_product_id": product_id,
-        "groups": [_group_dict(group, downloads) for group in groups],
-    }
+    page can show Download to NAS, a progress bar, or a download-from-NAS link.
+    Uploaded installers (DRM-Free copies) ride along in `uploaded_files` — a
+    DRM-Free game has no GOG product, so its list is uploads only and never
+    touches the GOG API (no GOG account needed for it)."""
+    uploaded_files = [
+        _uploaded_file_dict(download)
+        for download in gog_download_service.list_uploads_for_game(db, game_id)
+    ]
+    entry = gog_repository.get_entry_by_game_id(db, game_id)
+    gog_item = _find_gog_library_item(db, game_id)
+    if entry is not None and gog_item is not None:
+        product_id = entry.gog_product_id
+        async with client_for_user(user) as client:
+            groups = await client.get_product_downloads(product_id)
+            persist_refresh_token(db, user, client)
+        downloads = {
+            download.file_id: download
+            for download in gog_download_service.list_downloads_for_game(db, game_id)
+        }
+        return {
+            "game_id": game_id,
+            "gog_product_id": product_id,
+            "groups": [_group_dict(group, downloads) for group in groups],
+            "uploaded_files": uploaded_files,
+        }
+    if entry is not None or gog_item is not None:
+        # Matched but not synced (or vice versa) — keep the precise GOG error.
+        _require_imported_product_id(db, game_id)
+    if _find_drm_free_library_item(db, game_id) is None:
+        raise NotFoundError(
+            "This game has no GOG or DRM-Free copy — installers are only for GOG-imported and DRM-Free games"
+        )
+    return {"game_id": game_id, "gog_product_id": None, "groups": [], "uploaded_files": uploaded_files}
+
+
+def upload_installer(
+    db: Session, game_id: int, source: BinaryIO, original_filename: str
+) -> dict[str, Any]:
+    """Stores an installer the user uploaded themselves for a DRM-Free copy — no
+    GOG product, no CDN, no queue: the file lands on the NAS straight away and
+    the row is completed immediately."""
+    if _find_drm_free_library_item(db, game_id) is None:
+        raise NotFoundError(
+            "Uploads are only for games with a DRM-Free copy — set the copy's Digital Storefront to DRM-Free first"
+        )
+    download = gog_download_service.save_uploaded_installer(db, game_id, source, original_filename)
+    return _download_dict(download)
 
 
 async def queue_download(
@@ -344,13 +377,21 @@ async def queue_download(
 def get_download_file_path(db: Session, game_id: int, file_id: str) -> "Path":
     """The on-disk path of a completed download, for the authenticated file route —
     only when the row is completed AND the file is actually there at the right size.
-    Anything else is a 404: the game page offers Download to NAS instead."""
-    _require_imported_product_id(db, game_id)
+    Anything else is a 404: the game page offers Download to NAS instead. Uploaded
+    installers (no GOG product) go through the DRM-Free gate instead of the GOG
+    one."""
     download = next(
         (d for d in gog_download_service.list_downloads_for_game(db, game_id) if d.file_id == file_id),
         None,
     )
-    if download is None or not gog_download_service.verify_completed_file(download):
+    if download is None:
+        raise NotFoundError("That installer hasn't finished downloading to the NAS yet")
+    if download.gog_product_id is None:
+        if _find_drm_free_library_item(db, game_id) is None:
+            raise NotFoundError("That installer hasn't finished downloading to the NAS yet")
+    else:
+        _require_imported_product_id(db, game_id)
+    if not gog_download_service.verify_completed_file(download):
         raise NotFoundError("That installer hasn't finished downloading to the NAS yet")
     path = gog_download_service.download_file_path(download)
     if path is None:
@@ -379,6 +420,28 @@ def _download_dict(download: "GogDownload") -> dict[str, Any]:
         "downloaded_bytes": download.downloaded_bytes,
         "filename": download.filename,
         "error": download.error,
+    }
+
+
+def _find_drm_free_library_item(db: Session, game_id: int) -> LibraryItem | None:
+    """The OWNED library item carrying the DRM-Free storefront (Format: Digital) —
+    the same shape as the GOG item above, but for copies the user tagged
+    DRM-Free instead of ones the GOG sync imported."""
+    return next(
+        (
+            item
+            for item in library_item_repository.list_library_items(db, game_id, status=LibraryStatus.OWNED)
+            if item.format == MediaFormat.DIGITAL and item.digital_storefront == "DRM-Free"
+        ),
+        None,
+    )
+
+
+def _uploaded_file_dict(download: "GogDownload") -> dict[str, Any]:
+    return {
+        "file_id": download.file_id,
+        "filename": download.filename,
+        "size": download.total_size,
     }
 
 

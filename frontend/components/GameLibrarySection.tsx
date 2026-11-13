@@ -73,12 +73,13 @@ const GameLibrarySection = ({
   const replaceRom = useReplaceRom(gameId);
   const updateRomLabel = useUpdateRomLabel(gameId);
   const deleteRom = useDeleteRom(gameId);
-  // Installer downloads only exist for games imported by the GOG sync — the
-  // query (and the row icon below) only fires when a copy carries the GOG
-  // storefront. Same query key as the dialog's installers section, so the two
-  // share one request.
+  // Installer downloads only exist for GOG-imported games, and uploaded
+  // installers only for DRM-Free copies — the query (and the row icon below)
+  // only fires when a copy carries one of those storefronts. Same query key as
+  // the dialog's installers section, so the two share one request.
   const hasGogItem = (libraryItems ?? []).some((item) => item.digitalStorefront === "GOG");
-  const { data: gogInstallers } = useGogInstallers(gameId, hasGogItem);
+  const hasDrmFreeItem = (libraryItems ?? []).some((item) => item.digitalStorefront === "DRM-Free");
+  const { data: gogInstallers } = useGogInstallers(gameId, hasGogItem || hasDrmFreeItem);
   // Labels of the installers already downloaded to the NAS ("windows · en · 1.0"),
   // for the row icon's tooltip — empty while nothing has finished downloading.
   const downloadedGogInstallerLabels = useMemo(() => {
@@ -94,6 +95,11 @@ const GameLibrarySection = ({
     }
     return labels;
   }, [gogInstallers]);
+  // Filenames of the installers uploaded for a DRM-Free copy, for the same icon.
+  const uploadedInstallerNames = useMemo(
+    () => (gogInstallers?.uploadedFiles ?? []).map((file) => file.filename ?? file.fileId),
+    [gogInstallers]
+  );
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [uploadStep, setUploadStep] = useState<{ current: number; total: number } | null>(null);
   // Moving an owned copy that holds a ROM to the Wishlist deletes the ROM (see
@@ -173,13 +179,23 @@ const GameLibrarySection = ({
 
   // The same gamepad icon as the ROM one, on a GOG copy whose installer is
   // already downloaded to the NAS — green, because a downloaded installer is
-  // ready to send to this device (unlike a ROM, which can be unplayable).
+  // ready to send to this device (unlike a ROM, which can be unplayable). A
+  // DRM-Free copy gets the same icon once an installer has been uploaded for it.
   const renderGogInstallerIcon = (item: LibraryItem) => {
-    if (item.digitalStorefront !== "GOG" || downloadedGogInstallerLabels.length === 0) return null;
-    const tooltip = t("games.library.gogInstallerDownloadedTooltip", {
-      count: downloadedGogInstallerLabels.length,
-      name: downloadedGogInstallerLabels.join(", "),
-    });
+    const isGog = item.digitalStorefront === "GOG";
+    const isDrmFree = item.digitalStorefront === "DRM-Free";
+    if (isGog && downloadedGogInstallerLabels.length === 0) return null;
+    if (isDrmFree && uploadedInstallerNames.length === 0) return null;
+    if (!isGog && !isDrmFree) return null;
+    const tooltip = isGog
+      ? t("games.library.gogInstallerDownloadedTooltip", {
+          count: downloadedGogInstallerLabels.length,
+          name: downloadedGogInstallerLabels.join(", "),
+        })
+      : t("games.library.drmFreeInstallerUploadedTooltip", {
+          count: uploadedInstallerNames.length,
+          name: uploadedInstallerNames.join(", "),
+        });
     return (
       <Tooltip title={tooltip}>
         <Box component="span" aria-label={tooltip} sx={{ display: "inline-flex", alignItems: "center" }}>
@@ -378,7 +394,8 @@ const GameLibrarySection = ({
                 .filter(Boolean)
                 .join(" · ");
               const showGogInstallerIcon =
-                item.digitalStorefront === "GOG" && downloadedGogInstallerLabels.length > 0;
+                (item.digitalStorefront === "GOG" && downloadedGogInstallerLabels.length > 0) ||
+                (item.digitalStorefront === "DRM-Free" && uploadedInstallerNames.length > 0);
               return (
                 <ListRow
                   key={item.id}
@@ -452,6 +469,7 @@ const GameLibrarySection = ({
           onStatusChange={setDialogStatus}
           gameId={gameId}
           showGogInstallers={hasGogItem}
+          showDrmFreeInstallers={hasDrmFreeItem}
           platforms={platforms ?? []}
           regions={regions ?? []}
           gameCategory={gameCategory}

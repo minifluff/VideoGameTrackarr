@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
@@ -269,6 +269,28 @@ async def queue_gog_installer_download(
     except GogAuthError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     gog_jobs.ensure_download_job_running(db, session_factory)
+    return GogDownloadResponse.model_validate(result)
+
+
+@router.post(
+    "/api/integrations/gog/games/{game_id}/installers/upload",
+    response_model=GogDownloadResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def upload_gog_installer(
+    game_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> GogDownloadResponse:
+    """Upload an installer file for a DRM-Free copy straight to the NAS — no GOG
+    product, no CDN, no queue: the file streams to disk and the row is completed
+    immediately, so Download serves it right away. Re-uploading the same filename
+    replaces the file. Only for games with a DRM-Free copy."""
+    try:
+        result = gog_service.upload_installer(db, game_id, file.file, file.filename or "")
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return GogDownloadResponse.model_validate(result)
 
 

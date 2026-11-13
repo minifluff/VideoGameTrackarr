@@ -275,6 +275,7 @@ def test_get_installers_lists_groups_with_download_states(auth_client, db_sessio
     assert response.status_code == 200
     body = response.json()
     assert body["gogProductId"] == PRODUCT_ID
+    assert body["uploadedFiles"] == []
     [group] = body["groups"]
     assert group["title"] == "The Witcher 3"
     [installer] = group["installers"]
