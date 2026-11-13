@@ -704,9 +704,15 @@ const LibraryItemDialog = ({
                   // platform switches away from a fixed-storefront one) leaves the old text
                   // visibly stuck even though the underlying form value did change.
                   inputValue={field.value ?? ""}
-                  onChange={(_event, value) => field.onChange(value ?? undefined)}
+                  // Clear to "" rather than undefined: react-hook-form's get()
+                  // falls back to the field's default value when the stored value
+                  // is undefined, so the X would leave the old storefront visibly
+                  // stuck even though the form value had cleared (same "" sentinel
+                  // the platform-switch effect above already uses). onSubmit
+                  // converts "" back to undefined for the API.
+                  onChange={(_event, value) => field.onChange(value ?? "")}
                   onInputChange={(_event, value, reason) => {
-                    if (reason === "input") field.onChange(value || undefined);
+                    if (reason === "input") field.onChange(value);
                   }}
                   renderInput={(params) => (
                     <TextField
@@ -746,9 +752,15 @@ const LibraryItemDialog = ({
                   options={ALL_DIGITAL_STOREFRONTS}
                   value={field.value ?? null}
                   inputValue={field.value ?? ""}
-                  onChange={(_event, value) => field.onChange(value ?? undefined)}
+                  // Clear to "" rather than undefined: react-hook-form's get()
+                  // falls back to the field's default value when the stored value
+                  // is undefined, so the X would leave the old storefront visibly
+                  // stuck even though the form value had cleared (same "" sentinel
+                  // the platform-switch effect above already uses). onSubmit
+                  // converts "" back to undefined for the API.
+                  onChange={(_event, value) => field.onChange(value ?? "")}
                   onInputChange={(_event, value, reason) => {
-                    if (reason === "input") field.onChange(value || undefined);
+                    if (reason === "input") field.onChange(value);
                   }}
                   renderInput={(params) => (
                     <TextField

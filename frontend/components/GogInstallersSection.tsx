@@ -176,39 +176,35 @@ const GogInstallersSection = ({ gameId, hasGogItem, hasUploadableItem }: GogInst
 
   return (
     <Box sx={{ p: 2 }}>
-      <Typography variant="h6" component="h2" gutterBottom>
-        {t(hasGogItem ? "games.gogInstallers.heading" : "games.gogInstallers.installersHeading")}
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        {t(hasGogItem ? "games.gogInstallers.description" : "games.gogInstallers.uploadedDescription")}
-      </Typography>
-      {hasUploadableItem ? (
-        <Box sx={{ mb: 2 }}>
-          <input
-            ref={fileInputRef}
-            type="file"
-            hidden
-            onChange={(event) => {
-              void handleUpload(event.target.files?.[0]);
-              // Reset so the same file can be picked again (re-upload replaces it).
-              event.target.value = "";
-            }}
-          />
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploadInstaller.isPending}
-          >
-            {t("games.gogInstallers.uploadButton")}
-          </Button>
-        </Box>
-      ) : null}
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 2 }}>
+        <Typography variant="h6" component="h2">
+          {t(hasGogItem ? "games.gogInstallers.heading" : "games.gogInstallers.installersHeading")}
+        </Typography>
+        {hasUploadableItem ? (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              hidden
+              onChange={(event) => {
+                void handleUpload(event.target.files?.[0]);
+                // Reset so the same file can be picked again (re-upload replaces it).
+                event.target.value = "";
+              }}
+            />
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadInstaller.isPending}
+            >
+              {t("games.gogInstallers.uploadButton")}
+            </Button>
+          </>
+        ) : null}
+      </Stack>
       {installers.uploadedFiles.length > 0 ? (
         <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle1" sx={{ mb: 1 }}>
-            {t("games.gogInstallers.uploadedHeading")}
-          </Typography>
           {installers.uploadedFiles.map((uploaded) => (
             <Stack
               key={uploaded.fileId}

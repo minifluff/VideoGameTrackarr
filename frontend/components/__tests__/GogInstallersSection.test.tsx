@@ -183,8 +183,10 @@ describe("GogInstallersSection", () => {
     renderSection(false, true);
 
     expect(screen.getByText("Installers")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Upload installer" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Upload" })).toBeInTheDocument();
     expect(screen.queryByText("GOG Installers")).not.toBeInTheDocument();
+    // No description text under the heading in the upload-only variant.
+    expect(screen.queryByText(/never part of backups/)).not.toBeInTheDocument();
   });
 
   it("shows an uploaded installer with a Download button for a DRM-Free copy", async () => {
@@ -197,7 +199,6 @@ describe("GogInstallersSection", () => {
     };
     renderSection(false, true);
 
-    expect(screen.getByText("Uploaded installers")).toBeInTheDocument();
     expect(screen.getByText("setup_game_1.0.exe · 20 B")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Download" }));
 

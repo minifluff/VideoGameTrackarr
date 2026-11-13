@@ -312,7 +312,7 @@ describe("GameLibrarySection", () => {
 
     expect(screen.getByText("Update game in your collection")).toBeInTheDocument();
     expect(screen.getByText("Installers")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Upload installer" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Upload" })).toBeInTheDocument();
   });
 
   it("shows the gamepad icon on a DRM-Free row with an uploaded installer", () => {
@@ -342,7 +342,7 @@ describe("GameLibrarySection", () => {
 
     expect(screen.getByText("Update game in your collection")).toBeInTheDocument();
     expect(screen.getByText("Installers")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Upload installer" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Upload" })).toBeInTheDocument();
   });
 
   it("shows the gamepad icon on an Abandonware row with an uploaded installer", () => {

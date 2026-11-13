@@ -129,6 +129,38 @@ describe("LibraryItemDialog", () => {
     expect(screen.getByLabelText("Digital Storefront")).toHaveValue("DRM-Free");
   });
 
+  it("clearing the Digital Storefront with the X empties the field", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(
+      <LibraryItemDialog
+        open
+        title="Update game in your collection"
+        status="owned"
+        platforms={platforms}
+        regions={regions}
+        defaultValues={{ format: "digital", platformId: 1, digitalStorefront: "GOG" }}
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+        submitLabel="Save"
+      />
+    );
+
+    const input = screen.getByLabelText("Digital Storefront");
+    expect(input).toHaveValue("GOG");
+
+    // Several Autocompletes in this dialog have a Clear button — scope to the
+    // storefront field's own one.
+    const storefrontRoot = input.closest(".MuiAutocomplete-root");
+    expect(storefrontRoot).not.toBeNull();
+    await user.click(within(storefrontRoot as HTMLElement).getByLabelText("Clear"));
+    expect(input).toHaveValue("");
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSubmit).toHaveBeenCalled();
+    expect(onSubmit.mock.calls[0][0].digitalStorefront).toBeUndefined();
+  });
+
   it("shows Digital Storefront when format is picked before platform", async () => {
     const user = userEvent.setup();
     render(
