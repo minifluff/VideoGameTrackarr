@@ -8,7 +8,7 @@ import { useDashboardStats } from "../hooks/useDashboard";
 import { useHardwareStats } from "../hooks/useHardwareStats";
 import { useVersion } from "../hooks/useVersion";
 import { getNavDestinations, type NavDestination } from "./destinations";
-import { isCustomIconDataUrl, resolveIconSrc, useAppearance } from "../theme/AppearanceProvider";
+import { useAppearance } from "../theme/AppearanceProvider";
 
 export const SIDEBAR_WIDTH = 240;
 
@@ -144,8 +144,6 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const {
-    appTitle,
-    appIcon,
     hideDashboardMenu,
     hideGamesMenu,
     hideHardwareMenu,
@@ -182,47 +180,8 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", bgcolor: "background.paper" }}>
-      <Box
-        component={Link}
-        to="/"
-        onClick={onNavigate}
-        sx={{
-          height: 56,
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          gap: 1.25,
-          px: 2,
-          borderBottom: 1,
-          borderColor: "divider",
-          color: "text.primary",
-          textDecoration: "none",
-        }}
-      >
-        {appIcon === "default" || isCustomIconDataUrl(appIcon) ? (
-          <Box component="img" src={resolveIconSrc(appIcon)} alt="" sx={{ width: 30, height: 30 }} />
-        ) : (
-          <Box
-            sx={{
-              width: 30,
-              height: 30,
-              fontSize: 22,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {appIcon}
-          </Box>
-        )}
-        <Typography
-          variant="subtitle2"
-          noWrap
-          sx={{ fontWeight: 650, fontSize: 14, letterSpacing: "-0.01em" }}
-        >
-          {appTitle}
-        </Typography>
-      </Box>
+      {/* No branding header here anymore — the icon + app title live in the
+          AppBar (see AppShell), so the sidebar starts straight on the nav. */}
       <Box
         component="nav"
         aria-label={t("nav.primary")}

@@ -57,6 +57,9 @@ describe("Sidebar", () => {
   it("shows top-level destinations and group headings, hiding sub-items on the dashboard", () => {
     renderSidebar("/");
 
+    // The app title lives in the AppBar now — the sidebar starts on the nav,
+    // with no branding header link of its own.
+    expect(screen.queryByRole("link", { name: "VideoGameTrackarr" })).not.toBeInTheDocument();
     expect(screen.getByText("Library")).toBeInTheDocument();
     // "Stats" is the group heading; Achievements comes first inside it, then
     // the Insights destination link (the only "Insights" on the page now).

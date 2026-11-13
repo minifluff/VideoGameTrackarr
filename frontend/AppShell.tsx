@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useRef, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate, Link as RouterLink } from "react-router-dom";
 import DarkModeIcon from "@mui/icons-material/DarkModeOutlined";
 import LightModeIcon from "@mui/icons-material/LightModeOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -13,6 +13,7 @@ import Link from "@mui/material/Link";
 import { useTheme } from "@mui/material/styles";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTranslation } from "react-i18next";
 import { ToastContainer } from "react-toastify";
@@ -26,7 +27,7 @@ import { useScrollResetOnNavigate } from "./hooks/useScrollResetOnNavigate";
 import GlobalSearch from "./navigation/GlobalSearch";
 import { getNavDestinations } from "./navigation/destinations";
 import Sidebar, { SIDEBAR_WIDTH } from "./navigation/Sidebar";
-import { useAppearance } from "./theme/AppearanceProvider";
+import { isCustomIconDataUrl, resolveIconSrc, useAppearance } from "./theme/AppearanceProvider";
 import { useColorMode } from "./theme/ColorModeProvider";
 
 // Upstream's model: one Sidebar, permanent on desktop and a hamburger drawer below
@@ -44,6 +45,8 @@ const AppShell = () => {
   const navigate = useNavigate();
   const logoutMutation = useLogout();
   const {
+    appTitle,
+    appIcon,
     hideDashboardMenu,
     hideGamesMenu,
     hideHardwareMenu,
@@ -159,6 +162,49 @@ const AppShell = () => {
                 <MenuIcon />
               </IconButton>
             )}
+            {/* The app title lives here in the title bar now, not at the top of the
+                sidebar — the same icon + title the sidebar header used to render. */}
+            <Box
+              component={RouterLink}
+              to="/"
+              sx={{
+                display: { xs: "none", sm: "flex" },
+                alignItems: "center",
+                gap: 1.25,
+                minWidth: 0,
+                color: "inherit",
+                textDecoration: "none",
+              }}
+            >
+              {appIcon === "default" || isCustomIconDataUrl(appIcon) ? (
+                <Box
+                  component="img"
+                  src={resolveIconSrc(appIcon)}
+                  alt=""
+                  sx={{ width: 30, height: 30 }}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    width: 30,
+                    height: 30,
+                    fontSize: 22,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {appIcon}
+                </Box>
+              )}
+              <Typography
+                variant="h6"
+                noWrap
+                sx={{ fontWeight: 650, fontSize: 17, letterSpacing: "-0.01em" }}
+              >
+                {appTitle}
+              </Typography>
+            </Box>
           </Box>
           <Box sx={{ minWidth: 0, width: { xs: "100%", sm: "min(520px, 50vw)" }, mx: "auto" }}>
             <GlobalSearch />
