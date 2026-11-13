@@ -431,6 +431,14 @@
         "exportBackup": {
           "name": "Scheduled backup export",
           "description": "Writes the data export to a network folder on a schedule and deletes old exports beyond the number you keep."
+        },
+        "gogDownload": {
+          "name": "GOG Download",
+          "description": "Downloads queued GOG installer files to this server, oldest first — each file's download link is refreshed from GOG when its download starts."
+        },
+        "gogImport": {
+          "name": "GOG Import",
+          "description": "Fetches your GOG library and matches it to your catalog — nothing is added or changed automatically. Review and sync on the Integration Sync page."
         }
       },
       "exportBackup": {
