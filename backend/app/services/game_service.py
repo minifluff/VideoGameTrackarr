@@ -74,6 +74,7 @@ class BookshelfEntry:
     name: str
     platform_label: str
     formats: list[str]
+    hide_from_public: bool
 
 
 def list_bookshelf_entries(db: Session, *, public: bool = False) -> list[BookshelfEntry]:
@@ -103,6 +104,7 @@ def list_bookshelf_entries(db: Session, *, public: bool = False) -> list[Bookshe
                 name=game.name,
                 platform_label=platform.abbreviation or platform.name,
                 formats=[],
+                hide_from_public=game.hide_from_public,
             )
             merged[key] = entry
         if item.format is not None and item.format.value not in entry.formats:

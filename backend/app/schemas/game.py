@@ -67,6 +67,7 @@ class BookshelfEntryResponse(CamelModel):
     name: str
     platform_label: str
     formats: list[str]
+    hide_from_public: bool
 
 
 class GameDetailResponse(GameSummaryResponse):

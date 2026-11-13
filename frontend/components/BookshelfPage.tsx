@@ -7,6 +7,7 @@ import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import TuneIcon from "@mui/icons-material/Tune";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
+import Checkbox from "@mui/material/Checkbox";
 import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
@@ -25,6 +26,7 @@ import { fetchBookshelfEntries } from "../api/games";
 import type { BookshelfEntry, PlatformResponse } from "../api/types";
 import { usePlatforms } from "../hooks/usePlatforms";
 import { gameIdentifier } from "../utils/identifiers";
+import { readStoredShowHidden, storeShowHidden } from "../utils/showHiddenGames";
 import BookshelfGrid, { packRows, useProgressiveRows, useShelfWidth, useTemplateInfo } from "./BookshelfGrid";
 import type { Shelf, ShelfCase, ShelfGame, TemplateInfo } from "./BookshelfGrid";
 import PlatformTemplateDialog from "./PlatformTemplateDialog";
@@ -262,6 +264,9 @@ const BookshelfPage = () => {
   const [templatePlatform, setTemplatePlatform] = useState<PlatformResponse | null>(null);
   const [caseScale, setCaseScaleState] = useState<number>(readStoredCaseScale);
   const [mixed, setMixedState] = useState<boolean>(readStoredMixed);
+  // Same shared "Show Hidden" preference as the Games and List pages —
+  // hidden games stay off the shelf unless this is checked.
+  const [showHidden, setShowHiddenState] = useState<boolean>(readStoredShowHidden);
   const [optionsMenuAnchor, setOptionsMenuAnchor] = useState<HTMLElement | null>(null);
   const [platformMenuAnchor, setPlatformMenuAnchor] = useState<HTMLElement | null>(null);
   const [formatMenuAnchor, setFormatMenuAnchor] = useState<HTMLElement | null>(null);
@@ -277,8 +282,20 @@ const BookshelfPage = () => {
     localStorage.setItem(BOOKSHELF_MIXED_KEY, String(next));
   };
 
+  const setShowHidden = (next: boolean) => {
+    setShowHiddenState(next);
+    storeShowHidden(next);
+  };
+
   const { data: platforms } = usePlatforms();
-  const caseFormats = useMemo(() => buildCaseFormatsFromEntries(entries), [entries]);
+  // Hidden games are filtered out here, before shelves/case formats/counts
+  // are built — so the shelf, its summary count and the Platform/Format
+  // menus only ever cover what is actually shown.
+  const visibleEntries = useMemo(
+    () => (showHidden ? entries : entries?.filter((entry) => !entry.hideFromPublic)),
+    [entries, showHidden]
+  );
+  const caseFormats = useMemo(() => buildCaseFormatsFromEntries(visibleEntries), [visibleEntries]);
   const platformsByLabel = useMemo(() => indexPlatformsByLabel(platforms), [platforms]);
   const templateInfo = useTemplateInfo(platforms);
   const formatOptions = useMemo(
@@ -286,7 +303,7 @@ const BookshelfPage = () => {
     [caseFormats]
   );
 
-  const shelves = useMemo(() => buildShelvesFromEntries(entries), [entries]);
+  const shelves = useMemo(() => buildShelvesFromEntries(visibleEntries), [visibleEntries]);
   const totalCases = shelves.reduce((sum, shelf) => sum + shelf.cases.length, 0);
   const keyword = search.trim().toLowerCase();
   const templateCaseSizes = useMemo(
@@ -443,6 +460,13 @@ const BookshelfPage = () => {
           <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
             {t("games.bookshelf.mixedHelp")}
           </Typography>
+          <Divider sx={{ my: 1.5 }} />
+          <FormControlLabel
+            control={
+              <Checkbox checked={showHidden} onChange={(event) => setShowHidden(event.target.checked)} />
+            }
+            label={t("games.listToolbar.showHidden")}
+          />
         </Box>
       </Menu>
       <Menu

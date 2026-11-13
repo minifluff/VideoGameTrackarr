@@ -100,6 +100,7 @@ class LibraryListItemResponse(CamelModel):
     tag_names: list[str]
     notes: str | None
     digital_storefront: str | None
+    hide_from_public: bool
 
 
 def library_item_from_orm(

@@ -63,6 +63,7 @@ export interface BookshelfEntry {
   name: string;
   platformLabel: string;
   formats: string[];
+  hideFromPublic: boolean;
 }
 
 // Public (share-link) Bookshelf payload: the same slim entries as the
@@ -629,6 +630,7 @@ export interface LibraryListItem {
   tagNames: string[];
   notes: string | null;
   digitalStorefront: string | null;
+  hideFromPublic: boolean;
 }
 
 export type RomUnplayableReason = "unsupported_platform" | "unsupported_file_type" | "missing_bios";

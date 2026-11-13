@@ -247,6 +247,32 @@ describe("GameListToolbar top-row controls", () => {
 
     expect(props.onCardSizeChange).toHaveBeenCalledWith(0.9);
   });
+
+  it("shows a Show Hidden checkbox in Options and reports the toggle", async () => {
+    const props = renderToolbar({
+      cardSize: 1.0,
+      onCardSizeChange: vi.fn(),
+      showHidden: false,
+      onShowHiddenChange: vi.fn(),
+    });
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "Options" }));
+    const checkbox = screen.getByRole("checkbox", { name: "Show Hidden" });
+    expect(checkbox).not.toBeChecked();
+    await user.click(checkbox);
+
+    expect(props.onShowHiddenChange).toHaveBeenCalledWith(true);
+  });
+
+  it("shows no Show Hidden checkbox in Options without the toggle props", async () => {
+    renderToolbar({ cardSize: 1.0, onCardSizeChange: vi.fn() });
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "Options" }));
+
+    expect(screen.queryByRole("checkbox", { name: "Show Hidden" })).not.toBeInTheDocument();
+  });
 });
 
 describe("GameListToolbar on a Platform page", () => {

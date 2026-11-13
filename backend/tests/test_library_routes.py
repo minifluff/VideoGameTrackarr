@@ -561,3 +561,19 @@ def test_list_all_library_items_includes_status(auth_client, db_session, seed_ga
     by_name = {item["gameName"]: item for item in response.json()}
     assert by_name["Test Game"]["status"] == "owned"
     assert by_name["Wishlisted Game"]["status"] == "wishlist"
+
+
+def test_list_all_library_items_carry_hide_from_public(auth_client, db_session, seed_game, seed_platform):
+    db_session.add(LibraryItem(game_id=seed_game.id, platform_id=seed_platform.id, status=LibraryStatus.OWNED))
+    hidden_game = Game(igdb_id=5006, name="Hidden Game", category=GameCategory.MAIN_GAME, hide_from_public=True)
+    db_session.add(hidden_game)
+    db_session.commit()
+    db_session.add(LibraryItem(game_id=hidden_game.id, status=LibraryStatus.OWNED))
+    db_session.commit()
+
+    response = auth_client.get("/api/library/items")
+
+    assert response.status_code == 200
+    by_name = {item["gameName"]: item for item in response.json()}
+    assert by_name["Test Game"]["hideFromPublic"] is False
+    assert by_name["Hidden Game"]["hideFromPublic"] is True

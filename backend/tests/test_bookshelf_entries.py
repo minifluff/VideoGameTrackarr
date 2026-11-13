@@ -35,3 +35,14 @@ def test_bookshelf_entries_empty_library(auth_client):
     response = auth_client.get("/api/games/bookshelf")
     assert response.status_code == 200
     assert response.json() == []
+
+
+def test_bookshelf_entries_carry_hide_from_public(auth_client, seed_game, seed_platform):
+    _add_copy(auth_client, seed_game.id, seed_platform.id, "owned", "physical")
+    # Hiding the game (the Hide checkbox on its page) must surface on the
+    # entry — the Bookshelf page's Show Hidden toggle reads it.
+    response = auth_client.patch(f"/api/games/{seed_game.id}/visibility", json={"hideFromPublic": True})
+    assert response.status_code == 200
+
+    [entry] = auth_client.get("/api/games/bookshelf").json()
+    assert entry["hideFromPublic"] is True

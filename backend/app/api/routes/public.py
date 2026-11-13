@@ -63,6 +63,7 @@ def get_public_bookshelf(
                 name=entry.name,
                 platform_label=entry.platform_label,
                 formats=entry.formats,
+                hide_from_public=entry.hide_from_public,
             )
             for entry in entries
         ],

@@ -48,6 +48,7 @@ function shelfEntries(count: number): BookshelfEntry[] {
     name: `Game ${i + 1}`,
     platformLabel: "PS5",
     formats: ["physical"],
+    hideFromPublic: false,
   }));
 }
 
@@ -108,9 +109,9 @@ describe("BookshelfPage progressive loading", () => {
 // and Format each get their own icon with a popout menu, like Options.
 describe("BookshelfPage toolbar", () => {
   const toolbarEntries = (): BookshelfEntry[] => [
-    { gameId: 1, gameSlug: "zelda", gameUuid: "uuid-1", name: "Zelda", platformLabel: "PS5", formats: ["physical"] },
-    { gameId: 2, gameSlug: "mario", gameUuid: "uuid-2", name: "Mario", platformLabel: "PS5", formats: ["digital"] },
-    { gameId: 3, gameSlug: "metroid", gameUuid: "uuid-3", name: "Metroid", platformLabel: "Switch", formats: ["physical"] },
+    { gameId: 1, gameSlug: "zelda", gameUuid: "uuid-1", name: "Zelda", platformLabel: "PS5", formats: ["physical"], hideFromPublic: false },
+    { gameId: 2, gameSlug: "mario", gameUuid: "uuid-2", name: "Mario", platformLabel: "PS5", formats: ["digital"], hideFromPublic: false },
+    { gameId: 3, gameSlug: "metroid", gameUuid: "uuid-3", name: "Metroid", platformLabel: "Switch", formats: ["physical"], hideFromPublic: false },
   ];
 
   beforeEach(() => {
@@ -171,5 +172,21 @@ describe("BookshelfPage toolbar", () => {
     expect(await screen.findByTitle("Mario — PS5")).toBeInTheDocument();
     expect(screen.queryByTitle("Zelda — PS5")).not.toBeInTheDocument();
     expect(screen.queryByTitle("Metroid — Switch")).not.toBeInTheDocument();
+  });
+
+  it("hides hidden games unless Show Hidden is checked in Options", async () => {
+    mockFetchEntries.mockResolvedValue([
+      ...toolbarEntries(),
+      { gameId: 4, gameSlug: "hidden-gem", gameUuid: "uuid-4", name: "Hidden Gem", platformLabel: "PS5", formats: ["physical"], hideFromPublic: true },
+    ]);
+    renderPage();
+    await screen.findByTitle("Zelda — PS5");
+    expect(screen.queryByTitle("Hidden Gem — PS5")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Options" }));
+    const checkbox = await screen.findByRole("checkbox", { name: "Show Hidden" });
+    expect(checkbox).not.toBeChecked();
+    fireEvent.click(checkbox);
+    expect(await screen.findByTitle("Hidden Gem — PS5")).toBeInTheDocument();
   });
 });

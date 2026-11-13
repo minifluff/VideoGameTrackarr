@@ -133,6 +133,7 @@ def list_bookshelf_entries(db: Session = Depends(get_db)) -> list[BookshelfEntry
             name=entry.name,
             platform_label=entry.platform_label,
             formats=entry.formats,
+            hide_from_public=entry.hide_from_public,
         )
         for entry in game_service.list_bookshelf_entries(db)
     ]

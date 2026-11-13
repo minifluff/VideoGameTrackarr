@@ -43,6 +43,7 @@ def _library_item_to_dict(item: LibraryItem, game: Game) -> dict:
         "tag_names": [],
         "notes": item.notes,
         "digital_storefront": item.digital_storefront,
+        "hide_from_public": game.hide_from_public,
     }
 
 

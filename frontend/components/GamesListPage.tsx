@@ -18,6 +18,8 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import Divider from "@mui/material/Divider";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import Collapse from "@mui/material/Collapse";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -45,6 +47,7 @@ import { Pill } from "./Detail";
 import MoveLibraryItemDialog from "./MoveLibraryItemDialog";
 import type { LibraryListItem } from "../api/types";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { readStoredShowHidden, storeShowHidden } from "../utils/showHiddenGames";
 
 type SortColumn = "gameName" | "status" | "platformName" | "edition" | "format" | "notes" | "digitalStorefront";
 type SortDirection = "asc" | "desc";
@@ -59,6 +62,13 @@ const GamesListPage = () => {
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [platformFilter, setPlatformFilter] = useState<string>("all");
   const [formatFilter, setFormatFilter] = useState<string>("all");
+  // Same shared "Show Hidden" preference as the Games and Bookshelf pages —
+  // hidden games stay out of the table unless this is checked.
+  const [showHidden, setShowHiddenState] = useState<boolean>(readStoredShowHidden);
+  const setShowHidden = (next: boolean) => {
+    setShowHiddenState(next);
+    storeShowHidden(next);
+  };
   const [optionsMenuAnchor, setOptionsMenuAnchor] = useState<HTMLElement | null>(null);
   const [platformMenuAnchor, setPlatformMenuAnchor] = useState<HTMLElement | null>(null);
   const [formatMenuAnchor, setFormatMenuAnchor] = useState<HTMLElement | null>(null);
@@ -102,26 +112,33 @@ const GamesListPage = () => {
     queryFn: listAllLibraryItems,
   });
   // Defensive: ensure items is always an array (API might return unexpected shape)
-  const items = Array.isArray(rawItems) ? rawItems : [];
+  const items = useMemo(() => (Array.isArray(rawItems) ? rawItems : []), [rawItems]);
+  // Hidden games are filtered out here, before the Platform/Format menus and
+  // the table are built — so the menus and the rows only ever cover what is
+  // actually shown.
+  const visibleItems = useMemo(
+    () => (showHidden ? items : items.filter((item) => !item.hideFromPublic)),
+    [items, showHidden]
+  );
 
   const platforms = useMemo(() => {
     const set = new Set<string>();
-    items.forEach((item) => {
+    visibleItems.forEach((item) => {
       if (item.platformName) set.add(item.platformName);
     });
     return Array.from(set).sort();
-  }, [items]);
+  }, [visibleItems]);
 
   const formats = useMemo(() => {
     const set = new Set<string>();
-    items.forEach((item) => {
+    visibleItems.forEach((item) => {
       if (item.format) set.add(item.format);
     });
     return Array.from(set).sort();
-  }, [items]);
+  }, [visibleItems]);
 
   const filteredAndSorted = useMemo(() => {
-    let result = items;
+    let result = visibleItems;
     if (platformFilter !== "all") {
       result = result.filter((item) => item.platformName === platformFilter);
     }
@@ -185,12 +202,12 @@ const GamesListPage = () => {
       return sortDirection === "asc" ? cmp : -cmp;
     });
     return sorted;
-  }, [items, debouncedSearch, sortColumn, sortDirection, platformFilter, formatFilter]);
+  }, [visibleItems, debouncedSearch, sortColumn, sortDirection, platformFilter, formatFilter]);
 
   useEffect(() => {
     setPage(0);
     setSelectedIds(new Set());
-  }, [debouncedSearch, platformFilter, formatFilter]);
+  }, [debouncedSearch, platformFilter, formatFilter, showHidden]);
 
 
   const paginatedItems = useMemo(() => {
@@ -368,6 +385,15 @@ const GamesListPage = () => {
             </MenuItem>
           );
         })}
+        <Divider sx={{ my: 0.5 }} />
+        <Box sx={{ px: 2, py: 0.5 }}>
+          <FormControlLabel
+            control={
+              <Checkbox checked={showHidden} onChange={(event) => setShowHidden(event.target.checked)} />
+            }
+            label={t("games.listToolbar.showHidden")}
+          />
+        </Box>
       </Menu>
       <Menu
         anchorEl={platformMenuAnchor}

@@ -926,6 +926,7 @@
       "moreTabLabel": "Plus",
       "sortByLabel": "Trier par",
       "optionsButton": "Options",
+      "showHidden": "Show Hidden",
       "cardSizePageNote": "S'applique à cette page seulement",
       "sortNameAsc": "Nom (ASC)",
       "sortNameDesc": "Nom (DESC)",

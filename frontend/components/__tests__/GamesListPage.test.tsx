@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LibraryListItem } from "../../api/types";
 import GamesListPage from "../GamesListPage";
 
@@ -21,6 +21,7 @@ const items: LibraryListItem[] = [
     tagNames: [],
     notes: null,
     digitalStorefront: null,
+    hideFromPublic: false,
   },
   {
     id: 2,
@@ -36,6 +37,23 @@ const items: LibraryListItem[] = [
     tagNames: [],
     notes: null,
     digitalStorefront: null,
+    hideFromPublic: false,
+  },
+  {
+    id: 3,
+    gameId: 12,
+    gameName: "Hidden Gem",
+    gameUuid: "uuid-3",
+    status: "owned",
+    platformName: "Xbox",
+    edition: null,
+    format: "digital",
+    firstReleaseDate: null,
+    dateAdded: null,
+    tagNames: [],
+    notes: null,
+    digitalStorefront: null,
+    hideFromPublic: true,
   },
 ];
 
@@ -61,6 +79,12 @@ vi.mock("../../hooks/useLibrary", () => ({
 }));
 
 vi.mock("../../hooks/useGames", () => ({ useGames: () => ({ data: [] }) }));
+
+// The Show Hidden preference persists in localStorage across tests in this
+// file; start each test from the default (hidden games excluded).
+beforeEach(() => {
+  localStorage.clear();
+});
 
 function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -179,6 +203,20 @@ describe("GamesListPage toolbar", () => {
     // Reopen: the new choice carries the checkmark.
     await user.click(screen.getByRole("button", { name: "Options" }));
     expect(await screen.findByRole("menuitem", { name: "25" })).toHaveClass("Mui-selected");
+  });
+
+  it("hides hidden games unless Show Hidden is checked in Options", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText("Astro Bot");
+    expect(screen.queryByText("Hidden Gem")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Options" }));
+    const checkbox = screen.getByRole("checkbox", { name: "Show Hidden" });
+    expect(checkbox).not.toBeChecked();
+    await user.click(checkbox);
+    expect(await screen.findByText("Hidden Gem")).toBeInTheDocument();
   });
 });
 

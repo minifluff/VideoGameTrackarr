@@ -14,6 +14,7 @@ const entries: BookshelfEntry[] = [
     name: "Game 1",
     platformLabel: "PS5",
     formats: ["physical"],
+    hideFromPublic: false,
   },
   {
     gameId: 101,
@@ -22,6 +23,7 @@ const entries: BookshelfEntry[] = [
     name: "Game 2",
     platformLabel: "Nintendo Switch",
     formats: ["digital"],
+    hideFromPublic: false,
   },
 ];
 

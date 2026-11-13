@@ -11,6 +11,7 @@ const entry = (overrides: Partial<BookshelfEntry>): BookshelfEntry => ({
   name: "A Game",
   platformLabel: "Nintendo Switch",
   formats: ["physical"],
+  hideFromPublic: false,
   ...overrides,
 });
 

@@ -25,6 +25,7 @@ import { parseGameSortParam } from "../utils/gameSortOptions";
 import { gameIdentifier } from "../utils/identifiers";
 import { matchesOwnership } from "../utils/ownershipFilter";
 import { ALL_KNOWN_STOREFRONTS } from "../utils/storefronts";
+import { readStoredShowHidden, storeShowHidden } from "../utils/showHiddenGames";
 import { showUndoToast } from "./UndoToast";
 import GameCard from "./GameCard";
 import GameListToolbar, { type OwnershipStatus } from "./GameListToolbar";
@@ -122,6 +123,14 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
   // first visit, then remembered for this page's session key only.
   const { cardSize: globalCardSize } = useAppearance();
   const [cardSize, setCardSize] = useSessionState(`${sp}.cardSize`, globalCardSize);
+  // Hidden games (hide_from_public) stay out of the grid unless the user asks
+  // to see them — shared localStorage preference with the Bookshelf and List
+  // pages, so the choice follows across all three.
+  const [showHidden, setShowHiddenState] = useState(readStoredShowHidden);
+  const setShowHidden = (next: boolean) => {
+    setShowHiddenState(next);
+    storeShowHidden(next);
+  };
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<number>>(new Set());
   const [manageTagsOpen, setManageTagsOpen] = useState(false);
@@ -244,13 +253,17 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
     // isn't owned/wishlisted yet is unaffected — it stays visible (greyscaled, no chip; see
     // GameCard.tsx) since it was never "missing" in that sense.
     let list = games.filter((game) => !(game.autoDiscovered && !game.owned && !game.wishlisted));
+    // Hidden games stay out of the grid unless Show Hidden is checked in Options.
+    if (!showHidden) {
+      list = list.filter((game) => !game.hideFromPublic);
+    }
     if (effectiveOwnershipStatuses.length > 0) {
       list = list.filter((game) =>
         matchesOwnership(game, effectiveOwnershipStatuses, ownershipExclude, matchAll.ownership)
       );
     }
     return list;
-  }, [games, effectiveOwnershipStatuses, ownershipExclude, matchAll.ownership]);
+  }, [games, effectiveOwnershipStatuses, ownershipExclude, matchAll.ownership, showHidden]);
 
   const visibleGames = useMemo(
     () => filteredGames.filter((game) => !isPending(game.id)),
@@ -529,6 +542,8 @@ const GameList = ({ sessionPrefix = "games", forcedFilters, initialOwnershipStat
             onSortChange={setSort}
             cardSize={cardSize}
             onCardSizeChange={setCardSize}
+            showHidden={showHidden}
+            onShowHiddenChange={setShowHidden}
             playStatuses={playStatuses}
             onPlayStatusesChange={setPlayStatuses}
             playStatusExclude={playStatusExclude}

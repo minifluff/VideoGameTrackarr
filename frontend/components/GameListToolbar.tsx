@@ -322,6 +322,11 @@ interface GameListToolbarProps {
   // the global size.
   cardSize?: number;
   onCardSizeChange?: (size: number) => void;
+  // Optional like showMissing — only the Games page passes these; rendered in
+  // the Options menu right under the card size slider when provided. Hidden
+  // games (hide_from_public) stay out of the grid unless this is checked.
+  showHidden?: boolean;
+  onShowHiddenChange?: (value: boolean) => void;
   // Optional like includeAddons below — the Games page never shows a still-undiscovered
   // "what's missing" game at all (see GameList.tsx), so it has no use for this toggle either;
   // same for the Missing Addons page (it's already inherently "what's missing"). Either
@@ -415,6 +420,8 @@ const GameListToolbar = ({
   onSortChange,
   cardSize,
   onCardSizeChange,
+  showHidden,
+  onShowHiddenChange,
   showMissing,
   onShowMissingChange,
   includeAddons,
@@ -1269,6 +1276,20 @@ const GameListToolbar = ({
             <Typography variant="caption" color="text.secondary">
               {t("games.listToolbar.cardSizePageNote")}
             </Typography>
+            {onShowHiddenChange !== undefined ? (
+              <>
+                <Divider sx={{ my: 1.5 }} />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={showHidden ?? false}
+                      onChange={(event) => onShowHiddenChange(event.target.checked)}
+                    />
+                  }
+                  label={t("games.listToolbar.showHidden")}
+                />
+              </>
+            ) : null}
           </Box>
         </Menu>
         <Dialog open={filtersOpen} onClose={() => setFiltersOpen(false)} fullWidth maxWidth="md">
