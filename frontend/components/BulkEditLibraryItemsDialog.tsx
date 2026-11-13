@@ -33,12 +33,12 @@ const FORMAT_OPTIONS: { value: MediaFormat; labelKey: string }[] = [
 const FIELD_KEYS: { value: BulkLibraryField; labelKey: string }[] = [
   { value: "format", labelKey: "games.listPage.bulkEdit.fields.format" },
   { value: "platform", labelKey: "games.listPage.bulkEdit.fields.platform" },
+  { value: "digital_storefront", labelKey: "games.listPage.bulkEdit.fields.digitalStorefront" },
   { value: "region", labelKey: "games.listPage.bulkEdit.fields.region" },
   { value: "status", labelKey: "games.listPage.bulkEdit.fields.status" },
   { value: "edition", labelKey: "games.listPage.bulkEdit.fields.edition" },
   { value: "notes", labelKey: "games.listPage.bulkEdit.fields.notes" },
   { value: "game", labelKey: "games.listPage.bulkEdit.fields.game" },
-  { value: "digital_storefront", labelKey: "games.listPage.bulkEdit.fields.digitalStorefront" },
 ];
 
 interface BulkEditLibraryItemsDialogProps {

@@ -126,6 +126,26 @@ describe("BulkEditLibraryItemsDialog", () => {
     });
   });
 
+  it("lists Digital Storefront right after Platform in the Field dropdown", async () => {
+    const user = userEvent.setup();
+    render(
+      <BulkEditLibraryItemsDialog open itemIds={[1]} onClose={vi.fn()} onApplied={vi.fn()} />
+    );
+
+    await user.click(screen.getByRole("combobox", { name: "Field" }));
+    const options = await screen.findAllByRole("option");
+    expect(options.map((option) => option.textContent)).toEqual([
+      "Format",
+      "Platform",
+      "Digital Storefront",
+      "Region",
+      "Status",
+      "Edition",
+      "Notes",
+      "Move to game",
+    ]);
+  });
+
   it("applies a Digital Storefront pick from the known storefronts", async () => {
     const user = userEvent.setup();
     render(
