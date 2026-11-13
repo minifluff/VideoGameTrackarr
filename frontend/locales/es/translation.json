@@ -999,7 +999,8 @@
       "bulkImportInProgressMessage": "Se están añadiendo juegos, vuelve más tarde.",
       "bulkImportCompletedToast": "Adición masiva finalizada — {{succeeded}} añadidos, {{failed}} fallidos.",
       "bulkImportFailedToast": "La adición masiva falló. Inténtalo de nuevo.",
-      "steamSyncButton": "Steam Sync"
+      "steamSyncButton": "Steam Sync",
+      "gogSyncButton": "GOG Sync"
     },
     "suggestionsDialog": {
       "title": "¿Ya está este juego en IGDB?",

@@ -231,13 +231,14 @@ const AddGame = () => {
           <Typography variant="h4" component="h1" gutterBottom>
             {t("games.add.pageTitle")}
           </Typography>
-          <Button
-            variant="outlined"
-            onClick={() => navigate("/settings/steam-sync")}
-            sx={{ mb: 1 }}
-          >
-            {t("games.add.steamSyncButton")}
-          </Button>
+          <Stack direction="column" spacing={1} sx={{ mb: 1, alignItems: "flex-end" }}>
+            <Button variant="outlined" onClick={() => navigate("/settings/steam-sync")}>
+              {t("games.add.steamSyncButton")}
+            </Button>
+            <Button variant="outlined" onClick={() => navigate("/settings/gog-sync")}>
+              {t("games.add.gogSyncButton")}
+            </Button>
+          </Stack>
         </Box>
       </Box>
       <Box sx={{ width: "100%", typography: "body1" }}>
