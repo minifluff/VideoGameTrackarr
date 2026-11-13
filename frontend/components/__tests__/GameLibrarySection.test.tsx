@@ -235,7 +235,7 @@ describe("GameLibrarySection", () => {
     renderSection(<GameLibrarySection {...baseProps} libraryItems={[gogItem]} />);
 
     expect(
-      screen.getByLabelText("GOG installer downloaded to the NAS: windows · en · 1.0")
+      screen.getByLabelText("GOG installer downloaded: windows · en · 1.0")
     ).toBeInTheDocument();
   });
 

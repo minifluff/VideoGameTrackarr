@@ -229,14 +229,17 @@ const GamesListPage = () => {
 
 
 
-  // The Digital Storefront column only earns its space when the rows in view
-  // actually have storefronts — a platform whose copies were all bought
-  // elsewhere (or have no storefront recorded) gets a clean table with no
-  // column of dashes. Recomputed from the filtered set, so filtering to a
-  // platform with storefronts shows it and filtering away hides it again.
+  // The Digital Storefront column only earns its space when one platform is
+  // selected and its rows actually have storefronts — with All platforms it
+  // stays hidden, and a platform whose copies were all bought elsewhere (or
+  // have no storefront recorded) gets a clean table with no column of dashes.
+  // Recomputed from the filtered set, so filtering to a platform with
+  // storefronts shows it and filtering away hides it again.
   const showStorefrontColumn = useMemo(
-    () => filteredAndSorted.some((item) => item.digitalStorefront != null && item.digitalStorefront !== ""),
-    [filteredAndSorted]
+    () =>
+      platformFilter !== "all" &&
+      filteredAndSorted.some((item) => item.digitalStorefront != null && item.digitalStorefront !== ""),
+    [filteredAndSorted, platformFilter]
   );
 
   const columns: { key: SortColumn; label: string }[] = [

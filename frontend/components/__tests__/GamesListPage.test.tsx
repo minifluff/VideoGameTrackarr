@@ -275,7 +275,8 @@ describe("GamesListPage bulk delete pagination", () => {
     expect(await screen.findByText("Game 01")).toBeInTheDocument();
   });
 
-  it("shows the Digital Storefront column after Platform when a row has one", async () => {
+  it("shows the Digital Storefront column after Platform when a platform with storefronts is selected", async () => {
+    const user = userEvent.setup();
     mockListItems.mockResolvedValueOnce([
       { ...items[0], digitalStorefront: "GOG" },
       items[1],
@@ -283,6 +284,14 @@ describe("GamesListPage bulk delete pagination", () => {
     renderPage();
 
     await screen.findByText("Astro Bot");
+    // The table's Platform column header is a second button with the same
+    // name, so pick the toolbar one carrying the badge.
+    const toolbarButton = screen
+      .getAllByRole("button", { name: "Platform" })
+      .find((button) => button.querySelector(".MuiBadge-root"));
+    await user.click(toolbarButton as HTMLElement);
+    await user.click(await screen.findByRole("menuitem", { name: "PlayStation 5" }));
+
     const headers = screen.getAllByRole("columnheader").map((cell) => cell.textContent);
     expect(headers).toEqual([
       "",
@@ -296,6 +305,19 @@ describe("GamesListPage bulk delete pagination", () => {
       "",
     ]);
     expect(screen.getByText("GOG")).toBeInTheDocument();
+  });
+
+  it("hides the Digital Storefront column when All platforms is selected, even with storefronts present", async () => {
+    mockListItems.mockResolvedValueOnce([
+      { ...items[0], digitalStorefront: "GOG" },
+      items[1],
+    ]);
+    renderPage();
+
+    await screen.findByText("Astro Bot");
+    const headers = screen.getAllByRole("columnheader").map((cell) => cell.textContent);
+    expect(headers).not.toContain("Digital Storefront");
+    expect(screen.queryByText("GOG")).not.toBeInTheDocument();
   });
 
   it("hides the Digital Storefront column when no row has one", async () => {
