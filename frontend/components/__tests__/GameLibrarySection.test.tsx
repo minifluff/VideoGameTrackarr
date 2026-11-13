@@ -102,6 +102,49 @@ const abandonwareItem = {
   isOnSale: false,
 } as unknown as LibraryItem;
 
+const steamItem = {
+  id: 6,
+  status: "owned",
+  platformId: 1,
+  platformName: "Steam",
+  format: "digital",
+  digitalStorefront: "Steam",
+  edition: null,
+  steelbook: false,
+  roms: [],
+  isOnSale: false,
+} as unknown as LibraryItem;
+
+const gogInstallersWithDownload: import("../../api/integrations").GogInstallers = {
+  gameId: 1,
+  gogProductId: 1207658695,
+  groups: [
+    {
+      productId: 1207658695,
+      title: "Absolute Drift",
+      installers: [
+        {
+          id: "installer_windows_en",
+          os: "windows",
+          language: "en",
+          version: "1.0",
+          totalSize: 20,
+          files: [
+            {
+              id: "en1installer0",
+              size: 20,
+              downloadState: "completed",
+              downloadedBytes: 20,
+              downloadError: null,
+            },
+          ],
+        },
+      ],
+    },
+  ],
+  uploadedFiles: [],
+};
+
 const baseProps = {
   gameId: 1,
   platforms,
@@ -355,5 +398,39 @@ describe("GameLibrarySection", () => {
     renderSection(<GameLibrarySection {...baseProps} libraryItems={[abandonwareItem]} />);
 
     expect(screen.getByLabelText("Installer downloaded: setup_game_1.0.exe")).toBeInTheDocument();
+  });
+
+  it("hides the GOG Installers section in the edit dialog for a Steam copy of a GOG game", () => {
+    gogInstallersData = gogInstallersWithDownload;
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[gogItem, steamItem]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Steam" }));
+
+    expect(screen.getByText("Update game in your collection")).toBeInTheDocument();
+    expect(screen.queryByText("GOG Installers")).not.toBeInTheDocument();
+    expect(screen.queryByText("Installers")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Upload" })).not.toBeInTheDocument();
+  });
+
+  it("shows the GOG Installers section in the edit dialog for the GOG copy", () => {
+    gogInstallersData = gogInstallersWithDownload;
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[gogItem, steamItem]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "PC" }));
+
+    expect(screen.getByText("Update game in your collection")).toBeInTheDocument();
+    expect(screen.getByText("GOG Installers")).toBeInTheDocument();
+    expect(screen.getByText("Absolute Drift")).toBeInTheDocument();
+  });
+
+  it("shows no Installers section when adding a copy to a GOG game", () => {
+    gogInstallersData = gogInstallersWithDownload;
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[gogItem]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add copy" }));
+
+    expect(screen.getByText("Add game to your collection")).toBeInTheDocument();
+    expect(screen.queryByText("GOG Installers")).not.toBeInTheDocument();
+    expect(screen.queryByText("Installers")).not.toBeInTheDocument();
   });
 });

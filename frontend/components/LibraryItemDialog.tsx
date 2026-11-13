@@ -152,10 +152,12 @@ interface LibraryItemDialogProps {
   // keeps the Move action instead, so the ROM-deletion warning still applies there.
   showStatusToggle?: boolean;
   onStatusChange?: (status: LibraryStatus) => void;
-  // The game this copy belongs to — when set and the game has a GOG-imported copy,
-  // the GOG Installers section renders at the bottom of the dialog, like the ROM
-  // section above it. A copy that takes uploads renders the same section with an
-  // upload button instead. Games with neither render nothing here.
+  // The game this copy belongs to — when set and the copy being edited is a
+  // GOG-imported copy, the GOG Installers section renders at the bottom of the
+  // dialog, like the ROM section above it. A copy that takes uploads renders
+  // the same section with an upload button instead. The caller gates both on
+  // the edited copy, not the game: a Steam copy of a game that also has a GOG
+  // copy must not show the GOG installers.
   gameId?: number;
   showGogInstallers?: boolean;
   showInstallerUpload?: boolean;

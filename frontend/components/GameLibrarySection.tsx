@@ -476,8 +476,14 @@ const GameLibrarySection = ({
           showStatusToggle={dialogItem == null}
           onStatusChange={setDialogStatus}
           gameId={gameId}
-          showGogInstallers={hasGogItem}
-          showInstallerUpload={hasUploadableItem}
+          // Per-copy, not per-game: the Installers section belongs to the copy
+          // being edited. A game with a GOG copy AND a Steam copy used to show
+          // the GOG installers under the Steam copy too, because these were
+          // game-level flags — now only the GOG copy's dialog shows them, and
+          // only an uploadable copy's dialog shows the upload button. Adding a
+          // new copy shows neither (it has no installers yet).
+          showGogInstallers={dialogItem?.digitalStorefront === "GOG"}
+          showInstallerUpload={dialogItem != null && isUploadableItem(dialogItem)}
           platforms={platforms ?? []}
           regions={regions ?? []}
           gameCategory={gameCategory}
