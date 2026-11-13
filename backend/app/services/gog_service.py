@@ -325,9 +325,10 @@ async def get_installers(db: Session, user: User, game_id: int) -> dict[str, Any
     if entry is not None or gog_item is not None:
         # Matched but not synced (or vice versa) — keep the precise GOG error.
         _require_imported_product_id(db, game_id)
-    if _find_drm_free_library_item(db, game_id) is None:
+    if _find_uploadable_library_item(db, game_id) is None:
         raise NotFoundError(
-            "This game has no GOG or DRM-Free copy — installers are only for GOG-imported and DRM-Free games"
+            "This game has no copy that takes installers — GOG-imported games, DRM-Free "
+            "digital copies, and Abandonware/Other copies"
         )
     return {"game_id": game_id, "gog_product_id": None, "groups": [], "uploaded_files": uploaded_files}
 
@@ -335,12 +336,13 @@ async def get_installers(db: Session, user: User, game_id: int) -> dict[str, Any
 def upload_installer(
     db: Session, game_id: int, source: BinaryIO, original_filename: str
 ) -> dict[str, Any]:
-    """Stores an installer the user uploaded themselves for a DRM-Free copy — no
-    GOG product, no CDN, no queue: the file lands on the NAS straight away and
+    """Stores an installer the user uploaded themselves for a copy that takes
+    uploads (a DRM-Free digital copy, or an Abandonware/Other copy) — no GOG
+    product, no CDN, no queue: the file lands on the NAS straight away and
     the row is completed immediately."""
-    if _find_drm_free_library_item(db, game_id) is None:
+    if _find_uploadable_library_item(db, game_id) is None:
         raise NotFoundError(
-            "Uploads are only for games with a DRM-Free copy — set the copy's Digital Storefront to DRM-Free first"
+            "Uploads are only for DRM-Free digital copies and for Abandonware/Other copies"
         )
     download = gog_download_service.save_uploaded_installer(db, game_id, source, original_filename)
     return _download_dict(download)
@@ -387,7 +389,7 @@ def get_download_file_path(db: Session, game_id: int, file_id: str) -> "Path":
     if download is None:
         raise NotFoundError("That installer hasn't finished downloading to the NAS yet")
     if download.gog_product_id is None:
-        if _find_drm_free_library_item(db, game_id) is None:
+        if _find_uploadable_library_item(db, game_id) is None:
             raise NotFoundError("That installer hasn't finished downloading to the NAS yet")
     else:
         _require_imported_product_id(db, game_id)
@@ -423,15 +425,17 @@ def _download_dict(download: "GogDownload") -> dict[str, Any]:
     }
 
 
-def _find_drm_free_library_item(db: Session, game_id: int) -> LibraryItem | None:
-    """The OWNED library item carrying the DRM-Free storefront (Format: Digital) —
-    the same shape as the GOG item above, but for copies the user tagged
-    DRM-Free instead of ones the GOG sync imported."""
+def _find_uploadable_library_item(db: Session, game_id: int) -> LibraryItem | None:
+    """The OWNED library item an installer can be uploaded for: a Digital copy
+    tagged DRM-Free, or any Abandonware / Other copy. Those two formats have no
+    store flow of their own (and no storefront field in the dialog), so any owned
+    copy qualifies — the file is user-supplied either way."""
     return next(
         (
             item
             for item in library_item_repository.list_library_items(db, game_id, status=LibraryStatus.OWNED)
-            if item.format == MediaFormat.DIGITAL and item.digital_storefront == "DRM-Free"
+            if item.format in (MediaFormat.ABANDONWARE, MediaFormat.OTHER)
+            or (item.format == MediaFormat.DIGITAL and item.digital_storefront == "DRM-Free")
         ),
         None,
     )

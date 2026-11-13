@@ -154,11 +154,11 @@ interface LibraryItemDialogProps {
   onStatusChange?: (status: LibraryStatus) => void;
   // The game this copy belongs to — when set and the game has a GOG-imported copy,
   // the GOG Installers section renders at the bottom of the dialog, like the ROM
-  // section above it. A DRM-Free copy renders the same section with an upload
-  // button instead. Games with neither render nothing here.
+  // section above it. A copy that takes uploads renders the same section with an
+  // upload button instead. Games with neither render nothing here.
   gameId?: number;
   showGogInstallers?: boolean;
-  showDrmFreeInstallers?: boolean;
+  showInstallerUpload?: boolean;
   platforms: PlatformResponse[];
   regions: RegionResponse[];
   gameCategory?: GameCategory | null;
@@ -181,7 +181,7 @@ const LibraryItemDialog = ({
   onStatusChange,
   gameId,
   showGogInstallers = false,
-  showDrmFreeInstallers = false,
+  showInstallerUpload = false,
   platforms,
   regions,
   gameCategory,
@@ -898,11 +898,11 @@ const LibraryItemDialog = ({
             )}
           />
         </FormControl>
-        {(showGogInstallers || showDrmFreeInstallers) && gameId != null ? (
+        {(showGogInstallers || showInstallerUpload) && gameId != null ? (
           <GogInstallersSection
             gameId={gameId}
             hasGogItem={showGogInstallers}
-            hasDrmFreeItem={showDrmFreeInstallers}
+            hasUploadableItem={showInstallerUpload}
           />
         ) : null}
       </DialogContent>

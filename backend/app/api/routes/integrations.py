@@ -283,10 +283,11 @@ def upload_gog_installer(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> GogDownloadResponse:
-    """Upload an installer file for a DRM-Free copy straight to the NAS — no GOG
-    product, no CDN, no queue: the file streams to disk and the row is completed
-    immediately, so Download serves it right away. Re-uploading the same filename
-    replaces the file. Only for games with a DRM-Free copy."""
+    """Upload an installer file for a copy that takes uploads (a DRM-Free digital
+    copy, or an Abandonware/Other copy) straight to the NAS — no GOG product, no
+    CDN, no queue: the file streams to disk and the row is completed immediately,
+    so Download serves it right away. Re-uploading the same filename replaces
+    the file. Only for games with such a copy."""
     try:
         result = gog_service.upload_installer(db, game_id, file.file, file.filename or "")
     except ValueError as exc:

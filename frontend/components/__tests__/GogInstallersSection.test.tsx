@@ -71,10 +71,10 @@ function makeInstallers(): GogInstallers {
   };
 }
 
-function renderSection(hasGogItem = true, hasDrmFreeItem = false) {
+function renderSection(hasGogItem = true, hasUploadableItem = false) {
   return render(
     <ThemeProvider theme={createM3Theme("light", "normal")}>
-      <GogInstallersSection gameId={1} hasGogItem={hasGogItem} hasDrmFreeItem={hasDrmFreeItem} />
+      <GogInstallersSection gameId={1} hasGogItem={hasGogItem} hasUploadableItem={hasUploadableItem} />
     </ThemeProvider>
   );
 }

@@ -18,32 +18,32 @@ import { TOAST_OPTIONS } from "../utils/toastOptions";
 
 interface GogInstallersSectionProps {
   gameId: number;
-  // Only GOG-imported games have installers from the CDN, and only DRM-Free
-  // copies take uploads — the dialog only mounts this section (and fires the
-  // query) when a library item carries one of those storefronts, so every other
-  // dialog skips the request entirely.
+  // Only GOG-imported games have installers from the CDN, and only copies that
+  // take uploads (DRM-Free digital, Abandonware, Other) take uploaded files —
+  // the dialog only mounts this section (and fires the query) when a library
+  // item qualifies, so every other dialog skips the request entirely.
   hasGogItem: boolean;
-  hasDrmFreeItem: boolean;
+  hasUploadableItem: boolean;
 }
 
 // Offline installers for a GOG-imported game: the NAS downloads each file in the
 // background (uploads/gog-installers, never part of backups), and once a file is on
-// the NAS the button serves it to this device instead. DRM-Free copies get the
-// same treatment, except the file comes from the user: they upload it here and
-// Download sends it back. The section stays hidden whenever there is nothing to
-// show (a GOG game with no installers and no uploads, and no DRM-Free copy to
+// the NAS the button serves it to this device instead. Copies that take uploads
+// get the same treatment, except the file comes from the user: they upload it
+// here and Download sends it back. The section stays hidden whenever there is
+// nothing to show (a GOG game with no installers and no uploads, and no copy to
 // upload for).
-const GogInstallersSection = ({ gameId, hasGogItem, hasDrmFreeItem }: GogInstallersSectionProps) => {
+const GogInstallersSection = ({ gameId, hasGogItem, hasUploadableItem }: GogInstallersSectionProps) => {
   const { t } = useTranslation();
-  const { data: installers, isError } = useGogInstallers(gameId, hasGogItem || hasDrmFreeItem);
+  const { data: installers, isError } = useGogInstallers(gameId, hasGogItem || hasUploadableItem);
   const queueDownload = useQueueGogInstallerDownload(gameId);
   const fileLink = useGogInstallerFileLink();
   const uploadInstaller = useUploadGogInstaller(gameId);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  if (!hasGogItem && !hasDrmFreeItem) return null;
+  if (!hasGogItem && !hasUploadableItem) return null;
   if (isError || !installers) return null;
-  if (installers.groups.length === 0 && installers.uploadedFiles.length === 0 && !hasDrmFreeItem) {
+  if (installers.groups.length === 0 && installers.uploadedFiles.length === 0 && !hasUploadableItem) {
     return null;
   }
 
@@ -146,7 +146,7 @@ const GogInstallersSection = ({ gameId, hasGogItem, hasDrmFreeItem }: GogInstall
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         {t(hasGogItem ? "games.gogInstallers.description" : "games.gogInstallers.uploadedDescription")}
       </Typography>
-      {hasDrmFreeItem ? (
+      {hasUploadableItem ? (
         <Box sx={{ mb: 2 }}>
           <input
             ref={fileInputRef}

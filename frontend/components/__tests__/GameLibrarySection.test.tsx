@@ -88,6 +88,19 @@ const drmFreeItem = {
   isOnSale: false,
 } as unknown as LibraryItem;
 
+const abandonwareItem = {
+  id: 5,
+  status: "owned",
+  platformId: 1,
+  platformName: "PC",
+  format: "abandonware",
+  digitalStorefront: null,
+  edition: null,
+  steelbook: false,
+  roms: [],
+  isOnSale: false,
+} as unknown as LibraryItem;
+
 const baseProps = {
   gameId: 1,
   platforms,
@@ -318,5 +331,28 @@ describe("GameLibrarySection", () => {
     renderSection(<GameLibrarySection {...baseProps} libraryItems={[drmFreeItem]} />);
 
     expect(screen.queryByLabelText(/Installer downloaded/)).not.toBeInTheDocument();
+  });
+
+  it("shows the Installers section with an upload button in the edit dialog for an Abandonware copy", () => {
+    gogInstallersData = { gameId: 1, gogProductId: null, groups: [], uploadedFiles: [] };
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[abandonwareItem]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "PC" }));
+
+    expect(screen.getByText("Update game in your collection")).toBeInTheDocument();
+    expect(screen.getByText("Installers")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Upload installer" })).toBeInTheDocument();
+  });
+
+  it("shows the gamepad icon on an Abandonware row with an uploaded installer", () => {
+    gogInstallersData = {
+      gameId: 1,
+      gogProductId: null,
+      groups: [],
+      uploadedFiles: [{ fileId: "upload-abc", filename: "setup_game_1.0.exe", size: 20 }],
+    };
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[abandonwareItem]} />);
+
+    expect(screen.getByLabelText("Installer downloaded: setup_game_1.0.exe")).toBeInTheDocument();
   });
 });

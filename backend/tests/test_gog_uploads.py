@@ -27,6 +27,27 @@ def _seed_drm_free_game(db_session):
     return game
 
 
+def _seed_format_game(
+    db_session, name, slug, igdb_id, format, storefront=None, status=LibraryStatus.OWNED
+):
+    game = Game(igdb_id=igdb_id, name=name, slug=slug, category=GameCategory.MAIN_GAME)
+    db_session.add(game)
+    platform = Platform(name="PC (Microsoft Windows)", slug="win")
+    db_session.add(platform)
+    db_session.commit()
+    db_session.add(
+        LibraryItem(
+            game_id=game.id,
+            platform_id=platform.id,
+            status=status,
+            format=format,
+            digital_storefront=storefront,
+        )
+    )
+    db_session.commit()
+    return game
+
+
 def _seed_plain_game(db_session):
     game = Game(igdb_id=102, name="Plain Game", slug="plain-game", category=GameCategory.MAIN_GAME)
     db_session.add(game)
@@ -92,7 +113,7 @@ def test_upload_installer_replaces_same_filename(auth_client, db_session, tmp_pa
     assert len(listed["uploadedFiles"]) == 1
 
 
-def test_upload_installer_requires_drm_free_copy(auth_client, db_session, tmp_path, monkeypatch):
+def test_upload_installer_requires_uploadable_copy(auth_client, db_session, tmp_path, monkeypatch):
     monkeypatch.setattr(gog_download_service, "UPLOADS_DIR", tmp_path / "uploads")
     plain = _seed_plain_game(db_session)
 
@@ -101,6 +122,51 @@ def test_upload_installer_requires_drm_free_copy(auth_client, db_session, tmp_pa
     assert response.status_code == 404
     listed = auth_client.get(f"/api/integrations/gog/games/{plain.id}/installers")
     assert listed.status_code == 404
+
+
+def test_upload_installer_works_for_abandonware_copy(auth_client, db_session, tmp_path, monkeypatch):
+    monkeypatch.setattr(gog_download_service, "UPLOADS_DIR", tmp_path / "uploads")
+    game = _seed_format_game(
+        db_session, "Abandonware Game", "abandonware-game", 103, MediaFormat.ABANDONWARE
+    )
+
+    response = _upload(auth_client, game.id)
+
+    assert response.status_code == 201
+    assert response.json()["status"] == "completed"
+    listed = auth_client.get(f"/api/integrations/gog/games/{game.id}/installers").json()
+    assert listed["gogProductId"] is None
+    assert listed["groups"] == []
+    [uploaded] = listed["uploadedFiles"]
+    assert uploaded["filename"] == FILENAME
+
+
+def test_upload_installer_works_for_other_copy(auth_client, db_session, tmp_path, monkeypatch):
+    monkeypatch.setattr(gog_download_service, "UPLOADS_DIR", tmp_path / "uploads")
+    game = _seed_format_game(db_session, "Other Game", "other-game", 104, MediaFormat.OTHER)
+
+    response = _upload(auth_client, game.id)
+
+    assert response.status_code == 201
+    listed = auth_client.get(f"/api/integrations/gog/games/{game.id}/installers").json()
+    assert len(listed["uploadedFiles"]) == 1
+
+
+def test_upload_installer_rejects_wishlist_copy(auth_client, db_session, tmp_path, monkeypatch):
+    monkeypatch.setattr(gog_download_service, "UPLOADS_DIR", tmp_path / "uploads")
+    game = _seed_format_game(
+        db_session,
+        "Wishlist DRM-Free Game",
+        "wishlist-drm-free-game",
+        105,
+        MediaFormat.DIGITAL,
+        storefront="DRM-Free",
+        status=LibraryStatus.WISHLIST,
+    )
+
+    response = _upload(auth_client, game.id)
+
+    assert response.status_code == 404
 
 
 def test_installers_list_for_drm_free_game_never_calls_gog(

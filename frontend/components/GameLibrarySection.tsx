@@ -74,12 +74,21 @@ const GameLibrarySection = ({
   const updateRomLabel = useUpdateRomLabel(gameId);
   const deleteRom = useDeleteRom(gameId);
   // Installer downloads only exist for GOG-imported games, and uploaded
-  // installers only for DRM-Free copies — the query (and the row icon below)
-  // only fires when a copy carries one of those storefronts. Same query key as
-  // the dialog's installers section, so the two share one request.
+  // installers only for copies that take uploads — the query (and the row icon
+  // below) only fires when a copy carries one of those. Same query key as the
+  // dialog's installers section, so the two share one request.
   const hasGogItem = (libraryItems ?? []).some((item) => item.digitalStorefront === "GOG");
-  const hasDrmFreeItem = (libraryItems ?? []).some((item) => item.digitalStorefront === "DRM-Free");
-  const { data: gogInstallers } = useGogInstallers(gameId, hasGogItem || hasDrmFreeItem);
+  // A copy an installer can be uploaded for: an owned Digital copy tagged
+  // DRM-Free, or any owned Abandonware / Other copy (those formats have no
+  // store flow, so any owned copy qualifies). Mirrors the backend gate in
+  // gog_service._find_uploadable_library_item.
+  const isUploadableItem = (item: LibraryItem) =>
+    item.status === "owned" &&
+    (item.format === "abandonware" ||
+      item.format === "other" ||
+      (item.format === "digital" && item.digitalStorefront === "DRM-Free"));
+  const hasUploadableItem = (libraryItems ?? []).some(isUploadableItem);
+  const { data: gogInstallers } = useGogInstallers(gameId, hasGogItem || hasUploadableItem);
   // Labels of the installers already downloaded to the NAS ("windows · en · 1.0"),
   // for the row icon's tooltip — empty while nothing has finished downloading.
   const downloadedGogInstallerLabels = useMemo(() => {
@@ -180,19 +189,18 @@ const GameLibrarySection = ({
   // The same gamepad icon as the ROM one, on a GOG copy whose installer is
   // already downloaded to the NAS — green, because a downloaded installer is
   // ready to send to this device (unlike a ROM, which can be unplayable). A
-  // DRM-Free copy gets the same icon once an installer has been uploaded for it.
+  // copy that takes uploads gets the same icon once an installer has been
+  // uploaded for it.
   const renderGogInstallerIcon = (item: LibraryItem) => {
     const isGog = item.digitalStorefront === "GOG";
-    const isDrmFree = item.digitalStorefront === "DRM-Free";
     if (isGog && downloadedGogInstallerLabels.length === 0) return null;
-    if (isDrmFree && uploadedInstallerNames.length === 0) return null;
-    if (!isGog && !isDrmFree) return null;
+    if (!isGog && (!isUploadableItem(item) || uploadedInstallerNames.length === 0)) return null;
     const tooltip = isGog
       ? t("games.library.gogInstallerDownloadedTooltip", {
           count: downloadedGogInstallerLabels.length,
           name: downloadedGogInstallerLabels.join(", "),
         })
-      : t("games.library.drmFreeInstallerUploadedTooltip", {
+      : t("games.library.installerUploadedTooltip", {
           count: uploadedInstallerNames.length,
           name: uploadedInstallerNames.join(", "),
         });
@@ -395,7 +403,7 @@ const GameLibrarySection = ({
                 .join(" · ");
               const showGogInstallerIcon =
                 (item.digitalStorefront === "GOG" && downloadedGogInstallerLabels.length > 0) ||
-                (item.digitalStorefront === "DRM-Free" && uploadedInstallerNames.length > 0);
+                (isUploadableItem(item) && uploadedInstallerNames.length > 0);
               return (
                 <ListRow
                   key={item.id}
@@ -469,7 +477,7 @@ const GameLibrarySection = ({
           onStatusChange={setDialogStatus}
           gameId={gameId}
           showGogInstallers={hasGogItem}
-          showDrmFreeInstallers={hasDrmFreeItem}
+          showInstallerUpload={hasUploadableItem}
           platforms={platforms ?? []}
           regions={regions ?? []}
           gameCategory={gameCategory}
