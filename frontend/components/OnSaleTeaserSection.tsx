@@ -4,8 +4,6 @@ import { useOnSale } from "../hooks/useInsights";
 import CardCarousel from "./CardCarousel";
 import { OnSaleTile } from "./OnSaleSection";
 
-const TEASER_LIMIT = 15;
-
 // Shows nothing at all (heading included) when there's nothing on sale — an always-empty
 // "0 games on sale" block would just be noise on a dashboard. DashboardPage itself also
 // gates whether this even mounts and owns divider placement between sections, so this
@@ -20,7 +18,7 @@ const OnSaleTeaserSection = ({ cardSize, columnWidth }: { cardSize?: number; col
 
   return (
     <CardCarousel
-      items={items.slice(0, TEASER_LIMIT)}
+      items={items}
       getItemKey={(item) => item.libraryItemId}
       renderItem={(item) => <OnSaleTile item={item} hideWishlistedLine />}
       title={t("insights.dashboard.onSaleHeading")}

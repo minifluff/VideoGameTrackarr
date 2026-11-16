@@ -155,6 +155,32 @@ def test_stats_recently_added_and_recently_played(auth_client, db_session, seed_
     assert [g["id"] for g in body["recentlyPlayed"]] == [seed_game.id]
 
 
+def test_stats_recently_added_excludes_games_added_over_two_weeks_ago(auth_client, db_session):
+    db_session.add(
+        Game(
+            igdb_id=9001,
+            name="Old Game",
+            category=GameCategory.MAIN_GAME,
+            created_at=datetime.now(UTC) - timedelta(days=15),
+        )
+    )
+    db_session.commit()
+
+    response = auth_client.get("/api/dashboard/stats")
+
+    assert response.json()["recentlyAdded"] == []
+
+
+def test_stats_recently_added_caps_at_twenty(auth_client, db_session):
+    for index in range(21):
+        db_session.add(Game(igdb_id=9100 + index, name=f"Game {index}", category=GameCategory.MAIN_GAME))
+    db_session.commit()
+
+    response = auth_client.get("/api/dashboard/stats")
+
+    assert len(response.json()["recentlyAdded"]) == 20
+
+
 def test_release_calendar_requires_auth(client):
     response = client.get("/api/dashboard/release-calendar")
 

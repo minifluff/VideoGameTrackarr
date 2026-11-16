@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from typing import Literal
 
 from sqlalchemy import func, select
@@ -22,7 +22,10 @@ from app.repositories.device_repository import DeviceWithStatus
 from app.repositories.device_repository import _row_to_device_with_status as _row_to_device
 
 BREAKDOWN_LIMIT = 10
-RECENT_LIMIT = 8
+RECENT_LIMIT = 20
+# Recently-added rows only cover additions this recent — older additions have
+# already had their moment on the dashboard.
+RECENT_ADDED_DAYS = 14
 
 
 @dataclass
@@ -60,9 +63,10 @@ def list_recently_added(db: Session) -> list[RecentlyAddedHardwareItem]:
     device_added_at = (
         select(func.max(UserDevice.created_at)).where(UserDevice.device_id == Device.id).scalar_subquery()
     )
+    cutoff = datetime.now(UTC) - timedelta(days=RECENT_ADDED_DAYS)
     device_stmt = (
         select(Device, *_DEVICE_STATUS_COLUMNS, device_added_at)
-        .where(device_added_at.is_not(None))
+        .where(device_added_at.is_not(None), device_added_at >= cutoff)
         .order_by(device_added_at.desc())
         .limit(RECENT_LIMIT)
     )
@@ -78,7 +82,7 @@ def list_recently_added(db: Session) -> list[RecentlyAddedHardwareItem]:
     )
     accessory_stmt = (
         select(Accessory, *_ACCESSORY_STATUS_COLUMNS, accessory_added_at)
-        .where(accessory_added_at.is_not(None))
+        .where(accessory_added_at.is_not(None), accessory_added_at >= cutoff)
         .order_by(accessory_added_at.desc())
         .limit(RECENT_LIMIT)
     )

@@ -1,6 +1,6 @@
 from collections import Counter
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Literal
 
 from sqlalchemy import func, select
@@ -31,7 +31,10 @@ from app.repositories.game_repository import (
     _wishlisted_exists,
 )
 
-RECENT_LIMIT = 8
+RECENT_LIMIT = 20
+# Recently-added rows only cover additions this recent — older additions have
+# already had their moment on the dashboard.
+RECENT_ADDED_DAYS = 14
 BREAKDOWN_LIMIT = 10
 
 
@@ -147,6 +150,13 @@ def get_stats(db: Session) -> DashboardStatsData:
         )
     ]
 
+    # Same effective date as the Date Added sort (see game_repository
+    # _effective_date_added_epoch): a pre-release addition surfaces on its
+    # release date, not its much earlier added date. Only additions whose
+    # effective date is within the last RECENT_ADDED_DAYS show here at all.
+    now = datetime.now(UTC)
+    effective_added = _effective_date_added_epoch(now)
+    recent_cutoff_epoch = int((now - timedelta(days=RECENT_ADDED_DAYS)).timestamp())
     recently_added_stmt = (
         select(
             Game,
@@ -159,11 +169,9 @@ def get_stats(db: Session) -> DashboardStatsData:
             Game.parent_game_id.is_(None),
             _is_browsable_game(Game.category),
             ~_is_missing_game(Game.id),
+            effective_added >= recent_cutoff_epoch,
         )
-        # Same effective date as the Date Added sort (see game_repository
-        # _effective_date_added_epoch): a pre-release addition surfaces on its
-        # release date, not its much earlier added date.
-        .order_by(_effective_date_added_epoch().desc())
+        .order_by(effective_added.desc())
         .limit(RECENT_LIMIT)
     )
     recently_added = [_row_to_game_with_status(row) for row in db.execute(recently_added_stmt)]

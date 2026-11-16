@@ -86,9 +86,11 @@ def test_dashboard_recently_added_uses_effective_date(db_session):
 
     stats = dashboard_repository.get_stats(db_session)
 
+    # Only additions whose effective date is within the last 14 days show:
+    # Future Release (added 5 days ago) and Released Recently (added 30 days
+    # ago but released 10 days ago). No Release (20 days) and Old Release
+    # (40 days) have already had their moment on the dashboard.
     assert [g.game.id for g in stats.recently_added] == [
         games["future_release"].id,
         games["released_recently"].id,
-        games["no_release"].id,
-        games["old_release"].id,
     ]
