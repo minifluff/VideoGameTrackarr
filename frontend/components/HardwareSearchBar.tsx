@@ -66,6 +66,8 @@ interface HardwareSearchBarProps {
   onAccessoryTypeIdsChange: (ids: number[]) => void;
   platformIds: number[];
   onPlatformIdsChange: (ids: number[]) => void;
+  // A Hardware → Platforms page is already one platform, so it has no Platform filter.
+  hidePlatform?: boolean;
 }
 
 // Search + status in the bar, filters & sort behind a filter button that opens a
@@ -86,6 +88,7 @@ const HardwareSearchBar = ({
   onAccessoryTypeIdsChange,
   platformIds,
   onPlatformIdsChange,
+  hidePlatform = false,
 }: HardwareSearchBarProps) => {
   const { t } = useTranslation();
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -232,15 +235,17 @@ const HardwareSearchBar = ({
                   placeholder={allPlaceholder}
                 />
               </Grid>
-              <Grid size={{ xs: 12 }}>
-                <LookupFilter
-                  label={t("hardware.listToolbar.platformLabel")}
-                  options={hardwarePlatforms ?? []}
-                  value={platformIds}
-                  onChange={onPlatformIdsChange}
-                  placeholder={allPlaceholder}
-                />
-              </Grid>
+              {hidePlatform ? null : (
+                <Grid size={{ xs: 12 }}>
+                  <LookupFilter
+                    label={t("hardware.listToolbar.platformLabel")}
+                    options={hardwarePlatforms ?? []}
+                    value={platformIds}
+                    onChange={onPlatformIdsChange}
+                    placeholder={allPlaceholder}
+                  />
+                </Grid>
+              )}
             </Grid>
           </DialogContent>
         </Dialog>

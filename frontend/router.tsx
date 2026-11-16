@@ -31,6 +31,8 @@ const GamesListPage = lazy(() => import("./components/GamesListPage"));
 const PlayingGamesPage = lazy(() => import("./components/PlayingGamesPage"));
 const WishlistGamesPage = lazy(() => import("./components/WishlistGamesPage"));
 const HardwarePage = lazy(() => import("./components/HardwarePage"));
+const HardwarePlatformPage = lazy(() => import("./components/HardwarePlatformPage"));
+const HardwarePlatformsPage = lazy(() => import("./components/HardwarePlatformsPage"));
 const AchievementsPage = lazy(() => import("./components/AchievementsPage"));
 const AchievementGamePage = lazy(() => import("./components/AchievementGamePage"));
 const InsightsPage = lazy(() => import("./components/InsightsPage"));
@@ -83,6 +85,8 @@ import {
   gameDetailCrumbs,
   gamesCrumbs,
   hardwareCrumbs,
+  hardwarePlatformCrumbs,
+  hardwarePlatformsCrumbs,
   insightsCrumbs,
   achievementsCrumbs,
   achievementGameCrumbs,
@@ -210,6 +214,16 @@ const router = createBrowserRouter([
             handle: { crumbs: platformCrumbs },
           },
           { path: "/hardware", element: <HardwarePage />, handle: { crumbs: hardwareCrumbs } },
+          {
+            path: "/hardware/platforms",
+            element: <HardwarePlatformsPage />,
+            handle: { crumbs: hardwarePlatformsCrumbs },
+          },
+          {
+            path: "/hardware/platforms/:platformSlug",
+            element: <HardwarePlatformPage />,
+            handle: { crumbs: hardwarePlatformCrumbs },
+          },
           {
             path: "/hardware/device/add",
             element: <AddDevicePage />,

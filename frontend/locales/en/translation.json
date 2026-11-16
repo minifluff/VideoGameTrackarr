@@ -1861,6 +1861,14 @@
       "devicesHeading": "Devices",
       "accessoriesHeading": "Accessories"
     },
+    "platformsPage": {
+      "title": "Platforms",
+      "deviceCount_one": "{{count}} device",
+      "deviceCount_other": "{{count}} devices",
+      "accessoryCount_one": "{{count}} accessory",
+      "accessoryCount_other": "{{count}} accessories",
+      "emptyMessage": "No platforms yet — they show up here once you own or wishlist a device on one, or an accessory compatible with one."
+    },
     "searchBar": {
       "statusAll": "All",
       "searchPlaceholder": "Enter device or accessory name",

@@ -85,6 +85,7 @@ export function getNavDestinations(t: TFunction, options?: NavDestinationOptions
       subItems: [
         { to: "/hardware/device/add", label: t("nav.addDevice"), icon: <AddIcon /> },
         { to: "/hardware/accessory/add", label: t("nav.addAccessory"), icon: <AddIcon /> },
+        { to: "/hardware/platforms", label: t("nav.platforms"), icon: <SportsEsportsIcon /> },
       ],
     },
     { to: "/events", label: t("nav.events"), icon: <EventIcon /> },

@@ -14,16 +14,29 @@ import HardwareSearchBar from "./HardwareSearchBar";
 import type { HardwareSort, HardwareStatusFilter } from "./HardwareListToolbar";
 import { useSessionState } from "../hooks/useSessionState";
 
-const HardwarePage = () => {
+interface HardwarePageProps {
+  // A Hardware → Platforms page: the same lists, kept to devices on this platform and
+  // accessories compatible with it, with their own search, sort and filters.
+  platformId?: number;
+  platformName?: string;
+}
+
+const HardwarePage = ({ platformId, platformName }: HardwarePageProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [searchKeyword, setSearchKeyword] = useSessionState("hardware.searchKeyword", "");
-  const [status, setStatus] = useSessionState<HardwareStatusFilter>("hardware.status", "all");
-  const [sort, setSort] = useSessionState<HardwareSort>("hardware.sort", "name");
-  const [manufacturerIds, setManufacturerIds] = useSessionState<number[]>("hardware.manufacturerIds", []);
-  const [deviceTypeIds, setDeviceTypeIds] = useSessionState<number[]>("hardware.deviceTypeIds", []);
-  const [accessoryTypeIds, setAccessoryTypeIds] = useSessionState<number[]>("hardware.accessoryTypeIds", []);
-  const [platformIds, setPlatformIds] = useSessionState<number[]>("hardware.platformIds", []);
+  // The platform page keeps its own search, sort and filters apart from the main Hardware
+  // page's, so going back and forth doesn't leak one page's state into the other.
+  const scope = platformId === undefined ? "hardware" : "hardwarePlatform";
+  const [searchKeyword, setSearchKeyword] = useSessionState(`${scope}.searchKeyword`, "");
+  const [status, setStatus] = useSessionState<HardwareStatusFilter>(`${scope}.status`, "all");
+  const [sort, setSort] = useSessionState<HardwareSort>(`${scope}.sort`, "name");
+  const [manufacturerIds, setManufacturerIds] = useSessionState<number[]>(`${scope}.manufacturerIds`, []);
+  const [deviceTypeIds, setDeviceTypeIds] = useSessionState<number[]>(`${scope}.deviceTypeIds`, []);
+  const [accessoryTypeIds, setAccessoryTypeIds] = useSessionState<number[]>(`${scope}.accessoryTypeIds`, []);
+  const [platformIds, setPlatformIds] = useSessionState<number[]>(`${scope}.platformIds`, []);
+  // On a platform page the Platform filter is the page itself, so both lists are pinned
+  // to it whatever the (hidden) filter holds.
+  const pinnedPlatformIds = platformId === undefined ? platformIds : [platformId];
 
   const debouncedKeyword = useDebouncedValue(searchKeyword.trim(), 500);
   // Sub-nav and title: hidden once scrolled, only return when back at the very top.
@@ -51,7 +64,7 @@ const HardwarePage = () => {
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2, mb: 3, flexWrap: "wrap", mt: 2 }}>
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="h4" component="h1" gutterBottom>
-              {t("hardware.page.title")}
+              {platformName ?? t("hardware.page.title")}
             </Typography>
           </Box>
           <Stack direction="row" spacing={1.5} sx={{ flexShrink: 0, flexWrap: "wrap", rowGap: 1 }}>
@@ -80,6 +93,7 @@ const HardwarePage = () => {
           onAccessoryTypeIdsChange={setAccessoryTypeIds}
           platformIds={platformIds}
           onPlatformIdsChange={setPlatformIds}
+          hidePlatform={platformId !== undefined}
         />
       </Box>
 
@@ -107,7 +121,7 @@ const HardwarePage = () => {
             sort={sort}
             manufacturerIds={manufacturerIds}
             deviceTypeIds={deviceTypeIds}
-            platformIds={platformIds}
+            platformIds={pinnedPlatformIds}
           />
         </Box>
 
@@ -121,7 +135,7 @@ const HardwarePage = () => {
             sort={sort}
             manufacturerIds={manufacturerIds}
             accessoryTypeIds={accessoryTypeIds}
-            platformIds={platformIds}
+            platformIds={pinnedPlatformIds}
           />
         </Box>
       </Stack>

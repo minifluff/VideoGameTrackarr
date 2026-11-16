@@ -11,6 +11,37 @@ import { storefrontLogoUrl, type PlatformScope } from "../utils/platformScope";
 
 const LOGO_HEIGHT = 56;
 
+// A logo image, or the text standing in for one that hasn't been added yet. Also used by the
+// Hardware → Platforms cards.
+export const LogoOrBadge = ({
+  logoUrl,
+  badgeText,
+  height,
+}: {
+  logoUrl: string | undefined;
+  badgeText: string;
+  height: number;
+}) =>
+  logoUrl ? (
+    <Box component="img" src={logoUrl} alt="" sx={{ maxHeight: height, maxWidth: "100%", objectFit: "contain" }} />
+  ) : (
+    <Typography
+      aria-hidden
+      variant="h6"
+      component="div"
+      color="text.secondary"
+      sx={{
+        fontWeight: 700,
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        maxWidth: "100%",
+      }}
+    >
+      {badgeText}
+    </Typography>
+  );
+
 interface PlatformCardProps {
   // name is the card's display name ("PC · Steam" for a PC storefront card).
   platform: LibraryPlatform;
@@ -48,30 +79,7 @@ const PlatformCard = ({ platform, scope, onClick }: PlatformCardProps) => {
             bgcolor: "action.hover",
           }}
         >
-          {logoUrl ? (
-            <Box
-              component="img"
-              src={logoUrl}
-              alt=""
-              sx={{ maxHeight: LOGO_HEIGHT, maxWidth: "100%", objectFit: "contain" }}
-            />
-          ) : (
-            <Typography
-              aria-hidden
-              variant="h6"
-              component="div"
-              color="text.secondary"
-              sx={{
-                fontWeight: 700,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                maxWidth: "100%",
-              }}
-            >
-              {badgeText}
-            </Typography>
-          )}
+          <LogoOrBadge logoUrl={logoUrl} badgeText={badgeText} height={LOGO_HEIGHT} />
         </Box>
         <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>
           <Typography
