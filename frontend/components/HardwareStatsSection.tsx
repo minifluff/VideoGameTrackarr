@@ -1,30 +1,13 @@
-import Box from "@mui/material/Box";
-import Chip from "@mui/material/Chip";
-import Grid from "@mui/material/Grid";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { useHardwareStats } from "../hooks/useHardwareStats";
 import { useCurrency } from "../theme/CurrencyProvider";
 import { formatCurrency } from "../utils/currency";
+import { BarList, PanelGrid, StatPanel, StatTile, TileGrid, type BarRow } from "./Stats";
 
-interface StatCardProps {
-  label: string;
-  value: string;
-}
+const BAR_LIMIT = 10;
 
-const StatCard = ({ label, value }: StatCardProps) => (
-  <Paper sx={{ p: 2, textAlign: "center" }}>
-    <Typography variant="h4" component="div">
-      {value}
-    </Typography>
-    <Typography variant="body2" color="text.secondary">
-      {label}
-    </Typography>
-  </Paper>
-);
-
+// Hardware half of Insights' stats — the upstream page's tiles and bar-list breakdowns.
 const HardwareStatsSection = () => {
   const { t } = useTranslation();
   const { data: stats, isLoading } = useHardwareStats();
@@ -34,58 +17,28 @@ const HardwareStatsSection = () => {
     return null;
   }
 
-  const hasBreakdownData = stats.manufacturerDistribution.length > 0 || stats.platformDistribution.length > 0;
+  const plainRows = (entries: { name: string; count: number }[]): BarRow[] =>
+    entries.map((entry) => ({ label: entry.name, value: entry.count }));
+
+  const bars = (rows: BarRow[]) => (
+    <BarList rows={rows} empty={t("insights.page.noData")} limit={BAR_LIMIT} otherLabel={t("insights.page.other")} />
+  );
 
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 6, sm: 3 }}>
-          <StatCard label={t("hardware.stats.ownedConsoles")} value={String(stats.ownedConsoles)} />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 3 }}>
-          <StatCard label={t("hardware.stats.ownedAccessories")} value={String(stats.ownedAccessories)} />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 3 }}>
-          <StatCard label={t("hardware.stats.wishlistHardware")} value={String(stats.wishlistHardware)} />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 3 }}>
-          <StatCard
-            label={t("hardware.stats.collectionValue")}
-            value={formatCurrency(stats.collectionValue, currency, { maximumFractionDigits: 0 })}
-          />
-        </Grid>
-      </Grid>
-
-      {hasBreakdownData ? (
-        <Paper sx={{ p: 2 }}>
-          <Stack spacing={2}>
-            {stats.manufacturerDistribution.length > 0 ? (
-              <Box>
-                <Typography variant="subtitle2" gutterBottom>
-                  {t("hardware.stats.byManufacturer")}
-                </Typography>
-                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                  {stats.manufacturerDistribution.map((entry) => (
-                    <Chip key={entry.name} label={`${entry.name}: ${entry.count}`} variant="outlined" />
-                  ))}
-                </Box>
-              </Box>
-            ) : null}
-            {stats.platformDistribution.length > 0 ? (
-              <Box>
-                <Typography variant="subtitle2" gutterBottom>
-                  {t("hardware.stats.byPlatform")}
-                </Typography>
-                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                  {stats.platformDistribution.map((entry) => (
-                    <Chip key={entry.name} label={`${entry.name}: ${entry.count}`} variant="outlined" />
-                  ))}
-                </Box>
-              </Box>
-            ) : null}
-          </Stack>
-        </Paper>
-      ) : null}
+      <TileGrid>
+        <StatTile label={t("hardware.stats.ownedConsoles")} value={stats.ownedConsoles} to="/hardware" />
+        <StatTile label={t("hardware.stats.ownedAccessories")} value={stats.ownedAccessories} to="/hardware" />
+        <StatTile label={t("hardware.stats.wishlistHardware")} value={stats.wishlistHardware} to="/hardware" />
+        <StatTile
+          label={t("hardware.stats.collectionValue")}
+          value={formatCurrency(stats.collectionValue, currency, { maximumFractionDigits: 0 })}
+        />
+      </TileGrid>
+      <PanelGrid>
+        <StatPanel title={t("hardware.stats.byManufacturer")}>{bars(plainRows(stats.manufacturerDistribution))}</StatPanel>
+        <StatPanel title={t("hardware.stats.byPlatform")}>{bars(plainRows(stats.platformDistribution))}</StatPanel>
+      </PanelGrid>
     </Stack>
   );
 };

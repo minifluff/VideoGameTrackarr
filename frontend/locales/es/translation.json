@@ -1442,7 +1442,10 @@
     },
     "page": {
       "gamesHeading": "Juegos",
-      "hardwareHeading": "Hardware"
+      "hardwareHeading": "Hardware",
+      "moreHeading": "More insights",
+      "noData": "Nothing to show yet.",
+      "other": "Other"
     },
     "subNav": {
       "overview": "Resumen"

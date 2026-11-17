@@ -5,9 +5,11 @@ import ButtonBase from "@mui/material/ButtonBase";
 import Typography from "@mui/material/Typography";
 import type { TFunction } from "i18next";
 
-// Shared pieces for the Dashboard (ported from upstream's Overview): headline tiles and
-// the playtime formatter. Upstream's `vgt.*` tokens don't exist in this fork's theme, so
-// muted text uses `text.secondary` and the link hover uses `primary.main`.
+// Shared pieces for the Dashboard and the Insights page: headline tiles, titled panels and
+// single-series bar lists (one hue — the accent — since every bar measures the same thing).
+// Ported from upstream's Stats.tsx. Upstream's `vgt.*` tokens don't exist in this fork's
+// theme, so muted text uses `text.secondary`, the link hover uses `primary.main`, and the
+// bar track uses the hover background.
 
 interface StatTileProps {
   label: string;
@@ -88,3 +90,111 @@ export const TileGrid = ({ children, min = 170 }: { children: ReactNode; min?: n
     {children}
   </Box>
 );
+
+interface StatPanelProps {
+  title: string;
+  action?: ReactNode;
+  children: ReactNode;
+}
+
+// A titled, bordered block holding one breakdown.
+export const StatPanel = ({ title, action, children }: StatPanelProps) => (
+  <Box sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 2, p: 2, minWidth: 0 }}>
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, mb: 1.5 }}>
+      <Typography variant="subtitle2" component="h3">
+        {title}
+      </Typography>
+      {action}
+    </Box>
+    {children}
+  </Box>
+);
+
+export const PanelGrid = ({ children, min = 320 }: { children: ReactNode; min?: number }) => (
+  <Box
+    sx={{
+      display: "grid",
+      gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: `repeat(auto-fill, minmax(${min}px, 1fr))` },
+      gap: 1.5,
+      alignItems: "start",
+      // Below a TileGrid in the same section.
+      "* + &": { mt: 1.5 },
+    }}
+  >
+    {children}
+  </Box>
+);
+
+export interface BarRow {
+  label: string;
+  value: number;
+  // Opens a filtered list.
+  onClick?: () => void;
+}
+
+interface BarListProps {
+  rows: BarRow[];
+  empty: string;
+  // Show at most this many, largest first; the rest fold into one "Other" row.
+  limit?: number;
+  otherLabel: string;
+  format?: (value: number) => string;
+}
+
+export const BarList = ({ rows, empty, limit, otherLabel, format = String }: BarListProps) => {
+  if (!rows.length) {
+    return (
+      <Typography variant="body2" sx={{ color: "text.secondary" }}>
+        {empty}
+      </Typography>
+    );
+  }
+  let shown = rows;
+  if (limit && rows.length > limit) {
+    const rest = rows.slice(limit - 1).reduce((total, row) => total + row.value, 0);
+    shown = [...rows.slice(0, limit - 1), { label: otherLabel, value: rest }];
+  }
+  const max = Math.max(...shown.map((row) => row.value), 1);
+  return (
+    <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, display: "grid", gap: 1 }}>
+      {shown.map((row) => (
+        <Box component="li" key={row.label} title={`${row.label}: ${format(row.value)}`} sx={{ minWidth: 0 }}>
+          <Box
+            {...(row.onClick ? { component: ButtonBase, onClick: row.onClick } : {})}
+            sx={{
+              display: "block",
+              width: "100%",
+              textAlign: "left",
+              font: "inherit",
+              color: "inherit",
+              borderRadius: 1,
+              "&:hover .bar": row.onClick ? { opacity: 1 } : undefined,
+              "&:hover .bar-label": row.onClick ? { color: "primary.main" } : undefined,
+            }}
+          >
+            <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, fontSize: 13, mb: 0.5 }}>
+              <Box component="span" className="bar-label" sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {row.label}
+              </Box>
+              <Box component="span" sx={{ color: "text.secondary", fontVariantNumeric: "tabular-nums" }}>
+                {format(row.value)}
+              </Box>
+            </Box>
+            <Box sx={{ height: 6, borderRadius: 1, bgcolor: "action.hover" }}>
+              <Box
+                className="bar"
+                sx={{
+                  height: "100%",
+                  width: `${Math.max((row.value / max) * 100, 2)}%`,
+                  borderRadius: 1,
+                  bgcolor: "primary.main",
+                  opacity: 0.85,
+                }}
+              />
+            </Box>
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  );
+};
