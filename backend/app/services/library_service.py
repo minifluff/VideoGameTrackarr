@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.models.catalog import Game, Platform, Region
 from app.models.library import LibraryItem, LibraryStatus
 from app.repositories import game_repository, library_item_repository
-from app.services import rom_service
+from app.services import itad_service, nintendo_service, platprices_service, rom_service
 from app.services.exceptions import NotFoundError
 
 logger = logging.getLogger(__name__)
@@ -20,6 +20,20 @@ def list_library_items(db: Session, game_id: int, status: LibraryStatus | None =
 
 def list_tracked_items(db: Session) -> list[LibraryItem]:
     return library_item_repository.list_tracked_items(db)
+
+
+def list_untracked_items(db: Session) -> list[LibraryItem]:
+    """Wishlisted, not-currently-tracked items that a sale provider can actually
+    track — the Sale - Ignored page's Untracked tab. The eligibility filter is
+    the union of the three providers' rules (digital + eligible platform slug),
+    so every row the tab offers a Track button for can really be tracked."""
+    return [
+        item
+        for item in library_item_repository.list_untracked_items(db)
+        if itad_service.is_library_item_itad_eligible(item)
+        or platprices_service.is_library_item_platprices_eligible(item)
+        or nintendo_service.is_library_item_nintendo_eligible(item)
+    ]
 
 
 def _library_item_to_dict(item: LibraryItem, game: Game) -> dict:

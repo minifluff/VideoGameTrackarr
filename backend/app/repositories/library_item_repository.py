@@ -47,6 +47,21 @@ def list_tracked_items(db: Session) -> list[LibraryItem]:
     return list(db.scalars(stmt))
 
 
+def list_untracked_items(db: Session) -> list[LibraryItem]:
+    """Every wishlisted library item with track_for_sales off — the raw pool for the
+    Sale - Ignored page's Untracked tab. The service layer filters this down to
+    items a sale provider can actually track (digital + eligible platform), so the
+    tab only ever offers a Track button that can do something."""
+    stmt = (
+        select(LibraryItem)
+        .options(joinedload(LibraryItem.game), joinedload(LibraryItem.platform))
+        .join(Game, Game.id == LibraryItem.game_id)
+        .where(LibraryItem.status == LibraryStatus.WISHLIST, LibraryItem.track_for_sales.is_(False))
+        .order_by(Game.name)
+    )
+    return list(db.scalars(stmt))
+
+
 def list_library_items(db: Session, game_id: int, status: LibraryStatus | None = None) -> list[LibraryItem]:
     stmt = (
         select(LibraryItem)

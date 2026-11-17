@@ -1653,6 +1653,10 @@
     "salesIgnored": {
       "heading": "Ofertas - ignoradas",
       "description": "Wishlisted games that ITAD, PlatPrices, or Nintendo couldn't find an exact title match for. They're skipped on every refresh from here on — use Retry to give a title another chance on the next run.",
+      "tabIgnored": "Ignored",
+      "tabUntracked": "Untracked",
+      "untrackedDescription": "Wishlisted games that can be tracked for sales but aren't yet — track one to start watching its price, or remove it from your wishlist.",
+      "untrackedEmptyState": "Nothing here. Every trackable wishlist game is already being tracked.",
       "emptyState": "No hay nada aquí. Todos los títulos rastreados o bien coincidieron o aún no se han buscado.",
       "columnName": "Nombre",
       "columnProvider": "Proveedor",
@@ -1668,7 +1672,13 @@
       "retryErrorToast": "No se pudo reintentar este título. Inténtalo de nuevo.",
       "removeButton": "Eliminar",
       "removeSuccessToast": "Se desactivó el seguimiento de ofertas para este título.",
-      "removeErrorToast": "No se pudo eliminar este título. Inténtalo de nuevo."
+      "removeErrorToast": "No se pudo eliminar este título. Inténtalo de nuevo.",
+      "trackButton": "Track",
+      "trackSuccessToast": "Now tracking this game for sales.",
+      "trackErrorToast": "Could not track this game. Please try again.",
+      "removeFromWishlistButton": "Remove from wishlist",
+      "removeFromWishlistSuccessToast": "Removed from your wishlist.",
+      "removeFromWishlistErrorToast": "Could not remove this game from your wishlist. Please try again."
     },
     "onSale": {
       "description": "Ofertas actuales de tus juegos digitales en la lista de deseos, emparejados mediante IsThereAnyDeal (Windows/Mac/Linux/Android) y PlatPrices (PlayStation). Un juego sin lanzamiento digital, o en una plataforma que ningún proveedor cubre, simplemente no aparecerá aquí.",

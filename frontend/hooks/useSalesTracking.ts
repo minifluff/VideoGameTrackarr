@@ -1,9 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { deleteLibraryItem } from "../api/library";
 import {
   getIgnoredSalesTitles,
   getTrackedSalesItems,
+  getUntrackedSalesItems,
   removeIgnoredSalesTitle,
   retryIgnoredSalesTitle,
+  trackSalesItem,
   untrackSalesItem,
   type SalesProvider,
 } from "../api/salesTracking";
@@ -41,6 +44,41 @@ export function useRemoveIgnoredSalesTitle() {
 
 export function useTrackedSalesItems() {
   return useQuery({ queryKey: ["sales-tracking-tracked"], queryFn: getTrackedSalesItems });
+}
+
+export function useUntrackedSalesItems() {
+  return useQuery({ queryKey: ["sales-tracking-untracked"], queryFn: getUntrackedSalesItems });
+}
+
+export function useTrackSalesItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (libraryItemId: number) => trackSalesItem(libraryItemId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sales-tracking-untracked"] });
+      queryClient.invalidateQueries({ queryKey: ["sales-tracking-tracked"] });
+      queryClient.invalidateQueries({ queryKey: ["games"] });
+      queryClient.invalidateQueries({ queryKey: ["insights"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+// Removing a wishlist row from the Untracked tab deletes the library item outright
+// (not just its tracking flag) — the ["library"] prefix invalidation covers the
+// per-game ["library", gameId] queries too, so a game page visited next shows it gone.
+export function useRemoveWishlistItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (libraryItemId: number) => deleteLibraryItem(libraryItemId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sales-tracking-untracked"] });
+      queryClient.invalidateQueries({ queryKey: ["library"] });
+      queryClient.invalidateQueries({ queryKey: ["games"] });
+      queryClient.invalidateQueries({ queryKey: ["insights"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
 }
 
 export function useUntrackSalesItem() {

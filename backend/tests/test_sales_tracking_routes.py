@@ -1,4 +1,4 @@
-from app.models.catalog import Game, GameCategory
+from app.models.catalog import Game, GameCategory, Platform
 from app.models.itad import ItadPriceCache
 from app.models.library import LibraryItem, LibraryStatus, MediaFormat
 from app.models.nintendo import NintendoPriceCache
@@ -372,5 +372,175 @@ def test_untrack_clears_track_for_sales_and_removes_it_from_the_list(
 
 def test_untrack_404s_for_a_nonexistent_library_item(auth_client):
     response = auth_client.post("/api/sales-tracking/tracked/999999/untrack")
+
+    assert response.status_code == 404
+
+
+def test_list_untracked_requires_auth(client):
+    response = client.get("/api/sales-tracking/untracked")
+
+    assert response.status_code == 401
+
+
+def test_track_requires_auth(client):
+    response = client.post("/api/sales-tracking/tracked/1/track")
+
+    assert response.status_code == 401
+
+
+def test_list_untracked_empty_when_nothing_untracked(auth_client):
+    response = auth_client.get("/api/sales-tracking/untracked")
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_list_untracked_includes_an_eligible_untracked_switch_item(auth_client, db_session, seed_game):
+    switch = Platform(name="Nintendo Switch", slug="switch")
+    db_session.add(switch)
+    db_session.commit()
+    item = LibraryItem(
+        game_id=seed_game.id,
+        platform_id=switch.id,
+        status=LibraryStatus.WISHLIST,
+        format=MediaFormat.DIGITAL,
+        track_for_sales=False,
+    )
+    db_session.add(item)
+    db_session.commit()
+
+    response = auth_client.get("/api/sales-tracking/untracked")
+
+    assert response.status_code == 200
+    [row] = response.json()
+    assert row["libraryItemId"] == item.id
+    assert row["gameName"] == seed_game.name
+    assert row["platformName"] == "Nintendo Switch"
+    assert row["format"] == "digital"
+
+
+def test_list_untracked_excludes_a_tracked_item(auth_client, db_session, seed_game, seed_pc_platform):
+    db_session.add(
+        LibraryItem(
+            game_id=seed_game.id,
+            platform_id=seed_pc_platform.id,
+            status=LibraryStatus.WISHLIST,
+            format=MediaFormat.DIGITAL,
+            track_for_sales=True,
+        )
+    )
+    db_session.commit()
+
+    response = auth_client.get("/api/sales-tracking/untracked")
+
+    assert response.json() == []
+
+
+def test_list_untracked_excludes_an_owned_item(auth_client, db_session, seed_game, seed_pc_platform):
+    db_session.add(
+        LibraryItem(
+            game_id=seed_game.id,
+            platform_id=seed_pc_platform.id,
+            status=LibraryStatus.OWNED,
+            format=MediaFormat.DIGITAL,
+            track_for_sales=False,
+        )
+    )
+    db_session.commit()
+
+    response = auth_client.get("/api/sales-tracking/untracked")
+
+    assert response.json() == []
+
+
+def test_list_untracked_excludes_ineligible_items(auth_client, db_session, seed_game):
+    nes = Platform(name="Nintendo Entertainment System", slug="nes")
+    switch = Platform(name="Nintendo Switch", slug="switch")
+    db_session.add(nes)
+    db_session.add(switch)
+    db_session.commit()
+    # Digital NES: no provider tracks it. Physical Switch: Switch tracking is digital-only.
+    db_session.add(
+        LibraryItem(
+            game_id=seed_game.id,
+            platform_id=nes.id,
+            status=LibraryStatus.WISHLIST,
+            format=MediaFormat.DIGITAL,
+            track_for_sales=False,
+        )
+    )
+    db_session.add(
+        LibraryItem(
+            game_id=seed_game.id,
+            platform_id=switch.id,
+            status=LibraryStatus.WISHLIST,
+            format=MediaFormat.PHYSICAL,
+            track_for_sales=False,
+        )
+    )
+    db_session.commit()
+
+    response = auth_client.get("/api/sales-tracking/untracked")
+
+    assert response.json() == []
+
+
+def test_list_untracked_sorted_by_game_name(auth_client, db_session, seed_pc_platform):
+    zebra = Game(igdb_id=1, name="Zebra Quest", slug="zebra-quest", category=GameCategory.MAIN_GAME)
+    apple = Game(igdb_id=2, name="Apple Adventure", slug="apple-adventure", category=GameCategory.MAIN_GAME)
+    db_session.add(zebra)
+    db_session.add(apple)
+    db_session.commit()
+    db_session.add(
+        LibraryItem(
+            game_id=zebra.id,
+            platform_id=seed_pc_platform.id,
+            status=LibraryStatus.WISHLIST,
+            format=MediaFormat.DIGITAL,
+            track_for_sales=False,
+        )
+    )
+    db_session.add(
+        LibraryItem(
+            game_id=apple.id,
+            platform_id=seed_pc_platform.id,
+            status=LibraryStatus.WISHLIST,
+            format=MediaFormat.DIGITAL,
+            track_for_sales=False,
+        )
+    )
+    db_session.commit()
+
+    response = auth_client.get("/api/sales-tracking/untracked")
+
+    assert [row["gameName"] for row in response.json()] == ["Apple Adventure", "Zebra Quest"]
+
+
+def test_track_sets_track_for_sales_and_moves_it_to_the_tracked_list(
+    auth_client, db_session, seed_game, seed_pc_platform
+):
+    item = LibraryItem(
+        game_id=seed_game.id,
+        platform_id=seed_pc_platform.id,
+        status=LibraryStatus.WISHLIST,
+        format=MediaFormat.DIGITAL,
+        track_for_sales=False,
+    )
+    db_session.add(item)
+    db_session.commit()
+    item_id = item.id
+
+    response = auth_client.post(f"/api/sales-tracking/tracked/{item_id}/track")
+
+    assert response.status_code == 204
+    db_session.expire_all()
+    assert db_session.get(LibraryItem, item_id).track_for_sales is True
+
+    assert auth_client.get("/api/sales-tracking/untracked").json() == []
+    assert [row["libraryItemId"] for row in auth_client.get("/api/sales-tracking/tracked").json()] == [item_id]
+
+
+def test_track_404s_for_a_nonexistent_library_item(auth_client):
+    response = auth_client.post("/api/sales-tracking/tracked/999999/track")
 
     assert response.status_code == 404

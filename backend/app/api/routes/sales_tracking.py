@@ -54,6 +54,17 @@ def list_tracked_sales_items(db: Session = Depends(get_db)) -> list[TrackedSales
     return [tracked_sales_item_from_orm(item) for item in items]
 
 
+@router.get("/untracked", response_model=list[TrackedSalesItemResponse])
+def list_untracked_sales_items(db: Session = Depends(get_db)) -> list[TrackedSalesItemResponse]:
+    items = library_service.list_untracked_items(db)
+    return [tracked_sales_item_from_orm(item) for item in items]
+
+
 @router.post("/tracked/{library_item_id}/untrack", status_code=status.HTTP_204_NO_CONTENT)
 def untrack_sales_item(library_item_id: int, db: Session = Depends(get_db)) -> None:
     library_service.update_library_item(db, library_item_id, track_for_sales=False)
+
+
+@router.post("/tracked/{library_item_id}/track", status_code=status.HTTP_204_NO_CONTENT)
+def track_sales_item(library_item_id: int, db: Session = Depends(get_db)) -> None:
+    library_service.update_library_item(db, library_item_id, track_for_sales=True)

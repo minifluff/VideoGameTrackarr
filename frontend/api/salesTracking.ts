@@ -45,6 +45,15 @@ export async function getTrackedSalesItems(): Promise<TrackedSalesItem[]> {
   return response.data;
 }
 
+export async function getUntrackedSalesItems(): Promise<TrackedSalesItem[]> {
+  const response = await apiClient.get<TrackedSalesItem[]>("/api/sales-tracking/untracked");
+  return response.data;
+}
+
 export async function untrackSalesItem(libraryItemId: number): Promise<void> {
   await apiClient.post(`/api/sales-tracking/tracked/${libraryItemId}/untrack`);
+}
+
+export async function trackSalesItem(libraryItemId: number): Promise<void> {
+  await apiClient.post(`/api/sales-tracking/tracked/${libraryItemId}/track`);
 }
