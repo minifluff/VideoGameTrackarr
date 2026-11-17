@@ -45,6 +45,8 @@ describe("InsightsPage", () => {
       playStatusBreakdown: {},
       platformBreakdown: [],
       genreBreakdown: [],
+      recentlyAdded: [],
+      recentlyPlayed: [],
     } as DashboardStats;
     hardwareStats = {
       ownedConsoles: 1,
@@ -53,6 +55,7 @@ describe("InsightsPage", () => {
       collectionValue: 0,
       manufacturerDistribution: [],
       platformDistribution: [],
+      recentlyAdded: [],
     } as HardwareStats;
     missingAddons = [{}, {}];
     duplicates = [{}];

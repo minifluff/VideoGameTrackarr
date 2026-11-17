@@ -688,7 +688,7 @@
       "hideEventsMenu": "Hide Events menu",
       "hideAchievementsMenu": "Hide Achievements menu",
       "hideInsightsMenu": "Hide Insights menu",
-      "hideMenuHelp": "Removes a hidden menu from the main menu (drawer, side rail, and bottom bar). Its pages stay reachable by direct link.",
+      "hideMenuHelp": "Removes from the main menu (drawer, side rail, and bottom bar). Its pages stay reachable by direct link.",
       "startPage": "Starting page",
       "startPageHelp": "The page the app opens on when loading the dashboard. Direct links to other pages still open as normal."
     },
