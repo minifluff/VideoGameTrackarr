@@ -78,37 +78,31 @@ const AppearanceSection = () => {
   const hideMenuToggles = [
     {
       labelKey: "settings.appearance.hideDashboardMenu",
-      pageLabelKey: "nav.dashboard",
       checked: hideDashboardMenu,
       onChange: setHideDashboardMenu,
     },
     {
       labelKey: "settings.appearance.hideGamesMenu",
-      pageLabelKey: "nav.games",
       checked: hideGamesMenu,
       onChange: setHideGamesMenu,
     },
     {
       labelKey: "settings.appearance.hideHardwareMenu",
-      pageLabelKey: "nav.hardware",
       checked: hideHardwareMenu,
       onChange: setHideHardwareMenu,
     },
     {
       labelKey: "settings.appearance.hideEventsMenu",
-      pageLabelKey: "nav.events",
       checked: hideEventsMenu,
       onChange: setHideEventsMenu,
     },
     {
       labelKey: "settings.appearance.hideAchievementsMenu",
-      pageLabelKey: "nav.achievements",
       checked: hideAchievementsMenu,
       onChange: setHideAchievementsMenu,
     },
     {
       labelKey: "settings.appearance.hideInsightsMenu",
-      pageLabelKey: "nav.insights",
       checked: hideInsightsMenu,
       onChange: setHideInsightsMenu,
     },
@@ -349,11 +343,11 @@ const AppearanceSection = () => {
             }
             label={t(toggle.labelKey)}
           />
-          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
-            {t("settings.appearance.hidePageMenuHelp", { page: t(toggle.pageLabelKey) })}
-          </Typography>
         </Box>
       ))}
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
+        {t("settings.appearance.hideMenuHelp")}
+      </Typography>
 
       <Typography variant="subtitle2" gutterBottom>
         {t("settings.appearance.startPage")}
