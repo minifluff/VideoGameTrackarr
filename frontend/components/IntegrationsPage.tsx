@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Collapse from "@mui/material/Collapse";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -11,6 +13,9 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
@@ -36,7 +41,60 @@ import {
 import { useClearPlayniteCache, usePlayniteConfig, useTestPlayniteConnection, useUpdatePlayniteConfig } from "../hooks/usePlaynite";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 
-const PlayniteSection = () => {
+type IntegrationSectionId =
+  | "igdb"
+  | "steam"
+  | "gog"
+  | "playnite"
+  | "retroachievements"
+  | "itad"
+  | "platprices"
+  | "nintendo";
+
+// One collapsible section on the Integrations page: the header row (logo, title,
+// chips, sync buttons) always stays visible and only the body collapses, so a
+// section's status and its sync button are reachable without expanding it. The
+// arrow sits at the far right of the header, after any sync buttons. The body
+// stays mounted while collapsed (no unmountOnExit) so half-typed fields keep
+// their values when a section is folded away and reopened.
+const IntegrationSection = ({
+  open,
+  onToggle,
+  header,
+  children,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  header: ReactNode;
+  children: ReactNode;
+}) => {
+  const { t } = useTranslation();
+  return (
+    <>
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: open ? 1.5 : 0 }}>
+        {header}
+        <Box sx={{ flexGrow: 1 }} />
+        <IconButton
+          size="small"
+          onClick={onToggle}
+          aria-expanded={open}
+          aria-label={open ? t("common.collapse") : t("common.expand")}
+        >
+          {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        </IconButton>
+      </Stack>
+      <Collapse in={open}>{children}</Collapse>
+    </>
+  );
+};
+
+const PlayniteSection = ({
+  open,
+  onToggle,
+}: {
+  open: boolean;
+  onToggle: () => void;
+}) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: config } = usePlayniteConfig();
@@ -87,16 +145,20 @@ const PlayniteSection = () => {
   const configured = !!config?.smbPath;
 
   return (
-    <>
-      <Divider sx={{ my: 3 }} />
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
-        <Typography variant="subtitle1">{t("settings.integrations.playniteHeading")}</Typography>
-        <ConfiguredChip configured={configured} />
-        <Box sx={{ flexGrow: 1 }} />
-        <Button variant="outlined" onClick={() => navigate("/settings/playnite-sync")}>
-          {t("nav.playniteSync")}
-        </Button>
-      </Stack>
+    <IntegrationSection
+      open={open}
+      onToggle={onToggle}
+      header={
+        <>
+          <Typography variant="subtitle1">{t("settings.integrations.playniteHeading")}</Typography>
+          <ConfiguredChip configured={configured} />
+          <Box sx={{ flexGrow: 1 }} />
+          <Button variant="outlined" onClick={() => navigate("/settings/playnite-sync")}>
+            {t("nav.playniteSync")}
+          </Button>
+        </>
+      }
+    >
       <Alert severity="info" sx={{ mb: 2 }}>
         {t("settings.integrations.playniteDescription")}
       </Alert>
@@ -156,7 +218,7 @@ const PlayniteSection = () => {
         )}
       </Stack>
       <ClearPlayniteCacheSection />
-    </>
+    </IntegrationSection>
   );
 };
 
@@ -221,7 +283,13 @@ const ClearPlayniteCacheSection = () => {
 // RetroAchievements powers the Achievements page: the username picks whose profile
 // is shown, the Web API key authorizes the calls. The key is never sent back to the
 // browser — an empty field keeps the saved one (same pattern as the Playnite password).
-const RetroAchievementsSection = () => {
+const RetroAchievementsSection = ({
+  open,
+  onToggle,
+}: {
+  open: boolean;
+  onToggle: () => void;
+}) => {
   const { t } = useTranslation();
   const { data: status } = useRetroAchievementsStatus();
   const updateSettings = useUpdateRetroAchievementsSettings();
@@ -252,11 +320,16 @@ const RetroAchievementsSection = () => {
   };
 
   return (
-    <>
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
-        <Typography variant="subtitle1">{t("settings.integrations.retroachievementsHeading")}</Typography>
-        <ConfiguredChip configured={status?.configured} />
-      </Stack>
+    <IntegrationSection
+      open={open}
+      onToggle={onToggle}
+      header={
+        <>
+          <Typography variant="subtitle1">{t("settings.integrations.retroachievementsHeading")}</Typography>
+          <ConfiguredChip configured={status?.configured} />
+        </>
+      }
+    >
       <Alert severity="info" sx={{ mb: 2 }}>
         <Trans
           i18nKey="settings.integrations.retroachievementsDescription"
@@ -309,7 +382,7 @@ const RetroAchievementsSection = () => {
           {t("common.save")}
         </Button>
       </Box>
-    </>
+    </IntegrationSection>
   );
 };
 
@@ -341,7 +414,13 @@ const ConfiguredChip = ({ configured }: { configured: boolean | undefined }) => 
   );
 };
 
-const GogSection = () => {
+const GogSection = ({
+  open,
+  onToggle,
+}: {
+  open: boolean;
+  onToggle: () => void;
+}) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: status } = useIntegrationsStatus();
@@ -373,17 +452,22 @@ const GogSection = () => {
   };
 
   return (
-    <>
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
-        <Typography variant="subtitle1">{t("settings.integrations.gogHeading")}</Typography>
-        <ConfiguredChip configured={configured} />
-        <Box sx={{ flexGrow: 1 }} />
-        {configured && (
-          <Button variant="outlined" onClick={() => navigate("/settings/sync?tab=gog")}>
-            {t("nav.gogSync")}
-          </Button>
-        )}
-      </Stack>
+    <IntegrationSection
+      open={open}
+      onToggle={onToggle}
+      header={
+        <>
+          <Typography variant="subtitle1">{t("settings.integrations.gogHeading")}</Typography>
+          <ConfiguredChip configured={configured} />
+          <Box sx={{ flexGrow: 1 }} />
+          {configured && (
+            <Button variant="outlined" onClick={() => navigate("/settings/sync?tab=gog")}>
+              {t("nav.gogSync")}
+            </Button>
+          )}
+        </>
+      }
+    >
       <Alert severity="info" sx={{ mb: 2 }}>
         {t("settings.integrations.gogDescription")}
       </Alert>
@@ -429,16 +513,30 @@ const GogSection = () => {
           </Box>
         </Stack>
       )}
-    </>
+    </IntegrationSection>
   );
 };
 
 const IntegrationsPage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data: status } = useIntegrationsStatus();
   const updateSteamId = useUpdateSteamId();
   const [steamId, setSteamId] = useState("");
   const [touched, setTouched] = useState(false);
+  // Only the top section starts open; the rest fold away until expanded.
+  const [openSections, setOpenSections] = useState<Record<IntegrationSectionId, boolean>>({
+    igdb: true,
+    steam: false,
+    gog: false,
+    playnite: false,
+    retroachievements: false,
+    itad: false,
+    platprices: false,
+    nintendo: false,
+  });
+  const toggleSection = (id: IntegrationSectionId) =>
+    setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
 
   useEffect(() => {
     // Only seeds the field from the server value until the user actually edits it — without
@@ -467,159 +565,203 @@ const IntegrationsPage = () => {
       </Box>
       <Card sx={{ maxWidth: 640 }}>
         <CardContent>
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
-            <Box
-              component="img"
-              src={igdbLogo}
-              alt={t("settings.integrations.igdbLogoAlt")}
-              sx={{ width: 32 }}
-            />
-            <Typography variant="subtitle1">{t("settings.integrations.igdbHeading")}</Typography>
-            <ConfiguredChip configured={status?.igdbConfigured} />
-          </Stack>
-          <Alert severity="info">
-            <Trans
-              i18nKey="settings.integrations.igdbDescription"
-              components={{ 1: <code />, 3: <code />, 5: <code /> }}
-            />
-          </Alert>
-
-          <Divider sx={{ my: 3 }} />
-
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
-            <Box
-              component="img"
-              src={steamLogo}
-              alt={t("settings.integrations.steamLogoAlt")}
-              sx={{ width: 32 }}
-            />
-            <Typography variant="subtitle1">{t("settings.integrations.steamHeading")}</Typography>
-            <ConfiguredChip configured={status?.steamApiKeyConfigured} />
-          </Stack>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            <Trans
-              i18nKey="settings.integrations.steamDescription"
-              components={{ 1: <code />, 3: <code /> }}
-            />
-          </Alert>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-            {t("settings.integrations.steamIdHelperText")}
-          </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-            <TextField
-              label={t("settings.integrations.steamIdLabel")}
-              placeholder={t("settings.integrations.steamIdPlaceholder")}
-              value={steamId}
-              onChange={(e) => {
-                setSteamId(e.target.value);
-                setTouched(true);
-              }}
-              sx={{ minWidth: 280 }}
-            />
-            <Button
-              variant="contained"
-              onClick={handleSaveSteamId}
-              disabled={updateSteamId.isPending || steamId === (status?.steamId64 ?? "")}
-            >
-              {t("common.save")}
-            </Button>
-          </Box>
-
-          <Divider sx={{ my: 3 }} />
-
-          <GogSection />
-
-          <Divider sx={{ my: 3 }} />
-
-          <PlayniteSection />
-
-          <Divider sx={{ my: 3 }} />
-
-          <RetroAchievementsSection />
-
-          <Divider sx={{ my: 3 }} />
-
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
-            <Box
-              component="img"
-              src={itadLogo}
-              alt={t("settings.integrations.itadLogoAlt")}
-              sx={{ width: 32 }}
-            />
-            <Typography variant="subtitle1">{t("settings.integrations.itadHeading")}</Typography>
-            <ConfiguredChip configured={status?.itadConfigured} />
-            <RegionChip configured={status?.itadConfigured} region={status?.itadCountry} />
-          </Stack>
-          <Alert severity="info">
-            <Trans
-              i18nKey="settings.integrations.itadDescription"
-              components={{ 1: <code />, 3: <code /> }}
-            />
-          </Alert>
-
-          <Divider sx={{ my: 3 }} />
-
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
-            <Box
-              sx={{
-                bgcolor: "#161616",
-                borderRadius: 1,
-                px: 1,
-                py: 0.5,
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <Box
-                component="img"
-                src={platpricesLogo}
-                alt={t("settings.integrations.platpricesLogoAlt")}
-                sx={{ height: 22, display: "block" }}
+          <IntegrationSection
+            open={openSections.igdb}
+            onToggle={() => toggleSection("igdb")}
+            header={
+              <>
+                <Box
+                  component="img"
+                  src={igdbLogo}
+                  alt={t("settings.integrations.igdbLogoAlt")}
+                  sx={{ width: 32 }}
+                />
+                <Typography variant="subtitle1">{t("settings.integrations.igdbHeading")}</Typography>
+                <ConfiguredChip configured={status?.igdbConfigured} />
+              </>
+            }
+          >
+            <Alert severity="info">
+              <Trans
+                i18nKey="settings.integrations.igdbDescription"
+                components={{ 1: <code />, 3: <code />, 5: <code /> }}
               />
-            </Box>
-            <Typography variant="subtitle1">
-              {t("settings.integrations.platpricesHeading")}
-            </Typography>
-            <ConfiguredChip configured={status?.platpricesConfigured} />
-            <RegionChip configured={status?.platpricesConfigured} region={status?.platpricesRegion} />
-          </Stack>
-          <Alert severity="info" sx={{ mb: 1.5 }}>
-            <Trans
-              i18nKey="settings.integrations.platpricesDescription"
-              components={{ 1: <code />, 3: <code /> }}
-            />
-          </Alert>
-          <Alert severity="warning" sx={{ mb: 1.5 }}>
-            {t("settings.integrations.platpricesRegionCaveat")}
-          </Alert>
-          <Typography variant="caption" color="text.secondary">
-            <Trans
-              i18nKey="settings.integrations.platpricesCredit"
-              components={{
-                1: <Link href="https://platprices.com" target="_blank" rel="noopener noreferrer" />,
-              }}
-            />
-          </Typography>
+            </Alert>
+          </IntegrationSection>
 
           <Divider sx={{ my: 3 }} />
 
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
-            <Typography variant="subtitle1">{t("settings.integrations.nintendoHeading")}</Typography>
-            <ConfiguredChip configured />
-            <RegionChip configured region={status?.nintendoCountry} />
-          </Stack>
-          <Alert severity="info" sx={{ mb: 1.5 }}>
-            <Trans
-              i18nKey="settings.integrations.nintendoDescription"
-              components={{ 1: <code />, 3: <code /> }}
-            />
-          </Alert>
-          <Alert severity="warning" sx={{ mb: 1.5 }}>
-            {t("settings.integrations.nintendoRegionCaveat")}
-          </Alert>
-          <Typography variant="caption" color="text.secondary">
-            {t("settings.integrations.nintendoCredit")}
-          </Typography>
+          <IntegrationSection
+            open={openSections.steam}
+            onToggle={() => toggleSection("steam")}
+            header={
+              <>
+                <Box
+                  component="img"
+                  src={steamLogo}
+                  alt={t("settings.integrations.steamLogoAlt")}
+                  sx={{ width: 32 }}
+                />
+                <Typography variant="subtitle1">{t("settings.integrations.steamHeading")}</Typography>
+                <ConfiguredChip configured={status?.steamApiKeyConfigured} />
+                <Box sx={{ flexGrow: 1 }} />
+                {status?.steamApiKeyConfigured && (
+                  <Button variant="outlined" onClick={() => navigate("/settings/sync?tab=steam")}>
+                    {t("nav.steamSync")}
+                  </Button>
+                )}
+              </>
+            }
+          >
+            <Alert severity="info" sx={{ mb: 2 }}>
+              <Trans
+                i18nKey="settings.integrations.steamDescription"
+                components={{ 1: <code />, 3: <code /> }}
+              />
+            </Alert>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+              {t("settings.integrations.steamIdHelperText")}
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+              <TextField
+                label={t("settings.integrations.steamIdLabel")}
+                placeholder={t("settings.integrations.steamIdPlaceholder")}
+                value={steamId}
+                onChange={(e) => {
+                  setSteamId(e.target.value);
+                  setTouched(true);
+                }}
+                sx={{ minWidth: 280 }}
+              />
+              <Button
+                variant="contained"
+                onClick={handleSaveSteamId}
+                disabled={updateSteamId.isPending || steamId === (status?.steamId64 ?? "")}
+              >
+                {t("common.save")}
+              </Button>
+            </Box>
+          </IntegrationSection>
+
+          <Divider sx={{ my: 3 }} />
+
+          <GogSection open={openSections.gog} onToggle={() => toggleSection("gog")} />
+
+          <Divider sx={{ my: 3 }} />
+
+          <PlayniteSection open={openSections.playnite} onToggle={() => toggleSection("playnite")} />
+
+          <Divider sx={{ my: 3 }} />
+
+          <RetroAchievementsSection
+            open={openSections.retroachievements}
+            onToggle={() => toggleSection("retroachievements")}
+          />
+
+          <Divider sx={{ my: 3 }} />
+
+          <IntegrationSection
+            open={openSections.itad}
+            onToggle={() => toggleSection("itad")}
+            header={
+              <>
+                <Box
+                  component="img"
+                  src={itadLogo}
+                  alt={t("settings.integrations.itadLogoAlt")}
+                  sx={{ width: 32 }}
+                />
+                <Typography variant="subtitle1">{t("settings.integrations.itadHeading")}</Typography>
+                <ConfiguredChip configured={status?.itadConfigured} />
+                <RegionChip configured={status?.itadConfigured} region={status?.itadCountry} />
+              </>
+            }
+          >
+            <Alert severity="info">
+              <Trans
+                i18nKey="settings.integrations.itadDescription"
+                components={{ 1: <code />, 3: <code /> }}
+              />
+            </Alert>
+          </IntegrationSection>
+
+          <Divider sx={{ my: 3 }} />
+
+          <IntegrationSection
+            open={openSections.platprices}
+            onToggle={() => toggleSection("platprices")}
+            header={
+              <>
+                <Box
+                  sx={{
+                    bgcolor: "#161616",
+                    borderRadius: 1,
+                    px: 1,
+                    py: 0.5,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={platpricesLogo}
+                    alt={t("settings.integrations.platpricesLogoAlt")}
+                    sx={{ height: 22, display: "block" }}
+                  />
+                </Box>
+                <Typography variant="subtitle1">
+                  {t("settings.integrations.platpricesHeading")}
+                </Typography>
+                <ConfiguredChip configured={status?.platpricesConfigured} />
+                <RegionChip configured={status?.platpricesConfigured} region={status?.platpricesRegion} />
+              </>
+            }
+          >
+            <Alert severity="info" sx={{ mb: 1.5 }}>
+              <Trans
+                i18nKey="settings.integrations.platpricesDescription"
+                components={{ 1: <code />, 3: <code /> }}
+              />
+            </Alert>
+            <Alert severity="warning" sx={{ mb: 1.5 }}>
+              {t("settings.integrations.platpricesRegionCaveat")}
+            </Alert>
+            <Typography variant="caption" color="text.secondary">
+              <Trans
+                i18nKey="settings.integrations.platpricesCredit"
+                components={{
+                  1: <Link href="https://platprices.com" target="_blank" rel="noopener noreferrer" />,
+                }}
+              />
+            </Typography>
+          </IntegrationSection>
+
+          <Divider sx={{ my: 3 }} />
+
+          <IntegrationSection
+            open={openSections.nintendo}
+            onToggle={() => toggleSection("nintendo")}
+            header={
+              <>
+                <Typography variant="subtitle1">{t("settings.integrations.nintendoHeading")}</Typography>
+                <ConfiguredChip configured />
+                <RegionChip configured region={status?.nintendoCountry} />
+              </>
+            }
+          >
+            <Alert severity="info" sx={{ mb: 1.5 }}>
+              <Trans
+                i18nKey="settings.integrations.nintendoDescription"
+                components={{ 1: <code />, 3: <code /> }}
+              />
+            </Alert>
+            <Alert severity="warning" sx={{ mb: 1.5 }}>
+              {t("settings.integrations.nintendoRegionCaveat")}
+            </Alert>
+            <Typography variant="caption" color="text.secondary">
+              {t("settings.integrations.nintendoCredit")}
+            </Typography>
+          </IntegrationSection>
         </CardContent>
       </Card>
     </>
