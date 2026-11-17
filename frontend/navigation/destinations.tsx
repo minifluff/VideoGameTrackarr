@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import type { TFunction } from "i18next";
 import AddIcon from "@mui/icons-material/Add";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
-import BlockIcon from "@mui/icons-material/Block";
 import CableIcon from "@mui/icons-material/Cable";
 import CollectionsIcon from "@mui/icons-material/Collections";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -129,14 +128,9 @@ export function getNavDestinations(t: TFunction, options?: NavDestinationOptions
           separatorBefore: true,
         },
         {
-          to: "/settings/sale-tracked",
-          label: t("nav.saleTracked"),
+          to: "/settings/sale-manager",
+          label: t("nav.saleManager"),
           icon: <VisibilityIcon />,
-        },
-        {
-          to: "/settings/sales-ignored",
-          label: t("nav.salesIgnored"),
-          icon: <BlockIcon />,
         },
         {
           to: "/settings/about",

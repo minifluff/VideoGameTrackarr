@@ -54,8 +54,7 @@ const PublicGamesPage = lazy(() => import("./components/PublicGamesPage"));
 const PublicBookshelfPage = lazy(() => import("./components/PublicBookshelfPage"));
 const PublicHardwarePage = lazy(() => import("./components/PublicHardwarePage"));
 const Settings = lazy(() => import("./components/Settings"));
-const SalesIgnoredListPage = lazy(() => import("./components/SalesIgnoredListPage"));
-const SaleTrackedPage = lazy(() => import("./components/SaleTrackedPage"));
+const SaleManagerPage = lazy(() => import("./components/SaleManagerPage"));
 const SyncPage = lazy(() => import("./components/SyncPage"));
 const RemoveGamesPage = lazy(() => import("./components/RemoveGamesPage"));
 const PlayniteSyncPage = lazy(() => import("./components/PlayniteSyncPage"));
@@ -100,8 +99,7 @@ import {
   unlinkedGamesCrumbs,
   platformCrumbs,
   platformsCrumbs,
-  saleTrackedCrumbs,
-  salesIgnoredCrumbs,
+  saleManagerCrumbs,
   seriesCrumbs,
   settingsCrumbs,
   syncCrumbs,
@@ -334,14 +332,17 @@ const router = createBrowserRouter([
             handle: { crumbs: playniteSyncCrumbs },
           },
           {
+            path: "/settings/sale-manager",
+            element: <SaleManagerPage />,
+            handle: { crumbs: saleManagerCrumbs },
+          },
+          {
             path: "/settings/sale-tracked",
-            element: <SaleTrackedPage />,
-            handle: { crumbs: saleTrackedCrumbs },
+            element: <Navigate to="/settings/sale-manager?tab=tracked" replace />,
           },
           {
             path: "/settings/sales-ignored",
-            element: <SalesIgnoredListPage />,
-            handle: { crumbs: salesIgnoredCrumbs },
+            element: <Navigate to="/settings/sale-manager?tab=ignored" replace />,
           },
           { path: "/settings/about", element: <About />, handle: { crumbs: aboutCrumbs } },
           { path: "*", element: <NotFoundRouteElement />, handle: { crumbs: notFoundCrumbs } },

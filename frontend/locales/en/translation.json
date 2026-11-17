@@ -78,6 +78,7 @@
     "integrationSync": "Integration Sync",
     "saleTracked": "Sale - Tracked",
     "salesIgnored": "Sale - Ignored List",
+    "saleManager": "Sale Manager",
     "onSale": "On Sale",
     "settings": "Settings",
     "tagManager": "Tag Manager",
@@ -1638,6 +1639,7 @@
     },
     "saleTracked": {
       "heading": "Sale - Tracked",
+      "tabTracked": "Tracked",
       "description": "Every wishlisted game or addon you've opted into sale tracking, with its platform, format, storefront, and target price (if set). Remove one here to stop tracking it — its saved target price is kept in case you re-enable tracking later.",
       "emptyState": "Nothing here yet. Add games to your wishlist and run the ITAD price refresh job to see them here.",
       "columnName": "Name",

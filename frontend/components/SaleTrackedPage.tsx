@@ -23,7 +23,9 @@ import { formatCurrency } from "../utils/currency";
 import { gameIdentifier } from "../utils/identifiers";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 
-const SaleTrackedPage = () => {
+// The Sale Manager page renders this as its Tracked tab and titles itself, so it
+// hides this page's own heading the same way the Sync page hides its panels'.
+const SaleTrackedPage = ({ hideHeading = false }: { hideHeading?: boolean }) => {
   const { t } = useTranslation();
   const { currency } = useCurrency();
   const { data: items } = useTrackedSalesItems();
@@ -57,10 +59,11 @@ const SaleTrackedPage = () => {
 
   return (
     <>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          {t("insights.saleTracked.heading")}
-        </Typography>
+      {hideHeading ? null : (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h4" component="h1" gutterBottom>
+            {t("insights.saleTracked.heading")}
+          </Typography>
         {items !== undefined ? (
           <Typography variant="body2" color="text.secondary">
             {t(
@@ -71,7 +74,8 @@ const SaleTrackedPage = () => {
             )}
           </Typography>
         ) : null}
-      </Box>
+        </Box>
+      )}
 
       <Paper sx={{ width: "100%", overflow: "hidden", borderRadius: 2 }}>
         {rows.length === 0 ? (

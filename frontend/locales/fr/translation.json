@@ -78,6 +78,7 @@
     "integrationSync": "Integration Sync",
     "saleTracked": "Promotions - suivies",
     "salesIgnored": "Promotions - ignorées",
+    "saleManager": "Sale Manager",
     "onSale": "En promotion",
     "settings": "Paramètres",
     "tagManager": "Gestionnaire d'étiquettes",
@@ -1638,6 +1639,7 @@
     },
     "saleTracked": {
       "heading": "Promotions - suivies",
+      "tabTracked": "Tracked",
       "description": "Tous les jeux ou addons de votre liste de souhaits pour lesquels le suivi des promotions est activé, avec leur plateforme, format, boutique et prix cible (si défini). Retirez-en un ici pour arrêter de le suivre — son prix cible enregistré est conservé si vous réactivez le suivi plus tard.",
       "emptyState": "Rien ici pour l'instant. Cochez « Suivre les promotions » dans la boîte de dialogue d'édition d'un élément de votre liste de souhaits pour l'ajouter.",
       "columnName": "Nom",

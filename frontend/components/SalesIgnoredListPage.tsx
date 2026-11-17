@@ -1,4 +1,3 @@
-import type { SyntheticEvent } from "react";
 import AddCircleOutlineOutlinedIcon from "@mui/icons-material/AddCircleOutlineOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
@@ -8,7 +7,6 @@ import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
-import Tab from "@mui/material/Tab";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -16,12 +14,11 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
-import Tabs from "@mui/material/Tabs";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import type { MediaFormat } from "../api/types";
 import type { IgnoredSalesTitle, SalesProvider, TrackedSalesItem } from "../api/salesTracking";
@@ -44,7 +41,9 @@ const PROVIDER_LABEL_KEY: Record<SalesProvider, string> = {
   nintendo: "insights.salesIgnored.provider.nintendo",
 };
 
-const IgnoredPanel = () => {
+// The Ignored and Untracked panels of the Sale Manager page live here — the manager
+// owns the tabs and the heading, these panels own their own tables and pagination.
+export const IgnoredPanel = () => {
   const { t } = useTranslation();
   const { data: items } = useIgnoredSalesTitles();
   const retryTitle = useRetryIgnoredSalesTitle();
@@ -173,7 +172,7 @@ const IgnoredPanel = () => {
   );
 };
 
-const UntrackedPanel = () => {
+export const UntrackedPanel = () => {
   const { t } = useTranslation();
   const { currency } = useCurrency();
   const { data: items } = useUntrackedSalesItems();
@@ -317,33 +316,3 @@ const UntrackedPanel = () => {
   );
 };
 
-// Two tabs on the one page, same shape as the Integration Sync page: the tab lives in
-// the URL (?tab=ignored|untracked) so a tab is deep-linkable and the back button steps
-// between tabs. Ignored is the titles a provider gave up on; Untracked is the wishlist
-// games that could be tracked but aren't yet.
-const SalesIgnoredListPage = () => {
-  const { t } = useTranslation();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const tab = searchParams.get("tab") === "untracked" ? "untracked" : "ignored";
-
-  const handleTabChange = (_event: SyntheticEvent, next: string) => {
-    setSearchParams({ tab: next === "untracked" ? "untracked" : "ignored" });
-  };
-
-  return (
-    <>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          {t("insights.salesIgnored.heading")}
-        </Typography>
-      </Box>
-      <Tabs value={tab} onChange={handleTabChange} aria-label={t("insights.salesIgnored.heading")} sx={{ mb: 2 }}>
-        <Tab value="ignored" label={t("insights.salesIgnored.tabIgnored")} />
-        <Tab value="untracked" label={t("insights.salesIgnored.tabUntracked")} />
-      </Tabs>
-      {tab === "ignored" ? <IgnoredPanel /> : <UntrackedPanel />}
-    </>
-  );
-};
-
-export default SalesIgnoredListPage;

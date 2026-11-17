@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import type { IgnoredSalesTitle, TrackedSalesItem } from "../../api/salesTracking";
-import SalesIgnoredListPage from "../SalesIgnoredListPage";
+import { IgnoredPanel, UntrackedPanel } from "../SalesIgnoredListPage";
 
 let ignoredTitles: IgnoredSalesTitle[] = [];
 let untrackedItems: TrackedSalesItem[] = [];
@@ -55,71 +55,47 @@ const untrackedRow: TrackedSalesItem = {
   targetPrice: 29.99,
 };
 
-function renderPage(initialEntry = "/settings/sales-ignored") {
-  return render(
-    <MemoryRouter initialEntries={[initialEntry]}>
-      <SalesIgnoredListPage />
-    </MemoryRouter>
-  );
+function renderPanel(panel: React.ReactNode) {
+  return render(<MemoryRouter>{panel}</MemoryRouter>);
 }
 
-describe("SalesIgnoredListPage tabs", () => {
-  it("shows the Ignored tab by default with ignored titles", () => {
+describe("Sale Manager panels", () => {
+  it("IgnoredPanel lists ignored titles", () => {
     ignoredTitles = [ignoredRow];
-    untrackedItems = [untrackedRow];
 
-    renderPage();
+    renderPanel(<IgnoredPanel />);
 
-    expect(screen.getByRole("tab", { name: "Ignored" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText("Ignored Game")).toBeInTheDocument();
-    expect(screen.queryByText("Untracked Game")).not.toBeInTheDocument();
+    expect(screen.getByText("Nintendo eShop")).toBeInTheDocument();
   });
 
-  it("opens the Untracked tab from the URL and lists untracked wishlist games", () => {
-    ignoredTitles = [ignoredRow];
+  it("UntrackedPanel lists untracked wishlist games", () => {
     untrackedItems = [untrackedRow];
 
-    renderPage("/settings/sales-ignored?tab=untracked");
+    renderPanel(<UntrackedPanel />);
 
-    expect(screen.getByRole("tab", { name: "Untracked" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText("Untracked Game")).toBeInTheDocument();
     expect(screen.getByText("Nintendo Switch")).toBeInTheDocument();
-    expect(screen.queryByText("Ignored Game")).not.toBeInTheDocument();
   });
 
-  it("switches tabs on click", async () => {
+  it("UntrackedPanel tracks a game", async () => {
     const user = userEvent.setup();
-    ignoredTitles = [ignoredRow];
-    untrackedItems = [untrackedRow];
-
-    renderPage();
-
-    await user.click(screen.getByRole("tab", { name: "Untracked" }));
-
-    expect(screen.getByText("Untracked Game")).toBeInTheDocument();
-    expect(screen.queryByText("Ignored Game")).not.toBeInTheDocument();
-  });
-
-  it("tracks an untracked game from the Untracked tab", async () => {
-    const user = userEvent.setup();
-    ignoredTitles = [];
     untrackedItems = [untrackedRow];
     spies.track.mockClear();
 
-    renderPage("/settings/sales-ignored?tab=untracked");
+    renderPanel(<UntrackedPanel />);
 
     await user.click(screen.getByRole("button", { name: "Track" }));
 
     expect(spies.track).toHaveBeenCalledWith(7);
   });
 
-  it("removes an untracked game from the wishlist", async () => {
+  it("UntrackedPanel removes a game from the wishlist", async () => {
     const user = userEvent.setup();
-    ignoredTitles = [];
     untrackedItems = [untrackedRow];
     spies.removeWishlist.mockClear();
 
-    renderPage("/settings/sales-ignored?tab=untracked");
+    renderPanel(<UntrackedPanel />);
 
     await user.click(screen.getByRole("button", { name: "Remove from wishlist" }));
 

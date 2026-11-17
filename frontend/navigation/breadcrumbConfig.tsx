@@ -302,14 +302,9 @@ export const playniteSyncCrumbs: CrumbsFn = (_params, t) => [
   { label: t("nav.playniteSync") },
 ];
 
-export const saleTrackedCrumbs: CrumbsFn = (_params, t) => [
+export const saleManagerCrumbs: CrumbsFn = (_params, t) => [
   { label: t("nav.settings"), to: "/settings" },
-  { label: t("nav.saleTracked") },
-];
-
-export const salesIgnoredCrumbs: CrumbsFn = (_params, t) => [
-  { label: t("nav.settings"), to: "/settings" },
-  { label: t("nav.salesIgnored") },
+  { label: t("nav.saleManager") },
 ];
 
 export const aboutCrumbs: CrumbsFn = (_params, t) => [

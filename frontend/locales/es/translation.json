@@ -78,6 +78,7 @@
     "integrationSync": "Integration Sync",
     "saleTracked": "Ofertas - seguidas",
     "salesIgnored": "Ofertas - ignoradas",
+    "saleManager": "Sale Manager",
     "onSale": "En oferta",
     "settings": "Configuración",
     "tagManager": "Gestor de etiquetas",
@@ -1638,6 +1639,7 @@
     },
     "saleTracked": {
       "heading": "Ofertas - seguidas",
+      "tabTracked": "Tracked",
       "description": "Todos los juegos o addons de tu lista de deseos con seguimiento de ofertas activado, con su plataforma, formato, tienda y precio objetivo (si está definido). Elimina uno aquí para dejar de seguirlo — su precio objetivo guardado se conserva por si vuelves a activar el seguimiento.",
       "emptyState": "Nada por aquí todavía. Marca \"Rastrear ofertas\" en el diálogo de edición de un elemento de la lista de deseos para añadirlo.",
       "columnName": "Nombre",

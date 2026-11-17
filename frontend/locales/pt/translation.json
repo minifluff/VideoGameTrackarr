@@ -78,6 +78,7 @@
     "integrationSync": "Integration Sync",
     "saleTracked": "Promoções - Monitorizadas",
     "salesIgnored": "Promoções - Ignoradas",
+    "saleManager": "Sale Manager",
     "onSale": "Em Promoção",
     "settings": "Definições",
     "tagManager": "Gestor de etiquetas",
@@ -1638,6 +1639,7 @@
     },
     "saleTracked": {
       "heading": "Promoções - Monitorizadas",
+      "tabTracked": "Tracked",
       "description": "Todos os jogos ou addons da sua lista de desejos com monitorização de promoções ativada, com a sua plataforma, formato, loja e preço-alvo (se definido). Remova um daqui para deixar de o monitorizar — o preço-alvo guardado é mantido caso reative a monitorização mais tarde.",
       "emptyState": "Ainda não há nada aqui. Marque \"Acompanhar promoções\" na caixa de edição de um item da lista de desejos para o adicionar.",
       "columnName": "Nome",
