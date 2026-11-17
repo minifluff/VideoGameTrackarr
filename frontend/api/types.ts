@@ -556,6 +556,7 @@ export interface JobSchedule {
   enabled: boolean;
   cronExpression: string | null;
   nextRunAt: string | null;
+  timezone: string | null;
 }
 
 export interface JobSummary {

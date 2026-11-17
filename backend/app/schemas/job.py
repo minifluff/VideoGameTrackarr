@@ -24,6 +24,7 @@ class JobScheduleResponse(CamelModel):
     enabled: bool
     cron_expression: str | None
     next_run_at: str | None
+    timezone: str | None
 
 
 class JobSummaryResponse(CamelModel):
@@ -35,6 +36,9 @@ class JobSummaryResponse(CamelModel):
 class JobScheduleUpdateRequest(CamelModel):
     enabled: bool
     cron_expression: str | None = None
+    # IANA zone the cron is wall time in. None means "keep what's stored" — the friendly
+    # UI sends the browser's zone; custom-cron saves omit it.
+    timezone: str | None = None
 
 
 def job_run_from_state(state: JobRunState) -> JobRunResponse:
@@ -55,4 +59,5 @@ def job_schedule_from_orm(schedule: JobSchedule | None, next_run_at: datetime | 
         enabled=schedule.enabled if schedule else False,
         cron_expression=schedule.cron_expression if schedule else None,
         next_run_at=next_run_at.isoformat() if next_run_at else None,
+        timezone=schedule.timezone if schedule else None,
     )

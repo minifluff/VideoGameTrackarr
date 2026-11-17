@@ -256,7 +256,7 @@ describe("GogSyncPage import progress", { timeout: 20_000 }, () => {
       error: null,
       progress,
     },
-    schedule: { enabled: false, cronExpression: null, nextRunAt: null },
+    schedule: { enabled: false, cronExpression: null, nextRunAt: null, timezone: null },
   });
 
   const finishedJob = {
@@ -269,7 +269,7 @@ describe("GogSyncPage import progress", { timeout: 20_000 }, () => {
       error: null,
       progress: null,
     },
-    schedule: { enabled: false, cronExpression: null, nextRunAt: null },
+    schedule: { enabled: false, cronExpression: null, nextRunAt: null, timezone: null },
   };
 
   beforeEach(() => {

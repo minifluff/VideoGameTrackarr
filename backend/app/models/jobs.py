@@ -19,3 +19,6 @@ class JobSchedule(TimestampMixin, Base):
     job_id: Mapped[str] = mapped_column(String(100), primary_key=True)
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     cron_expression: Mapped[str | None] = mapped_column(String(100))
+    timezone: Mapped[str | None] = mapped_column(String(100))
+    # IANA zone the cron is wall time in (e.g. "America/Halifax"). NULL on rows saved
+    # before timezones existed — treated as UTC, matching the container default.

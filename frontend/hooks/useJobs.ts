@@ -66,8 +66,17 @@ export function useAcknowledgeJobStatus() {
 export function useUpdateJobSchedule() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ jobId, enabled, cronExpression }: { jobId: string; enabled: boolean; cronExpression: string | null }) =>
-      updateJobSchedule(jobId, { enabled, cronExpression }),
+    mutationFn: ({
+      jobId,
+      enabled,
+      cronExpression,
+      timezone,
+    }: {
+      jobId: string;
+      enabled: boolean;
+      cronExpression: string | null;
+      timezone?: string;
+    }) => updateJobSchedule(jobId, { enabled, cronExpression, timezone }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: jobsQueryKey });
     },

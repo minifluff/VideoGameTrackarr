@@ -59,7 +59,9 @@ def update_job_schedule(
     # schedule for something job_registry doesn't know about.
     job_registry.get_state(job_id)
     try:
-        job_schedule_service.update_schedule(db, job_id, payload.enabled, payload.cron_expression, session_factory)
+        job_schedule_service.update_schedule(
+            db, job_id, payload.enabled, payload.cron_expression, session_factory, payload.timezone
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return _to_summary(db, job_id)

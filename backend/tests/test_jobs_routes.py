@@ -27,7 +27,12 @@ def test_list_jobs_shows_all_four_registered_jobs_idle(auth_client):
     # run in the same pytest process.
     for job_id in ("resync_all", "resync_games", "resync_collections", "resync_series"):
         assert jobs[job_id]["run"]["status"] == "idle"
-        assert jobs[job_id]["schedule"] == {"enabled": False, "cronExpression": None, "nextRunAt": None}
+        assert jobs[job_id]["schedule"] == {
+            "enabled": False,
+            "cronExpression": None,
+            "nextRunAt": None,
+            "timezone": None,
+        }
 
 
 def test_run_job_transitions_to_completed(auth_client, monkeypatch):
@@ -76,3 +81,43 @@ def test_update_schedule_with_valid_cron_returns_next_run(auth_client):
     )
     assert disable_response.status_code == 200
     assert disable_response.json()["schedule"]["nextRunAt"] is None
+
+
+def test_update_schedule_with_timezone_persists_it_and_runs_in_that_zone(auth_client):
+    response = auth_client.put(
+        "/api/jobs/resync_all/schedule",
+        json={"enabled": True, "cronExpression": "0 3 * * *", "timezone": "America/Halifax"},
+    )
+
+    assert response.status_code == 200
+    schedule = response.json()["schedule"]
+    assert schedule["timezone"] == "America/Halifax"
+    # The next run is 3am wall time in Halifax, not 3am UTC.
+    assert schedule["nextRunAt"].endswith("-04:00") or schedule["nextRunAt"].endswith("-03:00")
+
+    auth_client.put("/api/jobs/resync_all/schedule", json={"enabled": False, "cronExpression": None})
+
+
+def test_update_schedule_with_unknown_timezone_returns_400(auth_client):
+    response = auth_client.put(
+        "/api/jobs/resync_all/schedule",
+        json={"enabled": True, "cronExpression": "0 3 * * *", "timezone": "Bogus/Zone"},
+    )
+
+    assert response.status_code == 400
+
+
+def test_update_schedule_without_timezone_keeps_the_stored_one(auth_client):
+    auth_client.put(
+        "/api/jobs/resync_all/schedule",
+        json={"enabled": True, "cronExpression": "0 3 * * *", "timezone": "America/Halifax"},
+    )
+
+    response = auth_client.put(
+        "/api/jobs/resync_all/schedule", json={"enabled": True, "cronExpression": "0 4 * * *"}
+    )
+
+    assert response.status_code == 200
+    assert response.json()["schedule"]["timezone"] == "America/Halifax"
+
+    auth_client.put("/api/jobs/resync_all/schedule", json={"enabled": False, "cronExpression": None})

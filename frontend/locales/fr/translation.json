@@ -469,7 +469,22 @@
         "saved": "Export settings saved.",
         "saveError": "Could not save export settings.",
         "resultSummary": "Exported {filename} — deleted {deleted} old export(s)."
-      }
+      },
+      "frequencyLabel": "How often",
+      "frequency": {
+        "hourly": "Every hour",
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "custom": "Custom"
+      },
+      "timeLabel": "Time",
+      "minuteLabel": "Minute past the hour",
+      "weekdayLabel": "Day of the week",
+      "dayOfMonthLabel": "Day of the month",
+      "timezoneNote": "Times are in {{timezone}}",
+      "lastRun": "Last run: {{date}}",
+      "runningSince": "Running since {{date}}"
     },
     "tagManager": {
       "description": "Supprime une étiquette de façon permanente. Cela la retire de tous les jeux, appareils et accessoires qui la portent — pas seulement d'un seul élément. Pour retirer une étiquette d'un seul élément, utilisez le champ Étiquettes sur la page de cet élément.",

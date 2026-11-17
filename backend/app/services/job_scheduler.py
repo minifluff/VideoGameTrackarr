@@ -22,7 +22,7 @@ _scheduler = BackgroundScheduler()
 def start(db: Session, session_factory: Callable[[], Session]) -> None:
     for schedule in job_schedule_repository.list_all(db):
         if schedule.enabled and schedule.cron_expression:
-            _add_job(schedule.job_id, schedule.cron_expression, session_factory)
+            _add_job(schedule.job_id, schedule.cron_expression, session_factory, schedule.timezone)
     if not _scheduler.running:
         _scheduler.start()
 
@@ -36,10 +36,19 @@ def reset_for_tests() -> None:
     _scheduler.remove_all_jobs()
 
 
-def _add_job(job_id: str, cron_expression: str, session_factory: Callable[[], Session]) -> None:
+def _add_job(
+    job_id: str,
+    cron_expression: str,
+    session_factory: Callable[[], Session],
+    timezone: str | None = None,
+) -> None:
+    # The trigger always gets an explicit zone. A None timezone is a row saved before
+    # timezones existed — UTC, matching the container default, so existing schedules
+    # keep firing when they did. (Without this, CronTrigger inherited the scheduler's
+    # local zone, which is the container's UTC on the NAS but the host zone elsewhere.)
     _scheduler.add_job(
         func=_fire,
-        trigger=CronTrigger.from_crontab(cron_expression),
+        trigger=CronTrigger.from_crontab(cron_expression, timezone=timezone or "UTC"),
         id=job_id,
         args=[job_id, session_factory],
         replace_existing=True,
@@ -58,11 +67,17 @@ def _fire(job_id: str, session_factory: Callable[[], Session]) -> None:
         logger.info("Skipped scheduled run of job %s: already running", job_id)
 
 
-def reschedule(job_id: str, enabled: bool, cron_expression: str | None, session_factory: Callable[[], Session]) -> None:
+def reschedule(
+    job_id: str,
+    enabled: bool,
+    cron_expression: str | None,
+    session_factory: Callable[[], Session],
+    timezone: str | None = None,
+) -> None:
     """Applies a schedule change to the live scheduler immediately, so an edit via the API
     takes effect without an app restart."""
     if enabled and cron_expression:
-        _add_job(job_id, cron_expression, session_factory)
+        _add_job(job_id, cron_expression, session_factory, timezone)
         return
 
     try:

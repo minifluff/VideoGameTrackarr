@@ -22,7 +22,7 @@ export async function acknowledgeJobStatus(jobId: string): Promise<void> {
 
 export async function updateJobSchedule(
   jobId: string,
-  body: { enabled: boolean; cronExpression: string | null }
+  body: { enabled: boolean; cronExpression: string | null; timezone?: string },
 ): Promise<JobSummary> {
   const response = await apiClient.put<JobSummary>(`/api/jobs/${jobId}/schedule`, body);
   return response.data;
