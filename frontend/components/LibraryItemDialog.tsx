@@ -203,6 +203,9 @@ const LibraryItemDialog = ({
   const [romDrafts, setRomDrafts] = useState<Record<number, ExistingRomDraft>>({});
   const [newRoms, setNewRoms] = useState<NewRomDraft[]>([]);
   const nextNewRomKey = useRef(0);
+  // Whether the user has toggled Track for sales themselves in this dialog
+  // session — once they have, the wishlist default below must not override them.
+  const trackForSalesTouched = useRef(false);
   // What the shared hidden file input is picking for: new ROMs, or a replacement for one.
   const pickTarget = useRef<number | "new">("new");
   const romInputRef = useRef<HTMLInputElement>(null);
@@ -224,6 +227,7 @@ const LibraryItemDialog = ({
     if (open) {
       setRomDrafts({});
       setNewRoms([]);
+      trackForSalesTouched.current = false;
       reset({
         format: "digital",
         ...defaultValues,
@@ -298,6 +302,25 @@ const LibraryItemDialog = ({
       setValue("targetPrice", undefined);
     }
   }, [showTrackForSales, setValue]);
+
+  // Wishlist copies default to tracked: a new wishlist copy on a sale-tracked
+  // platform/format gets Track for sales checked automatically, so it lands on
+  // the Sale - Tracked page without an extra step. Only when the caller passed
+  // no explicit value (a new copy) — editing an existing copy keeps whatever
+  // it already had, and once the user toggles the checkbox their choice sticks.
+  // (trackForSalesUnspecified is a plain boolean so the effect deps stay stable
+  // even though defaultValues is a fresh object each render.)
+  const trackForSalesUnspecified = defaultValues?.trackForSales == null;
+  useEffect(() => {
+    if (
+      status === "wishlist" &&
+      showTrackForSales &&
+      trackForSalesUnspecified &&
+      !trackForSalesTouched.current
+    ) {
+      setValue("trackForSales", true);
+    }
+  }, [status, showTrackForSales, trackForSalesUnspecified, setValue]);
 
   // Steelbook only means anything for a physical copy — cleared the same way trackForSales
   // is cleared above when its own gating condition stops holding, rather than leaving a
@@ -825,7 +848,13 @@ const LibraryItemDialog = ({
               render={({ field }) => (
                 <FormControlLabel
                   control={
-                    <Checkbox checked={field.value ?? false} onChange={(event) => field.onChange(event.target.checked)} />
+                    <Checkbox
+                      checked={field.value ?? false}
+                      onChange={(event) => {
+                        trackForSalesTouched.current = true;
+                        field.onChange(event.target.checked);
+                      }}
+                    />
                   }
                   label={t("dialogs.libraryItem.trackForSalesLabel")}
                 />

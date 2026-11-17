@@ -601,6 +601,76 @@ describe("LibraryItemDialog", () => {
     expect(screen.getByLabelText("Track for sales")).toBeInTheDocument();
   });
 
+  it("checks Track for sales by default on a new digital Switch wishlist row", () => {
+    const switchPlatforms: PlatformResponse[] = [
+      ...platforms,
+      { id: 4, igdbId: 130, name: "Nintendo Switch", slug: "switch", abbreviation: "Switch", gameCount: 0, spineTemplateUrl: null, caseHeightMm: null, caseSpineMm: null, spineColor: null, spineIcon: null, spineIconUrl: null },
+    ];
+    render(
+      <LibraryItemDialog
+        open
+        title="Add game to your wishlist"
+        status="wishlist"
+        platforms={switchPlatforms}
+        regions={regions}
+        defaultValues={{ platformId: 4, format: "digital" }}
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+        submitLabel="Add"
+      />
+    );
+
+    expect(screen.getByLabelText("Track for sales")).toBeChecked();
+  });
+
+  it("keeps Track for sales off when editing a wishlist row that was untracked", () => {
+    const switchPlatforms: PlatformResponse[] = [
+      ...platforms,
+      { id: 4, igdbId: 130, name: "Nintendo Switch", slug: "switch", abbreviation: "Switch", gameCount: 0, spineTemplateUrl: null, caseHeightMm: null, caseSpineMm: null, spineColor: null, spineIcon: null, spineIconUrl: null },
+    ];
+    render(
+      <LibraryItemDialog
+        open
+        title="Update game in your wishlist"
+        status="wishlist"
+        platforms={switchPlatforms}
+        regions={regions}
+        defaultValues={{ platformId: 4, format: "digital", trackForSales: false }}
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+        submitLabel="Update"
+      />
+    );
+
+    expect(screen.getByLabelText("Track for sales")).not.toBeChecked();
+  });
+
+  it("keeps the user's choice when they uncheck Track for sales", async () => {
+    const user = userEvent.setup();
+    const switchPlatforms: PlatformResponse[] = [
+      ...platforms,
+      { id: 4, igdbId: 130, name: "Nintendo Switch", slug: "switch", abbreviation: "Switch", gameCount: 0, spineTemplateUrl: null, caseHeightMm: null, caseSpineMm: null, spineColor: null, spineIcon: null, spineIconUrl: null },
+    ];
+    render(
+      <LibraryItemDialog
+        open
+        title="Add game to your wishlist"
+        status="wishlist"
+        platforms={switchPlatforms}
+        regions={regions}
+        defaultValues={{ platformId: 4, format: "digital" }}
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+        submitLabel="Add"
+      />
+    );
+
+    const checkbox = screen.getByLabelText("Track for sales");
+    expect(checkbox).toBeChecked();
+    await user.click(checkbox);
+    expect(checkbox).not.toBeChecked();
+  });
+
   it("hides Track for sales on a digital NES row", () => {
     render(
       <LibraryItemDialog
