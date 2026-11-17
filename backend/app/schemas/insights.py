@@ -8,6 +8,7 @@ from app.schemas.base import CamelModel
 from app.schemas.library import LibraryItemResponse, library_item_from_orm
 from app.services.hardware_reference_image_service import resolve_image_url
 from app.services.itad_service import OnSaleItem
+from app.services.nintendo_service import NintendoOnSaleItem
 from app.services.platprices_service import PlatPricesOnSaleItem
 
 
@@ -177,9 +178,10 @@ class OnSaleItemResponse(CamelModel):
     is_target_hit: bool
 
 
-def on_sale_item_from_orm(item: OnSaleItem | PlatPricesOnSaleItem) -> OnSaleItemResponse:
-    # ItadPriceCache and PlatPricesCache deliberately share the same field names (see
-    # models/platprices.py), so this works unchanged for either provider's item.
+def on_sale_item_from_orm(item: OnSaleItem | PlatPricesOnSaleItem | NintendoOnSaleItem) -> OnSaleItemResponse:
+    # ItadPriceCache, PlatPricesCache, and NintendoPriceCache deliberately share the same
+    # field names (see models/platprices.py), so this works unchanged for any provider's
+    # item.
     library_item = item.library_item
     cache = item.cache
     return OnSaleItemResponse(

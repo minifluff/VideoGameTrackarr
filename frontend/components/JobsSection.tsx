@@ -68,6 +68,10 @@ const JOB_DISPLAY_KEYS: Record<string, { nameKey: string; descriptionKey: string
     nameKey: "settings.jobs.jobs.platpricesRefresh.name",
     descriptionKey: "settings.jobs.jobs.platpricesRefresh.description",
   },
+  nintendo_refresh: {
+    nameKey: "settings.jobs.jobs.nintendoRefresh.name",
+    descriptionKey: "settings.jobs.jobs.nintendoRefresh.description",
+  },
   events_sync: {
     nameKey: "settings.jobs.jobs.eventsSync.name",
     descriptionKey: "settings.jobs.jobs.eventsSync.description",

@@ -17,12 +17,11 @@ My code is free to use how you wish. Just let me know if you need assistance.
 
 ## Screenshots
 
-<img width="1902" height="911" alt="1" src="https://github.com/user-attachments/assets/c5c0cb7e-ccf2-4935-aa4b-31297a774dc0" />
-<img width="1902" height="911" alt="2" src="https://github.com/user-attachments/assets/f8ea2c3d-364f-4067-90e0-e3cdd376dc8f" />
-<img width="1902" height="911" alt="3" src="https://github.com/user-attachments/assets/e6e5b0fb-01f5-4954-8144-a3383bcdf964" />
-<img width="1902" height="911" alt="4" src="https://github.com/user-attachments/assets/f1bc9d28-1a01-48b8-b7a4-3e57d83900ca" />
-<img width="406" height="825" alt="5" src="https://github.com/user-attachments/assets/1970b70d-5c44-48eb-bea5-43a12929e03e" />
-<img width="408" height="826" alt="6" src="https://github.com/user-attachments/assets/12481b91-a28d-4829-a5ff-f4345d75ecf9" />
+![](./screenshots/1.png)
+![](./screenshots/2.png)
+![](./screenshots/3.png)
+![](./screenshots/4.png)
+![](./screenshots/5.png)
 
 ## Features
 
@@ -42,7 +41,8 @@ My code is free to use how you wish. Just let me know if you need assistance.
 - **Steam sync** — import your Steam library and wishlist with playtime, review every change
   before it's applied, and relink or unlink mismatched entries.
 - **Sale tracking** — opt-in wishlist price tracking via IsThereAnyDeal (PC, Mac, Linux, and
-  Android) and PlatPrices (PlayStation), with target prices and an **On Sale** page.
+  Android), PlatPrices (PlayStation), and Nintendo eShop (Switch/Switch 2, no key needed),
+  with target prices and an **On Sale** page.
 - **Events** — upcoming gaming-industry events from IGDB, with any featured games already in
   your library.
 - **In-browser play** — upload ROMs for games you own and play over 25 systems right in the
@@ -133,6 +133,7 @@ Optional integrations — add key, then run `docker compose up -d` (a plain
 | Steam          | `STEAM_API_KEY`      | [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey) | Your SteamID64 is set in-app, under **Settings → Integrations**.                                                                     |
 | IsThereAnyDeal | `ITAD_API_KEY`       | [isthereanydeal.com/apps/my](https://isthereanydeal.com/apps/my/) | PC, Mac, Linux, and Android prices. `ITAD_COUNTRY` (two-letter code, default `US`) sets the store country.                                |
 | PlatPrices     | `PLATPRICES_API_KEY` | [platprices.com/api-request](https://platprices.com/api-request) | PlayStation prices. The free tier tracks any 2 PS Store regions, chosen on your PlatPrices dashboard. `PLATPRICES_REGION` (two-letter code such as `GB` or `IN`, default `US`) must be one of them. |
+| Nintendo eShop | — (no key)           | —                                                                 | Switch/Switch 2 prices, straight from Nintendo's public eShop price API. `NINTENDO_COUNTRY` (two-letter code, default `CA`) sets the store country. |
 
 Other options: `ROM_MAX_UPLOAD_MB` (default `2048`) caps ROM uploads — raise your reverse
 proxy's upload limit to match. `DATABASE_URL` (SQLite by default), `REDIS_URL`, and
@@ -144,7 +145,7 @@ GPL-3.0 — see [LICENSE](LICENSE).
 
 ## Customizations in this fork (most customizations are only tested under english pages)
 
-- Playnite library Import (via network share and JSON exporter plugin)
+- Playnite library sync (via network share and JSON exporter plugin)
 - Steam sync "Sync all" button
 - CSV import
 - Custom appearance settings (accent color, app title)
@@ -158,6 +159,8 @@ GPL-3.0 — see [LICENSE](LICENSE).
 - Platform page added
 - Platform Manager page added
 - Added platforms to Public page
+- Added dates to Games Calender section
+- Removed Events from Dashboard
 - Added Linked cover art (local nas or web).
 - Change search to allow any order of words.
 - Added Navigation Menu hides on scroll on phones
@@ -166,14 +169,15 @@ GPL-3.0 — see [LICENSE](LICENSE).
 - Added public game hiding feature
 - Move Remove to dropdown of multi-select and added confirm. Making tags the default action.
 - collapsible title/description and sticky toolbar on catalog pages
-- Added Individual Games list page
+- Added Test Game list page
+- Submenus collapse
 - Added Scheduled JSON backup to Network share
 - Fixed Isthereanydeal sale tracking and removed requirement to manual enter games to track
+- Many more Fixes and changes
 - Added persistent login
 - Added simple Andoid app. Downloadable from settings.
 - Display Mode added. Displays cover art, Screenshot, Artwork and Videos in slideshow
 - Added BookShelf. Shows games in a Bookshelf format and can be customized with Spine art.
-- Achievement tracking
 
 ## Support
 

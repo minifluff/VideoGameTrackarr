@@ -578,4 +578,44 @@ describe("LibraryItemDialog", () => {
 
     expect(screen.queryByText("GOG Installers")).not.toBeInTheDocument();
   });
+
+  it("shows Track for sales on a digital Switch row", () => {
+    const switchPlatforms: PlatformResponse[] = [
+      ...platforms,
+      { id: 4, igdbId: 130, name: "Nintendo Switch", slug: "switch", abbreviation: "Switch", gameCount: 0, spineTemplateUrl: null, caseHeightMm: null, caseSpineMm: null, spineColor: null, spineIcon: null, spineIconUrl: null },
+    ];
+    render(
+      <LibraryItemDialog
+        open
+        title="Update game in your collection"
+        status="wishlist"
+        platforms={switchPlatforms}
+        regions={regions}
+        defaultValues={{ platformId: 4, format: "digital" }}
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+        submitLabel="Update"
+      />
+    );
+
+    expect(screen.getByLabelText("Track for sales")).toBeInTheDocument();
+  });
+
+  it("hides Track for sales on a digital NES row", () => {
+    render(
+      <LibraryItemDialog
+        open
+        title="Update game in your collection"
+        status="wishlist"
+        platforms={platforms}
+        regions={regions}
+        defaultValues={{ platformId: 3, format: "digital" }}
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+        submitLabel="Update"
+      />
+    );
+
+    expect(screen.queryByLabelText("Track for sales")).not.toBeInTheDocument();
+  });
 });

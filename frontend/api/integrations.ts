@@ -11,6 +11,7 @@ export interface IntegrationsStatus {
   itadCountry: string;
   platpricesConfigured: boolean;
   platpricesRegion: string;
+  nintendoCountry: string;
   retroachievementsConfigured: boolean;
   retroachievementsUsername: string | null;
 }

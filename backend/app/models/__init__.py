@@ -58,6 +58,7 @@ from app.models.library import (  # noqa: F401
     RomSaveState,
     Tag,
 )
+from app.models.nintendo import NintendoPriceCache  # noqa: F401
 from app.models.platprices import PlatPricesCache  # noqa: F401
 from app.models.steam import SteamLibraryEntry  # noqa: F401
 from app.models.system import RefreshToken, User  # noqa: F401

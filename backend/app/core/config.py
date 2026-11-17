@@ -81,6 +81,17 @@ class Settings(BaseSettings):
         # PlatPricesClient sends it lower-case, as PlatPrices' docs show (region=us).
         return value.strip().upper() or "US"
 
+    # Nintendo eShop country (two-letter code, default "CA") — which country's eShop
+    # prices the Nintendo sale refresh fetches, and which catalog the title search uses.
+    # No API key exists for this provider: Nintendo's price API and catalog search are
+    # public, so there is nothing to configure beyond the country.
+    nintendo_country: str = "CA"
+
+    @field_validator("nintendo_country")
+    @classmethod
+    def _normalise_nintendo_country(cls, value: str) -> str:
+        return value.strip().upper() or "CA"
+
     # Optional response cache backend — falls back to an in-process TTL cache if unset.
     redis_url: str | None = None
 

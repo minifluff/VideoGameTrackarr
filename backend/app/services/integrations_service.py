@@ -15,6 +15,7 @@ def get_status(user: User) -> IntegrationsStatusResponse:
         itad_country=settings.itad_country.strip().upper(),
         platprices_configured=bool(settings.platprices_api_key),
         platprices_region=settings.platprices_region,
+        nintendo_country=settings.nintendo_country.strip().upper(),
         playnite_configured=bool(user.playnite_smb_path),
         retroachievements_configured=bool(user.retroachievements_username and user.retroachievements_api_key),
         retroachievements_username=user.retroachievements_username,

@@ -313,8 +313,9 @@ const RetroAchievementsSection = () => {
   );
 };
 
-// The store region prices are fetched for (ITAD_COUNTRY / PLATPRICES_REGION), so a region
-// that doesn't match what you expect is visible here rather than only in the prices.
+// The store region prices are fetched for (ITAD_COUNTRY / PLATPRICES_REGION /
+// NINTENDO_COUNTRY), so a region that doesn't match what you expect is visible here
+// rather than only in the prices.
 const RegionChip = ({ configured, region }: { configured: boolean | undefined; region: string | undefined }) => {
   const { t } = useTranslation();
   if (!configured || !region) return null;
@@ -598,6 +599,26 @@ const IntegrationsPage = () => {
                 1: <Link href="https://platprices.com" target="_blank" rel="noopener noreferrer" />,
               }}
             />
+          </Typography>
+
+          <Divider sx={{ my: 3 }} />
+
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
+            <Typography variant="subtitle1">{t("settings.integrations.nintendoHeading")}</Typography>
+            <ConfiguredChip configured />
+            <RegionChip configured region={status?.nintendoCountry} />
+          </Stack>
+          <Alert severity="info" sx={{ mb: 1.5 }}>
+            <Trans
+              i18nKey="settings.integrations.nintendoDescription"
+              components={{ 1: <code />, 3: <code /> }}
+            />
+          </Alert>
+          <Alert severity="warning" sx={{ mb: 1.5 }}>
+            {t("settings.integrations.nintendoRegionCaveat")}
+          </Alert>
+          <Typography variant="caption" color="text.secondary">
+            {t("settings.integrations.nintendoCredit")}
           </Typography>
         </CardContent>
       </Card>

@@ -424,6 +424,10 @@
           "name": "Atualização de preços PlatPrices",
           "description": "Atualiza preços de saldo para os jogos PlayStation na sua lista de desejos via PlatPrices — alimenta os selos Em saldo e Insights → Em saldo."
         },
+        "nintendoRefresh": {
+          "name": "Nintendo eShop price refresh",
+          "description": "Refreshes sale prices for wishlisted Switch games via Nintendo eShop — powers the On Sale badges and Insights → On Sale."
+        },
         "eventsSync": {
           "name": "Sincronizar eventos",
           "description": "Obtém os eventos da indústria de jogos atualmente próximos a partir do IGDB e remove qualquer evento previamente sincronizado que já tenha terminado — alimenta a página Eventos e o resumo do painel."
@@ -592,6 +596,10 @@
       "platpricesDescription": "A chave da API do PlatPrices é configurada através do ficheiro <1>.env</1> deste servidor (<3>PLATPRICES_API_KEY</3>), não através da aplicação. Peça uma chave em platprices.com/api-request (normalmente emitida em 1-2 dias úteis), adicione-a ao .env e reinicie o VideoGameTrackarr.",
       "platpricesRegionCaveat": "O plano gratuito do PlatPrices permite que sua conta acompanhe 2 regiões da PlayStation Store ao mesmo tempo (alteráveis uma vez a cada 24 horas em platprices.com), além de 1.000 solicitações por mês. Defina PLATPRICES_REGION no .env com o código de duas letras de uma delas (ex.: GB ou IN) e recrie o contêiner com docker compose up -d (uma simples reinicialização não aplica as alterações do .env). A região em uso aparece acima, e os preços obtidos para qualquer outra região são apagados ao iniciar.",
       "platpricesCredit": "Os dados de preços da PlayStation são fornecidos por <1>PlatPrices</1>.",
+      "nintendoHeading": "Nintendo eShop (Switch)",
+      "nintendoDescription": "Nintendo eShop sale tracking needs no API key — Nintendo's price API and catalog search are public. The country is set via this server's <1>.env</1> file (<3>NINTENDO_COUNTRY</3>, default CA), not through the app.",
+      "nintendoRegionCaveat": "Nintendo publishes no price history, so the historical low shown for a Switch game is built from what this app itself has observed since tracking started — it only becomes a real all-time low after the game has been watched through a sale. Changing NINTENDO_COUNTRY clears the cached prices and the observed lows, since they belong to the old country.",
+      "nintendoCredit": "Switch price data comes from Nintendo eShop.",
       "playniteHeading": "Playnite",
       "playniteDescription": "Connect to your Playnite library over the network (SMB share) to sync games into VideoGameTrackarr.",
       "playnitePathLabel": "Playnite folder location",
@@ -1644,7 +1652,7 @@
     },
     "salesIgnored": {
       "heading": "Promoções - Ignoradas",
-      "description": "Jogos da sua lista de desejos para os quais o ITAD ou o PlatPrices não encontraram uma correspondência exata de título. São ignorados em todas as atualizações a partir de agora — use Repetir para dar outra oportunidade a um título na próxima execução.",
+      "description": "Wishlisted games that ITAD, PlatPrices, or Nintendo couldn't find an exact title match for. They're skipped on every refresh from here on — use Retry to give a title another chance on the next run.",
       "emptyState": "Não há nada aqui. Todos os títulos monitorizados ou já corresponderam ou ainda não foram pesquisados.",
       "columnName": "Nome",
       "columnProvider": "Fornecedor",
@@ -1652,7 +1660,8 @@
       "columnActions": "Ações",
       "provider": {
         "itad": "IsThereAnyDeal",
-        "platprices": "PlatPrices"
+        "platprices": "PlatPrices",
+        "nintendo": "Nintendo eShop"
       },
       "retryButton": "Repetir",
       "retrySuccessToast": "Será repetido na próxima atualização.",

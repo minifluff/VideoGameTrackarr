@@ -1,6 +1,7 @@
 from app.models.catalog import Game, GameCategory
 from app.models.itad import ItadPriceCache
 from app.models.library import LibraryItem, LibraryStatus, MediaFormat
+from app.models.nintendo import NintendoPriceCache
 from app.models.platprices import PlatPricesCache
 
 
@@ -55,6 +56,18 @@ def test_list_ignored_includes_an_ignored_platprices_row(auth_client, db_session
     assert response.status_code == 200
     [item] = response.json()
     assert item["provider"] == "platprices"
+    assert item["gameId"] == seed_game.id
+
+
+def test_list_ignored_includes_an_ignored_nintendo_row(auth_client, db_session, seed_game):
+    db_session.add(NintendoPriceCache(game_id=seed_game.id, nsuid=None, ignored=True))
+    db_session.commit()
+
+    response = auth_client.get("/api/sales-tracking/ignored")
+
+    assert response.status_code == 200
+    [item] = response.json()
+    assert item["provider"] == "nintendo"
     assert item["gameId"] == seed_game.id
 
 

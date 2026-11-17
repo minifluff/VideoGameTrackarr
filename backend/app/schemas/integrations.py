@@ -11,6 +11,7 @@ class IntegrationsStatusResponse(CamelModel):
     itad_country: str
     platprices_configured: bool
     platprices_region: str
+    nintendo_country: str
     playnite_configured: bool
     retroachievements_configured: bool
     retroachievements_username: str | None

@@ -16,7 +16,7 @@ from app.schemas.insights import (
     missing_addons_from_orm,
     on_sale_item_from_orm,
 )
-from app.services import insight_service, itad_service, platprices_service
+from app.services import insight_service, itad_service, nintendo_service, platprices_service
 
 router = APIRouter(prefix="/api/insights", tags=["insights"], dependencies=[Depends(get_current_user)])
 
@@ -74,10 +74,14 @@ def list_accessories_without_owned_hardware(db: Session = Depends(get_db)) -> li
 
 @router.get("/on-sale", response_model=list[OnSaleItemResponse])
 def list_on_sale(db: Session = Depends(get_db)) -> list[OnSaleItemResponse]:
-    # Each provider covers a disjoint set of platforms (see itad_service/platprices_service's
-    # own eligibility gates) — merge both lists and re-sort rather than picking one, so a
-    # PC and a PS5 wishlist row can both show up together, target-hit first then discount %
-    # descending.
-    items = itad_service.list_on_sale_items(db) + platprices_service.list_on_sale_items(db)
+    # Each provider covers a disjoint set of platforms (see itad_service/platprices_service/
+    # nintendo_service's own eligibility gates) — merge all three lists and re-sort rather
+    # than picking one, so a PC, a PS5, and a Switch wishlist row can all show up together,
+    # target-hit first then discount % descending.
+    items = (
+        itad_service.list_on_sale_items(db)
+        + platprices_service.list_on_sale_items(db)
+        + nintendo_service.list_on_sale_items(db)
+    )
     items.sort(key=lambda entry: (not entry.is_target_hit, -(entry.cache.current_cut or 0)))
     return [on_sale_item_from_orm(item) for item in items]

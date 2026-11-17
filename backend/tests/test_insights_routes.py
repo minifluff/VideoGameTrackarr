@@ -1,7 +1,8 @@
-from app.models.catalog import Game, GameCategory
+from app.models.catalog import Game, GameCategory, Platform
 from app.models.hardware import AccessoryDeviceLink, HardwareReferenceEntry, UserAccessory, UserDevice
 from app.models.itad import ItadPriceCache
 from app.models.library import GameProgress, LibraryItem, LibraryStatus, MediaFormat, PlayStatus
+from app.models.nintendo import NintendoPriceCache
 from app.models.platprices import PlatPricesCache
 
 
@@ -792,6 +793,139 @@ def test_on_sale_merges_itad_and_platprices_rows_sorted_by_discount(
     assert response.status_code == 200
     body = response.json()
     assert [item["game"]["id"] for item in body] == [ps_game.id, pc_game.id]  # 70% before 20%
+
+
+def test_on_sale_lists_a_wishlisted_switch_game_with_a_current_discount(auth_client, db_session, seed_game):
+    switch = Platform(name="Nintendo Switch", slug="switch")
+    db_session.add(switch)
+    db_session.commit()
+    db_session.add(
+        LibraryItem(
+            game_id=seed_game.id,
+            status=LibraryStatus.WISHLIST,
+            target_price=60.0,
+            track_for_sales=True,
+            format=MediaFormat.DIGITAL,
+            platform_id=switch.id,
+        )
+    )
+    db_session.add(
+        NintendoPriceCache(
+            game_id=seed_game.id,
+            nsuid="70010000000153",
+            current_price_amount=56.99,
+            current_price_currency="CAD",
+            current_shop_name="Nintendo eShop",
+            current_cut=33,
+            historical_low_amount=56.99,
+            historical_low_currency="CAD",
+            historical_low_shop_name="Nintendo eShop",
+        )
+    )
+    db_session.commit()
+
+    response = auth_client.get("/api/insights/on-sale")
+
+    assert response.status_code == 200
+    [item] = response.json()
+    assert item["game"]["id"] == seed_game.id
+    assert item["currentPriceAmount"] == 56.99
+    assert item["currentPriceCurrency"] == "CAD"
+    assert item["currentShopName"] == "Nintendo eShop"
+    assert item["currentCut"] == 33
+    assert item["historicalLowAmount"] == 56.99
+    assert item["targetPrice"] == 60.0
+    assert item["isTargetHit"] is True
+
+
+def test_on_sale_merges_all_three_providers_sorted_by_discount(
+    auth_client, db_session, seed_pc_platform, seed_platform
+):
+    pc_game = Game(igdb_id=1, name="PC Game", slug="pc-game", category=GameCategory.MAIN_GAME)
+    ps_game = Game(igdb_id=2, name="PS Game", slug="ps-game", category=GameCategory.MAIN_GAME)
+    switch_game = Game(igdb_id=3, name="Switch Game", slug="switch-game", category=GameCategory.MAIN_GAME)
+    db_session.add(pc_game)
+    db_session.add(ps_game)
+    db_session.add(switch_game)
+    switch = Platform(name="Nintendo Switch", slug="switch")
+    db_session.add(switch)
+    db_session.commit()
+    db_session.add(
+        LibraryItem(
+            game_id=pc_game.id,
+            status=LibraryStatus.WISHLIST,
+            format=MediaFormat.DIGITAL,
+            platform_id=seed_pc_platform.id,
+            track_for_sales=True,
+        )
+    )
+    db_session.add(
+        LibraryItem(
+            game_id=ps_game.id,
+            status=LibraryStatus.WISHLIST,
+            format=MediaFormat.DIGITAL,
+            platform_id=seed_platform.id,
+            track_for_sales=True,
+        )
+    )
+    db_session.add(
+        LibraryItem(
+            game_id=switch_game.id,
+            status=LibraryStatus.WISHLIST,
+            format=MediaFormat.DIGITAL,
+            platform_id=switch.id,
+            track_for_sales=True,
+        )
+    )
+    db_session.add(ItadPriceCache(game_id=pc_game.id, itad_game_id="itad-1", current_price_amount=10.0, current_cut=20))
+    db_session.add(PlatPricesCache(game_id=ps_game.id, ppid="222", current_price_amount=10.0, current_cut=70))
+    db_session.add(
+        NintendoPriceCache(
+            game_id=switch_game.id,
+            nsuid="70010000000153",
+            current_price_amount=10.0,
+            current_cut=50,
+            current_shop_name="Nintendo eShop",
+        )
+    )
+    db_session.commit()
+
+    response = auth_client.get("/api/insights/on-sale")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert [item["game"]["id"] for item in body] == [ps_game.id, switch_game.id, pc_game.id]  # 70% > 50% > 20%
+
+
+def test_on_sale_excludes_a_wishlisted_switch_physical_row_even_with_a_cached_discount(
+    auth_client, db_session, seed_game
+):
+    switch = Platform(name="Nintendo Switch", slug="switch")
+    db_session.add(switch)
+    db_session.commit()
+    db_session.add(
+        LibraryItem(
+            game_id=seed_game.id,
+            status=LibraryStatus.WISHLIST,
+            track_for_sales=True,
+            format=MediaFormat.PHYSICAL,
+            platform_id=switch.id,
+        )
+    )
+    db_session.add(
+        NintendoPriceCache(
+            game_id=seed_game.id,
+            nsuid="70010000000153",
+            current_price_amount=56.99,
+            current_cut=33,
+        )
+    )
+    db_session.commit()
+
+    response = auth_client.get("/api/insights/on-sale")
+
+    assert response.status_code == 200
+    assert response.json() == []
 
 
 def test_on_sale_excludes_a_wishlisted_ps5_physical_row_even_with_a_cached_discount(

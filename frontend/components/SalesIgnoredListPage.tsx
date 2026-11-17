@@ -30,6 +30,7 @@ import { TOAST_OPTIONS } from "../utils/toastOptions";
 const PROVIDER_LABEL_KEY: Record<SalesProvider, string> = {
   itad: "insights.salesIgnored.provider.itad",
   platprices: "insights.salesIgnored.provider.platprices",
+  nintendo: "insights.salesIgnored.provider.nintendo",
 };
 
 const SalesIgnoredListPage = () => {
