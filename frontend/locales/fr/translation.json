@@ -486,6 +486,18 @@
       "lastRun": "Last run: {{date}}",
       "runningSince": "Running since {{date}}"
     },
+    "hidden": {
+      "title": "Hidden settings",
+      "note": "This page isn't linked anywhere — it's only reachable by its address.",
+      "syncTitle": "Sync acquired dates",
+      "syncDescription": "Sets every owned copy's Acquired date to its game's Date Added. This overwrites any acquired dates already set.",
+      "syncButton": "Sync acquired dates",
+      "confirmTitle": "Sync acquired dates?",
+      "confirmText": "Every owned copy's Acquired date will be replaced with its game's Date Added. This can't be undone.",
+      "sync": "Sync",
+      "success": "Updated {{count}} acquired dates",
+      "error": "Sync failed — nothing was changed."
+    },
     "tagManager": {
       "description": "Supprime une étiquette de façon permanente. Cela la retire de tous les jeux, appareils et accessoires qui la portent — pas seulement d'un seul élément. Pour retirer une étiquette d'un seul élément, utilisez le champ Étiquettes sur la page de cet élément.",
       "deleteConfirmTitle": "Supprimer « {{name}} » définitivement ?",

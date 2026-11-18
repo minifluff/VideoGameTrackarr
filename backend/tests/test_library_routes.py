@@ -452,6 +452,34 @@ def test_bulk_update_acquired_at_sets_and_clears(auth_client, seed_game, seed_pl
     assert response.status_code == 422
 
 
+def test_sync_acquired_dates_overwrites_with_game_added_date(auth_client, seed_game, seed_platform, db_session):
+    from datetime import datetime
+
+    seed_game.created_at = datetime(2022, 3, 11, 10, 0, 0)
+    db_session.commit()
+
+    first = _add_item(auth_client, seed_game.id, seed_platform.id, "digital")
+    second = _add_item(auth_client, seed_game.id, seed_platform.id, "digital")
+    # A wishlist copy is untouched — it was never acquired.
+    wishlist = auth_client.post(
+        f"/api/games/{seed_game.id}/library",
+        json={"status": "wishlist", "platformId": seed_platform.id, "format": "digital"},
+    )
+    assert wishlist.status_code == 201
+    wishlist_id = wishlist.json()["id"]
+
+    response = auth_client.post("/api/library/sync-acquired-dates")
+
+    assert response.status_code == 200
+    assert response.json() == {"updated": 2}
+    items = auth_client.get(f"/api/games/{seed_game.id}/library").json()
+    by_id = {item["id"]: item for item in items}
+    assert by_id[first]["acquiredAt"] == "2022-03-11"
+    assert by_id[second]["acquiredAt"] == "2022-03-11"
+    # The wishlist copy keeps the date it was created with, not the game's.
+    assert by_id[wishlist_id]["acquiredAt"] == date.today().isoformat()
+
+
 def test_bulk_update_platform_and_status(auth_client, seed_game, seed_platform, db_session):
     from app.models.catalog import Platform
 

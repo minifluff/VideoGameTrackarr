@@ -312,4 +312,9 @@ export const aboutCrumbs: CrumbsFn = (_params, t) => [
   { label: t("nav.about") },
 ];
 
+export const hiddenSettingsCrumbs: CrumbsFn = (_params, t) => [
+  { label: t("nav.settings"), to: "/settings" },
+  { label: t("settings.hidden.title") },
+];
+
 export const notFoundCrumbs: CrumbsFn = (_params, t) => [{ label: t("errors.pageNotFoundTitle") }];

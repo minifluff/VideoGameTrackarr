@@ -13,6 +13,7 @@ import {
   replaceRom,
   bulkDeleteLibraryItems,
   bulkUpdateLibraryItems,
+  syncAcquiredDates,
   type BulkLibraryField,
   updateLibraryItem,
   updateRomLabel,
@@ -73,6 +74,17 @@ export function useBulkUpdateLibraryItems() {
       queryClient.invalidateQueries({ queryKey: ["games"] });
       queryClient.invalidateQueries({ queryKey: ["insights"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+export function useSyncAcquiredDates() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => syncAcquiredDates(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["library"] });
+      queryClient.invalidateQueries({ queryKey: ["games"] });
     },
   });
 }

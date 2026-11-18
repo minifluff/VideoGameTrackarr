@@ -194,6 +194,30 @@ def bulk_update_library_items(
     return len(unique_ids)
 
 
+def sync_acquired_dates_from_game_added(db: Session) -> int:
+    """Overwrite every owned copy's acquired date with its parent game's
+    Date Added (game.created_at).
+
+    A backfill for libraries that predate acquired dates: the game's added
+    date is the best-known date a copy was acquired. Wishlist copies are
+    untouched — a copy that was never acquired has no acquired date.
+    """
+    rows = (
+        db.query(LibraryItem, Game.created_at)
+        .join(Game, LibraryItem.game_id == Game.id)
+        .filter(LibraryItem.status == LibraryStatus.OWNED)
+        .all()
+    )
+    updated = 0
+    for item, created_at in rows:
+        if created_at is None:
+            continue
+        item.acquired_at = created_at.date()
+        updated += 1
+    db.commit()
+    return updated
+
+
 def bulk_delete_library_items(db: Session, item_ids: list[int]) -> int:
     """Delete many library items at once; returns how many were deleted.
 

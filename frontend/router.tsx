@@ -54,6 +54,7 @@ const PublicGamesPage = lazy(() => import("./components/PublicGamesPage"));
 const PublicBookshelfPage = lazy(() => import("./components/PublicBookshelfPage"));
 const PublicHardwarePage = lazy(() => import("./components/PublicHardwarePage"));
 const Settings = lazy(() => import("./components/Settings"));
+const HiddenSettingsPage = lazy(() => import("./components/HiddenSettingsPage"));
 const SaleManagerPage = lazy(() => import("./components/SaleManagerPage"));
 const SyncPage = lazy(() => import("./components/SyncPage"));
 const RemoveGamesPage = lazy(() => import("./components/RemoveGamesPage"));
@@ -81,6 +82,7 @@ import {
   eventsCrumbs,
   franchiseCrumbs,
   aboutCrumbs,
+  hiddenSettingsCrumbs,
   gameDetailCrumbs,
   gamesCrumbs,
   hardwareCrumbs,
@@ -345,6 +347,13 @@ const router = createBrowserRouter([
             element: <Navigate to="/settings/sale-manager?tab=ignored" replace />,
           },
           { path: "/settings/about", element: <About />, handle: { crumbs: aboutCrumbs } },
+          {
+            // Deliberately unlinked from the sidebar — only reachable by typing
+            // the address. One-off maintenance actions live here.
+            path: "/settings-hidden",
+            element: <HiddenSettingsPage />,
+            handle: { crumbs: hiddenSettingsCrumbs },
+          },
           { path: "*", element: <NotFoundRouteElement />, handle: { crumbs: notFoundCrumbs } },
         ],
       },

@@ -89,6 +89,15 @@ export async function bulkUpdateLibraryItems(
   return { updated };
 }
 
+// Overwrites every owned copy's acquired date with its parent game's Date
+// Added (hidden settings page). Returns how many copies were updated.
+export async function syncAcquiredDates(): Promise<{ updated: number }> {
+  const response = await apiClient.post<{ updated: number }>(
+    "/api/library/sync-acquired-dates"
+  );
+  return response.data;
+}
+
 export function progressHandler(onProgress?: (fraction: number) => void) {
   return {
     onUploadProgress: (event: { loaded: number; total?: number }) => {

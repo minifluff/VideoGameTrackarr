@@ -129,6 +129,18 @@ def bulk_update_library_items(
     return BulkUpdateResponse(updated=updated)
 
 
+class SyncAcquiredDatesResponse(BaseModel):
+    updated: int
+
+
+@router.post("/api/library/sync-acquired-dates", response_model=SyncAcquiredDatesResponse)
+def sync_acquired_dates(db: Session = Depends(get_db)) -> SyncAcquiredDatesResponse:
+    """Overwrite every owned copy's acquired date with its parent game's
+    Date Added. Used from the hidden settings page."""
+    updated = library_service.sync_acquired_dates_from_game_added(db)
+    return SyncAcquiredDatesResponse(updated=updated)
+
+
 class BulkDeleteLibraryItemsRequest(BaseModel):
     item_ids: list[int] = Field(min_length=1, max_length=1000)
 
