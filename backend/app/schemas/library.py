@@ -99,6 +99,7 @@ class LibraryListItemResponse(CamelModel):
     date_added: datetime | None
     tag_names: list[str]
     notes: str | None
+    acquired_at: date | None
     digital_storefront: str | None
     hide_from_public: bool
 

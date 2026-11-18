@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -20,6 +20,7 @@ const items: LibraryListItem[] = [
     dateAdded: null,
     tagNames: [],
     notes: null,
+    acquiredAt: "2023-06-15",
     digitalStorefront: null,
     hideFromPublic: false,
   },
@@ -36,6 +37,7 @@ const items: LibraryListItem[] = [
     dateAdded: null,
     tagNames: [],
     notes: null,
+    acquiredAt: "2022-03-11",
     digitalStorefront: null,
     hideFromPublic: false,
   },
@@ -52,6 +54,7 @@ const items: LibraryListItem[] = [
     dateAdded: null,
     tagNames: [],
     notes: null,
+    acquiredAt: "2024-01-05",
     digitalStorefront: null,
     hideFromPublic: true,
   },
@@ -120,6 +123,31 @@ describe("GamesListPage selection", () => {
 
     await user.click(screen.getByRole("button", { name: "Clear selection" }));
     expect(screen.queryByText("2 selected")).not.toBeInTheDocument();
+  });
+
+  it("selects every game in the filtered list from the selection bar", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("checkbox", { name: "Astro Bot" }));
+    expect(await screen.findByText("1 selected")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Select all" }));
+    expect(await screen.findByText("2 selected")).toBeInTheDocument();
+
+    // With a search filter active, Select all only covers the filtered list:
+    // the filter clears the selection, and with just Zelda visible the button
+    // is disabled once that one row is selected.
+    const search = screen.getByLabelText("Search games");
+    await user.type(search, "Zelda");
+    // The search is debounced (300ms) — wait for the filter to actually apply
+    // before asserting on the filtered list.
+    await waitFor(() => {
+      expect(screen.queryByText("Astro Bot")).not.toBeInTheDocument();
+    });
+    await user.click(await screen.findByRole("checkbox", { name: "Zelda: Tears of the Kingdom" }));
+    expect(await screen.findByText("1 selected")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Select all" })).toBeDisabled();
   });
 
   it("deletes the selection only after confirming the warning dialog", async () => {
@@ -235,7 +263,7 @@ describe("GamesListPage status column", () => {
     const labels = headers.map((h) =>
       (h.textContent ?? "").replace(/sorted (ascending|descending)/, "").trim(),
     );
-    expect(labels).toEqual(["", "Name", "Platform", "Format", "Edition", "Status", "Notes", ""]);
+    expect(labels).toEqual(["", "Name", "Platform", "Format", "Edition", "Status", "Notes", "Acquired date", ""]);
   });
 
   it("sorts by status when the Status header is clicked", async () => {
@@ -251,6 +279,21 @@ describe("GamesListPage status column", () => {
     const rowsAfter = screen.getAllByRole("row");
     expect(rowsAfter[1]).toHaveTextContent("Zelda: Tears of the Kingdom");
     expect(rowsAfter[2]).toHaveTextContent("Astro Bot");
+  });
+
+  it("shows the Acquired date after Notes and sorts by it", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    expect(await screen.findByText("Mar 11, 2022")).toBeInTheDocument();
+    expect(screen.getByText("Jun 15, 2023")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Acquired date" }));
+    // Acquired ascending (Hidden Gem stays out — it's hidden): Zelda (2022)
+    // ahead of Astro Bot (2023).
+    const rows = screen.getAllByRole("row");
+    expect(rows[1]).toHaveTextContent("Zelda: Tears of the Kingdom");
+    expect(rows[2]).toHaveTextContent("Astro Bot");
   });
 });
 
@@ -340,6 +383,7 @@ describe("GamesListPage bulk delete pagination", () => {
       "Edition",
       "Status",
       "Notes",
+      "Acquired date",
       "",
     ]);
     expect(screen.getByText("GOG")).toBeInTheDocument();

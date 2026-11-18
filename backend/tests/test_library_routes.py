@@ -1,3 +1,5 @@
+from datetime import date
+
 from app.models.catalog import Game, GameCategory
 from app.models.itad import ItadPriceCache
 from app.models.library import GameProgress, LibraryItem, LibraryStatus
@@ -102,7 +104,8 @@ def test_update_library_item_sets_price(auth_client, seed_game):
 
 def test_update_library_item_sets_and_clears_acquired_at(auth_client, seed_game):
     created = auth_client.post(f"/api/games/{seed_game.id}/library", json={"status": "owned"}).json()
-    assert created["acquiredAt"] is None
+    # A manual add with no date is stamped today.
+    assert created["acquiredAt"] == date.today().isoformat()
 
     response = auth_client.put(f"/api/library/{created['id']}", json={"acquiredAt": "2022-03-11"})
 
@@ -563,7 +566,14 @@ def test_bulk_delete_rejects_empty_ids(auth_client):
 
 
 def test_list_all_library_items_includes_status(auth_client, db_session, seed_game, seed_platform):
-    db_session.add(LibraryItem(game_id=seed_game.id, platform_id=seed_platform.id, status=LibraryStatus.OWNED))
+    db_session.add(
+        LibraryItem(
+            game_id=seed_game.id,
+            platform_id=seed_platform.id,
+            status=LibraryStatus.OWNED,
+            acquired_at=date(2023, 6, 15),
+        )
+    )
     wishlisted_game = Game(igdb_id=5005, name="Wishlisted Game", category=GameCategory.MAIN_GAME)
     db_session.add(wishlisted_game)
     db_session.commit()
@@ -576,6 +586,8 @@ def test_list_all_library_items_includes_status(auth_client, db_session, seed_ga
     by_name = {item["gameName"]: item for item in response.json()}
     assert by_name["Test Game"]["status"] == "owned"
     assert by_name["Wishlisted Game"]["status"] == "wishlist"
+    # The list response carries the stored acquired date through.
+    assert by_name["Test Game"]["acquiredAt"] == "2023-06-15"
 
 
 def test_list_all_library_items_carry_hide_from_public(auth_client, db_session, seed_game, seed_platform):

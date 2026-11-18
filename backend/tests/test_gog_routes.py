@@ -1,4 +1,5 @@
 import time
+from datetime import date
 
 import httpx
 import pytest
@@ -154,6 +155,9 @@ def test_sync_gog_entries_creates_library_item_on_the_gog_galaxy_platform(auth_c
     assert item.status == LibraryStatus.OWNED
     assert item.format == MediaFormat.DIGITAL
     assert item.digital_storefront == "GOG"
+    # GOG's library endpoint has no purchase date in its product objects, so a
+    # synced copy is stamped with the day it entered the library.
+    assert item.acquired_at == date.today()
 
 
 def test_sync_gog_entries_reuses_an_existing_gog_galaxy_platform(auth_client, db_session):

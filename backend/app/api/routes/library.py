@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -59,7 +60,12 @@ def list_library_items(
 def add_library_item(
     game_id: int, body: LibraryItemCreateRequest, db: Session = Depends(get_db)
 ) -> LibraryItemResponse:
-    item = library_service.add_library_item(db, game_id, **body.model_dump())
+    fields = body.model_dump()
+    # A manual add with no acquired date is stamped today — the dialog sends
+    # today's date itself, so this only covers API creates that omit the field.
+    if fields.get("acquired_at") is None:
+        fields["acquired_at"] = date.today()
+    item = library_service.add_library_item(db, game_id, **fields)
     itad_cache = itad_repository.get_cache(db, game_id)
     platprices_cache = platprices_repository.get_cache(db, game_id)
     return library_item_from_orm(item, itad_cache, platprices_cache)

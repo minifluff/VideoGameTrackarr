@@ -1,5 +1,6 @@
 import enum
 from dataclasses import dataclass
+from datetime import date
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -158,6 +159,7 @@ def _sync_one(db: Session, entry: SteamLibraryEntry) -> None:
                 status=LibraryStatus.OWNED,
                 format=MediaFormat.DIGITAL,
                 digital_storefront="Steam",
+                acquired_at=date.today(),
             )
         sync_platform_id = steam_platform.id
     else:

@@ -1,3 +1,5 @@
+from datetime import date
+
 import httpx
 import respx
 
@@ -186,6 +188,9 @@ def test_sync_steam_entries_creates_library_item_and_progress_for_a_new_game(aut
     assert len(library_items) == 1
     assert library_items[0].status == LibraryStatus.OWNED
     assert library_items[0].digital_storefront == "Steam"
+    # Steam's API has no purchase date, so a synced copy is stamped with the
+    # day it entered the library.
+    assert library_items[0].acquired_at == date.today()
     progress = db_session.query(GameProgress).filter(GameProgress.game_id == game.id).first()
     assert progress.playtime_minutes == 754
     # The item now shows up as tracked, so its status flips away from "new".

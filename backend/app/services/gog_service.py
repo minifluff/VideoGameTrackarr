@@ -1,6 +1,7 @@
 import enum
 import time
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from typing import Any, BinaryIO
 from urllib.parse import parse_qs, urlparse
@@ -169,6 +170,7 @@ def _sync_one(db: Session, entry: GogLibraryEntry) -> None:
             status=LibraryStatus.OWNED,
             format=MediaFormat.DIGITAL,
             digital_storefront="GOG",
+            acquired_at=date.today(),
         )
 
     # Syncing a parent also syncs any of its DLC/expansion/pack children that are themselves

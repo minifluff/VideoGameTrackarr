@@ -72,6 +72,15 @@ const formSchema = z.object({
 
 export type LibraryItemFormValues = z.infer<typeof formSchema>;
 
+// Today's date as a local YYYY-MM-DD string, for the Acquired date default on
+// a new copy — local, not UTC, so a late-night add never lands on tomorrow.
+const todayLocalIso = (): string => {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+};
+
 // What to do with this copy's ROMs once the copy itself is saved — each ROM is a separate
 // request (uploads are multipart), so the caller applies these after the create/update call
 // returns an id.
@@ -222,7 +231,9 @@ const LibraryItemDialog = ({
     formState: { errors },
   } = useForm<LibraryItemFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { format: "digital", ...defaultValues },
+    // A new copy defaults its Acquired date to today; an edit's defaultValues
+    // carry the stored date (or ""), which spreads over the default below.
+    defaultValues: { format: "digital", acquiredAt: todayLocalIso(), ...defaultValues },
   });
 
   useEffect(() => {
@@ -232,6 +243,7 @@ const LibraryItemDialog = ({
       trackForSalesTouched.current = false;
       reset({
         format: "digital",
+        acquiredAt: todayLocalIso(),
         ...defaultValues,
         ...(lockFormatToDigital ? { format: "digital" } : {}),
       });
@@ -829,46 +841,28 @@ const LibraryItemDialog = ({
           />
         </FormControl>
         {status === "owned" ? (
-          <>
-            <FormControl fullWidth sx={{ margin: "10px 0 0 0" }}>
-              <Controller
-                name="price"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label={t("dialogs.libraryItem.priceLabel")}
-                    value={field.value ?? ""}
-                    onChange={(event) =>
-                      field.onChange(event.target.value === "" ? undefined : Number(event.target.value))
-                    }
-                    slotProps={{
-                      input: {
-                        startAdornment: <InputAdornment position="start">{getCurrencySymbol(currency)}</InputAdornment>,
-                      },
-                    }}
-                  />
-                )}
-              />
-            </FormControl>
-            <FormControl fullWidth sx={{ margin: "10px 0 20px 0" }}>
-              <Controller
-                name="acquiredAt"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    fullWidth
-                    type="date"
-                    label={t("dialogs.libraryItem.acquiredAtLabel")}
-                    value={field.value ?? ""}
-                    onChange={(event) => field.onChange(event.target.value || null)}
-                    slotProps={{ inputLabel: { shrink: true } }}
-                  />
-                )}
-              />
-            </FormControl>
-          </>
+          <FormControl fullWidth sx={{ margin: "10px 0 20px 0" }}>
+            <Controller
+              name="price"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  fullWidth
+                  type="number"
+                  label={t("dialogs.libraryItem.priceLabel")}
+                  value={field.value ?? ""}
+                  onChange={(event) =>
+                    field.onChange(event.target.value === "" ? undefined : Number(event.target.value))
+                  }
+                  slotProps={{
+                    input: {
+                      startAdornment: <InputAdornment position="start">{getCurrencySymbol(currency)}</InputAdornment>,
+                    },
+                  }}
+                />
+              )}
+            />
+          </FormControl>
         ) : null}
         {status === "wishlist" && showTrackForSales ? (
           <FormControl fullWidth sx={{ margin: "10px 0 0 0" }}>
@@ -958,7 +952,7 @@ const LibraryItemDialog = ({
             )}
           />
         </FormControl>
-        <FormControl fullWidth sx={{ margin: "10px 0 0 0" }}>
+        <FormControl fullWidth sx={{ margin: "10px 0 20px 0" }}>
           <Controller
             name="notes"
             control={control}
@@ -974,6 +968,24 @@ const LibraryItemDialog = ({
             )}
           />
         </FormControl>
+        {status === "owned" ? (
+          <FormControl fullWidth sx={{ margin: "10px 0 0 0" }}>
+            <Controller
+              name="acquiredAt"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  fullWidth
+                  type="date"
+                  label={t("dialogs.libraryItem.acquiredAtLabel")}
+                  value={field.value ?? ""}
+                  onChange={(event) => field.onChange(event.target.value || null)}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+              )}
+            />
+          </FormControl>
+        ) : null}
         {(showGogInstallers || showInstallerUpload) && gameId != null ? (
           <GogInstallersSection
             gameId={gameId}

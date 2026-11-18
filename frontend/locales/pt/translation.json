@@ -1337,6 +1337,7 @@
       "bulkEdit": {
         "editButton": "Edit",
         "clearButton": "Clear selection",
+        "selectAllButton": "Select all",
         "selectPage": "Select page",
         "title": "Edit {{count}} items",
         "fieldLabel": "Field",
@@ -1363,7 +1364,8 @@
         "deleteWarning": "This permanently removes the selected copies from your library, including any uploaded ROM files. This can't be undone.",
         "deleteConfirm": "Delete",
         "deleteError": "Couldn't delete the selected items."
-      }
+      },
+      "acquiredAtColumn": "Acquired date"
     },
     "bookshelf": {
       "title": "Bookshelf",

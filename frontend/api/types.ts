@@ -640,6 +640,7 @@ export interface LibraryListItem {
   dateAdded: string | null;
   tagNames: string[];
   notes: string | null;
+  acquiredAt: string | null;
   digitalStorefront: string | null;
   hideFromPublic: boolean;
 }

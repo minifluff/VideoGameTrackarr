@@ -211,6 +211,31 @@ describe("LibraryItemDialog", () => {
     expect(onSubmit.mock.calls[0][0].acquiredAt).toBeNull();
   });
 
+  it("defaults the acquired date to today for a new copy", async () => {
+    render(
+      <LibraryItemDialog
+        open
+        title="Add game to your collection"
+        status="owned"
+        platforms={platforms}
+        regions={regions}
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+        submitLabel="Add"
+      />
+    );
+
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    expect(screen.getByLabelText("Acquired date")).toHaveValue(today);
+
+    // The Acquired date field sits after Notes, at the bottom of the dialog.
+    const notesLabel = screen.getByLabelText("Notes");
+    const acquiredLabel = screen.getByLabelText("Acquired date");
+    const position = notesLabel.compareDocumentPosition(acquiredLabel);
+    expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("shows Digital Storefront when format is picked before platform", async () => {
     const user = userEvent.setup();
     render(

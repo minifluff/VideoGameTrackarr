@@ -76,6 +76,11 @@ class LibraryItem(TimestampMixin, Base):
         server_default="true",
         comment="Wishlist rows are tracked for sales by default; uncheck to exclude from ITAD/PlatPrices",
     )
+    # When this copy was acquired. No column default on purpose: a Python-side
+    # default also fires for an explicitly-passed None, so it would stamp
+    # today's date onto CSV-import and backup-restore rows that genuinely have
+    # no date. Auto-fill lives at the add sites instead — the create route and
+    # the Steam/GOG syncs stamp today when no date is given.
     acquired_at: Mapped[date | None] = mapped_column(Date)
     notes: Mapped[str | None] = mapped_column(Text)
     steelbook: Mapped[bool] = mapped_column(

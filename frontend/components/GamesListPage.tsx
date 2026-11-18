@@ -49,11 +49,22 @@ import type { LibraryListItem } from "../api/types";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { readStoredShowHidden, storeShowHidden } from "../utils/showHiddenGames";
 
-type SortColumn = "gameName" | "status" | "platformName" | "edition" | "format" | "notes" | "digitalStorefront";
+type SortColumn = "gameName" | "status" | "platformName" | "edition" | "format" | "notes" | "digitalStorefront" | "acquiredAt";
 type SortDirection = "asc" | "desc";
 
 const GamesListPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n.resolvedLanguage ?? i18n.language;
+  // Acquired dates are date-only values, parsed at local midnight like the
+  // progress section's dates so they never shift a day.
+  const formatAcquired = (date: string | null) =>
+    date
+      ? new Date(`${date}T00:00:00`).toLocaleDateString(language, {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      : "—";
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [sortColumn, setSortColumn] = useState<SortColumn>("gameName");
@@ -190,6 +201,10 @@ const GamesListPage = () => {
           aVal = a.notes;
           bVal = b.notes;
           break;
+        case "acquiredAt":
+          aVal = a.acquiredAt;
+          bVal = b.acquiredAt;
+          break;
         case "digitalStorefront":
           aVal = a.digitalStorefront;
           bVal = b.digitalStorefront;
@@ -269,6 +284,7 @@ const GamesListPage = () => {
     { key: "edition", label: t("games.listPage.editionColumn") },
     { key: "status", label: t("games.listPage.statusColumn") },
     { key: "notes", label: t("games.listPage.notesColumn") },
+    { key: "acquiredAt", label: t("games.listPage.acquiredAtColumn") },
   ];
 
   return (
@@ -497,6 +513,13 @@ const GamesListPage = () => {
               </Button>
               <Button
                 size="small"
+                disabled={selectedIds.size === filteredAndSorted.length}
+                onClick={() => setSelectedIds(new Set(filteredAndSorted.map((item) => item.id)))}
+              >
+                {t("games.listPage.bulkEdit.selectAllButton")}
+              </Button>
+              <Button
+                size="small"
                 variant="contained"
                 color="error"
                 startIcon={<DeleteIcon />}
@@ -578,6 +601,7 @@ const GamesListPage = () => {
                     </Pill>
                   </TableCell>
                   <TableCell>{item.notes ?? "—"}</TableCell>
+                  <TableCell>{formatAcquired(item.acquiredAt)}</TableCell>
                   <TableCell padding="checkbox" onClick={(event) => event.stopPropagation()}>
                     <Tooltip title={t("common.transfer")}>
                       <IconButton
