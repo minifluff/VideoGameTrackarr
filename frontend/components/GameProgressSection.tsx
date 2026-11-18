@@ -289,9 +289,6 @@ const GameProgressSection = ({
                   key={row.id}
                   label={row.platformName ?? t("games.about.unknownPlatform")}
                   onClick={() => handleEditProgressClick(row)}
-                  leading={
-                    <PlatformBadge>{badgeFor(row.platformId, row.platformName)}</PlatformBadge>
-                  }
                   title={row.platformName ?? t("games.about.unknownPlatform")}
                   subtitle={
                     [
