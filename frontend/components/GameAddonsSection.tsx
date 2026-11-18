@@ -25,7 +25,7 @@ const GameAddonsSection = ({ addons, onAddonClick }: GameAddonsSectionProps) => 
 
   return (
     <>
-      <CardHeader title={t("games.addons.title")} subheader={t("games.addons.subheader")} />
+      <CardHeader title={t("games.addons.title")} />
       <CardContent>
         {displayedAddons.length === 0 ? (
           <Box sx={{ p: 2 }}>{t("games.addons.empty")}</Box>

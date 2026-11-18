@@ -1170,7 +1170,6 @@
     },
     "addons": {
       "title": "Compléments",
-      "subheader": "DLC, extensions et packs pour ce jeu",
       "empty": "Aucun complément trouvé"
     },
     "gogInstallers": {
@@ -1220,7 +1219,6 @@
       "addSuccessToast": "Jeu ajouté à votre {{phrase}} avec succès !",
       "saveErrorToast": "Erreur lors de l'enregistrement du jeu dans votre {{phrase}}. Veuillez réessayer.",
       "title": "Votre bibliothèque",
-      "subheader": "Entrées de collection et de liste de souhaits, toutes plateformes et régions confondues",
       "collectionTableName": "Collection",
       "wishlistTableName": "Liste de souhaits",
       "updateDialogTitle": "Mettre à jour le jeu dans votre {{phrase}}",
@@ -1954,7 +1952,6 @@
   },
   "notes": {
     "title": "Notes",
-    "defaultSubheader": "Astuces sans divulgâcher l'histoire, où vous en étiez resté, tout ce qui mérite d'être noté",
     "addPlaceholder": "Ajouter une note...",
     "empty": "Aucune note pour l'instant.",
     "addError": "Erreur lors de l'ajout de la note. Veuillez réessayer.",
@@ -2048,7 +2045,6 @@
   },
   "tags": {
     "title": "Étiquettes",
-    "defaultSubheader": "Organisez à votre façon — coop, speedrun, priorité backlog, peu importe",
     "addLabel": "Ajouter une étiquette",
     "searchPlaceholder": "Tapez pour rechercher ou créer",
     "attachError": "Erreur lors de l'ajout de l'étiquette. Veuillez réessayer.",
@@ -2057,7 +2053,6 @@
   },
   "playSessions": {
     "title": "Sessions de jeu",
-    "subheader": "Enregistrez des sessions individuelles par plateforme pour un historique plus détaillé",
     "tableName": "Sessions de jeu",
     "platformColumn": "Plateforme",
     "startedColumn": "Débutée",
@@ -2085,7 +2080,6 @@
   },
   "progress": {
     "title": "Progression",
-    "subheader": "Statut et temps de jeu, suivis séparément pour chaque plateforme possédée",
     "tableName": "Progression",
     "platformColumn": "Plateforme",
     "statusColumn": "Statut",

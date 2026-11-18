@@ -361,11 +361,10 @@ const GameLibrarySection = ({
         </Backdrop>
       )}
       {/* The wrapping Card in GameDetails already carries id="library". The header
-          matches the other detail sections (Tags, Addons, Notes): CardHeader title +
-          subheader, with the actions in its action slot. */}
+          matches the other detail sections (Tags, Addons, Notes): CardHeader title,
+          with the actions in its action slot. */}
       <CardHeader
         title={t("games.library.title")}
-        subheader={t("games.library.subheader")}
         action={
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <FormControlLabel

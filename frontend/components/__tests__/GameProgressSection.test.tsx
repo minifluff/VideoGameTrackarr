@@ -57,13 +57,7 @@ describe("GameProgressSection", () => {
     // CardHeader renders its title as a span, not a heading, like the other detail
     // sections (Tags, Addons, Notes).
     expect(screen.getByText("Progress")).toBeInTheDocument();
-    expect(
-      screen.getByText("Play status and playtime, tracked separately per owned platform")
-    ).toBeInTheDocument();
     expect(screen.getByText("Play Sessions")).toBeInTheDocument();
-    expect(
-      screen.getByText("Log individual sessions per platform if you want a finer-grained history")
-    ).toBeInTheDocument();
     // Summary facts: the overall status plus empty playtime/last-played.
     expect(screen.getByText("Status")).toBeInTheDocument();
     expect(screen.getByText("Playing")).toBeInTheDocument();

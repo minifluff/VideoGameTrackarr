@@ -76,7 +76,7 @@ const TagsSection = ({ tags, onAttach, onDetach, subheader }: TagsSectionProps) 
 
   return (
     <>
-      <CardHeader title={t("tags.title")} subheader={subheader ?? t("tags.defaultSubheader")} />
+      <CardHeader title={t("tags.title")} subheader={subheader} />
       <CardContent>
         <Autocomplete
           multiple

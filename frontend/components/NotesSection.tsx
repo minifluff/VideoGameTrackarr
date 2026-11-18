@@ -122,7 +122,6 @@ const NotesSection = ({
 }: NotesSectionProps) => {
   const { t } = useTranslation();
   const [draft, setDraft] = useState("");
-  const resolvedSubheader = subheader ?? t("notes.defaultSubheader");
 
   const handleAdd = async () => {
     if (!draft.trim()) return;
@@ -137,7 +136,7 @@ const NotesSection = ({
 
   return (
     <>
-      <CardHeader title={t("notes.title")} subheader={resolvedSubheader} />
+      <CardHeader title={t("notes.title")} subheader={subheader} />
       <CardContent>
         <Stack spacing={1.5}>
           <Stack direction="row" spacing={1}>

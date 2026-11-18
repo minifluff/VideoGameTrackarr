@@ -162,9 +162,6 @@ describe("GameLibrarySection", () => {
     // CardHeader renders its title as a span, not a heading, like the other detail
     // sections (Tags, Addons, Notes).
     expect(screen.getByText("Your Library")).toBeInTheDocument();
-    expect(
-      screen.getByText("Collection and wishlist entries across platforms and regions")
-    ).toBeInTheDocument();
     expect(screen.getByText("Owned")).toBeInTheDocument();
     expect(screen.getByText("Wishlist")).toBeInTheDocument();
     // Owned first even when the wishlist item comes first in the prop list. Rows are

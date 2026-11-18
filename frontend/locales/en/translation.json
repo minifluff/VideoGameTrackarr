@@ -1170,7 +1170,6 @@
     },
     "addons": {
       "title": "Addons",
-      "subheader": "DLC, expansions, and packs for this game",
       "empty": "No addons found"
     },
     "gogInstallers": {
@@ -1220,7 +1219,6 @@
       "addSuccessToast": "Game added to your {{phrase}} successfully!",
       "saveErrorToast": "Error saving game in your {{phrase}}. Please try again.",
       "title": "Your Library",
-      "subheader": "Collection and wishlist entries across platforms and regions",
       "collectionTableName": "Collection",
       "wishlistTableName": "Wishlist",
       "updateDialogTitle": "Update game in your {{phrase}}",
@@ -1954,7 +1952,6 @@
   },
   "notes": {
     "title": "Notes",
-    "defaultSubheader": "Spoiler-free tips, where you left off, anything worth remembering",
     "addPlaceholder": "Add a note...",
     "empty": "No notes yet.",
     "addError": "Error adding note. Please try again.",
@@ -2048,7 +2045,6 @@
   },
   "tags": {
     "title": "Tags",
-    "defaultSubheader": "Organize your own way — co-op, speedrun, backlog priority, whatever fits",
     "addLabel": "Add a tag",
     "searchPlaceholder": "Type to search or create",
     "attachError": "Error attaching tag. Please try again.",
@@ -2057,7 +2053,6 @@
   },
   "playSessions": {
     "title": "Play Sessions",
-    "subheader": "Log individual sessions per platform if you want a finer-grained history",
     "tableName": "Play Sessions",
     "platformColumn": "Platform",
     "startedColumn": "Started",
@@ -2085,7 +2080,6 @@
   },
   "progress": {
     "title": "Progress",
-    "subheader": "Play status and playtime, tracked separately per owned platform",
     "tableName": "Progress",
     "platformColumn": "Platform",
     "statusColumn": "Status",

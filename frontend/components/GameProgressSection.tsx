@@ -256,12 +256,11 @@ const GameProgressSection = ({
         </Backdrop>
       )}
       {/* The wrapping Card in GameDetails already carries id="progress". Both headers
-          match the other detail sections (Tags, Addons, Notes): CardHeader title +
-          subheader, with the actions in the action slot. The Play Sessions header keeps
+          match the other detail sections (Tags, Addons, Notes): CardHeader title,
+          with the actions in the action slot. The Play Sessions header keeps
           the play-sessions anchor the Section wrapper used to carry. */}
       <CardHeader
         title={t("progress.title")}
-        subheader={t("progress.subheader")}
         action={
           <SectionAction
             icon={<AddIcon />}
@@ -319,7 +318,6 @@ const GameProgressSection = ({
       <CardHeader
         id="play-sessions"
         title={t("playSessions.title")}
-        subheader={t("playSessions.subheader")}
         action={
           <SectionAction
             icon={<AddIcon />}
