@@ -26,7 +26,7 @@ const JobScheduleControls = ({ job, editor }: { job: JobSummary; editor: JobSche
       <Stack
         direction="row"
         spacing={1.5}
-        sx={{ alignItems: "flex-start", flexWrap: "wrap", mt: 1 }}
+        sx={{ alignItems: "flex-start", flexWrap: "wrap", mt: 2 }}
       >
         <TextField
           select

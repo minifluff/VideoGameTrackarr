@@ -5,7 +5,6 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
-import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
@@ -165,9 +164,7 @@ const ExportBackupJobCard = ({ job }: { job: JobSummary }) => {
         {t("settings.jobs.jobs.exportBackup.description")}
       </Typography>
 
-      <Divider sx={{ my: 2 }} />
-
-      <Typography variant="body2" color="text.secondary" gutterBottom>
+      <Typography variant="body2" color="text.secondary" gutterBottom sx={{ mt: 2 }}>
         {t("settings.jobs.exportBackup.destinationHeading")}
       </Typography>
       <Stack spacing={2} sx={{ maxWidth: 500, mt: 1 }}>
@@ -268,8 +265,6 @@ const ExportBackupJobCard = ({ job }: { job: JobSummary }) => {
           </Alert>
         )}
       </Stack>
-
-      <Divider sx={{ my: 2 }} />
 
       {isRunning && (
         <Box sx={{ mt: 1.5 }}>
