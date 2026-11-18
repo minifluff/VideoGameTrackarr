@@ -829,6 +829,7 @@ def test_get_game_detail_includes_parent_name(auth_client, db_session, seed_game
     assert body["parentGameName"] == "Test Game"
     assert body["parentGameSlug"] == "test-game"
     assert body["category"] == "dlc_addon"
+    assert body["createdAt"]
 
 
 def test_owned_and_wishlisted_are_false_with_no_library_items(auth_client, seed_game):

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any
 
 from app.models.catalog import CompanyRole, Game, GameCategory, IgdbReleaseRegion
@@ -108,6 +109,8 @@ class GameDetailResponse(GameSummaryResponse):
     igdb_status: int | None
     game_modes: list[str]
     age_ratings: dict[str, str]
+    # When the game was added to the library — the Date Added on the game page.
+    created_at: datetime
     time_to_beat: dict[str, int | None] | None
 
 
@@ -200,6 +203,7 @@ def game_detail_from_orm(
         game_modes=game.game_modes or [],
         age_ratings=game.age_ratings or {},
         time_to_beat=game.time_to_beat,
+        created_at=game.created_at,
     )
 
 

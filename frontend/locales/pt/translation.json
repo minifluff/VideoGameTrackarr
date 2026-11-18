@@ -1118,7 +1118,8 @@
       "timeToBeatMain": "Main Story",
       "timeToBeatExtras": "Main + Extras",
       "timeToBeatCompletionist": "Completionist",
-      "timeToBeatSubmissions": "Based on {{count}} player submissions"
+      "timeToBeatSubmissions": "Based on {{count}} player submissions",
+      "dateAddedLabel": "Date Added"
     },
     "actions": {
       "removeSuccessToast": "Jogo removido da sua biblioteca!",

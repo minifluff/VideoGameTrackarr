@@ -325,6 +325,8 @@ export interface GameDetail extends GameSummary {
   edition: string | null;
   igdbUrl: string | null;
   steamAppId: number | null;
+  // When the game was added to the library — the Date Added on the game page.
+  createdAt: string;
   parentGameId: number | null;
   parentGameName: string | null;
   parentGameSlug: string | null;

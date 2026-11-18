@@ -1,12 +1,9 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
-import Chip from "@mui/material/Chip";
 import Grid from "@mui/material/Grid";
 import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import type { GameSummary } from "../api/types";
 import { useAddons, useGame } from "../hooks/useGames";
@@ -21,6 +18,7 @@ import GameActionButtons from "./GameActionButtons";
 import GameAddonsSection from "./GameAddonsSection";
 import GameCoverCard from "./GameCoverCard";
 import GameLibrarySection from "./GameLibrarySection";
+import GameOwnedOnSection from "./GameOwnedOnSection";
 import GameProgressSection from "./GameProgressSection";
 import NotesSection from "./NotesSection";
 import NotFoundPage from "./NotFoundPage";
@@ -56,16 +54,6 @@ const GameDetails = () => {
   const createNote = useCreateNote(gameId);
   const updateNote = useUpdateNote(gameId);
   const deleteNote = useDeleteNote(gameId);
-
-  // Owned platforms derived from the user's library items (matches the public
-  // game page's "Owned on" chips).
-  const ownedPlatforms = useMemo(() => {
-    const names = new Set<string>();
-    for (const item of libraryItems ?? []) {
-      if (item.platformName) names.add(item.platformName);
-    }
-    return [...names].sort();
-  }, [libraryItems]);
 
   // Replaces the old tab-based deep links (e.g. jumping straight to the Actions tab) —
   // deferred to the next paint via requestAnimationFrame so the layout above the target
@@ -133,18 +121,7 @@ const GameDetails = () => {
       <Grid size={{ xs: 12, md: 3 }}>
         <Stack spacing={2}>
           <GameCoverCard game={game} />
-          {ownedPlatforms.length > 0 && (
-            <Box>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                {t("public.games.ownedOn")}
-              </Typography>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                {ownedPlatforms.map((platform) => (
-                  <Chip key={platform} label={platform} size="small" />
-                ))}
-              </Box>
-            </Box>
-          )}
+          <GameOwnedOnSection createdAt={game.createdAt} libraryItems={libraryItems} />
           <GameActionButtons
             gameId={gameId}
             gameIdentifier={identifier!}
