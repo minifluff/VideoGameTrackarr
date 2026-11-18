@@ -234,12 +234,7 @@ function JobCard({ job }: { job: JobSummary }) {
 
       <JobLastRunLine job={job} />
 
-      {schedule.scheduleEnabled && (
-        <>
-          <Divider sx={{ my: 2 }} />
-          <JobScheduleControls job={job} editor={schedule} />
-        </>
-      )}
+      {schedule.scheduleEnabled && <JobScheduleControls job={job} editor={schedule} />}
     </Box>
   );
 }
