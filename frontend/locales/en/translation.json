@@ -379,7 +379,6 @@
       "heading": "Jobs",
       "runNow": "Run now",
       "dismiss": "Dismiss",
-      "scheduleHeading": "Schedule",
       "scheduleEnabledLabel": "Run on a schedule",
       "cronExpressionLabel": "Cron expression",
       "cronExpressionHelp": "Standard 5-field cron, e.g. \"0 3 * * *\" for daily at 3am.",

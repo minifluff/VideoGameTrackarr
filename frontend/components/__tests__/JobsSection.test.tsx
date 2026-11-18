@@ -127,3 +127,43 @@ describe("JobsSection friendly scheduler", () => {
     expect(screen.getByText(/Last run: 2 hours ago · .* · 3m 12s/)).toBeInTheDocument();
   });
 });
+
+describe("JobsSection schedule toggle", () => {
+  it("hides the schedule section and saves the disable when toggled off", () => {
+    const job = idleJob("resync_all");
+    job.schedule = {
+      enabled: true,
+      cronExpression: "0 3 * * *",
+      nextRunAt: null,
+      timezone: getBrowserTimeZone(),
+    };
+    jobsList = [job];
+    updateScheduleSpy.mockClear();
+
+    render(<JobsSection />);
+    expect(screen.getByLabelText("How often")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("Run on a schedule"));
+
+    expect(screen.queryByLabelText("How often")).not.toBeInTheDocument();
+    expect(updateScheduleSpy).toHaveBeenCalledWith({
+      jobId: "resync_all",
+      enabled: false,
+      cronExpression: null,
+    });
+  });
+
+  it("reveals the schedule section when toggled on without saving yet", () => {
+    const job = idleJob("resync_all");
+    jobsList = [job];
+    updateScheduleSpy.mockClear();
+
+    render(<JobsSection />);
+    expect(screen.queryByLabelText("How often")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("Run on a schedule"));
+
+    expect(screen.getByLabelText("How often")).toBeInTheDocument();
+    expect(updateScheduleSpy).not.toHaveBeenCalled();
+  });
+});

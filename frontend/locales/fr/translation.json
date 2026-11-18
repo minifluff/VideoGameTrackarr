@@ -379,7 +379,6 @@
       "heading": "Tâches",
       "runNow": "Exécuter maintenant",
       "dismiss": "Ignorer",
-      "scheduleHeading": "Planification",
       "scheduleEnabledLabel": "Exécuter selon une planification",
       "cronExpressionLabel": "Expression cron",
       "cronExpressionHelp": "Cron standard à 5 champs, par ex. « 0 3 * * * » pour tous les jours à 3h.",

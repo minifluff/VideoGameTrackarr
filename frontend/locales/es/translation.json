@@ -379,7 +379,6 @@
       "heading": "Tareas",
       "runNow": "Ejecutar ahora",
       "dismiss": "Descartar",
-      "scheduleHeading": "Programación",
       "scheduleEnabledLabel": "Ejecutar según una programación",
       "cronExpressionLabel": "Expresión cron",
       "cronExpressionHelp": "Cron estándar de 5 campos, p. ej. \"0 3 * * *\" para diario a las 3am.",

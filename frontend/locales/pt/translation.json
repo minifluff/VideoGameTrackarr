@@ -379,7 +379,6 @@
       "heading": "Tarefas",
       "runNow": "Executar agora",
       "dismiss": "Dispensar",
-      "scheduleHeading": "Agendamento",
       "scheduleEnabledLabel": "Executar num agendamento",
       "cronExpressionLabel": "Expressão cron",
       "cronExpressionHelp": "Cron padrão de 5 campos, por exemplo \"0 3 * * *\" para diariamente às 3h.",

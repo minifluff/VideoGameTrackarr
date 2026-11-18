@@ -19,14 +19,16 @@ import type { JobRunStatus, JobSummary, ResyncJobResult } from "../api/types";
 import {
   useAcknowledgeJobStatus,
   useRunJob,
-  useUpdateJobSchedule,
 } from "../hooks/useJobs";
+import { useJobScheduleEditor } from "../hooks/useJobScheduleEditor";
 import {
   useExportJobConfig,
   useTestExportJobConnection,
   useUpdateExportJobConfig,
 } from "../hooks/useExportJob";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
+import JobLastRunLine from "./JobLastRunLine";
+import JobScheduleControls from "./JobScheduleControls";
 
 const STATUS_CHIP_COLOR: Record<JobRunStatus, ChipProps["color"]> = {
   idle: "default",
@@ -44,15 +46,11 @@ const ExportBackupJobCard = ({ job }: { job: JobSummary }) => {
   const { t } = useTranslation();
   const runJob = useRunJob();
   const acknowledge = useAcknowledgeJobStatus();
-  const updateSchedule = useUpdateJobSchedule();
+  const schedule = useJobScheduleEditor(job);
 
   const { data: config } = useExportJobConfig();
   const updateConfig = useUpdateExportJobConfig();
   const testConnection = useTestExportJobConnection();
-
-  // Schedule state (mirrors JobCard)
-  const [scheduleEnabled, setScheduleEnabled] = useState(job.schedule.enabled);
-  const [cronExpression, setCronExpression] = useState(job.schedule.cronExpression ?? "");
 
   // Export config state
   const [smbPath, setSmbPath] = useState("");
@@ -62,11 +60,6 @@ const ExportBackupJobCard = ({ job }: { job: JobSummary }) => {
   const [includeFiles, setIncludeFiles] = useState(false);
   const [touched, setTouched] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
-
-  useEffect(() => {
-    setScheduleEnabled(job.schedule.enabled);
-    setCronExpression(job.schedule.cronExpression ?? "");
-  }, [job.schedule.enabled, job.schedule.cronExpression]);
 
   useEffect(() => {
     if (!touched && config) {
@@ -99,19 +92,6 @@ const ExportBackupJobCard = ({ job }: { job: JobSummary }) => {
       await acknowledge.mutateAsync(job.id);
     } catch (error) {
       console.error(`Error dismissing job ${job.id} status:`, error);
-    }
-  };
-
-  const handleSaveSchedule = async () => {
-    try {
-      await updateSchedule.mutateAsync({
-        jobId: job.id,
-        enabled: scheduleEnabled,
-        cronExpression: scheduleEnabled ? cronExpression.trim() : null,
-      });
-    } catch (error) {
-      console.error(`Error saving schedule for job ${job.id}:`, error);
-      toast.error(t("settings.jobs.scheduleSaveError"), TOAST_OPTIONS);
     }
   };
 
@@ -169,6 +149,16 @@ const ExportBackupJobCard = ({ job }: { job: JobSummary }) => {
               ? t("settings.jobs.exportBackup.configured")
               : t("settings.jobs.exportBackup.notConfiguredLabel")
           }
+        />
+        <FormControlLabel
+          control={
+            <Switch
+              checked={schedule.scheduleEnabled}
+              onChange={(event) => void schedule.handleToggle(event.target.checked)}
+            />
+          }
+          label={t("settings.jobs.scheduleEnabledLabel")}
+          sx={{ ml: "auto" }}
         />
       </Stack>
       <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -262,6 +252,15 @@ const ExportBackupJobCard = ({ job }: { job: JobSummary }) => {
           >
             {t("settings.jobs.exportBackup.testButton")}
           </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<PlayArrowIcon />}
+            disabled={isRunning}
+            onClick={handleRun}
+          >
+            {t("settings.jobs.runNow")}
+          </Button>
         </Box>
         {testResult && (
           <Alert severity={testResult.ok ? "success" : "error"}>
@@ -271,17 +270,6 @@ const ExportBackupJobCard = ({ job }: { job: JobSummary }) => {
       </Stack>
 
       <Divider sx={{ my: 2 }} />
-
-      <Button
-        variant="outlined"
-        size="small"
-        startIcon={<PlayArrowIcon />}
-        sx={{ mt: 0.5 }}
-        disabled={isRunning}
-        onClick={handleRun}
-      >
-        {t("settings.jobs.runNow")}
-      </Button>
 
       {isRunning && (
         <Box sx={{ mt: 1.5 }}>
@@ -343,48 +331,14 @@ const ExportBackupJobCard = ({ job }: { job: JobSummary }) => {
         </Alert>
       )}
 
-      <Divider sx={{ my: 2 }} />
+      <JobLastRunLine job={job} />
 
-      <Typography variant="body2" color="text.secondary" gutterBottom>
-        {t("settings.jobs.scheduleHeading")}
-      </Typography>
-      <FormControlLabel
-        control={
-          <Switch
-            checked={scheduleEnabled}
-            onChange={(event) => setScheduleEnabled(event.target.checked)}
-          />
-        }
-        label={t("settings.jobs.scheduleEnabledLabel")}
-      />
-      <Stack
-        direction="row"
-        spacing={1.5}
-        sx={{ alignItems: "flex-start", flexWrap: "wrap", mt: 1 }}
-      >
-        <TextField
-          size="small"
-          label={t("settings.jobs.cronExpressionLabel")}
-          helperText={t("settings.jobs.cronExpressionHelp")}
-          value={cronExpression}
-          disabled={!scheduleEnabled}
-          onChange={(event) => setCronExpression(event.target.value)}
-          sx={{ minWidth: 220 }}
-        />
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={handleSaveSchedule}
-          disabled={updateSchedule.isPending}
-        >
-          {t("settings.jobs.saveSchedule")}
-        </Button>
-      </Stack>
-      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
-        {job.schedule.nextRunAt
-          ? t("settings.jobs.nextRun", { date: new Date(job.schedule.nextRunAt).toLocaleString() })
-          : t("settings.jobs.neverScheduled")}
-      </Typography>
+      {schedule.scheduleEnabled && (
+        <>
+          <Divider sx={{ my: 2 }} />
+          <JobScheduleControls job={job} editor={schedule} />
+        </>
+      )}
     </Box>
   );
 };
