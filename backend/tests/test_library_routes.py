@@ -100,6 +100,21 @@ def test_update_library_item_sets_price(auth_client, seed_game):
     assert response.json()["price"] == 19.99
 
 
+def test_update_library_item_sets_and_clears_acquired_at(auth_client, seed_game):
+    created = auth_client.post(f"/api/games/{seed_game.id}/library", json={"status": "owned"}).json()
+    assert created["acquiredAt"] is None
+
+    response = auth_client.put(f"/api/library/{created['id']}", json={"acquiredAt": "2022-03-11"})
+
+    assert response.status_code == 200
+    assert response.json()["acquiredAt"] == "2022-03-11"
+
+    response = auth_client.put(f"/api/library/{created['id']}", json={"acquiredAt": None})
+
+    assert response.status_code == 200
+    assert response.json()["acquiredAt"] is None
+
+
 def test_add_wishlist_item_with_target_price(auth_client, seed_game):
     response = auth_client.post(f"/api/games/{seed_game.id}/library", json={"status": "wishlist", "targetPrice": 15.0})
 

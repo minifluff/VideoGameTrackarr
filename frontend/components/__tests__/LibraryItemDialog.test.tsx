@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { EmulationConfig, PlatformResponse, RegionResponse, RomFileSummary } from "../../api/types";
@@ -159,6 +159,56 @@ describe("LibraryItemDialog", () => {
     await user.click(screen.getByRole("button", { name: "Save" }));
     expect(onSubmit).toHaveBeenCalled();
     expect(onSubmit.mock.calls[0][0].digitalStorefront).toBeUndefined();
+  });
+
+  it("shows and submits the acquired date", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(
+      <LibraryItemDialog
+        open
+        title="Update game in your collection"
+        status="owned"
+        platforms={platforms}
+        regions={regions}
+        defaultValues={{ format: "digital", platformId: 1, acquiredAt: "2022-03-11" }}
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+        submitLabel="Save"
+      />
+    );
+
+    expect(screen.getByLabelText("Acquired date")).toHaveValue("2022-03-11");
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSubmit).toHaveBeenCalled();
+    expect(onSubmit.mock.calls[0][0].acquiredAt).toBe("2022-03-11");
+  });
+
+  it("clearing the acquired date submits null", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(
+      <LibraryItemDialog
+        open
+        title="Update game in your collection"
+        status="owned"
+        platforms={platforms}
+        regions={regions}
+        defaultValues={{ format: "digital", platformId: 1, acquiredAt: "2022-03-11" }}
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+        submitLabel="Save"
+      />
+    );
+
+    const input = screen.getByLabelText("Acquired date");
+    fireEvent.change(input, { target: { value: "" } });
+    expect(input).toHaveValue("");
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSubmit).toHaveBeenCalled();
+    expect(onSubmit.mock.calls[0][0].acquiredAt).toBeNull();
   });
 
   it("shows Digital Storefront when format is picked before platform", async () => {

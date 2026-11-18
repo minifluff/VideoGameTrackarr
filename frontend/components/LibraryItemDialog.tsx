@@ -66,6 +66,8 @@ const formSchema = z.object({
   trackForSales: z.boolean().optional(),
   steelbook: z.boolean().optional(),
   notes: z.string().optional(),
+  // Date-only "YYYY-MM-DD" string from the date input; null clears it.
+  acquiredAt: z.string().nullable().optional(),
 });
 
 export type LibraryItemFormValues = z.infer<typeof formSchema>;
@@ -397,7 +399,17 @@ const LibraryItemDialog = ({
         changes.added = newRoms.map((draft) => ({ file: draft.file, label: draft.label.trim() || null }));
       }
     }
-    onSubmit({ ...values, digitalStorefront: values.digitalStorefront || undefined }, changes);
+    onSubmit(
+      {
+        ...values,
+        digitalStorefront: values.digitalStorefront || undefined,
+        // An empty date input means "no acquired date": send null so clearing
+        // one actually clears it on the backend (undefined would be dropped
+        // from the payload and the old date would survive the update).
+        acquiredAt: values.acquiredAt || null,
+      },
+      changes
+    );
   };
 
   const [downloadingRomId, setDownloadingRomId] = useState<number | null>(null);
@@ -817,28 +829,46 @@ const LibraryItemDialog = ({
           />
         </FormControl>
         {status === "owned" ? (
-          <FormControl fullWidth sx={{ margin: "10px 0 20px 0" }}>
-            <Controller
-              name="price"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  fullWidth
-                  type="number"
-                  label={t("dialogs.libraryItem.priceLabel")}
-                  value={field.value ?? ""}
-                  onChange={(event) =>
-                    field.onChange(event.target.value === "" ? undefined : Number(event.target.value))
-                  }
-                  slotProps={{
-                    input: {
-                      startAdornment: <InputAdornment position="start">{getCurrencySymbol(currency)}</InputAdornment>,
-                    },
-                  }}
-                />
-              )}
-            />
-          </FormControl>
+          <>
+            <FormControl fullWidth sx={{ margin: "10px 0 0 0" }}>
+              <Controller
+                name="price"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label={t("dialogs.libraryItem.priceLabel")}
+                    value={field.value ?? ""}
+                    onChange={(event) =>
+                      field.onChange(event.target.value === "" ? undefined : Number(event.target.value))
+                    }
+                    slotProps={{
+                      input: {
+                        startAdornment: <InputAdornment position="start">{getCurrencySymbol(currency)}</InputAdornment>,
+                      },
+                    }}
+                  />
+                )}
+              />
+            </FormControl>
+            <FormControl fullWidth sx={{ margin: "10px 0 20px 0" }}>
+              <Controller
+                name="acquiredAt"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    fullWidth
+                    type="date"
+                    label={t("dialogs.libraryItem.acquiredAtLabel")}
+                    value={field.value ?? ""}
+                    onChange={(event) => field.onChange(event.target.value || null)}
+                    slotProps={{ inputLabel: { shrink: true } }}
+                  />
+                )}
+              />
+            </FormControl>
+          </>
         ) : null}
         {status === "wishlist" && showTrackForSales ? (
           <FormControl fullWidth sx={{ margin: "10px 0 0 0" }}>

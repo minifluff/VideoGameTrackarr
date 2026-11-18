@@ -227,7 +227,8 @@
       "romDownloadError": "Não foi possível baixar a ROM. Tente novamente.",
       "romUnsupportedPlatformNote": "ROMs não são compatíveis com {{platform}} — ela não pode ser jogada no navegador, então não é possível enviar arquivos ROM para ela.",
       "romChoosePlatformNote": "Escolha uma plataforma para enviar ROMs. Só plataformas que podem ser jogadas no navegador as aceitam.",
-      "formatSubscription": "Subscription"
+      "formatSubscription": "Subscription",
+      "acquiredAtLabel": "Acquired date"
     },
     "manageTags": {
       "title": "Tags",

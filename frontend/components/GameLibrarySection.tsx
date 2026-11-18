@@ -501,6 +501,7 @@ const GameLibrarySection = ({
                   trackForSales: dialogItem.trackForSales,
                   steelbook: dialogItem.steelbook,
                   notes: dialogItem.notes ?? "",
+                  acquiredAt: dialogItem.acquiredAt ?? "",
                 }
               : undefined
           }

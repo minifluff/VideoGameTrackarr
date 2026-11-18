@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ThemeProvider } from "@mui/material/styles";
 import { describe, expect, it } from "vitest";
 import { createM3Theme } from "../../theme/createM3Theme";
@@ -65,6 +65,22 @@ describe("GameOwnedOnSection", () => {
     // The wishlist copy has no acquired date to show, so it gets no row: the
     // Date Added row plus the two owned copies.
     expect(screen.getAllByRole("listitem")).toHaveLength(3);
+    // Expanded, the platform chips swap out for the dates box.
+    expect(screen.queryByText("Nintendo Switch")).not.toBeInTheDocument();
+  });
+
+  it("brings the platform chips back when collapsed again", async () => {
+    renderSection(<GameOwnedOnSection {...props} />);
+    const toggle = screen.getByRole("button", { name: /Owned on/ });
+    fireEvent.click(toggle);
+    fireEvent.click(toggle);
+
+    expect(screen.getByText("Nintendo Switch")).toBeInTheDocument();
+    // The Collapse exit transition hides the dates a beat after the second
+    // click, so wait for it rather than asserting mid-transition.
+    await waitFor(() =>
+      expect(screen.queryByText("Date Added")).not.toBeVisible()
+    );
   });
 
   it("renders nothing with no library items", () => {

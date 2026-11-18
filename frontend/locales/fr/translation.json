@@ -227,7 +227,8 @@
       "romDownloadError": "Impossible de télécharger la ROM. Veuillez réessayer.",
       "romUnsupportedPlatformNote": "Les ROM ne sont pas prises en charge pour {{platform}} — elle ne peut pas être jouée dans le navigateur, donc aucun fichier ROM ne peut être envoyé pour elle.",
       "romChoosePlatformNote": "Choisissez une plateforme pour envoyer des ROM. Seules les plateformes jouables dans le navigateur les acceptent.",
-      "formatSubscription": "Subscription"
+      "formatSubscription": "Subscription",
+      "acquiredAtLabel": "Acquired date"
     },
     "manageTags": {
       "title": "Tags",

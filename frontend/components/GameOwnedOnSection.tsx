@@ -96,11 +96,15 @@ const GameOwnedOnSection = ({ createdAt, libraryItems }: GameOwnedOnSectionProps
           <ExpandMoreIcon fontSize="small" color="action" />
         )}
       </ButtonBase>
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 1 }}>
-        {ownedPlatforms.map((platform) => (
-          <Chip key={platform} label={platform} size="small" />
-        ))}
-      </Box>
+      {/* The chips are the collapsed view: once the dates are open, they swap
+      out for the dates box so the section doesn't repeat the same platforms. */}
+      {!datesExpanded && (
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 1 }}>
+          {ownedPlatforms.map((platform) => (
+            <Chip key={platform} label={platform} size="small" />
+          ))}
+        </Box>
+      )}
       <Collapse in={datesExpanded}>
         {/* Same bordered row box as the About section's Platforms & release dates. */}
         <Box
