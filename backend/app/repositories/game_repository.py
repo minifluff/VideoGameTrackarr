@@ -253,13 +253,19 @@ def _effective_date_added_epoch(now: datetime | None = None) -> ColumnElement[in
     already passed, the release date wins instead. A future release date never wins:
     an unreleased game keeps its added date until release day arrives.
 
+    The latest acquired date across the game's owned copies counts the same way:
+    a copy picked up long after the game was added still makes the game newly
+    added. Wishlist copies don't count (never acquired), and a future acquired
+    date never wins, same as a future release.
+
     Both sides are compared as unix seconds: first_release_date already is one, and
     created_at is converted with SQLite's strftime (this app's database is SQLite —
-    see _game_modes_clause's json_each note for the same assumption).
+    see _game_modes_clause's json_each note for the same assumption). An acquired
+    date is date-only, so its epoch is that day at midnight UTC.
     """
     now_ts = int((now or datetime.now(UTC)).timestamp())
     added_epoch = cast(func.strftime("%s", Game.created_at), Integer)
-    return case(
+    base = case(
         (
             and_(
                 Game.first_release_date.is_not(None),
@@ -269,6 +275,26 @@ def _effective_date_added_epoch(now: datetime | None = None) -> ColumnElement[in
             Game.first_release_date,
         ),
         else_=added_epoch,
+    )
+    latest_acquired_epoch = (
+        select(func.max(cast(func.strftime("%s", LibraryItem.acquired_at), Integer)))
+        .where(
+            LibraryItem.game_id == Game.id,
+            LibraryItem.status == LibraryStatus.OWNED,
+            LibraryItem.acquired_at.is_not(None),
+        )
+        .scalar_subquery()
+    )
+    return case(
+        (
+            and_(
+                latest_acquired_epoch.is_not(None),
+                latest_acquired_epoch <= now_ts,
+                latest_acquired_epoch > base,
+            ),
+            latest_acquired_epoch,
+        ),
+        else_=base,
     )
 
 
