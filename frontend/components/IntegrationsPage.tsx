@@ -72,8 +72,9 @@ const IntegrationSection = ({
   return (
     <>
       <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: open ? 1.5 : 0 }}>
-        {header}
-        <Box sx={{ flexGrow: 1 }} />
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexGrow: 1, minWidth: 0 }}>
+          {header}
+        </Box>
         <IconButton
           size="small"
           onClick={onToggle}
@@ -524,9 +525,9 @@ const IntegrationsPage = () => {
   const updateSteamId = useUpdateSteamId();
   const [steamId, setSteamId] = useState("");
   const [touched, setTouched] = useState(false);
-  // Only the top section starts open; the rest fold away until expanded.
+  // All sections start folded; expand one to see it.
   const [openSections, setOpenSections] = useState<Record<IntegrationSectionId, boolean>>({
-    igdb: true,
+    igdb: false,
     steam: false,
     gog: false,
     playnite: false,
