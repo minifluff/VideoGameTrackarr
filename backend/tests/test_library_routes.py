@@ -419,6 +419,50 @@ def test_list_items_includes_digital_storefront(auth_client, seed_game, seed_pla
     assert rows[0]["digitalStorefront"] == "GOG"
 
 
+def test_switching_wishlist_to_owned_populates_acquired_date(auth_client, seed_game, seed_platform, db_session):
+    from app.models.library import LibraryItem, LibraryStatus, MediaFormat
+
+    # A wishlist copy with no acquired date (e.g. imported before acquired
+    # dates existed) gets today's date when it becomes owned.
+    db_session.add(
+        LibraryItem(
+            game_id=seed_game.id,
+            platform_id=seed_platform.id,
+            status=LibraryStatus.WISHLIST,
+            format=MediaFormat.DIGITAL,
+        )
+    )
+    db_session.commit()
+    item_id = db_session.query(LibraryItem).filter(LibraryItem.game_id == seed_game.id).one().id
+
+    response = auth_client.put(f"/api/library/{item_id}", json={"status": "owned"})
+
+    assert response.status_code == 200
+    assert response.json()["acquiredAt"] == date.today().isoformat()
+
+    # An explicit date on the flip wins over today.
+    db_session.query(LibraryItem).filter(LibraryItem.id == item_id).update(
+        {"status": LibraryStatus.WISHLIST, "acquired_at": None}
+    )
+    db_session.commit()
+
+    response = auth_client.put(
+        f"/api/library/{item_id}", json={"status": "owned", "acquiredAt": "2022-03-11"}
+    )
+
+    assert response.status_code == 200
+    assert response.json()["acquiredAt"] == "2022-03-11"
+
+    # Editing an already-owned copy with no acquired date does not invent one.
+    db_session.query(LibraryItem).filter(LibraryItem.id == item_id).update({"acquired_at": None})
+    db_session.commit()
+
+    response = auth_client.put(f"/api/library/{item_id}", json={"notes": "still no date"})
+
+    assert response.status_code == 200
+    assert response.json()["acquiredAt"] is None
+
+
 def test_bulk_update_acquired_at_sets_and_clears(auth_client, seed_game, seed_platform):
     first = _add_item(auth_client, seed_game.id, seed_platform.id, "digital")
     second = _add_item(auth_client, seed_game.id, seed_platform.id, "digital")

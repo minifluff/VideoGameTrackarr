@@ -1,5 +1,6 @@
 import logging
 import uuid
+from datetime import date
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -111,7 +112,13 @@ def _update_library_item(db: Session, item_id: int, **fields: Any) -> tuple[Libr
     orphaned filenames for the caller to delete from disk once its own
     transaction commits. Bulk callers use this so a whole batch commits once."""
     item = _require_library_item(db, item_id)
+    was_wishlist = item.status == LibraryStatus.WISHLIST
     item = library_item_repository.update_library_item(db, item, **fields)
+    # A wishlist copy that becomes owned gets an acquired date — today, unless
+    # the update already set one (the edit dialog lets you pick a date when
+    # flipping). Editing an already-owned copy never invents a date.
+    if was_wishlist and item.status == LibraryStatus.OWNED and item.acquired_at is None:
+        item.acquired_at = date.today()
     # A copy that's no longer an owned ROM/Abandonware/ISO copy can't hold a ROM — the
     # frontend warns before saving a change like this (LibraryItemDialog/GameLibrarySection).
     orphaned_files: list[str] = []
