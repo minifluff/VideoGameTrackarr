@@ -2,7 +2,7 @@ from datetime import UTC, date, datetime, timedelta
 
 from app.models.catalog import Game, GameCategory
 from app.models.hardware import HardwareReferenceEntry, UserAccessory, UserDevice
-from app.models.library import GameProgress, LibraryItem, LibraryStatus, PlayStatus
+from app.models.library import GameProgress, LibraryItem, LibraryStatus, MediaFormat, PlayStatus
 
 
 def _link_device_to_reference(db_session, device, release_date: date) -> None:
@@ -52,11 +52,20 @@ def test_stats_on_empty_library(auth_client):
 
 
 def test_stats_counts_and_breakdowns(auth_client, db_session, seed_game, seed_platform):
-    db_session.add(LibraryItem(game_id=seed_game.id, platform_id=seed_platform.id, status=LibraryStatus.OWNED))
+    db_session.add(
+        LibraryItem(
+            game_id=seed_game.id,
+            platform_id=seed_platform.id,
+            status=LibraryStatus.OWNED,
+            format=MediaFormat.DIGITAL,
+        )
+    )
     other_game = Game(igdb_id=5005, name="Wishlisted Game", category=GameCategory.MAIN_GAME)
     db_session.add(other_game)
     db_session.commit()
-    db_session.add(LibraryItem(game_id=other_game.id, status=LibraryStatus.WISHLIST))
+    db_session.add(
+        LibraryItem(game_id=other_game.id, status=LibraryStatus.WISHLIST, format=MediaFormat.PHYSICAL)
+    )
     db_session.add(
         GameProgress(
             game_id=seed_game.id,
@@ -80,6 +89,7 @@ def test_stats_counts_and_breakdowns(auth_client, db_session, seed_game, seed_pl
     # top-level game gets counted now, not just ones with an existing GameProgress row.
     assert body["playStatusBreakdown"] == {"playing": 1, "none": 1}
     assert {p["name"]: p["count"] for p in body["platformBreakdown"]} == {seed_platform.name: 1}
+    assert {f["name"]: f["count"] for f in body["formatBreakdown"]} == {"digital": 1, "physical": 1}
 
 
 def test_stats_exclude_missing_games(auth_client, db_session, seed_game, seed_platform):

@@ -19,6 +19,10 @@ vi.mock("../../hooks/usePlatforms", () => ({
   usePlatforms: () => ({ data: [] }),
 }));
 
+vi.mock("../../hooks/useGenres", () => ({
+  useGenres: () => ({ data: [] }),
+}));
+
 vi.mock("../../hooks/useHardwareStats", () => ({
   useHardwareStats: () => ({ data: hardwareStats, isLoading: false }),
 }));
@@ -45,6 +49,7 @@ describe("InsightsPage", () => {
       playStatusBreakdown: {},
       platformBreakdown: [],
       genreBreakdown: [],
+      formatBreakdown: [],
       recentlyAdded: [],
       recentlyPlayed: [],
     } as DashboardStats;

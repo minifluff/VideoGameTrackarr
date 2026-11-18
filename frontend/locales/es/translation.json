@@ -1254,7 +1254,8 @@
       "byPlayStatusTitle": "Por estado de juego",
       "byPlatformTitle": "Por plataforma",
       "byGenreTitle": "Por género",
-      "breakdownCountLabel": "{{name}}: {{count}}"
+      "breakdownCountLabel": "{{name}}: {{count}}",
+      "byFormatTitle": "By Format"
     },
     "play": {
       "dialogTitle": "Jugar a {{name}}",

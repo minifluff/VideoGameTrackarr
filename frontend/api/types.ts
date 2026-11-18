@@ -419,6 +419,7 @@ export interface DashboardStats {
   playStatusBreakdown: Partial<Record<PlayStatus, number>>;
   platformBreakdown: NamedCount[];
   genreBreakdown: NamedCount[];
+  formatBreakdown: NamedCount[];
   recentlyAdded: GameSummary[];
   recentlyPlayed: GameSummary[];
 }

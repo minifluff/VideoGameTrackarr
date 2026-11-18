@@ -22,6 +22,7 @@ class DashboardStatsResponse(CamelModel):
     play_status_breakdown: dict[str, int]
     platform_breakdown: list[NamedCountResponse]
     genre_breakdown: list[NamedCountResponse]
+    format_breakdown: list[NamedCountResponse]
     recently_added: list[GameSummaryResponse]
     recently_played: list[GameSummaryResponse]
 
@@ -38,6 +39,7 @@ def dashboard_stats_from_data(
         play_status_breakdown=data.play_status_breakdown,
         platform_breakdown=[NamedCountResponse(name=p.name, count=p.count) for p in data.platform_breakdown],
         genre_breakdown=[NamedCountResponse(name=g.name, count=g.count) for g in data.genre_breakdown],
+        format_breakdown=[NamedCountResponse(name=f.name, count=f.count) for f in data.format_breakdown],
         recently_added=[game_summary_from_orm(g, on_sale_game_ids) for g in data.recently_added],
         recently_played=[game_summary_from_orm(g, on_sale_game_ids) for g in data.recently_played],
     )

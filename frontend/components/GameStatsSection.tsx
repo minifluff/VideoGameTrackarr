@@ -1,21 +1,22 @@
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
-import type { PlayStatus } from "../api/types";
+import type { MediaFormat, PlayStatus } from "../api/types";
 import { useDashboardStats } from "../hooks/useDashboard";
+import { useGenres } from "../hooks/useGenres";
 import { useOpenFilteredGames } from "../hooks/useOpenFilteredGames";
 import { usePlatforms } from "../hooks/usePlatforms";
 import { BarList, PanelGrid, StatPanel, StatTile, TileGrid, formatPlaytime, type BarRow } from "./Stats";
 
 const BAR_LIMIT = 10;
 
-// Games half of Insights' stats — the upstream page's tiles and bar-list breakdowns. The
-// tiles and the play-status/platform rows open the filtered Games list; the genre rows
-// don't (the Games list has no genre filter to open).
+// Games half of Insights' stats — the upstream page's tiles and bar-list breakdowns.
+// The tiles and the play-status/platform/genre/format rows open the filtered Games list.
 const GameStatsSection = () => {
   const { t } = useTranslation();
   const { data: stats, isLoading } = useDashboardStats();
   const { data: platforms } = usePlatforms();
+  const { data: genres } = useGenres();
   const openGames = useOpenFilteredGames();
 
   if (isLoading) {
@@ -50,8 +51,30 @@ const GameStatsSection = () => {
       onClick: platform ? () => openGames({ platformIds: [platform.id] }) : undefined,
     };
   });
-  const plainRows = (entries: { name: string; count: number }[]): BarRow[] =>
-    entries.map((entry) => ({ label: entry.name, value: entry.count }));
+  // Genre and platform rows resolve by name, like the platform rows — a name the
+  // lookup doesn't know stays a plain row instead of a dead link.
+  const genreRows: BarRow[] = stats.genreBreakdown.map((entry) => {
+    const genre = genres?.find((option) => option.name === entry.name);
+    return {
+      label: entry.name,
+      value: entry.count,
+      onClick: genre ? () => openGames({ genreIds: [genre.id] }) : undefined,
+    };
+  });
+  const formatLabels: Record<MediaFormat, string> = {
+    physical: t("games.library.formatPhysical"),
+    digital: t("games.library.formatDigital"),
+    iso: t("games.library.formatIso"),
+    rom: t("games.library.formatRom"),
+    abandonware: t("games.library.formatAbandonware"),
+    subscription: t("games.library.formatSubscription"),
+    other: t("games.library.formatOther"),
+  };
+  const formatRows: BarRow[] = stats.formatBreakdown.map((entry) => ({
+    label: formatLabels[entry.name as MediaFormat],
+    value: entry.count,
+    onClick: () => openGames({ formats: [entry.name as MediaFormat] }),
+  }));
 
   const bars = (rows: BarRow[]) => (
     <BarList rows={rows} empty={t("insights.page.noData")} limit={BAR_LIMIT} otherLabel={t("insights.page.other")} />
@@ -80,7 +103,8 @@ const GameStatsSection = () => {
       <PanelGrid>
         <StatPanel title={t("games.stats.byPlayStatusTitle")}>{bars(playStatusRows)}</StatPanel>
         <StatPanel title={t("games.stats.byPlatformTitle")}>{bars(platformRows)}</StatPanel>
-        <StatPanel title={t("games.stats.byGenreTitle")}>{bars(plainRows(stats.genreBreakdown))}</StatPanel>
+        <StatPanel title={t("games.stats.byGenreTitle")}>{bars(genreRows)}</StatPanel>
+        <StatPanel title={t("games.stats.byFormatTitle")}>{bars(formatRows)}</StatPanel>
       </PanelGrid>
     </Stack>
   );

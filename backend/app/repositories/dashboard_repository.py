@@ -64,6 +64,7 @@ class DashboardStatsData:
     play_status_breakdown: dict[str, int]
     platform_breakdown: list[NamedCount]
     genre_breakdown: list[NamedCount]
+    format_breakdown: list[NamedCount]
     recently_added: list[GameWithStatus]
     recently_played: list[GameWithStatus]
 
@@ -150,6 +151,20 @@ def get_stats(db: Session) -> DashboardStatsData:
         )
     ]
 
+    # Like the platform breakdown: counted per LibraryItem row, so a game with
+    # both a physical and a digital copy counts under both formats. Rows with no
+    # format recorded are left out rather than shown as a nameless bar.
+    format_breakdown = [
+        NamedCount(name=format.value, count=count)
+        for format, count in db.execute(
+            select(LibraryItem.format, func.count(func.distinct(LibraryItem.game_id)))
+            .where(LibraryItem.format.is_not(None))
+            .group_by(LibraryItem.format)
+            .order_by(func.count(func.distinct(LibraryItem.game_id)).desc())
+            .limit(BREAKDOWN_LIMIT)
+        )
+    ]
+
     # Same effective date as the Date Added sort (see game_repository
     # _effective_date_added_epoch): a pre-release addition surfaces on its
     # release date, not its much earlier added date. Only additions whose
@@ -204,6 +219,7 @@ def get_stats(db: Session) -> DashboardStatsData:
         play_status_breakdown=play_status_breakdown,
         platform_breakdown=platform_breakdown,
         genre_breakdown=genre_breakdown,
+        format_breakdown=format_breakdown,
         recently_added=recently_added,
         recently_played=recently_played,
     )

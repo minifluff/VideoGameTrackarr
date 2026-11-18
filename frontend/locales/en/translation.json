@@ -1254,7 +1254,8 @@
       "byPlayStatusTitle": "By Play Status",
       "byPlatformTitle": "By Platform",
       "byGenreTitle": "By Genre",
-      "breakdownCountLabel": "{{name}}: {{count}}"
+      "breakdownCountLabel": "{{name}}: {{count}}",
+      "byFormatTitle": "By Format"
     },
     "play": {
       "dialogTitle": "Play {{name}}",

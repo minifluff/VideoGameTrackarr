@@ -7,6 +7,7 @@ import GameStatsSection from "../GameStatsSection";
 
 let stats: DashboardStats | undefined;
 let platforms: { id: number; name: string }[] | undefined;
+let genres: { id: number; name: string }[] | undefined;
 
 vi.mock("../../hooks/useDashboard", () => ({
   useDashboardStats: () => ({ data: stats, isLoading: false }),
@@ -14,6 +15,10 @@ vi.mock("../../hooks/useDashboard", () => ({
 
 vi.mock("../../hooks/usePlatforms", () => ({
   usePlatforms: () => ({ data: platforms }),
+}));
+
+vi.mock("../../hooks/useGenres", () => ({
+  useGenres: () => ({ data: genres }),
 }));
 
 const statsFixture: DashboardStats = {
@@ -25,6 +30,7 @@ const statsFixture: DashboardStats = {
   playStatusBreakdown: { playing: 4, completed: 6 },
   platformBreakdown: [{ name: "PC (Microsoft Windows)", count: 7 }],
   genreBreakdown: [{ name: "RPG", count: 5 }],
+  formatBreakdown: [{ name: "digital", count: 6 }],
 } as DashboardStats;
 
 function renderSection() {
@@ -36,9 +42,10 @@ function renderSection() {
 }
 
 describe("GameStatsSection", () => {
-  it("shows the headline tiles and the three bar breakdowns", () => {
+  it("shows the headline tiles and the four bar breakdowns", () => {
     stats = statsFixture;
     platforms = [{ id: 1, name: "PC (Microsoft Windows)" }];
+    genres = [{ id: 2, name: "RPG" }];
 
     renderSection();
 
@@ -50,12 +57,15 @@ describe("GameStatsSection", () => {
     expect(screen.getByText("PC (Microsoft Windows)")).toBeInTheDocument();
     expect(screen.getByText("By Genre")).toBeInTheDocument();
     expect(screen.getByText("RPG")).toBeInTheDocument();
+    expect(screen.getByText("By Format")).toBeInTheDocument();
+    expect(screen.getByText("Digital")).toBeInTheDocument();
   });
 
   it("opens the Games list filtered to a play status from a bar row", async () => {
     const user = userEvent.setup();
     stats = statsFixture;
     platforms = [{ id: 1, name: "PC (Microsoft Windows)" }];
+    genres = [{ id: 2, name: "RPG" }];
 
     renderSection();
 
@@ -63,6 +73,34 @@ describe("GameStatsSection", () => {
 
     expect(JSON.parse(window.sessionStorage.getItem("vgt.view.games.playStatuses") ?? "null")).toEqual([
       "playing",
+    ]);
+  });
+
+  it("opens the Games list filtered to a genre from a bar row", async () => {
+    const user = userEvent.setup();
+    stats = statsFixture;
+    platforms = [{ id: 1, name: "PC (Microsoft Windows)" }];
+    genres = [{ id: 2, name: "RPG" }];
+
+    renderSection();
+
+    await user.click(screen.getByText("RPG"));
+
+    expect(JSON.parse(window.sessionStorage.getItem("vgt.view.games.genreIds") ?? "null")).toEqual([2]);
+  });
+
+  it("opens the Games list filtered to a format from a bar row", async () => {
+    const user = userEvent.setup();
+    stats = statsFixture;
+    platforms = [{ id: 1, name: "PC (Microsoft Windows)" }];
+    genres = [{ id: 2, name: "RPG" }];
+
+    renderSection();
+
+    await user.click(screen.getByText("Digital"));
+
+    expect(JSON.parse(window.sessionStorage.getItem("vgt.view.games.formats") ?? "null")).toEqual([
+      "digital",
     ]);
   });
 });
