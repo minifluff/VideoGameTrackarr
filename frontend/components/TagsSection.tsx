@@ -13,12 +13,11 @@ interface TagsSectionProps {
   tags: Tag[];
   onAttach: (tagId: number) => Promise<unknown>;
   onDetach: (tagId: number) => Promise<unknown>;
-  subheader?: string;
 }
 
 // Entity-agnostic — the parent owns how attach/detach are scoped (to a game, a device, ...).
 // Tag creation isn't entity-specific, so this still calls useCreateTag() directly.
-const TagsSection = ({ tags, onAttach, onDetach, subheader }: TagsSectionProps) => {
+const TagsSection = ({ tags, onAttach, onDetach }: TagsSectionProps) => {
   const { t } = useTranslation();
   const { data: allTags } = useTags();
   const createTag = useCreateTag();
@@ -76,8 +75,8 @@ const TagsSection = ({ tags, onAttach, onDetach, subheader }: TagsSectionProps) 
 
   return (
     <>
-      <CardHeader title={t("tags.title")} subheader={subheader} />
-      <CardContent>
+      <CardHeader title={t("tags.title")} sx={{ pb: 1 }} />
+      <CardContent sx={{ pt: 1 }}>
         <Autocomplete
           multiple
           freeSolo

@@ -184,7 +184,6 @@ const DeviceDetails = () => {
               tags={device.tags}
               onAttach={(tagId) => attachTag.mutateAsync(tagId)}
               onDetach={(tagId) => detachTag.mutateAsync(tagId)}
-              subheader={t("hardware.detailsShared.tagsSubheader")}
             />
           </Card>
 
@@ -244,7 +243,6 @@ const DeviceDetails = () => {
             <NotesSection
               notes={deviceNotes}
               isCreating={createNote.isPending}
-              subheader={t("hardware.detailsShared.notesSubheader")}
               onCreate={(body) => createNote.mutateAsync(body)}
               onUpdate={(noteId, body) => updateNote.mutateAsync({ noteId, body })}
               onDelete={(noteId) => deleteNote.mutateAsync(noteId)}

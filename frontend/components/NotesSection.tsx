@@ -29,7 +29,6 @@ interface NotesSectionProps {
   onUpdate: (noteId: number, body: string) => Promise<unknown>;
   onDelete: (noteId: number) => Promise<unknown>;
   isCreating?: boolean;
-  subheader?: string;
 }
 
 const NoteRow = ({
@@ -118,7 +117,6 @@ const NotesSection = ({
   onUpdate,
   onDelete,
   isCreating,
-  subheader,
 }: NotesSectionProps) => {
   const { t } = useTranslation();
   const [draft, setDraft] = useState("");
@@ -136,8 +134,8 @@ const NotesSection = ({
 
   return (
     <>
-      <CardHeader title={t("notes.title")} subheader={subheader} />
-      <CardContent>
+      <CardHeader title={t("notes.title")} sx={{ pb: 1 }} />
+      <CardContent sx={{ pt: 1 }}>
         <Stack spacing={1.5}>
           <Stack direction="row" spacing={1}>
             <TextField

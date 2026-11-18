@@ -365,6 +365,7 @@ const GameLibrarySection = ({
           with the actions in its action slot. */}
       <CardHeader
         title={t("games.library.title")}
+        sx={{ pb: 1 }}
         action={
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <FormControlLabel
@@ -386,7 +387,7 @@ const GameLibrarySection = ({
           </Box>
         }
       />
-      <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+      <CardContent sx={{ p: { xs: 1.5, sm: 2 }, pt: 1 }}>
         {visibleItems.length === 0 ? (
           <EmptyLine>{t("games.library.empty")}</EmptyLine>
         ) : (

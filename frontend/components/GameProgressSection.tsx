@@ -261,6 +261,7 @@ const GameProgressSection = ({
           the play-sessions anchor the Section wrapper used to carry. */}
       <CardHeader
         title={t("progress.title")}
+        sx={{ pb: 1 }}
         action={
           <SectionAction
             icon={<AddIcon />}
@@ -269,7 +270,7 @@ const GameProgressSection = ({
           />
         }
       />
-      <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+      <CardContent sx={{ p: { xs: 1.5, sm: 2 }, pt: 1 }}>
         <Facts
           facts={[
             [
@@ -318,6 +319,7 @@ const GameProgressSection = ({
       <CardHeader
         id="play-sessions"
         title={t("playSessions.title")}
+        sx={{ pb: 1 }}
         action={
           <SectionAction
             icon={<AddIcon />}
@@ -326,7 +328,7 @@ const GameProgressSection = ({
           />
         }
       />
-      <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+      <CardContent sx={{ p: { xs: 1.5, sm: 2 }, pt: 1 }}>
         {visibleSessions.length === 0 ? (
           <EmptyLine>{t("playSessions.empty")}</EmptyLine>
         ) : (
