@@ -419,6 +419,39 @@ def test_list_items_includes_digital_storefront(auth_client, seed_game, seed_pla
     assert rows[0]["digitalStorefront"] == "GOG"
 
 
+def test_bulk_update_acquired_at_sets_and_clears(auth_client, seed_game, seed_platform):
+    first = _add_item(auth_client, seed_game.id, seed_platform.id, "digital")
+    second = _add_item(auth_client, seed_game.id, seed_platform.id, "digital")
+
+    response = auth_client.post(
+        "/api/library/bulk-update",
+        json={"item_ids": [first, second], "field": "acquired_at", "value": "2022-03-11"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"updated": 2}
+    items = auth_client.get(f"/api/games/{seed_game.id}/library").json()
+    assert {item["acquiredAt"] for item in items} == {"2022-03-11"}
+
+    # Blank clears the acquired date on every selected item.
+    response = auth_client.post(
+        "/api/library/bulk-update",
+        json={"item_ids": [first, second], "field": "acquired_at", "value": ""},
+    )
+
+    assert response.status_code == 200
+    items = auth_client.get(f"/api/games/{seed_game.id}/library").json()
+    assert {item["acquiredAt"] for item in items} == {None}
+
+    # A malformed date is rejected, not stored.
+    response = auth_client.post(
+        "/api/library/bulk-update",
+        json={"item_ids": [first], "field": "acquired_at", "value": "not-a-date"},
+    )
+
+    assert response.status_code == 422
+
+
 def test_bulk_update_platform_and_status(auth_client, seed_game, seed_platform, db_session):
     from app.models.catalog import Platform
 

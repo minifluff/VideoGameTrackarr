@@ -131,7 +131,7 @@ def update_library_item(db: Session, item_id: int, **fields: Any) -> LibraryItem
 # Fields the List page's bulk edit may set on many items at once — exactly one
 # field per call, applied through update_library_item so its invariants (ROM
 # detach when a copy stops being ROM-capable, etc.) hold for bulk edits too.
-BULK_UPDATE_FIELDS = ("format", "platform", "region", "status", "edition", "notes", "digital_storefront")
+BULK_UPDATE_FIELDS = ("format", "platform", "region", "status", "edition", "notes", "digital_storefront", "acquired_at")
 
 
 def bulk_update_library_items(
@@ -160,6 +160,9 @@ def bulk_update_library_items(
     elif field in ("edition", "notes", "digital_storefront"):
         text = str(value).strip() if value is not None else None
         fields = {field: text or None}
+    elif field == "acquired_at":
+        # The route already parsed the YYYY-MM-DD string (or None to clear).
+        fields = {"acquired_at": value}
     elif field == "game":
         # Moving copies to another game doesn't fit the set-a-column loop below
         # (it reassigns game_id), and an item already in the target game is a

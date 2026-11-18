@@ -83,10 +83,12 @@ def update_library_item(
 
 class BulkUpdateLibraryItemsRequest(BaseModel):
     item_ids: list[int] = Field(min_length=1, max_length=1000)
-    field: Literal["format", "platform", "region", "status", "edition", "notes", "game", "digital_storefront"]
+    field: Literal[
+        "format", "platform", "region", "status", "edition", "notes", "game", "digital_storefront", "acquired_at"
+    ]
     # format/status arrive as their enum value strings, platform/region/game as
     # integer ids, edition/notes/digital_storefront as free text (blank clears
-    # the field).
+    # the field), acquired_at as a YYYY-MM-DD string (blank clears the date).
     value: str | int | None = None
 
 
@@ -113,6 +115,16 @@ def bulk_update_library_items(
     elif body.field in ("platform", "region"):
         if not isinstance(body.value, int):
             raise HTTPException(status_code=422, detail=f"{body.field} value must be an id")
+    elif body.field == "acquired_at":
+        if body.value is None or (isinstance(body.value, str) and body.value.strip() == ""):
+            value = None
+        elif isinstance(body.value, str):
+            try:
+                value = date.fromisoformat(body.value)
+            except ValueError:
+                raise HTTPException(status_code=422, detail=f"Invalid acquired date: {body.value}") from None
+        else:
+            raise HTTPException(status_code=422, detail="acquired_at value must be a date string")
     updated = library_service.bulk_update_library_items(db, body.item_ids, body.field, value)
     return BulkUpdateResponse(updated=updated)
 

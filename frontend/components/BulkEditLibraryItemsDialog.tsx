@@ -38,6 +38,7 @@ const FIELD_KEYS: { value: BulkLibraryField; labelKey: string }[] = [
   { value: "status", labelKey: "games.listPage.bulkEdit.fields.status" },
   { value: "edition", labelKey: "games.listPage.bulkEdit.fields.edition" },
   { value: "notes", labelKey: "games.listPage.bulkEdit.fields.notes" },
+  { value: "acquired_at", labelKey: "games.listPage.bulkEdit.fields.acquiredAt" },
   { value: "game", labelKey: "games.listPage.bulkEdit.fields.game" },
 ];
 
@@ -80,7 +81,11 @@ const BulkEditLibraryItemsDialog = ({
     }
   }, [open ]);
 
-  const isTextField = field === "edition" || field === "notes" || field === "digital_storefront";
+  const isTextField =
+    field === "edition" ||
+    field === "notes" ||
+    field === "digital_storefront" ||
+    field === "acquired_at";
   const canApply =
     field === "game" ? selectedGameId !== null : isTextField || value !== "";
 
@@ -231,7 +236,19 @@ const BulkEditLibraryItemsDialog = ({
           />
         )}
 
-        {isTextField && field !== "digital_storefront" && (
+        {field === "acquired_at" && (
+          <TextField
+            type="date"
+            label={t("games.listPage.bulkEdit.valueLabel")}
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+            helperText={t("games.listPage.bulkEdit.blankClears")}
+            slotProps={{ inputLabel: { shrink: true } }}
+            fullWidth
+          />
+        )}
+
+        {isTextField && field !== "digital_storefront" && field !== "acquired_at" && (
           <TextField
             label={t("games.listPage.bulkEdit.valueLabel")}
             value={value}

@@ -37,13 +37,38 @@ export async function deleteLibraryItem(itemId: number): Promise<void> {
 // Deletes many library items at once (List page bulk delete). The backend
 // validates every id before deleting, so a bad id fails the whole call.
 export async function bulkDeleteLibraryItems(itemIds: number[]): Promise<{ deleted: number }> {
-  const response = await apiClient.post<{ deleted: number }>("/api/library/bulk-delete", {
-    item_ids: itemIds,
-  });
-  return response.data;
+  let deleted = 0;
+  for (const batch of chunkIds(itemIds)) {
+    const response = await apiClient.post<{ deleted: number }>("/api/library/bulk-delete", {
+      item_ids: batch,
+    });
+    deleted += response.data.deleted;
+  }
+  return { deleted };
 }
 
-export type BulkLibraryField = "format" | "platform" | "region" | "status" | "edition" | "notes" | "game" | "digital_storefront";
+export type BulkLibraryField =
+  | "format"
+  | "platform"
+  | "region"
+  | "status"
+  | "edition"
+  | "notes"
+  | "game"
+  | "digital_storefront"
+  | "acquired_at";
+
+// The backend caps item_ids at 1000 per bulk call, so a Select-all on a big
+// library is sent in batches and the counts summed.
+const BULK_BATCH_SIZE = 1000;
+
+function chunkIds(itemIds: number[]): number[][] {
+  const chunks: number[][] = [];
+  for (let i = 0; i < itemIds.length; i += BULK_BATCH_SIZE) {
+    chunks.push(itemIds.slice(i, i + BULK_BATCH_SIZE));
+  }
+  return chunks;
+}
 
 // Sets ONE field on many library items at once (List page bulk edit). The
 // backend validates every id before writing, so a bad id fails the whole call.
@@ -52,12 +77,16 @@ export async function bulkUpdateLibraryItems(
   field: BulkLibraryField,
   value: string | number | null
 ): Promise<{ updated: number }> {
-  const response = await apiClient.post<{ updated: number }>("/api/library/bulk-update", {
-    item_ids: itemIds,
-    field,
-    value,
-  });
-  return response.data;
+  let updated = 0;
+  for (const batch of chunkIds(itemIds)) {
+    const response = await apiClient.post<{ updated: number }>("/api/library/bulk-update", {
+      item_ids: batch,
+      field,
+      value,
+    });
+    updated += response.data.updated;
+  }
+  return { updated };
 }
 
 export function progressHandler(onProgress?: (fraction: number) => void) {

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import BulkEditLibraryItemsDialog from "../BulkEditLibraryItemsDialog";
@@ -142,6 +142,7 @@ describe("BulkEditLibraryItemsDialog", () => {
       "Status",
       "Edition",
       "Notes",
+      "Acquired date",
       "Move to game",
     ]);
   });
@@ -180,6 +181,51 @@ describe("BulkEditLibraryItemsDialog", () => {
     expect(mutateAsync).toHaveBeenCalledWith({
       itemIds: [11],
       field: "digital_storefront",
+      value: "",
+    });
+  });
+
+  it("applies an acquired date change to every selected item", async () => {
+    const user = userEvent.setup();
+    render(
+      <BulkEditLibraryItemsDialog
+        open
+        itemIds={[11, 12]}
+        onClose={vi.fn()}
+        onApplied={vi.fn()}
+      />
+    );
+
+    await user.click(screen.getByRole("combobox", { name: "Field" }));
+    await user.click(await screen.findByRole("option", { name: "Acquired date" }));
+    // Date inputs take fireEvent.change, not userEvent typing.
+    fireEvent.change(screen.getByLabelText("New value"), {
+      target: { value: "2022-03-11" },
+    });
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    expect(mutateAsync).toHaveBeenCalledWith({
+      itemIds: [11, 12],
+      field: "acquired_at",
+      value: "2022-03-11",
+    });
+  });
+
+  it("clears the acquired date when Apply is hit with a blank value", async () => {
+    const user = userEvent.setup();
+    render(
+      <BulkEditLibraryItemsDialog open itemIds={[11]} onClose={vi.fn()} onApplied={vi.fn()} />
+    );
+
+    await user.click(screen.getByRole("combobox", { name: "Field" }));
+    await user.click(await screen.findByRole("option", { name: "Acquired date" }));
+    // Blank is allowed for a date (same as Edition/Notes) — Apply stays enabled.
+    expect(screen.getByRole("button", { name: "Apply" })).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    expect(mutateAsync).toHaveBeenCalledWith({
+      itemIds: [11],
+      field: "acquired_at",
       value: "",
     });
   });

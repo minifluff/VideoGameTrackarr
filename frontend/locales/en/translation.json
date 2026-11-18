@@ -1354,6 +1354,7 @@
           "status": "Status",
           "edition": "Edition",
           "notes": "Notes",
+          "acquiredAt": "Acquired date",
           "game": "Move to game",
           "digitalStorefront": "Digital Storefront"
         },
