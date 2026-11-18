@@ -4,7 +4,6 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
-import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
@@ -20,6 +19,7 @@ import { useTranslation } from "react-i18next";
 import { usePublicGame } from "../hooks/usePublic";
 import GameAboutSection from "./GameAboutSection";
 import GameCoverCard from "./GameCoverCard";
+import GameOwnedOnSection from "./GameOwnedOnSection";
 import NotFoundPage from "./NotFoundPage";
 
 const sectionCardSx = { borderRadius: 2, overflow: "hidden" } as const;
@@ -74,18 +74,7 @@ const PublicGameDetailsPage = () => {
         <Stack spacing={2}>
           {/* Sale tracking is the owner's own data, and the public list never shows "Missing". */}
           <GameCoverCard game={{ ...game, isOnSale: false, autoDiscovered: false }} />
-          {game.ownedPlatforms.length > 0 && (
-            <Box>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                {t("public.games.ownedOn")}
-              </Typography>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                {game.ownedPlatforms.map((platform) => (
-                  <Chip key={platform} label={platform} size="small" />
-                ))}
-              </Box>
-            </Box>
-          )}
+          <GameOwnedOnSection publicCopies={game.ownedCopies} />
           <Button
             component={Link}
             to={gamesPath}

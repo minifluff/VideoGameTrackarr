@@ -104,6 +104,20 @@ describe("PublicGameDetailsPage", () => {
     );
   });
 
+  it("shows the Owned on dropdown with platform and format on the public page", async () => {
+    getPublicGame.mockResolvedValue({
+      ...game,
+      ownedCopies: [{ platform: "Steam", edition: "Standard", format: "digital" }],
+    });
+    renderPage();
+
+    const toggle = await screen.findByRole("button", { name: /Owned on/ });
+    await userEvent.click(toggle);
+
+    expect(screen.getByText("Steam · Digital")).toBeInTheDocument();
+    expect(screen.queryByText("Date Added")).not.toBeInTheDocument();
+  });
+
   it("goes back to the public games list", async () => {
     getPublicGame.mockResolvedValue(game);
     renderPage();

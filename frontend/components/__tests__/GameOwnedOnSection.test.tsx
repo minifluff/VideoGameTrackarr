@@ -38,6 +38,13 @@ const props = {
   libraryItems: [ownedSwitch, ownedPs4NoDate, wishlistedPc],
 };
 
+// Public pages pass the owned copies straight from the public detail
+// response — platform and format only, no dates and no edition.
+const publicCopies = [
+  { platform: "Steam", edition: "Standard", format: "digital" },
+  { platform: "Nintendo Switch", edition: null, format: "physical" },
+];
+
 describe("GameOwnedOnSection", () => {
   it("shows the Owned on chips and stays collapsed by default", () => {
     renderSection(<GameOwnedOnSection {...props} />);
@@ -87,6 +94,28 @@ describe("GameOwnedOnSection", () => {
     const { container } = renderSection(
       <GameOwnedOnSection createdAt={props.createdAt} libraryItems={[]} />
     );
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("shows platform + format rows and no dates on public pages", () => {
+    renderSection(<GameOwnedOnSection publicCopies={publicCopies} />);
+
+    expect(screen.getByText("Steam")).toBeInTheDocument();
+    expect(screen.getByText("Nintendo Switch")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Owned on/ }));
+
+    expect(screen.getByText("Steam · Digital")).toBeInTheDocument();
+    expect(screen.getByText("Nintendo Switch · Physical")).toBeInTheDocument();
+    // No Date Added row and no edition — just platform and format.
+    expect(screen.queryByText("Date Added")).not.toBeInTheDocument();
+    expect(screen.queryByText("Standard")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    // Expanded, the platform chips swap out for the rows box.
+    expect(screen.queryByText("Nintendo Switch")).not.toBeInTheDocument();
+  });
+
+  it("renders nothing with no public copies", () => {
+    const { container } = renderSection(<GameOwnedOnSection publicCopies={[]} />);
     expect(container.firstChild).toBeNull();
   });
 });
