@@ -4,7 +4,12 @@ from app.repositories.dashboard_repository import DashboardStatsData
 from app.schemas.accessory import AccessorySummaryResponse, accessory_summary_from_orm
 from app.schemas.base import CamelModel
 from app.schemas.device import DeviceSummaryResponse, device_summary_from_orm
-from app.schemas.game import GameSummaryResponse, game_summary_from_orm
+from app.schemas.game import (
+    GameSummaryResponse,
+    WishlistedGameSummaryResponse,
+    game_summary_from_orm,
+    wishlisted_game_summary_from_orm,
+)
 from app.services.dashboard_service import UpcomingReleaseItem
 
 
@@ -25,6 +30,7 @@ class DashboardStatsResponse(CamelModel):
     format_breakdown: list[NamedCountResponse]
     recently_added: list[GameSummaryResponse]
     recently_played: list[GameSummaryResponse]
+    wishlisted_games: list[WishlistedGameSummaryResponse]
 
 
 def dashboard_stats_from_data(
@@ -42,6 +48,12 @@ def dashboard_stats_from_data(
         format_breakdown=[NamedCountResponse(name=f.name, count=f.count) for f in data.format_breakdown],
         recently_added=[game_summary_from_orm(g, on_sale_game_ids) for g in data.recently_added],
         recently_played=[game_summary_from_orm(g, on_sale_game_ids) for g in data.recently_played],
+        wishlisted_games=[
+            wishlisted_game_summary_from_orm(
+                g, data.wishlisted_game_formats.get(g.game.id, []), on_sale_game_ids
+            )
+            for g in data.wishlisted_games
+        ],
     )
 
 

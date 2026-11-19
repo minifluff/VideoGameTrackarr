@@ -50,6 +50,7 @@ describe("resolveOverviewLayout", () => {
       "nowPlaying",
       "recentlyPlayed",
       "recentlyAddedGames",
+      "wishlistedGames",
       "recentlyAddedHardware",
       "needsAttention",
       "displayMode",

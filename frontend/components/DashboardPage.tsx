@@ -6,6 +6,8 @@ import TuneIcon from "@mui/icons-material/Tune";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
+import Checkbox from "@mui/material/Checkbox";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
 import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
@@ -73,6 +75,7 @@ const DashboardPage = () => {
   const { data: shareToken } = useShareLink();
   const { layout, cardSize, save: saveLayout, userLoading } = useOverviewLayout();
   const [customizing, setCustomizing] = useState(false);
+  const [physicalOnly, setPhysicalOnly] = useState(false);
 
   // The header needs nothing from the section queries, so it renders at once
   // instead of waiting behind the skeleton gate — on a slow device the page
@@ -185,6 +188,7 @@ const DashboardPage = () => {
     nowPlaying: t("overview.nowPlaying"),
     recentlyPlayed: t("overview.recentlyPlayed"),
     recentlyAddedGames: t("overview.recentlyAddedGames"),
+    wishlistedGames: t("overview.wishlistedGames"),
     recentlyAddedHardware: t("overview.recentlyAddedHardware"),
     needsAttention: t("overview.needsAttention"),
     displayMode: t("insights.dashboard.displayModeButton"),
@@ -197,6 +201,22 @@ const DashboardPage = () => {
     { key: "duplicates", label: t("overview.attention.duplicates"), value: duplicates?.length, to: "/insights/duplicates" },
     { key: "orphans", label: t("overview.attention.orphans"), value: orphans?.length, to: "/insights/orphaned-accessories" },
   ];
+
+  // The Wishlisted Games row's Physical filter — passed as the carousel's
+  // actions, so it sits left of the view-all chevron and the < > arrows.
+  const physicalFilter = (
+    <FormControlLabel
+      control={
+        <Checkbox
+          size="small"
+          checked={physicalOnly}
+          onChange={(event) => setPhysicalOnly(event.target.checked)}
+        />
+      }
+      label={t("overview.wishlistedPhysicalOnly")}
+      sx={{ mr: 0 }}
+    />
+  );
 
   const sections: Record<OverviewSectionKey, ReactNode> = {
     stats: (
@@ -331,6 +351,41 @@ const DashboardPage = () => {
         viewAllHref="/games?sort=date_added_desc"
       />
     ) : null,
+    wishlistedGames: (() => {
+      const wishlistedGames = stats?.wishlistedGames ?? [];
+      if (wishlistedGames.length === 0) return null;
+      const visibleGames = physicalOnly
+        ? wishlistedGames.filter((game) => game.formats.includes("physical"))
+        : wishlistedGames;
+      // The filter can empty the row — the section stays, checkbox and all,
+      // so it can be unchecked again instead of vanishing with it.
+      if (visibleGames.length === 0) {
+        return (
+          <Section
+            id="wishlisted-games"
+            title={t("overview.wishlistedGames")}
+            action={physicalFilter}
+          >
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              {t("overview.wishlistedPhysicalEmpty")}
+            </Typography>
+          </Section>
+        );
+      }
+      return (
+        <CardCarousel
+          id="wishlisted-games"
+          title={t("overview.wishlistedGames")}
+          items={visibleGames}
+          getItemKey={(game) => game.id}
+          renderItem={gameCard}
+          cardSize={cardSize}
+          columnWidth={STRIP_COLUMN * cardSize}
+          viewAllHref="/games/wishlist"
+          actions={physicalFilter}
+        />
+      );
+    })(),
     recentlyAddedHardware: hardwareStats?.recentlyAdded.length ? (
       <CardCarousel
         id="recently-added-hardware"

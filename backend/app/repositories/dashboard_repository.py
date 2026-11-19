@@ -67,6 +67,11 @@ class DashboardStatsData:
     format_breakdown: list[NamedCount]
     recently_added: list[GameWithStatus]
     recently_played: list[GameWithStatus]
+    wishlisted_games: list[GameWithStatus]
+    # Formats of each wishlisted game's wishlist copies only — drives the
+    # dashboard row's Physical filter. Kept out of the shared summary
+    # payload (see _store_url_fields): this list is the only consumer.
+    wishlisted_game_formats: dict[int, list[str]]
 
 
 def get_stats(db: Session) -> DashboardStatsData:
@@ -210,6 +215,35 @@ def get_stats(db: Session) -> DashboardStatsData:
     )
     recently_played = [_row_to_game_with_status(row) for row in db.execute(recently_played_stmt)]
 
+    # The dashboard's Wishlisted Games row: every top-level browsable game
+    # with a wishlist copy, newest added first. The formats come from a
+    # separate small query so the row can filter to physical copies without
+    # the summary payload carrying formats everywhere.
+    wishlisted_stmt = (
+        select(
+            Game,
+            _owned_exists(Game.id),
+            _wishlisted_exists(Game.id),
+            _play_status_subquery(Game.id),
+            _rating_subquery(Game.id),
+        )
+        .where(
+            Game.parent_game_id.is_(None),
+            _is_browsable_game(Game.category),
+            ~_is_missing_game(Game.id),
+            _wishlisted_exists(Game.id),
+        )
+        .order_by(Game.created_at.desc())
+    )
+    wishlisted_games = [_row_to_game_with_status(row) for row in db.execute(wishlisted_stmt)]
+    wishlisted_game_formats: dict[int, list[str]] = {}
+    for game_id, format in db.execute(
+        select(LibraryItem.game_id, LibraryItem.format)
+        .where(LibraryItem.status == LibraryStatus.WISHLIST, LibraryItem.format.is_not(None))
+        .distinct()
+    ):
+        wishlisted_game_formats.setdefault(game_id, []).append(format.value)
+
     return DashboardStatsData(
         total_owned=total_owned,
         total_wishlisted=total_wishlisted,
@@ -222,6 +256,8 @@ def get_stats(db: Session) -> DashboardStatsData:
         format_breakdown=format_breakdown,
         recently_added=recently_added,
         recently_played=recently_played,
+        wishlisted_games=wishlisted_games,
+        wishlisted_game_formats=wishlisted_game_formats,
     )
 
 

@@ -52,6 +52,7 @@ describe("InsightsPage", () => {
       formatBreakdown: [],
       recentlyAdded: [],
       recentlyPlayed: [],
+      wishlistedGames: [],
     } as DashboardStats;
     hardwareStats = {
       ownedConsoles: 1,

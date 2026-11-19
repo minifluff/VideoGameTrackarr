@@ -34,6 +34,8 @@ def update_appearance(
         hide_events_menu=body.hide_events_menu,
         hide_achievements_menu=body.hide_achievements_menu,
         hide_insights_menu=body.hide_insights_menu,
+        hide_display_mode_menu=body.hide_display_mode_menu,
+        hide_public_collection_menu=body.hide_public_collection_menu,
         start_page=body.start_page,
     )
     return AppearanceSettingsResponse(**settings)

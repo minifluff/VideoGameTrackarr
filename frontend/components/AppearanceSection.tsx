@@ -66,6 +66,10 @@ const AppearanceSection = () => {
     setHideAchievementsMenu,
     hideInsightsMenu,
     setHideInsightsMenu,
+    hideDisplayModeMenu,
+    setHideDisplayModeMenu,
+    hidePublicCollectionMenu,
+    setHidePublicCollectionMenu,
     startPage,
     setStartPage,
     resetAppearance,
@@ -105,6 +109,16 @@ const AppearanceSection = () => {
       labelKey: "settings.appearance.hideInsightsMenu",
       checked: hideInsightsMenu,
       onChange: setHideInsightsMenu,
+    },
+    {
+      labelKey: "settings.appearance.hideDisplayModeMenu",
+      checked: hideDisplayModeMenu,
+      onChange: setHideDisplayModeMenu,
+    },
+    {
+      labelKey: "settings.appearance.hidePublicCollectionMenu",
+      checked: hidePublicCollectionMenu,
+      onChange: setHidePublicCollectionMenu,
     },
   ];
 
@@ -152,6 +166,8 @@ const AppearanceSection = () => {
     hideEventsMenu ||
     hideAchievementsMenu ||
     hideInsightsMenu ||
+    hideDisplayModeMenu ||
+    hidePublicCollectionMenu ||
     startPage !== DEFAULT_START_PAGE;
 
   return (

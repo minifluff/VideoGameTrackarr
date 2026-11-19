@@ -17,6 +17,8 @@ HIDE_GAMES_KEY = "appearance.hide_games_menu"
 HIDE_EVENTS_KEY = "appearance.hide_events_menu"
 HIDE_ACHIEVEMENTS_KEY = "appearance.hide_achievements_menu"
 HIDE_INSIGHTS_KEY = "appearance.hide_insights_menu"
+HIDE_DISPLAY_MODE_KEY = "appearance.hide_display_mode_menu"
+HIDE_PUBLIC_COLLECTION_KEY = "appearance.hide_public_collection_menu"
 START_PAGE_KEY = "appearance.start_page"
 
 # The starting page must be a top-level destination — Settings is excluded, so a
@@ -60,6 +62,9 @@ def get_appearance(db: Session) -> dict[str, str | float | bool]:
         "hide_events_menu": _get_value(db, HIDE_EVENTS_KEY, "false") == "true",
         "hide_achievements_menu": _get_value(db, HIDE_ACHIEVEMENTS_KEY, "false") == "true",
         "hide_insights_menu": _get_value(db, HIDE_INSIGHTS_KEY, "false") == "true",
+        "hide_display_mode_menu": _get_value(db, HIDE_DISPLAY_MODE_KEY, "false") == "true",
+        "hide_public_collection_menu": _get_value(db, HIDE_PUBLIC_COLLECTION_KEY, "false")
+        == "true",
         "start_page": start_page,
     }
 
@@ -76,6 +81,8 @@ def update_appearance(
     hide_events_menu: bool | None = None,
     hide_achievements_menu: bool | None = None,
     hide_insights_menu: bool | None = None,
+    hide_display_mode_menu: bool | None = None,
+    hide_public_collection_menu: bool | None = None,
     start_page: str | None = None,
 ) -> dict[str, str | float | bool]:
     if accent_color is not None:
@@ -99,6 +106,12 @@ def update_appearance(
         _set_value(db, HIDE_ACHIEVEMENTS_KEY, "true" if hide_achievements_menu else "false")
     if hide_insights_menu is not None:
         _set_value(db, HIDE_INSIGHTS_KEY, "true" if hide_insights_menu else "false")
+    if hide_display_mode_menu is not None:
+        _set_value(db, HIDE_DISPLAY_MODE_KEY, "true" if hide_display_mode_menu else "false")
+    if hide_public_collection_menu is not None:
+        _set_value(
+            db, HIDE_PUBLIC_COLLECTION_KEY, "true" if hide_public_collection_menu else "false"
+        )
     if start_page is not None and start_page in START_PAGES:
         _set_value(db, START_PAGE_KEY, start_page)
     return get_appearance(db)

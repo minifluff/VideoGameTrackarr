@@ -49,5 +49,6 @@ describe("DashboardPage", () => {
     // "Display Mode" also names the page button, so it is scoped to the dialog.
     expect(within(dialog).getByText("Display Mode")).toBeInTheDocument();
     expect(within(dialog).getByText("Public Game Collection")).toBeInTheDocument();
+    expect(within(dialog).getByText("Wishlisted Games")).toBeInTheDocument();
   });
 });

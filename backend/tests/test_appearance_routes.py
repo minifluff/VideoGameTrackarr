@@ -11,6 +11,8 @@ def test_appearance_defaults_hide_hardware_menu_off(auth_client):
     assert response.json()["hideEventsMenu"] is False
     assert response.json()["hideAchievementsMenu"] is False
     assert response.json()["hideInsightsMenu"] is False
+    assert response.json()["hideDisplayModeMenu"] is False
+    assert response.json()["hidePublicCollectionMenu"] is False
     assert response.json()["startPage"] == "/"
 
 
@@ -43,6 +45,8 @@ def test_appearance_update_menu_toggles_and_start_page_roundtrip(auth_client):
             "hideEventsMenu": True,
             "hideAchievementsMenu": True,
             "hideInsightsMenu": True,
+            "hideDisplayModeMenu": True,
+            "hidePublicCollectionMenu": True,
             "startPage": "/games",
         },
     )
@@ -54,6 +58,8 @@ def test_appearance_update_menu_toggles_and_start_page_roundtrip(auth_client):
     assert body["hideEventsMenu"] is True
     assert body["hideAchievementsMenu"] is True
     assert body["hideInsightsMenu"] is True
+    assert body["hideDisplayModeMenu"] is True
+    assert body["hidePublicCollectionMenu"] is True
     assert body["startPage"] == "/games"
     assert auth_client.get("/api/settings/appearance").json()["startPage"] == "/games"
 

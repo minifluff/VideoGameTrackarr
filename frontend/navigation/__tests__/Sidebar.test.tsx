@@ -2,10 +2,20 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { ThemeProvider } from "@mui/material/styles";
 import { MemoryRouter } from "react-router-dom";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createM3Theme } from "../../theme/createM3Theme";
 import { AppearanceProvider } from "../../theme/AppearanceProvider";
+import { useShareLink } from "../../hooks/useShareLink";
 import Sidebar from "../Sidebar";
+
+// The share-link query has no server in jsdom, so it is mocked: no token by
+// default (Public Game Collection hidden, as in the app before a link exists),
+// a token when a test sets one.
+vi.mock("../../hooks/useShareLink", () => ({
+  useShareLink: vi.fn(() => ({ data: undefined })),
+}));
+
+const mockUseShareLink = vi.mocked(useShareLink);
 
 // Same M3-theme wrapper as the card tests — production renders always go through
 // the app's real createM3Theme. Stats/version queries have no server in jsdom, so
@@ -45,12 +55,20 @@ function renderSidebarWithAppearance(initialPath: string) {
   );
 }
 
+beforeEach(() => {
+  mockUseShareLink.mockReturnValue({ data: undefined } as unknown as ReturnType<
+    typeof useShareLink
+  >);
+});
+
 afterEach(() => {
   localStorage.removeItem("vgt.hideDashboardMenu");
   localStorage.removeItem("vgt.hideGamesMenu");
   localStorage.removeItem("vgt.hideEventsMenu");
   localStorage.removeItem("vgt.hideAchievementsMenu");
   localStorage.removeItem("vgt.hideInsightsMenu");
+  localStorage.removeItem("vgt.hideDisplayModeMenu");
+  localStorage.removeItem("vgt.hidePublicCollectionMenu");
 });
 
 describe("Sidebar", () => {
@@ -123,5 +141,41 @@ describe("Sidebar", () => {
     expect(screen.queryByText("Stats")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Events" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Settings" })).toBeInTheDocument();
+  });
+
+  it("shows Display Mode and Public Game Collection links at the bottom of the menu", () => {
+    mockUseShareLink.mockReturnValue({ data: "test-token" } as unknown as ReturnType<
+      typeof useShareLink
+    >);
+    renderSidebar("/");
+
+    expect(screen.getByRole("link", { name: "Display Mode" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Public Game Collection" })).toBeInTheDocument();
+    // Both sit after the last destination, above the version footer.
+    const linkLabels = screen.getAllByRole("link").map((link) => link.textContent);
+    expect(linkLabels.indexOf("Settings")).toBeLessThan(linkLabels.indexOf("Display Mode"));
+    expect(linkLabels.indexOf("Display Mode")).toBeLessThan(
+      linkLabels.indexOf("Public Game Collection")
+    );
+  });
+
+  it("hides the bottom buttons whose toggles are on", () => {
+    mockUseShareLink.mockReturnValue({ data: "test-token" } as unknown as ReturnType<
+      typeof useShareLink
+    >);
+    localStorage.setItem("vgt.hideDisplayModeMenu", "true");
+    localStorage.setItem("vgt.hidePublicCollectionMenu", "true");
+    renderSidebarWithAppearance("/");
+
+    expect(screen.queryByRole("link", { name: "Display Mode" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Public Game Collection" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Settings" })).toBeInTheDocument();
+  });
+
+  it("hides Public Game Collection when there is no share link", () => {
+    renderSidebar("/");
+
+    expect(screen.getByRole("link", { name: "Display Mode" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Public Game Collection" })).not.toBeInTheDocument();
   });
 });

@@ -14,6 +14,8 @@ class AppearanceSettingsResponse(CamelModel):
     hide_events_menu: bool
     hide_achievements_menu: bool
     hide_insights_menu: bool
+    hide_display_mode_menu: bool
+    hide_public_collection_menu: bool
     start_page: str
 
 
@@ -28,4 +30,6 @@ class AppearanceSettingsUpdate(CamelModel):
     hide_events_menu: bool | None = None
     hide_achievements_menu: bool | None = None
     hide_insights_menu: bool | None = None
+    hide_display_mode_menu: bool | None = None
+    hide_public_collection_menu: bool | None = None
     start_page: str | None = Field(default=None, max_length=64)

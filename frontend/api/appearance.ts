@@ -11,6 +11,8 @@ export interface AppearanceSettings {
   hideEventsMenu: boolean;
   hideAchievementsMenu: boolean;
   hideInsightsMenu: boolean;
+  hideDisplayModeMenu: boolean;
+  hidePublicCollectionMenu: boolean;
   startPage: string;
 }
 

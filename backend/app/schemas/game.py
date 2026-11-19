@@ -159,6 +159,24 @@ def game_summary_from_orm(
     )
 
 
+class WishlistedGameSummaryResponse(GameSummaryResponse):
+    # Formats of the game's wishlist copies only — the dashboard's Wishlisted
+    # Games row filters on these. Kept off the shared summary so the payload
+    # stays lean everywhere else (see _store_url_fields).
+    formats: list[str] = []
+
+
+def wishlisted_game_summary_from_orm(
+    status: GameWithStatus,
+    formats: list[str] | None = None,
+    on_sale_game_ids: frozenset[int] = frozenset(),
+) -> WishlistedGameSummaryResponse:
+    return WishlistedGameSummaryResponse(
+        **game_summary_from_orm(status, on_sale_game_ids).model_dump(),
+        formats=formats if formats is not None else [],
+    )
+
+
 def game_detail_from_orm(
     status: GameWithStatus,
     progress: GameProgress | None,

@@ -424,6 +424,14 @@ export interface DashboardStats {
   formatBreakdown: NamedCount[];
   recentlyAdded: GameSummary[];
   recentlyPlayed: GameSummary[];
+  wishlistedGames: WishlistedGameSummary[];
+}
+
+// A wishlisted game on the dashboard, with the formats of its wishlist
+// copies — the Wishlisted Games row's Physical filter reads these. The
+// shared GameSummary stays lean; this shape is only for that row.
+export interface WishlistedGameSummary extends GameSummary {
+  formats: MediaFormat[];
 }
 
 export type DashboardItemKind = "game" | "device" | "accessory";

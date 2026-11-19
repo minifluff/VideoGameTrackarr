@@ -1,11 +1,14 @@
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
+import PublicIcon from "@mui/icons-material/Public";
+import SlideshowIcon from "@mui/icons-material/Slideshow";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { useDashboardStats } from "../hooks/useDashboard";
 import { useHardwareStats } from "../hooks/useHardwareStats";
+import { useShareLink } from "../hooks/useShareLink";
 import { useVersion } from "../hooks/useVersion";
 import { getNavDestinations, type NavDestination } from "./destinations";
 import { isCustomIconDataUrl, resolveIconSrc, useAppearance } from "../theme/AppearanceProvider";
@@ -152,9 +155,12 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
     hideEventsMenu,
     hideAchievementsMenu,
     hideInsightsMenu,
+    hideDisplayModeMenu,
+    hidePublicCollectionMenu,
   } = useAppearance();
   const { data: dashboardStats } = useDashboardStats();
   const { data: hardwareStats } = useHardwareStats();
+  const { data: shareToken } = useShareLink();
   const { data: version } = useVersion();
   const destinations = getNavDestinations(t, {
     hideDashboardMenu,
@@ -279,6 +285,32 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
           </Box>
         ))}
       </Box>
+      {/* The Display Mode and Public Game Collection buttons live at the bottom
+          of the menu, above the version footer — same destinations as the
+          dashboard's buttons, as plain menu links. Public Collection needs a
+          share link to exist, same as on the dashboard. */}
+      {!hideDisplayModeMenu || (!hidePublicCollectionMenu && shareToken) ? (
+        <Box sx={{ px: 1.25, pb: 1, flexShrink: 0 }}>
+          {!hideDisplayModeMenu ? (
+            <NavLink
+              to="/display-mode"
+              label={t("insights.dashboard.displayModeButton")}
+              icon={<SlideshowIcon />}
+              selected={isPathWithin(pathname, "/display-mode")}
+              onNavigate={onNavigate}
+            />
+          ) : null}
+          {!hidePublicCollectionMenu && shareToken ? (
+            <NavLink
+              to={`/public/${shareToken}/games`}
+              label={t("insights.dashboard.publicCollectionButton")}
+              icon={<PublicIcon />}
+              selected={isPathWithin(pathname, `/public/${shareToken}`)}
+              onNavigate={onNavigate}
+            />
+          ) : null}
+        </Box>
+      ) : null}
       <Typography
         variant="caption"
         sx={{ color: "text.secondary", px: 2.25, py: 1.25, borderTop: 1, borderColor: "divider" }}

@@ -16,6 +16,7 @@ export const OVERVIEW_SECTION_KEYS = [
   "nowPlaying",
   "recentlyPlayed",
   "recentlyAddedGames",
+  "wishlistedGames",
   "recentlyAddedHardware",
   "needsAttention",
   // Fork additions: the two dashboard buttons, so they can be hidden and reordered

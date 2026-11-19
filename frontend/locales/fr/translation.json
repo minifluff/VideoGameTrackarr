@@ -134,6 +134,9 @@
     "nothingPlaying": "Rien marqué En cours pour le moment.",
     "recentlyPlayed": "Joués récemment",
     "recentlyAddedGames": "Jeux ajoutés récemment",
+    "wishlistedGames": "Wishlisted Games",
+    "wishlistedPhysicalOnly": "Physical",
+    "wishlistedPhysicalEmpty": "No physical games on your wishlist.",
     "recentlyAddedHardware": "Matériel ajouté récemment",
     "needsAttention": "À surveiller",
     "attention": {
@@ -715,6 +718,8 @@
       "hideEventsMenu": "Hide Events menu",
       "hideAchievementsMenu": "Hide Achievements menu",
       "hideInsightsMenu": "Hide Insights menu",
+      "hideDisplayModeMenu": "Hide Display Mode menu",
+      "hidePublicCollectionMenu": "Hide Public Game Collection menu",
       "hideMenuHelp": "Removes from the main menu (drawer, side rail, and bottom bar). Its pages stay reachable by direct link.",
       "startPage": "Starting page",
       "startPageHelp": "The page the app opens on when loading the dashboard. Direct links to other pages still open as normal."

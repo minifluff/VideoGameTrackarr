@@ -43,6 +43,10 @@ interface AppearanceContextValue {
   setHideAchievementsMenu: (hide: boolean) => void;
   hideInsightsMenu: boolean;
   setHideInsightsMenu: (hide: boolean) => void;
+  hideDisplayModeMenu: boolean;
+  setHideDisplayModeMenu: (hide: boolean) => void;
+  hidePublicCollectionMenu: boolean;
+  setHidePublicCollectionMenu: (hide: boolean) => void;
   startPage: StartPage;
   setStartPage: (page: StartPage) => void;
   resetAppearance: () => void;
@@ -69,6 +73,10 @@ const AppearanceContext = createContext<AppearanceContextValue>({
   setHideAchievementsMenu: () => {},
   hideInsightsMenu: false,
   setHideInsightsMenu: () => {},
+  hideDisplayModeMenu: false,
+  setHideDisplayModeMenu: () => {},
+  hidePublicCollectionMenu: false,
+  setHidePublicCollectionMenu: () => {},
   startPage: DEFAULT_START_PAGE,
   setStartPage: () => {},
   resetAppearance: () => {},
@@ -86,6 +94,8 @@ const HIDE_GAMES_STORAGE_KEY = "vgt.hideGamesMenu";
 const HIDE_EVENTS_STORAGE_KEY = "vgt.hideEventsMenu";
 const HIDE_ACHIEVEMENTS_STORAGE_KEY = "vgt.hideAchievementsMenu";
 const HIDE_INSIGHTS_STORAGE_KEY = "vgt.hideInsightsMenu";
+const HIDE_DISPLAY_MODE_STORAGE_KEY = "vgt.hideDisplayModeMenu";
+const HIDE_PUBLIC_COLLECTION_STORAGE_KEY = "vgt.hidePublicCollectionMenu";
 const START_PAGE_STORAGE_KEY = "vgt.startPage";
 
 const HEX_PATTERN = /^#[0-9a-fA-F]{6}$/;
@@ -197,6 +207,12 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
   const [hideInsightsMenu, setHideInsightsMenuState] = useState<boolean>(() =>
     readStoredHideMenu(HIDE_INSIGHTS_STORAGE_KEY)
   );
+  const [hideDisplayModeMenu, setHideDisplayModeMenuState] = useState<boolean>(() =>
+    readStoredHideMenu(HIDE_DISPLAY_MODE_STORAGE_KEY)
+  );
+  const [hidePublicCollectionMenu, setHidePublicCollectionMenuState] = useState<boolean>(() =>
+    readStoredHideMenu(HIDE_PUBLIC_COLLECTION_STORAGE_KEY)
+  );
   const [startPage, setStartPageState] = useState<StartPage>(readStoredStartPage);
   const [loadedFromServer, setLoadedFromServer] = useState(false);
 
@@ -251,6 +267,20 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
           setHideInsightsMenuState(settings.hideInsightsMenu);
           localStorage.setItem(HIDE_INSIGHTS_STORAGE_KEY, String(settings.hideInsightsMenu));
         }
+        if (typeof settings.hideDisplayModeMenu === "boolean") {
+          setHideDisplayModeMenuState(settings.hideDisplayModeMenu);
+          localStorage.setItem(
+            HIDE_DISPLAY_MODE_STORAGE_KEY,
+            String(settings.hideDisplayModeMenu)
+          );
+        }
+        if (typeof settings.hidePublicCollectionMenu === "boolean") {
+          setHidePublicCollectionMenuState(settings.hidePublicCollectionMenu);
+          localStorage.setItem(
+            HIDE_PUBLIC_COLLECTION_STORAGE_KEY,
+            String(settings.hidePublicCollectionMenu)
+          );
+        }
         if (typeof settings.startPage === "string" && isValidStartPage(settings.startPage)) {
           setStartPageState(settings.startPage);
           localStorage.setItem(START_PAGE_STORAGE_KEY, settings.startPage);
@@ -274,6 +304,8 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
     hideEventsMenu?: boolean;
     hideAchievementsMenu?: boolean;
     hideInsightsMenu?: boolean;
+    hideDisplayModeMenu?: boolean;
+    hidePublicCollectionMenu?: boolean;
     startPage?: StartPage;
   }) => {
     if (!loadedFromServer) return; // don't overwrite server before we've loaded
@@ -353,6 +385,18 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
     persist({ hideInsightsMenu: hide });
   };
 
+  const setHideDisplayModeMenu = (hide: boolean) => {
+    setHideDisplayModeMenuState(hide);
+    localStorage.setItem(HIDE_DISPLAY_MODE_STORAGE_KEY, String(hide));
+    persist({ hideDisplayModeMenu: hide });
+  };
+
+  const setHidePublicCollectionMenu = (hide: boolean) => {
+    setHidePublicCollectionMenuState(hide);
+    localStorage.setItem(HIDE_PUBLIC_COLLECTION_STORAGE_KEY, String(hide));
+    persist({ hidePublicCollectionMenu: hide });
+  };
+
   const setStartPage = (page: StartPage) => {
     if (!isValidStartPage(page)) return;
     setStartPageState(page);
@@ -371,6 +415,8 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
     setHideEventsMenuState(false);
     setHideAchievementsMenuState(false);
     setHideInsightsMenuState(false);
+    setHideDisplayModeMenuState(false);
+    setHidePublicCollectionMenuState(false);
     setStartPageState(DEFAULT_START_PAGE);
     localStorage.removeItem(ACCENT_STORAGE_KEY);
     localStorage.removeItem(TITLE_STORAGE_KEY);
@@ -382,6 +428,8 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem(HIDE_EVENTS_STORAGE_KEY);
     localStorage.removeItem(HIDE_ACHIEVEMENTS_STORAGE_KEY);
     localStorage.removeItem(HIDE_INSIGHTS_STORAGE_KEY);
+    localStorage.removeItem(HIDE_DISPLAY_MODE_STORAGE_KEY);
+    localStorage.removeItem(HIDE_PUBLIC_COLLECTION_STORAGE_KEY);
     localStorage.removeItem(START_PAGE_STORAGE_KEY);
     persist({
       accentColor: SEED_COLOR_HEX,
@@ -394,6 +442,8 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
       hideEventsMenu: false,
       hideAchievementsMenu: false,
       hideInsightsMenu: false,
+      hideDisplayModeMenu: false,
+      hidePublicCollectionMenu: false,
       startPage: DEFAULT_START_PAGE,
     });
   };
@@ -433,6 +483,10 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
         setHideAchievementsMenu,
         hideInsightsMenu,
         setHideInsightsMenu,
+        hideDisplayModeMenu,
+        setHideDisplayModeMenu,
+        hidePublicCollectionMenu,
+        setHidePublicCollectionMenu,
         startPage,
         setStartPage,
         resetAppearance,
