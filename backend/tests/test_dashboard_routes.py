@@ -176,8 +176,16 @@ def test_stats_wishlisted_games_carry_wishlist_formats(auth_client, db_session, 
     )
     digital_wish = Game(igdb_id=1002, name="Digital Wish", slug="digital-wish", category=GameCategory.MAIN_GAME)
     owned_game = Game(igdb_id=1003, name="Owned Game", slug="owned-game", category=GameCategory.MAIN_GAME)
+    hidden_wish = Game(
+        igdb_id=1004,
+        name="Hidden Wish",
+        slug="hidden-wish",
+        category=GameCategory.MAIN_GAME,
+        hide_from_public=True,
+    )
     db_session.add(digital_wish)
     db_session.add(owned_game)
+    db_session.add(hidden_wish)
     db_session.commit()
     db_session.add(
         LibraryItem(
@@ -185,6 +193,14 @@ def test_stats_wishlisted_games_carry_wishlist_formats(auth_client, db_session, 
             platform_id=seed_platform.id,
             status=LibraryStatus.WISHLIST,
             format=MediaFormat.DIGITAL,
+        )
+    )
+    db_session.add(
+        LibraryItem(
+            game_id=hidden_wish.id,
+            platform_id=seed_platform.id,
+            status=LibraryStatus.WISHLIST,
+            format=MediaFormat.PHYSICAL,
         )
     )
     db_session.add(
@@ -203,6 +219,7 @@ def test_stats_wishlisted_games_carry_wishlist_formats(auth_client, db_session, 
     assert wishlisted[seed_game.id]["formats"] == ["physical"]
     assert wishlisted[digital_wish.id]["formats"] == ["digital"]
     assert owned_game.id not in wishlisted
+    assert hidden_wish.id not in wishlisted
 
 
 def test_stats_recently_added_excludes_games_added_over_two_weeks_ago(auth_client, db_session):

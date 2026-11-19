@@ -216,8 +216,9 @@ def get_stats(db: Session) -> DashboardStatsData:
     recently_played = [_row_to_game_with_status(row) for row in db.execute(recently_played_stmt)]
 
     # The dashboard's Wishlisted Games row: every top-level browsable game
-    # with a wishlist copy, newest added first. The formats come from a
-    # separate small query so the row can filter to physical copies without
+    # with a wishlist copy, newest added first. Hidden games stay out, the
+    # same as the Games list when Show Hidden is off. The formats come from
+    # a separate small query so the row can filter to physical copies without
     # the summary payload carrying formats everywhere.
     wishlisted_stmt = (
         select(
@@ -232,6 +233,7 @@ def get_stats(db: Session) -> DashboardStatsData:
             _is_browsable_game(Game.category),
             ~_is_missing_game(Game.id),
             _wishlisted_exists(Game.id),
+            Game.hide_from_public.is_(False),
         )
         .order_by(Game.created_at.desc())
     )

@@ -159,6 +159,20 @@ describe("Sidebar", () => {
     );
   });
 
+  it("keeps the Public Game Collection label on one line", () => {
+    mockUseShareLink.mockReturnValue({ data: "test-token" } as unknown as ReturnType<
+      typeof useShareLink
+    >);
+    renderSidebar("/");
+
+    // jsdom has no layout, so the one-line rule is asserted on the label
+    // span's computed white-space, not on a measured width.
+    const label = screen.getByText("Public Game Collection");
+    expect(window.getComputedStyle(label).whiteSpace).toBe("nowrap");
+    const displayModeLabel = screen.getByText("Display Mode");
+    expect(window.getComputedStyle(displayModeLabel).whiteSpace).toBe("nowrap");
+  });
+
   it("hides the bottom buttons whose toggles are on", () => {
     mockUseShareLink.mockReturnValue({ data: "test-token" } as unknown as ReturnType<
       typeof useShareLink

@@ -5,6 +5,7 @@ import SlideshowIcon from "@mui/icons-material/Slideshow";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import Typography from "@mui/material/Typography";
+import type { SxProps, Theme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { useDashboardStats } from "../hooks/useDashboard";
 import { useHardwareStats } from "../hooks/useHardwareStats";
@@ -24,6 +25,10 @@ interface NavLinkProps {
   separatorBefore?: boolean;
   count?: number;
   onNavigate?: () => void;
+  // Long labels that must stay on one line: noWrap keeps the label from
+  // wrapping (with an ellipsis fallback) and sx can shrink it to fit.
+  noWrap?: boolean;
+  sx?: SxProps<Theme>;
 }
 
 const NavLink = ({
@@ -35,6 +40,8 @@ const NavLink = ({
   separatorBefore = false,
   count,
   onNavigate,
+  noWrap = false,
+  sx,
 }: NavLinkProps) => (
   <ButtonBase
     component={Link}
@@ -84,10 +91,20 @@ const NavLink = ({
             bgcolor: "divider",
           }
         : undefined,
+      ...sx,
     }}
   >
     {icon}
-    <Box component="span" sx={{ flexGrow: 1, textAlign: "left" }}>
+    <Box
+      component="span"
+      sx={{
+        flexGrow: 1,
+        textAlign: "left",
+        ...(noWrap
+          ? { whiteSpace: "nowrap", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }
+          : undefined),
+      }}
+    >
       {label}
     </Box>
     {count !== undefined ? (
@@ -298,6 +315,8 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
               icon={<SlideshowIcon />}
               selected={isPathWithin(pathname, "/display-mode")}
               onNavigate={onNavigate}
+              noWrap
+              sx={{ fontSize: 13 }}
             />
           ) : null}
           {!hidePublicCollectionMenu && shareToken ? (
@@ -307,6 +326,8 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
               icon={<PublicIcon />}
               selected={isPathWithin(pathname, `/public/${shareToken}`)}
               onNavigate={onNavigate}
+              noWrap
+              sx={{ fontSize: 13 }}
             />
           ) : null}
         </Box>
