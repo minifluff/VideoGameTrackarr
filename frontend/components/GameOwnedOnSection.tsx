@@ -1,12 +1,15 @@
-// The "Owned on" block on the game page's left column: the platform chips as they
-// always were, plus a dropdown (same pattern as the About section's Available
-// Platforms). On the private page it shows when the game was added and, for each
-// owned copy, when that copy was acquired; on the public pages it shows platform
-// and format only — no dates, since those are the owner's private data. Collapsed,
-// the block looks exactly as it did before.
+// The "Owned on" block on the game page's left column: the owned platform
+// chips as they always were, plus a dropdown (same pattern as the About
+// section's Available Platforms). A wishlist copy adds a Wishlisted chip
+// instead of a platform chip — its platform isn't owned. On the private page
+// it shows when the game was added and, for each owned copy, when that copy
+// was acquired; on the public pages it shows platform and format only — no
+// dates, since those are the owner's private data. Collapsed, the block looks
+// exactly as it did before.
 import { useMemo, useState } from "react";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import Chip from "@mui/material/Chip";
@@ -14,6 +17,7 @@ import Collapse from "@mui/material/Collapse";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import type { LibraryItem, MediaFormat, PublicOwnedCopy } from "../api/types";
+import { Pill } from "./Detail";
 
 interface GameOwnedOnSectionProps {
   // The game's added date (Game.created_at, ISO datetime). Private pages only.
@@ -44,8 +48,9 @@ const GameOwnedOnSection = ({
   // Public pages pass copies instead of library items, and get no dates.
   const showDates = publicCopies === undefined;
 
-  // Owned platforms derived from the user's library items (matches the public
-  // game page's "Owned on" chips) — or from the public copies on public pages.
+  // Owned platforms only — a wishlist copy's platform isn't owned, so it
+  // gets no chip here (it gets the Wishlisted chip below instead). Public
+  // pages pass owned copies only, so the same rule holds there.
   const ownedPlatforms = useMemo(() => {
     const names = new Set<string>();
     if (publicCopies) {
@@ -54,11 +59,18 @@ const GameOwnedOnSection = ({
       }
     } else {
       for (const item of libraryItems ?? []) {
-        if (item.platformName) names.add(item.platformName);
+        if (item.status === "owned" && item.platformName) names.add(item.platformName);
       }
     }
     return [...names].sort();
   }, [libraryItems, publicCopies]);
+
+  // A wishlist copy shows one Wishlisted chip alongside the owned platform
+  // chips. Public pages never see wishlist copies, so this stays false there.
+  const hasWishlistedCopy = useMemo(
+    () => (libraryItems ?? []).some((item) => item.status === "wishlist"),
+    [libraryItems]
+  );
 
   // Only owned copies have an acquired date to show — a wishlist row would just
   // render dateless. Sorted by platform, then format, so the list is stable.
@@ -85,7 +97,7 @@ const GameOwnedOnSection = ({
     );
   }, [libraryItems, publicCopies]);
 
-  if (ownedPlatforms.length === 0) {
+  if (ownedPlatforms.length === 0 && !hasWishlistedCopy) {
     return null;
   }
 
@@ -143,10 +155,15 @@ const GameOwnedOnSection = ({
       {/* The chips are the collapsed view: once the dropdown is open, they swap
       out for the rows box so the section doesn't repeat the same platforms. */}
       {!expanded && (
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 1 }}>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 1, alignItems: "center" }}>
           {ownedPlatforms.map((platform) => (
             <Chip key={platform} label={platform} size="small" />
           ))}
+          {hasWishlistedCopy ? (
+            <Pill small tone="wishlist" icon={<FavoriteIcon />}>
+              {t("games.card.wishlistedLine")}
+            </Pill>
+          ) : null}
         </Box>
       )}
       <Collapse in={expanded}>

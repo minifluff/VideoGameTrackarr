@@ -51,6 +51,10 @@ describe("GameOwnedOnSection", () => {
 
     expect(screen.getByText("Nintendo Switch")).toBeInTheDocument();
     expect(screen.getByText("Sony Playstation 4")).toBeInTheDocument();
+    // The wishlist copy's platform gets no chip — a Wishlisted chip stands
+    // in for it instead.
+    expect(screen.queryByText("PC")).not.toBeInTheDocument();
+    expect(screen.getByText("Wishlisted")).toBeInTheDocument();
     // MUI Collapse keeps its children mounted while closed, so the dates are
     // in the document but hidden until the section expands.
     expect(screen.queryByText("Date Added")).not.toBeVisible();
@@ -58,6 +62,21 @@ describe("GameOwnedOnSection", () => {
       "aria-expanded",
       "false"
     );
+  });
+
+  it("shows only the Wishlisted chip when every copy is wishlisted", () => {
+    renderSection(
+      <GameOwnedOnSection createdAt={props.createdAt} libraryItems={[wishlistedPc]} />
+    );
+
+    expect(screen.queryByText("PC")).not.toBeInTheDocument();
+    expect(screen.getByText("Wishlisted")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Owned on/ }));
+
+    // Expanding shows just the Date Added row — a wishlist copy has no
+    // acquired date and gets no row.
+    expect(screen.getByText("Date Added")).toBeInTheDocument();
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
   });
 
   it("expands to show Date Added and each owned copy's acquired date", () => {
