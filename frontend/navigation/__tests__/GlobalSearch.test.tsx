@@ -11,7 +11,10 @@ vi.mock("../../hooks/useDebouncedValue", () => ({
 vi.mock("../../hooks/useGames", () => ({
   useGames: (filters: { search?: string }, options?: { enabled?: boolean }) => ({
     data:
-      options?.enabled && filters.search
+      options?.enabled &&
+      filters.search &&
+      // The real server name-searches: a bare IGDB id matches no local name.
+      !/^(?:igdb:)?\d+$/i.test(filters.search)
         ? [
             { id: 1, uuid: "u1", slug: "zelda-botw", name: "Zelda: Breath of the Wild", coverUrl: null, firstReleaseDate: 1488499200 },
             // Auto-discovered and neither owned nor wishlisted: "missing", hidden below.
@@ -20,6 +23,25 @@ vi.mock("../../hooks/useGames", () => ({
             { id: 3, uuid: "u3", slug: "zelda-echoes", name: "Zelda: Echoes of Wisdom", coverUrl: null, firstReleaseDate: null, autoDiscovered: true, owned: false, wishlisted: true },
             // Owned but hidden: hidden from search below.
             { id: 4, uuid: "u4", slug: "zelda-hidden", name: "Zelda: Hidden Gem", coverUrl: null, firstReleaseDate: null, autoDiscovered: false, owned: true, wishlisted: false, hideFromPublic: true },
+          ]
+        : undefined,
+  }),
+}));
+vi.mock("../../hooks/useIgdbSearch", () => ({
+  useIgdbSearch: (query: string) => ({
+    data:
+      query === "igdb:12345"
+        ? [
+            {
+              igdbId: 12345,
+              name: "Hades",
+              slug: "hades",
+              summary: null,
+              coverUrl: null,
+              category: "main_game",
+              firstReleaseDate: 1600128000,
+              parentGame: null,
+            },
           ]
         : undefined,
   }),
@@ -71,6 +93,7 @@ function renderSearch() {
       },
       { path: "/games", element: <GamesStub /> },
       { path: "/games/add", element: <Shows label="Add game" /> },
+      { path: "/games/add/igdb/:igdbId", element: <Shows label="IGDB preview" /> },
       { path: "/game/:identifier", element: <Shows label="Game page" /> },
       { path: "/games/series/:slug", element: <Shows label="Series page" /> },
     ],
@@ -135,6 +158,27 @@ describe("GlobalSearch", () => {
 
     expect(router.state.location.pathname).toBe("/games/add");
     expect(router.state.location.state).toEqual({ igdbSearch: "hades" });
+  });
+
+  it("shows the IGDB game when its id is typed, and opens its preview", async () => {
+    const router = renderSearch();
+    await userEvent.type(screen.getByRole("combobox", { name: "Search" }), "12345");
+
+    expect(await screen.findByText("Hades")).toBeInTheDocument();
+    expect(screen.getByText("2020")).toBeInTheDocument();
+    await userEvent.click(screen.getByText("Hades"));
+
+    expect(router.state.location.pathname).toBe("/games/add/igdb/12345");
+  });
+
+  it("resolves an igdb:12345 paste the same way", async () => {
+    const router = renderSearch();
+    await userEvent.type(screen.getByRole("combobox", { name: "Search" }), "igdb:12345");
+
+    expect(await screen.findByText("Hades")).toBeInTheDocument();
+    await userEvent.click(screen.getByText("Hades"));
+
+    expect(router.state.location.pathname).toBe("/games/add/igdb/12345");
   });
 
   it("pins the popup to the viewport edges on phone widths", () => {

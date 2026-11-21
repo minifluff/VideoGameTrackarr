@@ -19,6 +19,7 @@ import { useCollections, useFranchises } from "../hooks/useCatalogBrowse";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useDeviceList } from "../hooks/useDevice";
 import { useGames } from "../hooks/useGames";
+import { useIgdbSearch } from "../hooks/useIgdbSearch";
 import { gameIdentifier, hardwareIdentifier } from "../utils/identifiers";
 import { isAllHiddenCatalogRef } from "../utils/showHiddenGames";
 
@@ -102,10 +103,17 @@ const GlobalSearch = () => {
   const [input, setInput] = useState("");
   const query = input.trim();
   const debounced = useDebouncedValue(query, 250);
-  const active = debounced.length >= MIN_LENGTH;
+  // A bare IGDB id (or an igdb:123 paste) resolves straight to that game —
+  // the backend search endpoint answers exact-id queries, so the header can
+  // show the game itself instead of only offering a name search for it. An
+  // exact id needs no minimum length: even a one-digit id is unambiguous.
+  const igdbIdMatch = debounced.match(/^(?:igdb:)?(\d+)$/i);
+  const igdbId = igdbIdMatch ? Number(igdbIdMatch[1]) : null;
+  const active = debounced.length >= MIN_LENGTH || igdbId !== null;
 
   // Games come from the server-side search; the smaller lists are filtered here.
   const { data: games } = useGames({ search: debounced }, { enabled: active });
+  const { data: igdbById } = useIgdbSearch(igdbId !== null ? `igdb:${igdbId}` : "");
   const { data: devices } = useDeviceList();
   const { data: accessories } = useAccessoryList();
   const { data: franchises } = useFranchises();
@@ -187,9 +195,23 @@ const GlobalSearch = () => {
         detail: "",
         to: `/games/collections/${collection.slug ?? ""}`,
       })),
+      // An exact IGDB id resolves to the game itself, ahead of the
+      // "Search IGDB for ..." catch-all. It opens the IGDB preview page —
+      // which redirects to the real page when the game is already in the
+      // library — instead of routing through Add Game's search.
+      ...(igdbById ?? []).slice(0, PER_KIND).map((result) => ({
+        kind: "igdb" as const,
+        id: result.igdbId,
+        label: result.name,
+        detail: result.firstReleaseDate
+          ? String(new Date(result.firstReleaseDate * 1000).getUTCFullYear())
+          : "",
+        to: `/games/add/igdb/${result.igdbId}`,
+        imageUrl: result.coverUrl,
+      })),
       { kind: "igdb", id: 0, label: t("search.igdb", { query: debounced }), detail: "", to: "" },
     ];
-  }, [active, debounced, games, devices, accessories, franchises, collections, t]);
+  }, [active, debounced, games, devices, accessories, franchises, collections, igdbById, t]);
 
   const choose = (option: SearchOption | string | null) => {
     if (option === null) return;
@@ -198,8 +220,14 @@ const GlobalSearch = () => {
       const state: SearchHandoffState = { search: option.trim() };
       navigate("/games", { state });
     } else if (option.kind === "igdb") {
-      const state: SearchHandoffState = { igdbSearch: query };
-      navigate("/games/add", { state });
+      // A resolved id match has a real destination (the IGDB preview page);
+      // the catch-all hands the text to Add Game's IGDB search instead.
+      if (option.to) {
+        navigate(option.to);
+      } else {
+        const state: SearchHandoffState = { igdbSearch: query };
+        navigate("/games/add", { state });
+      }
     } else {
       navigate(option.to);
     }
