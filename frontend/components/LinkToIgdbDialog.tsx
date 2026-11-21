@@ -118,12 +118,11 @@ const LinkToIgdbDialog = ({ open, gameId, gameName, gameCategory, onClose, chang
       if (changeMode) {
         const game = await changeIgdbLink.mutateAsync(igdbId);
         toast.success(t("igdb.linkChangedSuccess"), TOAST_OPTIONS);
-        // A change onto an IGDB id already in the library merges this row into
-        // the existing one and deletes it — land on the surviving game instead
-        // of a deleted page.
-        if (game.id !== gameId) {
-          navigate(`/game/${gameIdentifier(game)}`);
-        }
+        // Relinking refreshes the game from the new IGDB entry — including
+        // its slug — so the current URL is stale either way: a merge deletes
+        // this row (land on the surviving game) and a fresh link renames it
+        // (land on the new slug instead of a "game not found" page).
+        navigate(`/game/${gameIdentifier(game)}`);
       } else {
         await linkGameToIgdb.mutateAsync(igdbId);
         toast.success(t("igdb.linkedSuccess"), TOAST_OPTIONS);
