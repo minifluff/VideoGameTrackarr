@@ -38,6 +38,7 @@ const searchResult: IgdbSearchResult = {
 
 vi.mock("../../hooks/useIgdbSearch", () => ({
   useIgdbSearch: () => ({ data: [searchResult], isFetching: false, error: null }),
+  isIgdbIdQuery: (query: string) => /^(?:igdb:)?\d+$/i.test(query.trim()),
 }));
 
 const theme = createM3Theme("light", "normal");

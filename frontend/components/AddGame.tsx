@@ -42,6 +42,7 @@ import SimpleTabPanel from "./SimpleTabPanel";
 import VirtualGameGrid from "./VirtualGameGrid";
 import { useSessionState } from "../hooks/useSessionState";
 import { useSearchHandoff } from "../navigation/GlobalSearch";
+import { isIgdbIdQuery } from "../hooks/useIgdbSearch";
 
 const MIN_SEARCH_LENGTH = 3;
 
@@ -56,10 +57,9 @@ interface SteamPrefillState {
   };
 }
 
-// Matches backend's _IGDB_ID_QUERY_PATTERN (app/api/routes/igdb.py) — an exact-ID search
-// returns at most one result, so it gets its own "wrong category" message instead of the
-// generic "no games found".
-const IGDB_ID_QUERY_PATTERN = /^igdb:\d+$/i;
+// An exact-ID search returns at most one result, so it gets its own "wrong category"
+// message instead of the generic "no games found" (see isIdSearch below).
+// isIgdbIdQuery matches the backend's _IGDB_ID_QUERY_PATTERN (app/api/routes/igdb.py).
 
 // Addons (DLC/Addon, Expansion, Pack) need a parent already in the tracker to make sense —
 // adding one directly here would create an orphaned top-level entry. Only these top-level-
@@ -101,9 +101,13 @@ const AddGame = () => {
 
   const trimmedKeyword = searchKeyword.trim();
   const debouncedKeyword = useDebouncedValue(trimmedKeyword, 1000);
-  const isSearchActive = debouncedKeyword.length >= MIN_SEARCH_LENGTH;
+  // An exact IGDB id is searchable at any length — a bare number is an id
+  // lookup, not a fuzzy name search, so the 3-char minimum doesn't apply.
+  const isSearchActive =
+    debouncedKeyword.length >= MIN_SEARCH_LENGTH || isIgdbIdQuery(debouncedKeyword);
   const isPendingDebounce =
-    trimmedKeyword.length >= MIN_SEARCH_LENGTH && trimmedKeyword !== debouncedKeyword;
+    (trimmedKeyword.length >= MIN_SEARCH_LENGTH || isIgdbIdQuery(trimmedKeyword)) &&
+    trimmedKeyword !== debouncedKeyword;
 
   const {
     data: searchResults,
@@ -212,7 +216,7 @@ const AddGame = () => {
   };
 
   const igdbNotConfigured = isAxiosError(searchError) && searchError.response?.status === 503;
-  const isIdSearch = IGDB_ID_QUERY_PATTERN.test(debouncedKeyword);
+  const isIdSearch = isIgdbIdQuery(debouncedKeyword);
   const idSearchCategoryBlocked =
     isIdSearch &&
     !!searchResults &&

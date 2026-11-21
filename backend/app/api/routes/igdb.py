@@ -21,8 +21,10 @@ from app.services.igdb_client import IGDBClient
 router = APIRouter(prefix="/api/igdb", tags=["igdb"], dependencies=[Depends(get_current_user)])
 
 # Lets users paste an exact IGDB id (e.g. "igdb:3542") instead of a name search — handy
-# when a name search is ambiguous or too noisy to find a specific entry.
-_IGDB_ID_QUERY_PATTERN = re.compile(r"^igdb:(\d+)$", re.IGNORECASE)
+# when a name search is ambiguous or too noisy to find a specific entry. A bare number
+# ("3542") works the same way: the Add Game search hands it straight to this endpoint,
+# so users don't have to know the prefix exists.
+_IGDB_ID_QUERY_PATTERN = re.compile(r"^(?:igdb:)?(\d+)$", re.IGNORECASE)
 
 
 def _to_search_result(result: dict) -> IGDBSearchResultResponse:

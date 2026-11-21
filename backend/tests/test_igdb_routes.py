@@ -71,6 +71,26 @@ def test_igdb_search_by_id_syntax_returns_single_match(auth_client, igdb_client)
 
 
 @respx.mock
+def test_igdb_search_bare_number_takes_id_lookup_path(auth_client, igdb_client):
+    respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    games_route = respx.post(f"{IGDB_API_BASE}/games").mock(
+        return_value=httpx.Response(
+            200,
+            json=[{"id": 3542, "name": "Monster Truck Madness 2", "slug": "monster-truck-madness-2", "category": 0}],
+        )
+    )
+
+    response = auth_client.get("/api/igdb/search", params={"query": "3542"})
+
+    assert response.status_code == 200
+    [result] = response.json()
+    assert result["igdbId"] == 3542
+    assert result["name"] == "Monster Truck Madness 2"
+    # Confirms it took the id-lookup path (where id = (...)), not a name search.
+    assert "where id = (3542)" in games_route.calls.last.request.content.decode()
+
+
+@respx.mock
 def test_igdb_search_by_id_syntax_returns_empty_for_unknown_id(auth_client, igdb_client):
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
     respx.post(f"{IGDB_API_BASE}/games").mock(return_value=httpx.Response(200, json=[]))

@@ -42,8 +42,15 @@ const searchResults: IgdbSearchResult[] = [
 
 const localGames: Partial<GameSummary>[] = [{ id: 99, igdbId: 2, name: "Already Added" }];
 
+// Captures the query the component actually searched with, so tests can assert
+// a short bare IGDB id still triggers a search despite the 3-char name minimum.
+let mockIgdbQuery = "";
 vi.mock("../../hooks/useIgdbSearch", () => ({
-  useIgdbSearch: () => ({ data: searchResults, isFetching: false, error: null }),
+  useIgdbSearch: (query: string) => {
+    mockIgdbQuery = query;
+    return { data: searchResults, isFetching: false, error: null };
+  },
+  isIgdbIdQuery: (query: string) => /^(?:igdb:)?\d+$/i.test(query.trim()),
 }));
 
 vi.mock("../../hooks/useGames", () => ({
@@ -72,6 +79,26 @@ async function renderWithSearch() {
   await screen.findByText("Not Yet Added");
   return user;
 }
+
+describe("AddGame IGDB id search", () => {
+  it("searches by a bare IGDB id, even a short one", async () => {
+    const user = userEvent.setup();
+    render(<AddGame />, { wrapper: MemoryRouter });
+    await user.type(screen.getByLabelText("Search games on IGDB"), "42");
+
+    await screen.findByText("Not Yet Added");
+    expect(mockIgdbQuery).toBe("42");
+  });
+
+  it("searches by an igdb:12345 paste", async () => {
+    const user = userEvent.setup();
+    render(<AddGame />, { wrapper: MemoryRouter });
+    await user.type(screen.getByLabelText("Search games on IGDB"), "igdb:12345");
+
+    await screen.findByText("Not Yet Added");
+    expect(mockIgdbQuery).toBe("igdb:12345");
+  });
+});
 
 describe("AddGame bulk selection", () => {
   it("replaces the search bar with a selection bar when Select games is clicked", async () => {

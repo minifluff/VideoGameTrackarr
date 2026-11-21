@@ -20,6 +20,7 @@ vi.mock("../../hooks/useGames", () => ({
 
 vi.mock("../../hooks/useIgdbSearch", () => ({
   useIgdbSearch: () => ({ data: [], isFetching: false, error: null }),
+  isIgdbIdQuery: (query: string) => /^(?:igdb:)?\d+$/i.test(query.trim()),
 }));
 
 function renderButtons(libraryItems: LibraryItem[] | undefined) {

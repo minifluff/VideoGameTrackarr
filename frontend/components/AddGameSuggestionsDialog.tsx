@@ -14,7 +14,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useGames, useImportGame } from "../hooks/useGames";
-import { useIgdbSearch } from "../hooks/useIgdbSearch";
+import { isIgdbIdQuery, useIgdbSearch } from "../hooks/useIgdbSearch";
 import { gameIdentifier } from "../utils/identifiers";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import GameCard from "./GameCard";
@@ -47,7 +47,8 @@ const AddGameSuggestionsDialog = ({ open, name, onContinueManually, onClose }: A
   }, [open, name]);
 
   const debouncedQuery = useDebouncedValue(query.trim(), 500);
-  const isSearchActive = debouncedQuery.length >= MIN_SEARCH_LENGTH;
+  // An exact IGDB id is searchable at any length — see useIgdbSearch.ts.
+  const isSearchActive = debouncedQuery.length >= MIN_SEARCH_LENGTH || isIgdbIdQuery(debouncedQuery);
   const { data: searchResults, isFetching, error: searchError } = useIgdbSearch(isSearchActive ? debouncedQuery : "");
   const suggestions = searchResults ?? [];
   const igdbNotConfigured = isAxiosError(searchError) && searchError.response?.status === 503;

@@ -18,7 +18,7 @@ import { searchIgdb } from "../api/igdb";
 import type { GameCategory, IgdbSearchResult } from "../api/types";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useChangeIgdbLink, useGames, useLinkGameToIgdb, useLinkGameToIgdbViaParent, useMergeGameIntoIgdb } from "../hooks/useGames";
-import { useIgdbSearch } from "../hooks/useIgdbSearch";
+import { isIgdbIdQuery, useIgdbSearch } from "../hooks/useIgdbSearch";
 import { gameIdentifier } from "../utils/identifiers";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import ConfirmDialog from "./ConfirmDialog";
@@ -95,7 +95,8 @@ const LinkToIgdbDialog = ({ open, gameId, gameName, gameCategory, onClose, chang
   }, [open]);
 
   const debouncedQuery = useDebouncedValue(query.trim(), 500);
-  const isSearchActive = debouncedQuery.length >= MIN_SEARCH_LENGTH;
+  // An exact IGDB id is searchable at any length — see useIgdbSearch.ts.
+  const isSearchActive = debouncedQuery.length >= MIN_SEARCH_LENGTH || isIgdbIdQuery(debouncedQuery);
   const { data: searchResults, isFetching, error: searchError } = useIgdbSearch(
     isSearchActive ? debouncedQuery : "",
     isLinkingAddon ? "addon" : "game"
