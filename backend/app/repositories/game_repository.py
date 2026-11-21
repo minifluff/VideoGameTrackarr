@@ -1,5 +1,6 @@
 import enum
 import random
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -38,6 +39,11 @@ from app.models.library import (
 # Repositories only add/flush/delete — they never commit. The service (or script) that
 # calls them owns the transaction boundary, so a multi-step use case (e.g. importing a
 # game plus its addons) commits exactly once, atomically.
+
+# A bare IGDB id ("12345") or an "igdb:12345" paste — the same shape the IGDB
+# search endpoint accepts (see api/routes/igdb.py). _apply_optional_game_filters
+# matches it against Game.igdb_id.
+_IGDB_ID_SEARCH_PATTERN = re.compile(r"^(?:igdb:)?(\d+)$", re.IGNORECASE)
 
 
 @dataclass
@@ -412,11 +418,21 @@ def _apply_optional_game_filters(
     can offer the exact same filters against a differently-scoped base query, with zero
     duplicated clause-building logic to drift out of sync."""
     if search:
-        # Split into words and require each word to appear (in any order) — so
-        # "Wild Breath" finds "Breath of the Wild", not just exact substrings.
-        for word in search.split():
-            if word:
-                stmt = stmt.where(Game.name.ilike(f"%{word}%"))
+        # A bare IGDB id ("12345", or an "igdb:12345" paste) also matches the
+        # game's igdb_id — the local fallback for a game removed from IGDB,
+        # where the live IGDB lookup has nothing to return. The name match
+        # stays as an OR so a game whose title literally contains the digits
+        # still surfaces too.
+        id_match = _IGDB_ID_SEARCH_PATTERN.match(search.strip())
+        if id_match:
+            igdb_id = int(id_match.group(1))
+            stmt = stmt.where(or_(Game.igdb_id == igdb_id, Game.name.ilike(f"%{igdb_id}%")))
+        else:
+            # Split into words and require each word to appear (in any order) — so
+            # "Wild Breath" finds "Breath of the Wild", not just exact substrings.
+            for word in search.split():
+                if word:
+                    stmt = stmt.where(Game.name.ilike(f"%{word}%"))
     if platform_ids:
         # The platform of the user's *owned/wishlisted copy* (library_items), not
         # game_platforms — IGDB's full list of platforms a game was ever released on.

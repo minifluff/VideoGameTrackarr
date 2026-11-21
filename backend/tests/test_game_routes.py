@@ -157,6 +157,20 @@ def test_list_games_search_is_case_insensitive_substring(auth_client, db_session
     assert response.json() == []
 
 
+def test_list_games_search_matches_igdb_id(auth_client, db_session, seed_game):
+    # seed_game has igdb_id 1001 and its name contains no digits, so only the
+    # igdb_id match can find it — the local fallback when the game was removed
+    # from IGDB and the live lookup has nothing to return.
+    response = auth_client.get("/api/games", params={"search": "1001"})
+    assert [g["id"] for g in response.json()] == [seed_game.id]
+
+    response = auth_client.get("/api/games", params={"search": "igdb:1001"})
+    assert [g["id"] for g in response.json()] == [seed_game.id]
+
+    response = auth_client.get("/api/games", params={"search": "9999"})
+    assert response.json() == []
+
+
 def test_list_games_filters_by_platform_tag_collection_and_franchise(auth_client, db_session, seed_game, seed_platform):
     other_game = Game(igdb_id=2200, name="Other Game", category=GameCategory.MAIN_GAME)
     db_session.add(other_game)
