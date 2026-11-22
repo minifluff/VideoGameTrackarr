@@ -295,6 +295,67 @@ describe("GameLibrarySection", () => {
     expect(screen.queryByRole("button", { name: "Offline installers" })).not.toBeInTheDocument();
   });
 
+  it("shows a download icon on a ROM copy row that opens the ROMs dialog", () => {
+    const romItem = {
+      ...ownedItem,
+      id: 7,
+      format: "rom",
+      roms: [
+        {
+          id: 7,
+          label: null,
+          originalFilename: "Game (USA).nes",
+          sizeBytes: 40960,
+          extension: "nes",
+          isArchive: false,
+          playable: true,
+          core: "fceumm",
+          unplayableReason: null,
+          missingBiosSystem: null,
+          isolated: false,
+          saveStateCount: 0,
+          hasInGameSave: false,
+        },
+      ],
+    } as unknown as LibraryItem;
+    gogInstallersData = undefined;
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[romItem]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "ROM files" }));
+
+    expect(screen.getByText("ROMs — Absolute Drift")).toBeInTheDocument();
+    expect(screen.getByText("Game (USA).nes · 40.0 KB")).toBeInTheDocument();
+  });
+
+  it("does not show a download icon on a copy row without ROMs", () => {
+    gogInstallersData = undefined;
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[ownedItem]} />);
+
+    expect(screen.queryByRole("button", { name: "ROM files" })).not.toBeInTheDocument();
+  });
+
+  it("shows a download icon on an Abandonware copy row that opens the uploaded installers dialog", () => {
+    gogInstallersData = {
+      gameId: 1,
+      gogProductId: null,
+      groups: [],
+      uploadedFiles: [{ fileId: "upload-abc", filename: "setup_game_1.0.exe", size: 20 }],
+    };
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[abandonwareItem]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Installers" }));
+
+    expect(screen.getByText("Uploaded installers — Absolute Drift")).toBeInTheDocument();
+    expect(screen.getByText("setup_game_1.0.exe · 20 B")).toBeInTheDocument();
+  });
+
+  it("does not show a download icon on an uploadable copy row with nothing uploaded", () => {
+    gogInstallersData = { gameId: 1, gogProductId: null, groups: [], uploadedFiles: [] };
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[abandonwareItem]} />);
+
+    expect(screen.queryByRole("button", { name: "Installers" })).not.toBeInTheDocument();
+  });
+
   it("does not show the GOG Installers section in the edit dialog for a non-GOG copy", () => {
     gogInstallersData = undefined;
     renderSection(<GameLibrarySection {...baseProps} libraryItems={[ownedItem]} />);

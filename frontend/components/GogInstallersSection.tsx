@@ -8,6 +8,7 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import IconButton from "@mui/material/IconButton";
 import LinearProgress from "@mui/material/LinearProgress";
+import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Close from "@mui/icons-material/Close";
@@ -144,49 +145,50 @@ const GogInstallersSection = ({ gameId, hasGogItem, hasUploadableItem }: GogInst
         </Box>
       ) : null}
       {installers.uploadedFiles.length > 0 ? (
-        <Box sx={{ mb: 2 }}>
+        <Stack spacing={1} sx={{ mb: 2 }}>
           {installers.uploadedFiles.map((uploaded) => (
-            <Stack
-              key={uploaded.fileId}
-              direction="row"
-              spacing={1}
-              sx={{ alignItems: "center", justifyContent: "space-between", pl: 1, py: 0.5 }}
-            >
-              <Typography variant="body2" color="text.secondary">
-                {t("games.gogInstallers.uploadedFileLabel", {
-                  name: uploaded.filename ?? uploaded.fileId,
-                  size: formatFileSize(uploaded.size),
-                })}
-              </Typography>
-              <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => void handleDownload(uploaded.fileId)}
-                  disabled={fileLink.isPending}
-                >
-                  {t("games.gogInstallers.downloadButton")}
-                </Button>
-                <IconButton
-                  size="small"
-                  aria-label={t("games.gogInstallers.deleteInstallerLabel", {
+            <Paper key={uploaded.fileId} variant="outlined" sx={{ p: 1.5 }}>
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ alignItems: "center", justifyContent: "space-between" }}
+              >
+                <Typography variant="body2" sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
+                  {t("games.gogInstallers.uploadedFileLabel", {
                     name: uploaded.filename ?? uploaded.fileId,
+                    size: formatFileSize(uploaded.size),
                   })}
-                  onClick={() =>
-                    setPendingDelete({
-                      fileId: uploaded.fileId,
-                      filename: uploaded.filename ?? uploaded.fileId,
-                      uploaded: true,
-                    })
-                  }
-                  disabled={deleteInstaller.isPending}
-                >
-                  <Close fontSize="small" />
-                </IconButton>
+                </Typography>
+                <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", flexShrink: 0 }}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => void handleDownload(uploaded.fileId)}
+                    disabled={fileLink.isPending}
+                  >
+                    {t("games.gogInstallers.downloadButton")}
+                  </Button>
+                  <IconButton
+                    size="small"
+                    aria-label={t("games.gogInstallers.deleteInstallerLabel", {
+                      name: uploaded.filename ?? uploaded.fileId,
+                    })}
+                    onClick={() =>
+                      setPendingDelete({
+                        fileId: uploaded.fileId,
+                        filename: uploaded.filename ?? uploaded.fileId,
+                        uploaded: true,
+                      })
+                    }
+                    disabled={deleteInstaller.isPending}
+                  >
+                    <Close fontSize="small" />
+                  </IconButton>
+                </Stack>
               </Stack>
-            </Stack>
+            </Paper>
           ))}
-        </Box>
+        </Stack>
       ) : null}
       {hasGogItem ? (
         <GogInstallersList

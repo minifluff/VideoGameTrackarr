@@ -47,6 +47,8 @@ import { EmptyLine, ListRow, Panel, Pill, RowAction, SectionAction } from "./Det
 import GogInstallersDialog from "./GogInstallersDialog";
 import LibraryItemDialog, { type LibraryItemFormValues, type RomChanges } from "./LibraryItemDialog";
 import MoveLibraryItemDialog from "./MoveLibraryItemDialog";
+import RomsDownloadDialog from "./RomsDownloadDialog";
+import UploadedInstallersDialog from "./UploadedInstallersDialog";
 import { showUndoToast } from "./UndoToast";
 
 interface GameLibrarySectionProps {
@@ -126,6 +128,11 @@ const GameLibrarySection = ({
   const [dialogItem, setDialogItem] = useState<LibraryItem | null>(null);
   const [dialogStatus, setDialogStatus] = useState<LibraryStatus>("owned");
   const [installersOpen, setInstallersOpen] = useState(false);
+  // The copy whose ROM files the download dialog is showing, if any.
+  const [romsDownloadItem, setRomsDownloadItem] = useState<LibraryItem | null>(null);
+  // The uploaded-installers download dialog is game-level, like the GOG one —
+  // the files live under the game, not under one copy.
+  const [uploadedInstallersOpen, setUploadedInstallersOpen] = useState(false);
   // An owned GOG copy offers its offline installers once a GOG account is connected.
   const { data: gogStatus } = useGogStatus();
   const isGogCopy = (item: LibraryItem) =>
@@ -458,6 +465,20 @@ const GameLibrarySection = ({
                           onClick={() => setInstallersOpen(true)}
                         />
                       )}
+                      {item.roms.length > 0 && (
+                        <RowAction
+                          title={t("dialogs.libraryItem.romLabel")}
+                          icon={<CloudDownloadIcon fontSize="small" />}
+                          onClick={() => setRomsDownloadItem(item)}
+                        />
+                      )}
+                      {isUploadableItem(item) && uploadedInstallerNames.length > 0 && (
+                        <RowAction
+                          title={t("games.gogInstallers.installersHeading")}
+                          icon={<CloudDownloadIcon fontSize="small" />}
+                          onClick={() => setUploadedInstallersOpen(true)}
+                        />
+                      )}
                       <RowAction
                         title={owned ? t("table.moveToWishlist") : t("table.moveToCollection")}
                         icon={owned ? <FavoriteBorderIcon fontSize="small" /> : <CheckIcon fontSize="small" />}
@@ -533,6 +554,19 @@ const GameLibrarySection = ({
           gameId={gameId}
           gameName={gameName}
           onClose={() => setInstallersOpen(false)}
+        />
+        <RomsDownloadDialog
+          open={romsDownloadItem != null}
+          gameName={gameName}
+          roms={romsDownloadItem?.roms ?? []}
+          onClose={() => setRomsDownloadItem(null)}
+        />
+        <UploadedInstallersDialog
+          open={uploadedInstallersOpen}
+          gameId={gameId}
+          gameName={gameName}
+          files={gogInstallers?.uploadedFiles ?? []}
+          onClose={() => setUploadedInstallersOpen(false)}
         />
         <ConfirmDialog
           open={moveConfirmItem != null}

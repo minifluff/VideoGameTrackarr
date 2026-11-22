@@ -1229,7 +1229,10 @@
       "notConnected": "Connect your GOG account in Settings → Integrations to download installers.",
       "signInAgain": "GOG rejected the saved sign-in. Connect GOG again in Settings → Integrations.",
       "loadError": "Could not load the installers. Please try again.",
-      "saveErrorToast": "Could not save this file. Please try again."
+      "saveErrorToast": "Could not save this file. Please try again.",
+      "uploadedTitle": "Uploaded installers — {{name}}",
+      "uploadedDescription": "Installer files uploaded to this server for this game.",
+      "uploadedEmpty": "No installers have been uploaded for this game yet."
     },
     "coverCard": {
       "noImageAvailable": "Aucune image disponible"
@@ -1283,7 +1286,9 @@
       "ownedChip": "Possédé",
       "wishlistChip": "Liste de souhaits",
       "onSaleLine": "En solde : {{price}} chez {{shop}} (-{{cut}}%)",
-      "formatSubscription": "Subscription"
+      "formatSubscription": "Subscription",
+      "romsDownloadTitle": "ROMs — {{name}}",
+      "romsDownloadDescription": "Download the ROM files stored on this server."
     },
     "stats": {
       "playStatusNotStarted": "Pas commencé",
