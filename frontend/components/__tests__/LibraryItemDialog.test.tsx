@@ -30,10 +30,12 @@ vi.mock("../../hooks/useLibrary", () => ({
 // swapped per test (undefined = no installers, so the section stays hidden).
 let gogInstallersData: import("../../api/integrations").GogInstallers | undefined;
 const queueGogDownload = vi.fn();
+const downloadGogInstaller = vi.fn();
 const gogFileLink = vi.fn();
 vi.mock("../../hooks/useIntegrations", () => ({
   useGogInstallers: () => ({ data: gogInstallersData, isError: false }),
   useQueueGogInstallerDownload: () => ({ mutateAsync: queueGogDownload, isPending: false }),
+  useDownloadGogInstaller: () => ({ mutateAsync: downloadGogInstaller, isPending: false }),
   useGogInstallerFileLink: () => ({ mutateAsync: gogFileLink, isPending: false }),
   useUploadGogInstaller: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useDeleteGogInstaller: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -634,7 +636,7 @@ describe("LibraryItemDialog", () => {
 
     expect(screen.getByText("GOG Installers")).toBeInTheDocument();
     expect(screen.getByText("The Witcher 3")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Cache Download" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Download to server" })).toBeInTheDocument();
   });
 
   it("hides the GOG Installers section without a GOG copy", () => {

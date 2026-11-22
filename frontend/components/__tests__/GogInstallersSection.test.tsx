@@ -7,13 +7,13 @@ import GogInstallersSection from "../GogInstallersSection";
 
 let installers: GogInstallers | undefined;
 let installersError = false;
-const queueDownload = vi.fn();
+const downloadInstaller = vi.fn();
 const fileLink = vi.fn();
 const uploadInstaller = vi.fn();
 const deleteInstaller = vi.fn();
 vi.mock("../../hooks/useIntegrations", () => ({
   useGogInstallers: () => ({ data: installers, isError: installersError }),
-  useQueueGogInstallerDownload: () => ({ mutateAsync: queueDownload, isPending: false }),
+  useDownloadGogInstaller: () => ({ mutateAsync: downloadInstaller, isPending: false }),
   useGogInstallerFileLink: () => ({ mutateAsync: fileLink, isPending: false }),
   useUploadGogInstaller: () => ({ mutateAsync: uploadInstaller, isPending: false }),
   useDeleteGogInstaller: () => ({ mutateAsync: deleteInstaller, isPending: false }),
@@ -41,7 +41,7 @@ function makeInstallers(): GogInstallers {
                 downloadState: "not_downloaded",
                 downloadedBytes: 0,
                 downloadError: null,
-              filename: null,
+                filename: null,
               },
             ],
           },
@@ -64,7 +64,7 @@ function makeInstallers(): GogInstallers {
                 downloadState: "completed",
                 downloadedBytes: 987654,
                 downloadError: null,
-              filename: null,
+                filename: null,
               },
             ],
           },
@@ -88,39 +88,41 @@ describe("GogInstallersSection", () => {
     vi.clearAllMocks();
     installers = makeInstallers();
     installersError = false;
-    queueDownload.mockResolvedValue({ fileId: "en1installer0", status: "queued" });
     fileLink.mockResolvedValue("/api/integrations/gog/games/1/installers/en1installer0/file/token/setup.exe");
   });
 
-  it("shows both groups with a NAS download button and a device download button", () => {
+  it("shows both groups with a combined download button and a save button", () => {
     renderSection();
 
     expect(screen.getByText("GOG Installers")).toBeInTheDocument();
     expect(screen.getByText("The Witcher 3")).toBeInTheDocument();
     expect(screen.getByText("Hearts of Stone")).toBeInTheDocument();
-    expect(screen.getByText("windows · en · 1.32 · 117.7 MB")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Cache Download" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Download" })).toBeInTheDocument();
+    expect(screen.getAllByText("Windows")).toHaveLength(2);
+    expect(screen.getByText("1.32 · 117.7 MB · 1 file")).toBeInTheDocument();
+    // Only the not-downloaded installer offers Download to server — the
+    // finished one offers Save to device instead.
+    expect(screen.getAllByRole("button", { name: "Download to server" })).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Save to device" })).toBeInTheDocument();
   });
 
-  it("queues a NAS download when Cache Download is clicked", async () => {
+  it("queues the whole installer when Download to server is clicked", async () => {
     renderSection();
 
-    fireEvent.click(screen.getByRole("button", { name: "Cache Download" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Download to server" })[0]);
 
     await waitFor(() =>
-      expect(queueDownload).toHaveBeenCalledWith({
+      expect(downloadInstaller).toHaveBeenCalledWith({
+        productId: 1207658695,
         installerId: "installer_windows_en",
-        fileId: "en1installer0",
       })
     );
   });
 
-  it("opens the tokenized file link when Download is clicked", async () => {
+  it("opens the tokenized file link when Save to device is clicked", async () => {
     const open = vi.spyOn(window, "open").mockImplementation(() => null);
     renderSection();
 
-    fireEvent.click(screen.getByRole("button", { name: "Download" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save to device" }));
 
     await waitFor(() => expect(fileLink).toHaveBeenCalledWith({ gameId: 1, fileId: "en1installer0" }));
     expect(open).toHaveBeenCalledWith(
@@ -131,7 +133,7 @@ describe("GogInstallersSection", () => {
     open.mockRestore();
   });
 
-  it("shows a progress bar while a file is downloading on the NAS", () => {
+  it("shows a combined progress bar while a file is downloading on the NAS", () => {
     installers = makeInstallers();
     installers.groups[0].installers[0].files[0] = {
       id: "en1installer0",
@@ -144,7 +146,8 @@ describe("GogInstallersSection", () => {
     renderSection();
 
     expect(screen.getByRole("progressbar")).toBeInTheDocument();
-    expect(screen.getByText("Downloading… 58.9 MB of 117.7 MB")).toBeInTheDocument();
+    expect(screen.getByText("Part 1 of 1 · 117.7 MB")).toBeInTheDocument();
+    expect(screen.getByText("Downloading…")).toBeInTheDocument();
   });
 
   it("shows Retry with the error when a download failed", async () => {
@@ -159,10 +162,17 @@ describe("GogInstallersSection", () => {
     };
     renderSection();
 
-    expect(screen.getByText("Downloaded 10 bytes, expected 123456789")).toBeInTheDocument();
+    expect(
+      screen.getByText("Part 1 of 1 · 117.7 MB · Downloaded 10 bytes, expected 123456789")
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
 
-    await waitFor(() => expect(queueDownload).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(downloadInstaller).toHaveBeenCalledWith({
+        productId: 1207658695,
+        installerId: "installer_windows_en",
+      })
+    );
   });
 
   it("renders nothing without a GOG library item", () => {
@@ -258,13 +268,13 @@ describe("GogInstallersSection", () => {
     renderSection();
 
     // Only the completed file (Hearts of Stone) gets an X — the not-downloaded
-    // one only offers Cache Download.
+    // one only offers Download to server.
     expect(screen.getByRole("button", { name: /Delete windows · en · 1\.0/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Delete windows · en · 1\.32/ })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Delete windows · en · 1\.0/ }));
     expect(screen.getByText("Delete installer?")).toBeInTheDocument();
-    expect(screen.getByText(/You can cache it again with Cache Download/)).toBeInTheDocument();
+    expect(screen.getByText(/You can download it again with Download to server/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     await waitFor(() => expect(deleteInstaller).toHaveBeenCalledWith("en1installer0"));

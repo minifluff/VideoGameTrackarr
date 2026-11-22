@@ -155,6 +155,22 @@ describe("GogInstallersDialog", () => {
     expect(screen.getByText("Part 1 of 2 · 20 B · Connection reset")).toBeInTheDocument();
   });
 
+  it("offers Save to device per finished part but no delete in the standalone dialog", () => {
+    installers = makeInstallers();
+    installers.groups[0].installers[0].files[0] = {
+      id: "en1installer0",
+      size: 20,
+      downloadState: "completed",
+      downloadedBytes: 20,
+      downloadError: null,
+      filename: "setup_absolute_drift_1.0.exe",
+    };
+    renderDialog();
+
+    expect(screen.getByRole("button", { name: "Save to device" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Delete / })).not.toBeInTheDocument();
+  });
+
   it("explains when the game has no GOG copy to download from", () => {
     installersError = { isAxiosError: true, response: { status: 404 } };
     renderDialog();

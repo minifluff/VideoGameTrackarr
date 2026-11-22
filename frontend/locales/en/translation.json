@@ -1199,7 +1199,7 @@
       "uploadErrorToast": "Could not upload this installer. Please try again.",
       "deleteInstallerLabel": "Delete {{name}}",
       "deleteDialogTitle": "Delete installer?",
-      "deleteDialogGogDescription": "This deletes {{name}} from the NAS. You can cache it again with Cache Download.",
+      "deleteDialogGogDescription": "This deletes {{name}} from the NAS. You can download it again with Download to server.",
       "deleteDialogUploadedDescription": "This deletes {{name}} from the NAS. You'll need to upload it again.",
       "deleteDialogConfirm": "Delete",
       "deleteErrorToast": "Couldn't delete the installer. Please try again.",

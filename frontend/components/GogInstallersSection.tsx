@@ -13,16 +13,15 @@ import Typography from "@mui/material/Typography";
 import Close from "@mui/icons-material/Close";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-import type { GogInstallerFile } from "../api/integrations";
 import {
   useDeleteGogInstaller,
   useGogInstallerFileLink,
   useGogInstallers,
-  useQueueGogInstallerDownload,
   useUploadGogInstaller,
 } from "../hooks/useIntegrations";
 import { formatFileSize } from "../utils/roms";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
+import { GogInstallersList } from "./GogInstallersDialog";
 
 interface GogInstallersSectionProps {
   gameId: number;
@@ -34,17 +33,18 @@ interface GogInstallersSectionProps {
   hasUploadableItem: boolean;
 }
 
-// Offline installers for a GOG-imported game: the NAS downloads each file in the
-// background (uploads/gog-installers, never part of backups), and once a file is on
-// the NAS the button serves it to this device instead. Copies that take uploads
-// get the same treatment from their own folder (uploads/uploaded-installers),
-// except the file comes from the user: they upload it here and Download sends it
-// back. The section stays hidden whenever there is nothing to show (a GOG game with
-// no installers and no uploads, and no copy to upload for).
+// Offline installers for a GOG-imported game, shown the same way as in the
+// standalone Offline installers dialog: one card per installer with a combined
+// Download to server, progress, and Save to device per finished part — plus,
+// only here, a delete button on finished parts so a cached file can be
+// removed from the NAS again. Copies that take uploads get the same treatment
+// from their own folder (uploads/uploaded-installers), except the file comes
+// from the user: they upload it here and Download sends it back. The section
+// stays hidden whenever there is nothing to show (a GOG game with no
+// installers and no uploads, and no copy to upload for).
 const GogInstallersSection = ({ gameId, hasGogItem, hasUploadableItem }: GogInstallersSectionProps) => {
   const { t } = useTranslation();
   const { data: installers, isError } = useGogInstallers(gameId, hasGogItem || hasUploadableItem);
-  const queueDownload = useQueueGogInstallerDownload(gameId);
   const fileLink = useGogInstallerFileLink();
   const uploadInstaller = useUploadGogInstaller(gameId);
   const deleteInstaller = useDeleteGogInstaller(gameId);
@@ -66,15 +66,6 @@ const GogInstallersSection = ({ gameId, hasGogItem, hasUploadableItem }: GogInst
   if (installers.groups.length === 0 && installers.uploadedFiles.length === 0 && !hasUploadableItem) {
     return null;
   }
-
-  const handleQueue = async (installerId: string, fileId: string) => {
-    try {
-      await queueDownload.mutateAsync({ installerId, fileId });
-    } catch (error) {
-      console.error(`Error queueing GOG installer file ${fileId}:`, error);
-      toast.error(t("games.gogInstallers.queueErrorToast"), TOAST_OPTIONS);
-    }
-  };
 
   const handleDownload = async (fileId: string) => {
     try {
@@ -109,78 +100,6 @@ const GogInstallersSection = ({ gameId, hasGogItem, hasUploadableItem }: GogInst
     } catch (error) {
       console.error(`Error deleting installer file ${pendingDelete.fileId}:`, error);
       toast.error(t("games.gogInstallers.deleteErrorToast"), TOAST_OPTIONS);
-    }
-  };
-
-  const renderFileAction = (installerId: string, file: GogInstallerFile, displayName: string) => {
-    switch (file.downloadState) {
-      case "queued":
-      case "downloading":
-        return (
-          <Box sx={{ minWidth: 160 }}>
-            <LinearProgress
-              variant="determinate"
-              value={file.size > 0 ? Math.min(100, (file.downloadedBytes / file.size) * 100) : 0}
-            />
-            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-              {t("games.gogInstallers.downloadingLabel", {
-                downloaded: formatFileSize(file.downloadedBytes),
-                total: formatFileSize(file.size),
-              })}
-            </Typography>
-          </Box>
-        );
-      case "completed":
-        return (
-          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => void handleDownload(file.id)}
-              disabled={fileLink.isPending}
-            >
-              {t("games.gogInstallers.downloadButton")}
-            </Button>
-            <IconButton
-              size="small"
-              aria-label={t("games.gogInstallers.deleteInstallerLabel", { name: displayName })}
-              onClick={() => setPendingDelete({ fileId: file.id, filename: displayName, uploaded: false })}
-              disabled={deleteInstaller.isPending}
-            >
-              <Close fontSize="small" />
-            </IconButton>
-          </Stack>
-        );
-      case "failed":
-        return (
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            {file.downloadError && (
-              <Typography variant="caption" color="error">
-                {file.downloadError}
-              </Typography>
-            )}
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => void handleQueue(installerId, file.id)}
-              disabled={queueDownload.isPending}
-            >
-              {t("games.gogInstallers.retryButton")}
-            </Button>
-          </Stack>
-        );
-      case "not_downloaded":
-      default:
-        return (
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => void handleQueue(installerId, file.id)}
-            disabled={queueDownload.isPending}
-          >
-            {t("games.gogInstallers.cacheDownloadButton")}
-          </Button>
-        );
     }
   };
 
@@ -269,47 +188,15 @@ const GogInstallersSection = ({ gameId, hasGogItem, hasUploadableItem }: GogInst
           ))}
         </Box>
       ) : null}
-      {installers.groups.map((group) => (
-        <Box key={group.productId} sx={{ mb: 2 }}>
-          <Typography variant="subtitle1" sx={{ mb: 1 }}>
-            {group.title}
-          </Typography>
-          {group.installers.map((installer) => (
-            <Box key={installer.id} sx={{ mb: 1.5, pl: 1 }}>
-              <Typography variant="body2" sx={{ mb: 0.5 }}>
-                {t("games.gogInstallers.installerLabel", {
-                  os: installer.os,
-                  language: installer.language,
-                  version: installer.version ?? "",
-                  size: formatFileSize(installer.totalSize),
-                })}
-              </Typography>
-              {installer.files.map((file) => (
-                <Stack
-                  key={file.id}
-                  direction="row"
-                  spacing={1}
-                  sx={{ alignItems: "center", justifyContent: "space-between", pl: 1, py: 0.5 }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    {t("games.gogInstallers.fileLabel", { size: formatFileSize(file.size) })}
-                  </Typography>
-                  {renderFileAction(
-                    installer.id,
-                    file,
-                    t("games.gogInstallers.installerLabel", {
-                      os: installer.os,
-                      language: installer.language,
-                      version: installer.version ?? "",
-                      size: formatFileSize(installer.totalSize),
-                    })
-                  )}
-                </Stack>
-              ))}
-            </Box>
-          ))}
-        </Box>
-      ))}
+      {hasGogItem ? (
+        <GogInstallersList
+          gameId={gameId}
+          enabled
+          onDeleteFile={(file, name) =>
+            setPendingDelete({ fileId: file.id, filename: name, uploaded: false })
+          }
+        />
+      ) : null}
       <Dialog open={pendingDelete != null} onClose={() => setPendingDelete(null)}>
         <DialogTitle>{t("games.gogInstallers.deleteDialogTitle")}</DialogTitle>
         <DialogContent>

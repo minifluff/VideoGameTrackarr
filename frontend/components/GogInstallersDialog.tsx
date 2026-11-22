@@ -1,5 +1,6 @@
 import { isAxiosError } from "axios";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
+import Close from "@mui/icons-material/Close";
 import ReplayIcon from "@mui/icons-material/Replay";
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
 import Alert from "@mui/material/Alert";
@@ -11,6 +12,7 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import IconButton from "@mui/material/IconButton";
 import LinearProgress from "@mui/material/LinearProgress";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -60,12 +62,15 @@ interface GogInstallersListProps {
   gameId: number;
   // Fetches (and polls) only while shown.
   enabled: boolean;
+  // Set in the edit dialog so a finished part can be deleted from the NAS
+  // again — the standalone dialog never offers it.
+  onDeleteFile?: (file: GogInstallerFile, displayName: string) => void;
 }
 
 // The installers for one game and its DLC, each with Download to server, progress, and Save
 // to device per finished part. Shown in the Offline installers dialog, opened from a GOG
-// copy's download icon on the game page.
-export const GogInstallersList = ({ gameId, enabled }: GogInstallersListProps) => {
+// copy's download icon on the game page, and in the copy's own edit dialog.
+export const GogInstallersList = ({ gameId, enabled, onDeleteFile }: GogInstallersListProps) => {
   const { t } = useTranslation();
   const { data, isLoading, error } = useGogInstallers(gameId, enabled);
   const download = useDownloadGogInstaller(gameId);
@@ -101,7 +106,7 @@ export const GogInstallersList = ({ gameId, enabled }: GogInstallersListProps) =
     return t("games.gogInstallers.loadError");
   })();
 
-  const renderPart = (part: GogInstallerFile, index: number, count: number) => (
+  const renderPart = (part: GogInstallerFile, index: number, count: number, displayName: string) => (
     <Stack
       key={part.id}
       direction="row"
@@ -118,14 +123,24 @@ export const GogInstallersList = ({ gameId, enabled }: GogInstallersListProps) =
         {part.downloadState === "failed" && part.downloadError ? ` · ${part.downloadError}` : ""}
       </Typography>
       {part.downloadState === "completed" ? (
-        <Button
-          size="small"
-          startIcon={<SaveAltIcon />}
-          onClick={() => void handleSave(part)}
-          sx={{ flexShrink: 0 }}
-        >
-          {t("games.gogInstallers.saveButton")}
-        </Button>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", flexShrink: 0 }}>
+          <Button
+            size="small"
+            startIcon={<SaveAltIcon />}
+            onClick={() => void handleSave(part)}
+          >
+            {t("games.gogInstallers.saveButton")}
+          </Button>
+          {onDeleteFile ? (
+            <IconButton
+              size="small"
+              aria-label={t("games.gogInstallers.deleteInstallerLabel", { name: displayName })}
+              onClick={() => onDeleteFile(part, displayName)}
+            >
+              <Close fontSize="small" />
+            </IconButton>
+          ) : null}
+        </Stack>
       ) : (
         <Typography
           variant="caption"
@@ -140,6 +155,12 @@ export const GogInstallersList = ({ gameId, enabled }: GogInstallersListProps) =
 
   const renderInstaller = (productId: number, installer: GogInstaller) => {
     const state = installerState(installer);
+    const installerLabel = t("games.gogInstallers.installerLabel", {
+      os: installer.os,
+      language: installer.language,
+      version: installer.version ?? "",
+      size: formatFileSize(installer.totalSize),
+    });
     return (
       <Paper
         key={`${productId}:${installer.id}`}
@@ -202,7 +223,7 @@ export const GogInstallersList = ({ gameId, enabled }: GogInstallersListProps) =
           state.failed ||
           installer.files.some((part) => part.downloadState === "completed")) && (
           <Box sx={{ mt: 1 }}>
-            {installer.files.map((part, index) => renderPart(part, index, installer.files.length))}
+            {installer.files.map((part, index) => renderPart(part, index, installer.files.length, installerLabel))}
           </Box>
         )}
       </Paper>
