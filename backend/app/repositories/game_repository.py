@@ -9,9 +9,11 @@ from typing import Any
 from sqlalchemy import ColumnElement, Integer, Select, and_, case, cast, delete, exists, func, or_, select, update
 from sqlalchemy.orm import Session, joinedload, selectinload
 
+from app.core.search_keys import search_key
 from app.models.catalog import (
     Artwork,
     Game,
+    GameAlternativeName,
     GameCategory,
     GameCollection,
     GameCompany,
@@ -331,6 +333,53 @@ def _order_by_for_sort(sort: GameSortOption) -> list[ColumnElement[Any]]:
     return [value.is_(None), direction, Game.name.asc()]
 
 
+def name_matches(game: Any, search: str) -> ColumnElement[bool]:
+    """Whether a game's name or one of its IGDB alternative names contains the search text,
+    ignoring case, spaces, punctuation and accents: "gta 6" finds Grand Theft Auto VI through
+    its "GTA 6" alternative name, and "gtav" finds "GTA V". Both sides are compared as search
+    keys (app/core/search_keys.py), which also leaves no LIKE wildcards in the pattern. A
+    query with no letters or digits at all (e.g. "+") falls back to a plain name match."""
+    key = search_key(search)
+    if not key:
+        # Escaped, so a search for "%" or "_" means that character, not "anything".
+        literal = search.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        return game.name.ilike(f"%{literal}%", escape="\\")
+    pattern = f"%{key}%"
+    return or_(
+        game.search_key.like(pattern),
+        exists().where(GameAlternativeName.game_id == game.id, GameAlternativeName.search_key.like(pattern)),
+    )
+
+
+def matched_alternative_names(db: Session, game_ids: list[int], search: str) -> dict[int, str]:
+    """For games whose own name doesn't explain the match, the first alternative name that
+    does: game id → that name. Lets a result list say why "Grand Theft Auto VI" turned up
+    for "gta 6". The library search splits into words (see _apply_optional_game_filters),
+    so each word is checked in turn: a word counts as alias-matched when the game's own
+    name key doesn't contain it but one of its alternative names does."""
+    if not game_ids:
+        return {}
+    matches: dict[int, str] = {}
+    for word in search.split():
+        key = search_key(word)
+        if not key:
+            continue
+        pattern = f"%{key}%"
+        rows = db.execute(
+            select(GameAlternativeName.game_id, GameAlternativeName.name)
+            .join(Game, Game.id == GameAlternativeName.game_id)
+            .where(
+                GameAlternativeName.game_id.in_(game_ids),
+                GameAlternativeName.search_key.like(pattern),
+                ~Game.search_key.like(pattern),
+            )
+            .order_by(GameAlternativeName.game_id, GameAlternativeName.id)
+        )
+        for game_id, name in rows:
+            matches.setdefault(game_id, name)
+    return matches
+
+
 def _maybe_negate(clause: ColumnElement[bool], exclude: bool) -> ColumnElement[bool]:
     """Flips a filter's own predicate when its "Exclude" toggle is on — "show everything
     except what's selected" is just the logical negation of the same clause inclusion
@@ -426,13 +475,16 @@ def _apply_optional_game_filters(
         id_match = _IGDB_ID_SEARCH_PATTERN.match(search.strip())
         if id_match:
             igdb_id = int(id_match.group(1))
-            stmt = stmt.where(or_(Game.igdb_id == igdb_id, Game.name.ilike(f"%{igdb_id}%")))
+            stmt = stmt.where(or_(Game.igdb_id == igdb_id, name_matches(Game, str(igdb_id))))
         else:
             # Split into words and require each word to appear (in any order) — so
             # "Wild Breath" finds "Breath of the Wild", not just exact substrings.
+            # Each word matches by search key (see name_matches): "gta 6" finds
+            # Grand Theft Auto VI through its "GTA 6" alternative name, and
+            # "gtav" finds "GTA V".
             for word in search.split():
                 if word:
-                    stmt = stmt.where(Game.name.ilike(f"%{word}%"))
+                    stmt = stmt.where(name_matches(Game, word))
     if platform_ids:
         # The platform of the user's *owned/wishlisted copy* (library_items), not
         # game_platforms — IGDB's full list of platforms a game was ever released on.
@@ -641,6 +693,7 @@ def _get_game_options() -> tuple[Any, ...]:
         selectinload(Game.artworks),
         selectinload(Game.videos),
         selectinload(Game.release_dates).joinedload(ReleaseDate.platform),
+        selectinload(Game.alternative_names),
     )
 
 
@@ -809,7 +862,7 @@ def delete_game_with_addons(db: Session, game: Game) -> list[str]:
     """Deletes the game, its addons, and every row that hangs off either: library_items
     (and their rom_files), game_progress, play_sessions, notes, game_tags, plus the
     catalog-richness tables populated at import/resync time (genres/companies/franchises/
-    collections/platforms/screenshots/artworks/videos/release_dates).
+    collections/platforms/screenshots/artworks/videos/release_dates/alternative names).
 
     Returns the stored filenames of every deleted ROM and its save states/in-game save, for
     the caller to remove from disk (rom_service.delete_files) once its transaction commits."""
@@ -844,6 +897,7 @@ def delete_game_with_addons(db: Session, game: Game) -> list[str]:
     db.execute(delete(Artwork).where(Artwork.game_id.in_(game_ids)))
     db.execute(delete(GameVideo).where(GameVideo.game_id.in_(game_ids)))
     db.execute(delete(ReleaseDate).where(ReleaseDate.game_id.in_(game_ids)))
+    db.execute(delete(GameAlternativeName).where(GameAlternativeName.game_id.in_(game_ids)))
     db.execute(delete(Game).where(Game.id.in_(game_ids)))
     return rom_filenames
 

@@ -99,11 +99,13 @@ def list_games(
             # Platform chips show the abbreviation when IGDB has one ("PS4"),
             # falling back to the full name when it doesn't.
             platforms_by_game.setdefault(game_id, set()).add(platform_abbr or platform_name)
+    aliases = game_service.matched_alternative_names(db, game_ids, params.search) if params.search else {}
     return [
         game_summary_from_orm(
             game,
             on_sale_game_ids,
             owned_platforms=sorted(platforms_by_game.get(game.game.id, set())),
+            matched_alias=aliases.get(game.game.id),
         )
         for game in games
     ]

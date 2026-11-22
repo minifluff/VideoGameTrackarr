@@ -13,6 +13,7 @@ from app.core.config import BACKEND_DIR
 from app.models.catalog import (
     Artwork,
     Game,
+    GameAlternativeName,
     GameCategory,
     GameCollection,
     GameCompany,
@@ -460,6 +461,7 @@ def restore_backup(db: Session, payload: BackupPayload, files_zip: Path | None =
     # docstring — but they still reference game_id and would otherwise be left as orphans,
     # since a bulk `delete(Game)` doesn't trigger the ORM relationship cascades that
     # `session.delete(some_game_instance)` would).
+    db.execute(delete(GameAlternativeName))
     db.execute(delete(GameGenre))
     db.execute(delete(GamePlatform))
     db.execute(delete(GameCompany))

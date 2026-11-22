@@ -430,6 +430,24 @@ const GameAboutSection = ({ game, preview = false, publicToken }: GameAboutSecti
           </CardContent>
         </>
       ) : null}
+      {game.alternativeNames?.length ? (
+        <>
+          <Divider />
+          <CardContent>
+            <Typography variant="subtitle2" gutterBottom>
+              {t("games.about.alsoKnownAsTitle")}
+            </Typography>
+            <Box component="p" sx={{ m: 0, color: "text.secondary", fontSize: 14 }}>
+              {game.alternativeNames.map((alternative, index) => (
+                <span key={`${alternative.name}-${index}`}>
+                  {index ? ", " : null}
+                  <span title={alternative.comment ?? undefined}>{alternative.name}</span>
+                </span>
+              ))}
+            </Box>
+          </CardContent>
+        </>
+      ) : null}
       {timeToBeatRows.length > 0 ? (
         <>
           <Divider />

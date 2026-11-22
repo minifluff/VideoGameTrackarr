@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Any
 
+from app.core.search_keys import alternative_names_from_igdb
 from app.models.catalog import CompanyRole, Game, GameCategory, IgdbReleaseRegion
 from app.models.library import GameProgress, PlayStatus, Tag
 from app.repositories.game_repository import GameWithStatus
@@ -55,6 +56,16 @@ class GameSummaryResponse(CamelModel):
     # platform chips on game cards. Only populated by the main games-list route;
     # other callers leave the default empty list.
     owned_platforms: list[str] = []
+    # Only with a search, on GET /api/games: the alternative name that matched when the game's
+    # own name didn't (e.g. "GTA 6" for Grand Theft Auto VI), so the header search can say why
+    # the game turned up. None everywhere else.
+    matched_alias: str | None = None
+
+
+class GameAlternativeNameResponse(CamelModel):
+    name: str
+    # IGDB's label, e.g. "Acronym" or "Japanese title".
+    comment: str | None
 
 
 class BookshelfEntryResponse(CamelModel):
@@ -106,6 +117,8 @@ class GameDetailResponse(GameSummaryResponse):
     artwork_urls: list[str]
     videos: list[GameVideoResponse]
     release_dates: list[ReleaseDateResponse]
+    # IGDB's other names for the game, in IGDB's order: the game page's "Also known as".
+    alternative_names: list[GameAlternativeNameResponse] = []
     igdb_status: int | None
     game_modes: list[str]
     age_ratings: dict[str, str]
@@ -151,11 +164,13 @@ def game_summary_from_orm(
     status: GameWithStatus,
     on_sale_game_ids: frozenset[int] = frozenset(),
     owned_platforms: list[str] | None = None,
+    matched_alias: str | None = None,
 ) -> GameSummaryResponse:
     return GameSummaryResponse(
         **_game_fields(status.game, status),
         is_on_sale=status.game.id in on_sale_game_ids,
         owned_platforms=owned_platforms if owned_platforms is not None else [],
+        matched_alias=matched_alias,
     )
 
 
@@ -217,6 +232,9 @@ def game_detail_from_orm(
         artwork_urls=[a.url for a in game.artworks],
         videos=[game_video_from_orm(v) for v in game.videos],
         release_dates=[release_date_from_orm(rd) for rd in game.release_dates],
+        alternative_names=[
+            GameAlternativeNameResponse(name=alt.name, comment=alt.comment) for alt in game.alternative_names
+        ],
         igdb_status=game.igdb_status,
         game_modes=game.game_modes or [],
         age_ratings=game.age_ratings or {},
@@ -292,6 +310,7 @@ class IgdbGamePreviewResponse(CamelModel):
     artwork_urls: list[str]
     videos: list[GameVideoResponse]
     release_dates: list[ReleaseDateResponse]
+    alternative_names: list[GameAlternativeNameResponse] = []
     igdb_status: int | None = None
     game_modes: list[str] = []
     age_ratings: dict[str, str] = {}
@@ -396,6 +415,10 @@ def igdb_game_preview_from_payload(
             )
             for rd in igdb_game.get("release_dates") or []
             if rd.get("id") is not None
+        ],
+        alternative_names=[
+            GameAlternativeNameResponse(name=name, comment=comment)
+            for name, comment in alternative_names_from_igdb(igdb_game.get("name"), igdb_game.get("alternative_names"))
         ],
         local_game=(
             LocalGameRefResponse(slug=local_game.slug, uuid=local_game.uuid, name=local_game.name)

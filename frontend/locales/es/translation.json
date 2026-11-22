@@ -416,6 +416,10 @@
           "name": "Resincronizar sagas",
           "description": "Vuelve a obtener solo los datos de sagas de cada juego vinculado a IGDB — restaura las sagas después de restaurar una copia de seguridad, ya que esta no las conserva."
         },
+        "alternativeNames": {
+          "name": "Fetch alternative names",
+          "description": "Fetches IGDB’s other names (short names like “GTA 6”, other spellings, foreign titles) for every IGDB-linked game, so search finds them. A few requests for the whole library; a resync fetches them too."
+        },
         "steamImport": {
           "name": "Importación de Steam",
           "description": "Obtiene tu biblioteca de Steam y la empareja con tu catálogo — nada se añade ni se cambia automáticamente. Revisa y sincroniza en Insights → Sincronización Steam."
@@ -1112,6 +1116,7 @@
       "unknownPlatform": "Plataforma desconocida",
       "tbd": "Por determinar",
       "storylineTitle": "Argumento",
+      "alsoKnownAsTitle": "Also known as",
       "artworkTitle": "Ilustraciones",
       "videosTitle": "Vídeos",
       "watchOnYoutube": "Ver en YouTube",
@@ -1197,7 +1202,34 @@
       "deleteDialogGogDescription": "This deletes {{name}} from the NAS. You can cache it again with Cache Download.",
       "deleteDialogUploadedDescription": "This deletes {{name}} from the NAS. You'll need to upload it again.",
       "deleteDialogConfirm": "Delete",
-      "deleteErrorToast": "Couldn't delete the installer. Please try again."
+      "deleteErrorToast": "Couldn't delete the installer. Please try again.",
+      "openButton": "Offline installers",
+      "title": "Offline installers — {{name}}",
+      "description": "Download GOG's DRM-free installers to this server, then save them to any device. Each installer downloads with all its parts. For your own backups only — never share them.",
+      "downloadToServerButton": "Download to server",
+      "saveButton": "Save to device",
+      "progressLabel": "Download progress",
+      "partLabel": "Part {{index}} of {{count}}",
+      "partCount_one": "{{count}} file",
+      "partCount_other": "{{count}} files",
+      "state": {
+        "not_downloaded": "Not downloaded",
+        "queued": "Queued",
+        "downloading": "Downloading…",
+        "completed": "On the server",
+        "failed": "Failed"
+      },
+      "os": {
+        "windows": "Windows",
+        "mac": "macOS",
+        "linux": "Linux"
+      },
+      "empty": "GOG lists no offline installers for this game.",
+      "notAvailable": "Offline installers are only for games in your collection as a GOG copy that GOG Sync matched to your GOG library.",
+      "notConnected": "Connect your GOG account in Settings → Integrations to download installers.",
+      "signInAgain": "GOG rejected the saved sign-in. Connect GOG again in Settings → Integrations.",
+      "loadError": "Could not load the installers. Please try again.",
+      "saveErrorToast": "Could not save this file. Please try again."
     },
     "coverCard": {
       "noImageAvailable": "Imagen no disponible"
@@ -2185,6 +2217,7 @@
     "placeholder": "Buscar juegos, hardware, series…",
     "label": "Buscar",
     "igdb": "Buscar en IGDB “{{query}}”",
+    "matchedAlias": "aka {{name}}",
     "groups": {
       "game": "Juegos",
       "device": "Dispositivos",

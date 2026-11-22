@@ -11,20 +11,23 @@ vi.mock("../../hooks/useDebouncedValue", () => ({
 vi.mock("../../hooks/useGames", () => ({
   useGames: (filters: { search?: string }, options?: { enabled?: boolean }) => ({
     data:
-      options?.enabled &&
-      filters.search &&
-      // The real server name-searches: a bare IGDB id matches no local name.
-      !/^(?:igdb:)?\d+$/i.test(filters.search)
-        ? [
-            { id: 1, uuid: "u1", slug: "zelda-botw", name: "Zelda: Breath of the Wild", coverUrl: null, firstReleaseDate: 1488499200 },
-            // Auto-discovered and neither owned nor wishlisted: "missing", hidden below.
-            { id: 2, uuid: "u2", slug: "zelda-links-awakening", name: "Zelda: Link's Awakening", coverUrl: null, firstReleaseDate: null, autoDiscovered: true, owned: false, wishlisted: false },
-            // Auto-discovered but wishlisted: not missing, still searchable.
-            { id: 3, uuid: "u3", slug: "zelda-echoes", name: "Zelda: Echoes of Wisdom", coverUrl: null, firstReleaseDate: null, autoDiscovered: true, owned: false, wishlisted: true },
-            // Owned but hidden: hidden from search below.
-            { id: 4, uuid: "u4", slug: "zelda-hidden", name: "Zelda: Hidden Gem", coverUrl: null, firstReleaseDate: null, autoDiscovered: false, owned: true, wishlisted: false, hideFromPublic: true },
-          ]
-        : undefined,
+      !options?.enabled || !filters.search
+        ? undefined
+        : filters.search === "gta 6"
+          ? // Found through an alternative name, not its own.
+            [{ id: 5, uuid: "u5", slug: "gta-6", name: "Grand Theft Auto VI", coverUrl: null, firstReleaseDate: 1795046400, matchedAlias: "GTA 6" }]
+          : // The real server name-searches: a bare IGDB id matches no local name.
+            /^(?:igdb:)?\d+$/i.test(filters.search)
+            ? undefined
+            : [
+                { id: 1, uuid: "u1", slug: "zelda-botw", name: "Zelda: Breath of the Wild", coverUrl: null, firstReleaseDate: 1488499200 },
+                // Auto-discovered and neither owned nor wishlisted: "missing", hidden below.
+                { id: 2, uuid: "u2", slug: "zelda-links-awakening", name: "Zelda: Link's Awakening", coverUrl: null, firstReleaseDate: null, autoDiscovered: true, owned: false, wishlisted: false },
+                // Auto-discovered but wishlisted: not missing, still searchable.
+                { id: 3, uuid: "u3", slug: "zelda-echoes", name: "Zelda: Echoes of Wisdom", coverUrl: null, firstReleaseDate: null, autoDiscovered: true, owned: false, wishlisted: true },
+                // Owned but hidden: hidden from search below.
+                { id: 4, uuid: "u4", slug: "zelda-hidden", name: "Zelda: Hidden Gem", coverUrl: null, firstReleaseDate: null, autoDiscovered: false, owned: true, wishlisted: false, hideFromPublic: true },
+              ],
   }),
 }));
 vi.mock("../../hooks/useIgdbSearch", () => ({
@@ -114,6 +117,14 @@ describe("GlobalSearch", () => {
 
     await userEvent.click(screen.getByText("Zelda: Breath of the Wild"));
     expect(router.state.location.pathname).toBe("/game/zelda-botw");
+  });
+
+  it("says which alternative name a game was found by", async () => {
+    renderSearch();
+    await userEvent.type(screen.getByRole("combobox", { name: "Search" }), "gta 6");
+
+    expect(await screen.findByText("Grand Theft Auto VI")).toBeInTheDocument();
+    expect(screen.getByText("aka GTA 6 · 2026")).toBeInTheDocument();
   });
 
   it("hides missing games but keeps wishlisted discoveries", async () => {

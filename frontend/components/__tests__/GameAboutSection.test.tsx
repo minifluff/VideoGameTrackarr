@@ -204,4 +204,21 @@ describe("GameAboutSection platforms and companies", () => {
     expect(screen.getByText("Sony Playstation 5")).toBeInTheDocument();
     expect(screen.getByText("Oct 04, 2024")).toBeInTheDocument();
   });
+
+  it("lists IGDB's other names, each with its label as a tooltip, and nothing when there are none", () => {
+    const { unmount } = renderSection({
+      ...baseGame,
+      alternativeNames: [
+        { name: "GTA 5", comment: "Acronym" },
+        { name: "Grand Theft Auto 5", comment: null },
+      ],
+    });
+    expect(screen.getByRole("heading", { name: "Also known as" })).toBeInTheDocument();
+    expect(screen.getByText("GTA 5")).toHaveAttribute("title", "Acronym");
+    expect(screen.getByText("Grand Theft Auto 5")).not.toHaveAttribute("title");
+    unmount();
+
+    renderSection({ ...baseGame, alternativeNames: [] });
+    expect(screen.queryByRole("heading", { name: "Also known as" })).toBeNull();
+  });
 });

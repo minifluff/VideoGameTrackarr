@@ -1,4 +1,5 @@
 from app.services import (
+    alternative_names_job,
     event_sync_jobs,
     export_backup_job,
     gog_jobs,
@@ -22,6 +23,7 @@ def register_builtin_jobs() -> None:
     job_registry.register(resync_jobs.DEFINITION_GAMES)
     job_registry.register(resync_jobs.DEFINITION_COLLECTIONS)
     job_registry.register(resync_jobs.DEFINITION_SERIES)
+    job_registry.register(alternative_names_job.DEFINITION_ALTERNATIVE_NAMES)
     job_registry.register(steam_jobs.DEFINITION_STEAM_IMPORT)
     job_registry.register(gog_jobs.DEFINITION_GOG_IMPORT)
     job_registry.register(gog_jobs.DEFINITION_GOG_DOWNLOAD)

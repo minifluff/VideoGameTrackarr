@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.models.catalog import (
     Artwork,
     Game,
+    GameAlternativeName,
     GameCollection,
     GameCompany,
     GameFranchise,
@@ -74,6 +75,7 @@ def reset_database(db: Session) -> dict[str, int]:
         db.execute(delete(Artwork).where(Artwork.game_id.in_(game_ids)))
         db.execute(delete(GameVideo).where(GameVideo.game_id.in_(game_ids)))
         db.execute(delete(ReleaseDate).where(ReleaseDate.game_id.in_(game_ids)))
+        db.execute(delete(GameAlternativeName).where(GameAlternativeName.game_id.in_(game_ids)))
         db.execute(delete(Game).where(Game.id.in_(game_ids)))
 
     # Reset the sync tools: clear their scan/match caches so a fresh import works.
