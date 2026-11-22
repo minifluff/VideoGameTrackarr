@@ -41,6 +41,7 @@ function makeInstallers(): GogInstallers {
                 downloadState: "not_downloaded",
                 downloadedBytes: 0,
                 downloadError: null,
+              filename: null,
               },
             ],
           },
@@ -63,6 +64,7 @@ function makeInstallers(): GogInstallers {
                 downloadState: "completed",
                 downloadedBytes: 987654,
                 downloadError: null,
+              filename: null,
               },
             ],
           },
@@ -137,6 +139,7 @@ describe("GogInstallersSection", () => {
       downloadState: "downloading",
       downloadedBytes: 61728394,
       downloadError: null,
+      filename: null,
     };
     renderSection();
 
@@ -152,6 +155,7 @@ describe("GogInstallersSection", () => {
       downloadState: "failed",
       downloadedBytes: 0,
       downloadError: "Downloaded 10 bytes, expected 123456789",
+      filename: null,
     };
     renderSection();
 

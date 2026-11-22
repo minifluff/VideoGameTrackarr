@@ -154,6 +154,7 @@ const GameDetails = () => {
             <Card id="library" sx={sectionCardSx}>
               <GameLibrarySection
                 gameId={gameId}
+                gameName={game.name}
                 libraryItems={libraryItems}
                 platforms={platforms}
                 regions={regions}

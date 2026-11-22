@@ -1,3 +1,4 @@
+import copy
 import time
 from datetime import date
 
@@ -290,6 +291,90 @@ def test_get_installers_lists_groups_with_download_states(auth_client, db_sessio
     assert file["downloadState"] == "not_downloaded"
     assert file["downloadedBytes"] == 0
     assert file["downloadError"] is None
+    assert file["filename"] is None
+
+
+@respx.mock
+def test_download_gog_installer_queues_every_part(
+    auth_client, db_session, tmp_path, monkeypatch, test_user
+):
+    """One Download to server queues the .exe and its .bin together, and the
+    installers read names the finished file once the drainer writes it."""
+    monkeypatch.setattr(gog_download_service, "UPLOADS_DIR", tmp_path / "uploads")
+    game = _seed_matched_entry(db_session)
+    platform = _seed_gog_platform(db_session)
+    _seed_gog_library_item(db_session, game, platform)
+    _configure_gog(test_user, db_session)
+    payload = copy.deepcopy(PRODUCT_PAYLOAD)
+    payload["downloads"]["installers"][0]["files"].append(
+        {
+            "id": "en1installer1",
+            "size": 10,
+            "downlink": f"{GOG_API_BASE}/products/{PRODUCT_ID}/downlink/installer/en1installer1",
+        }
+    )
+    respx.get(f"{GOG_AUTH_BASE}/token").mock(return_value=httpx.Response(200, json=TOKEN_PAYLOAD))
+    respx.get(f"{GOG_API_BASE}/products/{PRODUCT_ID}").mock(
+        return_value=httpx.Response(200, json=payload)
+    )
+    respx.get(f"{GOG_API_BASE}/products/{PRODUCT_ID}/downlink/installer/en1installer0").mock(
+        return_value=httpx.Response(200, json={"downlink": "https://cdn.gog.com/setup_witcher3.exe"})
+    )
+    respx.get("https://cdn.gog.com/setup_witcher3.exe").mock(
+        return_value=httpx.Response(200, content=INSTALLER_BYTES)
+    )
+    respx.get(f"{GOG_API_BASE}/products/{PRODUCT_ID}/downlink/installer/en1installer1").mock(
+        return_value=httpx.Response(200, json={"downlink": "https://cdn.gog.com/setup_witcher3-1.bin"})
+    )
+    respx.get("https://cdn.gog.com/setup_witcher3-1.bin").mock(
+        return_value=httpx.Response(200, content=b"0123456789")
+    )
+
+    response = auth_client.post(
+        f"/api/integrations/gog/games/{game.id}/installers/download",
+        json={"productId": PRODUCT_ID, "installerId": "installer_windows_en"},
+    )
+
+    assert response.status_code == 200
+    [group] = response.json()["groups"]
+    [installer] = group["installers"]
+    assert [file["id"] for file in installer["files"]] == ["en1installer0", "en1installer1"]
+    assert {file["downloadState"] for file in installer["files"]} == {"queued"}
+
+    # The drainer job runs on a background thread — poll until both parts finish.
+    deadline = time.monotonic() + 20
+    states = {}
+    while time.monotonic() < deadline:
+        [installer] = auth_client.get(f"/api/integrations/gog/games/{game.id}/installers").json()["groups"][0][
+            "installers"
+        ]
+        states = {file["id"]: file for file in installer["files"]}
+        if all(file["downloadState"] == "completed" for file in states.values()):
+            break
+        time.sleep(0.2)
+    assert states["en1installer0"]["downloadState"] == "completed"
+    assert states["en1installer0"]["filename"] == "setup_witcher3.exe"
+    assert states["en1installer1"]["downloadState"] == "completed"
+    assert states["en1installer1"]["filename"] == "setup_witcher3-1.bin"
+
+
+@respx.mock
+def test_download_unknown_gog_installer_is_404(auth_client, db_session, test_user):
+    game = _seed_matched_entry(db_session)
+    platform = _seed_gog_platform(db_session)
+    _seed_gog_library_item(db_session, game, platform)
+    _configure_gog(test_user, db_session)
+    respx.get(f"{GOG_AUTH_BASE}/token").mock(return_value=httpx.Response(200, json=TOKEN_PAYLOAD))
+    respx.get(f"{GOG_API_BASE}/products/{PRODUCT_ID}").mock(
+        return_value=httpx.Response(200, json=PRODUCT_PAYLOAD)
+    )
+
+    response = auth_client.post(
+        f"/api/integrations/gog/games/{game.id}/installers/download",
+        json={"productId": PRODUCT_ID, "installerId": "installer_nope"},
+    )
+
+    assert response.status_code == 404
 
 
 @respx.mock

@@ -3,6 +3,7 @@ import {
   connectGog,
   deleteGogInstaller,
   disconnectGog,
+  downloadGogInstaller,
   getGogEntries,
   getGogInstallers,
   getGogInstallerFileLink,
@@ -32,6 +33,7 @@ import {
   updateSteamId,
   uploadGogInstaller,
 } from "../api/integrations";
+import type { GogInstallers } from "../api/integrations";
 
 export function useIntegrationsStatus() {
   return useQuery({ queryKey: ["integrations-status"], queryFn: getIntegrationsStatus });
@@ -265,6 +267,16 @@ export function useQueueGogInstallerDownload(gameId: number) {
     mutationFn: ({ installerId, fileId }: { installerId: string; fileId: string }) =>
       queueGogInstallerDownload(gameId, installerId, fileId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["gog-installers", gameId] }),
+  });
+}
+
+export function useDownloadGogInstaller(gameId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ productId, installerId }: { productId: number; installerId: string }) =>
+      downloadGogInstaller(gameId, productId, installerId),
+    onSuccess: (installers: GogInstallers) =>
+      queryClient.setQueryData(["gog-installers", gameId], installers),
   });
 }
 

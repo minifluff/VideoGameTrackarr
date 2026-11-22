@@ -8,8 +8,12 @@ import GameLibrarySection from "../GameLibrarySection";
 
 // The GOG Installers section inside the edit dialog reads these hooks.
 let gogInstallersData: import("../../api/integrations").GogInstallers | undefined;
+let gogConfigured = true;
+const downloadGogInstaller = vi.fn();
 vi.mock("../../hooks/useIntegrations", () => ({
   useGogInstallers: () => ({ data: gogInstallersData, isError: false }),
+  useGogStatus: () => ({ data: { configured: gogConfigured } }),
+  useDownloadGogInstaller: () => ({ mutateAsync: downloadGogInstaller, isPending: false }),
   useQueueGogInstallerDownload: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useGogInstallerFileLink: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useUploadGogInstaller: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -136,6 +140,7 @@ const gogInstallersWithDownload: import("../../api/integrations").GogInstallers 
               downloadState: "completed",
               downloadedBytes: 20,
               downloadError: null,
+              filename: null,
             },
           ],
         },
@@ -147,6 +152,7 @@ const gogInstallersWithDownload: import("../../api/integrations").GogInstallers 
 
 const baseProps = {
   gameId: 1,
+  gameName: "Absolute Drift",
   platforms,
   regions: [],
   gameCategory: null,
@@ -245,6 +251,7 @@ describe("GameLibrarySection", () => {
                   downloadState: "not_downloaded",
                   downloadedBytes: 0,
                   downloadError: null,
+                  filename: null,
                 },
               ],
             },
@@ -260,6 +267,32 @@ describe("GameLibrarySection", () => {
     expect(screen.getByText("Update game in your collection")).toBeInTheDocument();
     expect(screen.getByText("GOG Installers")).toBeInTheDocument();
     expect(screen.getByText("Absolute Drift")).toBeInTheDocument();
+  });
+
+  it("shows a download icon on a GOG copy row that opens the Offline installers dialog", () => {
+    gogInstallersData = gogInstallersWithDownload;
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[gogItem]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Offline installers" }));
+
+    expect(screen.getByText("Offline installers — Absolute Drift")).toBeInTheDocument();
+    expect(screen.getByText("Windows")).toBeInTheDocument();
+  });
+
+  it("does not show a download icon on a non-GOG copy row", () => {
+    gogInstallersData = undefined;
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[ownedItem]} />);
+
+    expect(screen.queryByRole("button", { name: "Offline installers" })).not.toBeInTheDocument();
+  });
+
+  it("does not show a download icon on a GOG copy row while GOG is not connected", () => {
+    gogConfigured = false;
+    gogInstallersData = gogInstallersWithDownload;
+    renderSection(<GameLibrarySection {...baseProps} libraryItems={[gogItem]} />);
+    gogConfigured = true;
+
+    expect(screen.queryByRole("button", { name: "Offline installers" })).not.toBeInTheDocument();
   });
 
   it("does not show the GOG Installers section in the edit dialog for a non-GOG copy", () => {
@@ -294,6 +327,7 @@ describe("GameLibrarySection", () => {
                   downloadState: "completed",
                   downloadedBytes: 20,
                   downloadError: null,
+                  filename: null,
                 },
               ],
             },
@@ -331,6 +365,7 @@ describe("GameLibrarySection", () => {
                   downloadState: "not_downloaded",
                   downloadedBytes: 0,
                   downloadError: null,
+                  filename: null,
                 },
               ],
             },

@@ -216,6 +216,9 @@ export interface GogInstallerFile {
   downloadState: GogDownloadState;
   downloadedBytes: number;
   downloadError: string | null;
+  // The file's name on the NAS, once the download has started; null while
+  // nothing has been queued yet.
+  filename: string | null;
 }
 
 export interface GogInstaller {
@@ -328,6 +331,18 @@ export async function queueGogInstallerDownload(
   const response = await apiClient.post<GogDownload>(
     `/api/integrations/gog/games/${gameId}/installers/queue`,
     { installerId, fileId }
+  );
+  return response.data;
+}
+
+export async function downloadGogInstaller(
+  gameId: number,
+  productId: number,
+  installerId: string
+): Promise<GogInstallers> {
+  const response = await apiClient.post<GogInstallers>(
+    `/api/integrations/gog/games/${gameId}/installers/download`,
+    { productId, installerId }
   );
   return response.data;
 }

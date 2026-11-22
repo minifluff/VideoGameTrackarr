@@ -139,6 +139,10 @@ class GogInstallerFileResponse(CamelModel):
     download_state: str
     downloaded_bytes: int
     download_error: str | None
+    # The file's name on the NAS, once the download has started (from the CDN
+    # URL or the Content-Disposition header) — the installers dialog shows it
+    # per part; None while nothing has been queued yet.
+    filename: str | None
 
 
 class GogInstallerResponse(CamelModel):
@@ -174,6 +178,11 @@ class GogInstallersResponse(CamelModel):
 class GogQueueDownloadRequest(CamelModel):
     installer_id: str
     file_id: str
+
+
+class GogDownloadInstallerRequest(CamelModel):
+    product_id: int
+    installer_id: str
 
 
 class GogDownloadResponse(CamelModel):

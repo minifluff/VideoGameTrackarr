@@ -10,6 +10,7 @@ from app.core.security import TokenError, TokenType, create_gog_installer_downlo
 from app.models.system import User
 from app.schemas.integrations import (
     GogConnectRequest,
+    GogDownloadInstallerRequest,
     GogDownloadLinkResponse,
     GogDownloadResponse,
     GogEntryResponse,
@@ -270,6 +271,27 @@ async def queue_gog_installer_download(
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     gog_jobs.ensure_download_job_running(db, session_factory)
     return GogDownloadResponse.model_validate(result)
+
+
+@router.post(
+    "/api/integrations/gog/games/{game_id}/installers/download", response_model=GogInstallersResponse
+)
+async def download_gog_installer(
+    game_id: int,
+    payload: GogDownloadInstallerRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    session_factory: Callable[[], Session] = Depends(get_session_factory),
+) -> GogInstallersResponse:
+    """Queues every part of one installer for download to the server and starts the
+    download job if it isn't running."""
+    try:
+        await gog_service.queue_installer(db, current_user, game_id, payload.product_id, payload.installer_id)
+        result = await gog_service.get_installers(db, current_user, game_id)
+    except GogAuthError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    gog_jobs.ensure_download_job_running(db, session_factory)
+    return GogInstallersResponse.model_validate(result)
 
 
 @router.post(

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import CheckIcon from "@mui/icons-material/Check";
+import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import DriveFileMoveIcon from "@mui/icons-material/DriveFileMove";
 import FavoriteIcon from "@mui/icons-material/Favorite";
@@ -38,17 +39,19 @@ import {
 } from "../hooks/useLibrary";
 import { useUndoableAction } from "../hooks/useUndoableAction";
 import { useUpdateGameVisibility } from "../hooks/useGames";
-import { useGogInstallers } from "../hooks/useIntegrations";
+import { useGogInstallers, useGogStatus } from "../hooks/useIntegrations";
 import { formatCurrency } from "../utils/currency";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import ConfirmDialog from "./ConfirmDialog";
 import { EmptyLine, ListRow, Panel, Pill, RowAction, SectionAction } from "./Detail";
+import GogInstallersDialog from "./GogInstallersDialog";
 import LibraryItemDialog, { type LibraryItemFormValues, type RomChanges } from "./LibraryItemDialog";
 import MoveLibraryItemDialog from "./MoveLibraryItemDialog";
 import { showUndoToast } from "./UndoToast";
 
 interface GameLibrarySectionProps {
   gameId: number;
+  gameName?: string;
   libraryItems: LibraryItem[] | undefined;
   platforms: PlatformResponse[] | undefined;
   regions: RegionResponse[] | undefined;
@@ -58,6 +61,7 @@ interface GameLibrarySectionProps {
 
 const GameLibrarySection = ({
   gameId,
+  gameName = "",
   libraryItems,
   platforms,
   regions,
@@ -121,6 +125,11 @@ const GameLibrarySection = ({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogItem, setDialogItem] = useState<LibraryItem | null>(null);
   const [dialogStatus, setDialogStatus] = useState<LibraryStatus>("owned");
+  const [installersOpen, setInstallersOpen] = useState(false);
+  // An owned GOG copy offers its offline installers once a GOG account is connected.
+  const { data: gogStatus } = useGogStatus();
+  const isGogCopy = (item: LibraryItem) =>
+    item.status === "owned" && item.format === "digital" && item.digitalStorefront === "GOG";
 
   // Fork-only: Subscription is a first-class media format here (migration mf5ub5cr1ptn),
   // so it keeps its label where upstream's format list has no such entry.
@@ -442,6 +451,13 @@ const GameLibrarySection = ({
                   }
                   actions={
                     <>
+                      {gogStatus?.configured && isGogCopy(item) && (
+                        <RowAction
+                          title={t("games.gogInstallers.openButton")}
+                          icon={<CloudDownloadIcon fontSize="small" />}
+                          onClick={() => setInstallersOpen(true)}
+                        />
+                      )}
                       <RowAction
                         title={owned ? t("table.moveToWishlist") : t("table.moveToCollection")}
                         icon={owned ? <FavoriteBorderIcon fontSize="small" /> : <CheckIcon fontSize="small" />}
@@ -511,6 +527,12 @@ const GameLibrarySection = ({
           onClose={() => setDialogOpen(false)}
           onSubmit={(values, romChange) => void handleDialogSubmit(values, romChange)}
           submitLabel={dialogItem ? t("games.library.updateLabel") : t("common.add")}
+        />
+        <GogInstallersDialog
+          open={installersOpen}
+          gameId={gameId}
+          gameName={gameName}
+          onClose={() => setInstallersOpen(false)}
         />
         <ConfirmDialog
           open={moveConfirmItem != null}

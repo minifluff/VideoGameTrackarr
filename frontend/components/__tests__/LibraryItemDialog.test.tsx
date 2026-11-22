@@ -608,6 +608,7 @@ describe("LibraryItemDialog", () => {
                   downloadState: "not_downloaded",
                   downloadedBytes: 0,
                   downloadError: null,
+                  filename: null,
                 },
               ],
             },

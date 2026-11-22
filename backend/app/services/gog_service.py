@@ -386,6 +386,34 @@ async def queue_download(
     return _download_dict(download)
 
 
+async def queue_installer(
+    db: Session, user: User, game_id: int, product_id: int, installer_id: str
+) -> None:
+    """Queues every part of one installer for the NAS drainer job — one button
+    downloads the .exe and its .bin files together. The installer must be one
+    GOG lists for this game's product (base game or one of its DLCs), or it's
+    a 404; each part goes through create_or_reuse_download, so already-finished
+    parts stay finished and failed ones retry."""
+    product_id = _require_imported_product_id(db, game_id)
+    async with client_for_user(user) as client:
+        groups = await client.get_product_downloads(product_id)
+        persist_refresh_token(db, user, client)
+    installer = next(
+        (
+            installer
+            for group in groups
+            if group.product_id == product_id
+            for installer in group.installers
+            if installer.id == installer_id
+        ),
+        None,
+    )
+    if installer is None:
+        raise NotFoundError(f"No GOG installer {installer_id} for this game")
+    for f in installer.files:
+        gog_download_service.create_or_reuse_download(db, game_id, product_id, installer_id, f.id, f.size)
+
+
 def get_download_file_path(db: Session, game_id: int, file_id: str) -> "Path":
     """The on-disk path of a completed download, for the authenticated file route —
     only when the row is completed AND the file is actually there at the right size.
@@ -438,14 +466,15 @@ def delete_installer(db: Session, game_id: int, file_id: str) -> None:
 
 def _download_state(download: "GogDownload | None") -> dict[str, Any]:
     if download is None:
-        return {"download_state": "not_downloaded", "downloaded_bytes": 0, "download_error": None}
+        return {"download_state": "not_downloaded", "downloaded_bytes": 0, "download_error": None, "filename": None}
     if download.status == GogDownloadStatus.COMPLETED and not gog_download_service.verify_completed_file(download):
         # Completed on paper but the file is gone or truncated — offer a fresh download.
-        return {"download_state": "not_downloaded", "downloaded_bytes": 0, "download_error": None}
+        return {"download_state": "not_downloaded", "downloaded_bytes": 0, "download_error": None, "filename": None}
     return {
         "download_state": download.status,
         "downloaded_bytes": download.downloaded_bytes,
         "download_error": download.error,
+        "filename": download.filename,
     }
 
 
