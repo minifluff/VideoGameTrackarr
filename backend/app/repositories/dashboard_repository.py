@@ -189,6 +189,7 @@ def get_stats(db: Session) -> DashboardStatsData:
             Game.parent_game_id.is_(None),
             _is_browsable_game(Game.category),
             ~_is_missing_game(Game.id),
+            Game.hide_from_public.is_(False),
             effective_added >= recent_cutoff_epoch,
         )
         .order_by(effective_added.desc())
