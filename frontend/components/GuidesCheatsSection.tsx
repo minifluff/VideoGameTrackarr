@@ -6,6 +6,8 @@ import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import LinkOutlinedIcon from "@mui/icons-material/LinkOutlined";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import Box from "@mui/material/Box";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
 import CircularProgress from "@mui/material/CircularProgress";
 import Dialog from "@mui/material/Dialog";
 import Tooltip from "@mui/material/Tooltip";
@@ -25,7 +27,6 @@ import { forgetGuidePosition } from "../utils/guideReaderPosition";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import ConfirmDialog from "./ConfirmDialog";
 import { EmptyLine, ListRow, Panel, RowAction, SectionAction } from "./Detail";
-import { Section } from "./Section";
 import GuideDialog from "./GuideDialog";
 
 // The reader (and pdf.js inside it) is only fetched when a guide is first opened.
@@ -193,23 +194,28 @@ const GuidesCheatsSection = ({ gameId, libraryItems, gamePlatforms }: GuidesChea
   const hasGuides = Boolean(guides && guides.length);
 
   return (
-    <Section
-      id="guides"
-      title={t("guides.title")}
-      action={
-        <SectionAction
-          icon={<AddIcon />}
-          label={t("guides.addAction")}
-          onClick={() => setDialog({})}
-        />
-      }
-    >
-      {isError ? (
-        <EmptyLine>{t("guides.errors.loadError")}</EmptyLine>
-      ) : !hasGuides ? (
-        <EmptyLine>{t("guides.empty")}</EmptyLine>
-      ) : (
-        <Panel>
+    <>
+      {/* The wrapping Card in GameDetails already carries id="guides". The header
+          matches the other detail sections (Tags, Addons, Notes): CardHeader title,
+          with the action in its action slot. */}
+      <CardHeader
+        title={t("guides.title")}
+        sx={{ pb: 1 }}
+        action={
+          <SectionAction
+            icon={<AddIcon />}
+            label={t("guides.addAction")}
+            onClick={() => setDialog({})}
+          />
+        }
+      />
+      <CardContent sx={{ p: { xs: 1.5, sm: 2 }, pt: 1 }}>
+        {isError ? (
+          <EmptyLine>{t("guides.errors.loadError")}</EmptyLine>
+        ) : !hasGuides ? (
+          <EmptyLine>{t("guides.empty")}</EmptyLine>
+        ) : (
+          <Panel>
           {(guides ?? []).map((guide) => (
             <ListRow
               key={guide.id}
@@ -259,6 +265,7 @@ const GuidesCheatsSection = ({ gameId, libraryItems, gamePlatforms }: GuidesChea
           ))}
         </Panel>
       )}
+      </CardContent>
 
       {readerGuide ? (
         <Suspense
@@ -307,7 +314,7 @@ const GuidesCheatsSection = ({ gameId, libraryItems, gamePlatforms }: GuidesChea
         onClose={() => setPendingDelete(null)}
         onConfirm={() => void handleDeleteConfirmed()}
       />
-    </Section>
+    </>
   );
 };
 

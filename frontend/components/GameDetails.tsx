@@ -180,7 +180,9 @@ const GameDetails = () => {
             </Card>
           ) : null}
           {!isAutoDiscovered ? (
-            <GuidesCheatsSection gameId={gameId} libraryItems={libraryItems} gamePlatforms={game.platforms} />
+            <Card id="guides" sx={sectionCardSx}>
+              <GuidesCheatsSection gameId={gameId} libraryItems={libraryItems} gamePlatforms={game.platforms} />
+            </Card>
           ) : null}
           {!isAutoDiscovered ? (
             <Card id="notes" sx={sectionCardSx}>
