@@ -42,8 +42,12 @@ from app.models.hardware import (
 )
 from app.models.library import (
     BiosFile,
+    GameGuide,
     GameProgress,
     GameTag,
+    GuideFormat,
+    GuideKind,
+    GuideSource,
     LibraryItem,
     LibraryStatus,
     MediaFormat,
@@ -66,9 +70,11 @@ from app.schemas.backup import (
     BackupGameProgress,
     BackupGameTag,
     BackupGameVideo,
+    BackupGuide,
     BackupHardware,
     BackupHardwarePlatform,
     BackupHardwareType,
+    BackupIncludedFiles,
     BackupLibraryItem,
     BackupManufacturer,
     BackupNote,
@@ -84,7 +90,7 @@ from app.schemas.backup import (
     BackupUserAccessory,
     BackupUserHardware,
 )
-from app.services import rom_service
+from app.services import guide_service, rom_service, upload_service
 
 BACKUPS_DIR = BACKEND_DIR / "db" / "backups"
 
@@ -111,7 +117,11 @@ def _custom_game_media(db: Session) -> dict[int, tuple[list[str], list[str], lis
     return media
 
 
-def build_backup_payload(db: Session, include_files: bool = False) -> BackupPayload:
+def build_backup_payload(db: Session, *, roms: bool = False, bios: bool = False) -> BackupPayload:
+    """Everything a restore needs. `roms` / `bios` add the rows describing those files, for a
+    .zip that carries the files themselves (see export_full_backup_zip). Guide rows are
+    always in the payload — their files are the part the flags gate — and custom-game
+    media URLs are always in the game rows (their files are the images flag)."""
     custom_media = _custom_game_media(db)
     no_media: tuple[list[str], list[str], list[BackupGameVideo]] = ([], [], [])
     payload = BackupPayload(
@@ -190,6 +200,24 @@ def build_backup_payload(db: Session, include_files: bool = False) -> BackupPayl
         ],
         notes=[BackupNote(id=n.id, game_id=n.game_id, body=n.body) for n in db.scalars(select(Note))],
         game_tags=[BackupGameTag(game_id=gt.game_id, tag_id=gt.tag_id) for gt in db.scalars(select(GameTag))],
+        # Guides & Cheats entries — links and files alike (the files themselves only travel
+        # in a full-backup .zip, under files/guides/, like ROMs).
+        guides=[
+            BackupGuide(
+                id=g.id,
+                game_id=g.game_id,
+                name=g.name,
+                kind=g.kind.value,
+                platform_id=g.platform_id,
+                source=g.source.value,
+                url=g.url,
+                original_filename=g.original_filename,
+                stored_filename=g.stored_filename,
+                media_format=g.media_format.value if g.media_format else None,
+                size_bytes=g.size_bytes,
+            )
+            for g in db.scalars(select(GameGuide))
+        ],
         manufacturers=[BackupManufacturer(id=m.id, name=m.name) for m in db.scalars(select(Manufacturer))],
         hardware_platforms=[BackupHardwarePlatform(id=p.id, name=p.name) for p in db.scalars(select(HardwarePlatform))],
         hardware_types=[BackupHardwareType(id=t.id, name=t.name) for t in db.scalars(select(DeviceType))],
@@ -261,7 +289,7 @@ def build_backup_payload(db: Session, include_files: bool = False) -> BackupPayl
             for ua in db.scalars(select(UserAccessory))
         ],
     )
-    if include_files:
+    if roms:
         payload.rom_files = [
             BackupRomFile(
                 id=r.id,
@@ -290,6 +318,7 @@ def build_backup_payload(db: Session, include_files: bool = False) -> BackupPayl
             )
             for s in db.scalars(select(RomSaveState))
         ]
+    if bios:
         payload.bios_files = [
             BackupBiosFile(
                 id=b.id, system=b.system, filename=b.filename, stored_filename=b.stored_filename,
@@ -306,9 +335,38 @@ def export_backup_json(db: Session) -> str:
 
 FULL_BACKUP_JSON_NAME = "backup.json"
 FULL_BACKUP_FILES_PREFIX = "files/"
+FULL_BACKUP_GUIDES_PREFIX = "files/guides/"
+FULL_BACKUP_IMAGES_PREFIX = FULL_BACKUP_FILES_PREFIX + "images/"
+
+# (URL prefix, zip folder, folder on disk) for every uploaded image a backup can carry:
+# custom game covers, screenshots and artwork, and accessory photos. IGDB images and
+# hardware reference photos are addresses elsewhere, not files here, so they're never
+# in this list. Spine images aren't in the backup payload at all (see BackupGame).
+_IMAGE_FOLDERS = (
+    (upload_service.COVERS_URL_PREFIX, "covers", upload_service.COVERS_DIR),
+    (upload_service.ACCESSORY_IMAGES_URL_PREFIX, "accessory-images", upload_service.ACCESSORY_IMAGES_DIR),
+    (upload_service.GAME_MEDIA_URL_PREFIX, "game-media", upload_service.GAME_MEDIA_DIR),
+)
 
 
-def _payload_file_paths(payload: BackupPayload) -> list[str]:
+def _plain_name(name: str) -> str:
+    """The flat name of a guides-file zip entry, with any directory bits stripped so a crafted
+    entry can't write outside the guides folder."""
+    return name.replace("\\", "/").rsplit("/", 1)[-1]
+
+
+def _guide_file_names(payload: BackupPayload) -> list[str]:
+    """Stored names of the payload's guide files — plain file names only (a hand-edited
+    backup's anything-else is never followed). Rendered copies are never archived: a restore
+    rebuilds them from the originals."""
+    return [
+        g.stored_filename
+        for g in payload.guides
+        if g.source == "file" and g.stored_filename and _plain_name(g.stored_filename)
+    ]
+
+
+def _rom_file_paths(payload: BackupPayload) -> list[str]:
     paths: list[str] = []
     for rom in payload.rom_files:
         paths.append(rom.stored_filename)
@@ -318,23 +376,60 @@ def _payload_file_paths(payload: BackupPayload) -> list[str]:
         paths.append(state.stored_filename)
         if state.screenshot_filename:
             paths.append(state.screenshot_filename)
-    paths.extend(b.stored_filename for b in payload.bios_files)
     return paths
 
 
-def export_full_backup_zip(db: Session) -> Path:
-    """A full backup: backup.json plus every ROM, save state, screenshot, in-game save and
-    BIOS file under files/<stored path>. Written to a temp file (the caller streams it out
-    and deletes it) so memory stays flat however many GB of ROMs there are. ROM data is
-    stored, not re-compressed — it's mostly already compressed, and deflating GBs is slow.
+def _bios_file_paths(payload: BackupPayload) -> list[str]:
+    return [b.stored_filename for b in payload.bios_files]
+
+
+def _uploaded_images(payload: BackupPayload) -> list[tuple[str, Path]]:
+    """(zip member, file on disk) for every uploaded image the backup's rows point at:
+    custom game covers, screenshots and artwork, and accessory photos. IGDB images and
+    hardware reference photos are addresses elsewhere, not files here, so they're never
+    in this list. A name that isn't a plain file name (a hand-edited backup) is skipped
+    rather than followed."""
+    urls = [
+        *(g.cover_url for g in payload.games),
+        *(url for g in payload.games for url in (*g.screenshot_urls, *g.artwork_urls)),
+        *(a.image_url for a in payload.accessories),
+    ]
+    images: dict[str, Path] = {}
+    for url in urls:
+        for prefix, folder, directory in _IMAGE_FOLDERS:
+            if url and url.startswith(prefix):
+                name = url.removeprefix(prefix)
+                if name and Path(name).name == name and name not in (".", ".."):
+                    images[f"{FULL_BACKUP_IMAGES_PREFIX}{folder}/{name}"] = directory / name
+    return list(images.items())
+
+
+def export_full_backup_zip(
+    db: Session, *, roms: bool = True, bios: bool = True, images: bool = False, guides: bool = True
+) -> Path:
+    """A .zip backup: backup.json plus the files picked — ROMs (with their save states,
+    screenshots and in-game saves) and BIOS files under files/<stored path>, uploaded
+    images under files/images/<folder>/<name>, guide files under files/guides/. Written
+    to a temp file (the caller streams it out and deletes it) so memory stays flat
+    however many GB of ROMs there are. ROM data is stored, not re-compressed — it's
+    mostly already compressed, and deflating GBs is slow.
+
+    The defaults are what the existing callers already got (the scheduled SMB export,
+    GET ?full=true): ROMs, BIOS files and guide files, but not images — images were
+    never in a fork .zip before, so including them by default would silently grow
+    every scheduled backup.
 
     Only files named in the backup payload are ever archived — nothing is swept from
     disk. That is what keeps installer files out of backups by design: the
     multi-GB installers under uploads/gog-installers and uploads/uploaded-installers
     are never part of the payload, so no backup (manual, scheduled SMB export, or
     safety snapshot) ever includes them.
-    See test_full_backup.test_full_backup_excludes_gog_installer_downloads."""
-    payload = build_backup_payload(db, include_files=True)
+    See test_full_backup.test_full_backup_excludes_gog_installer_downloads. Guides &
+    Cheats files follow the same rule in the other direction: guide files on disk are
+    archived under files/guides/ (see _guide_file_names), so a full backup carries them.
+    """
+    payload = build_backup_payload(db, roms=roms, bios=bios)
+    payload.included_files = BackupIncludedFiles(roms=roms, bios=bios, images=images, guides=guides)
     handle, name = tempfile.mkstemp(prefix="vgt-full-backup-", suffix=".zip")
     os.close(handle)
     path = Path(name)
@@ -343,10 +438,19 @@ def export_full_backup_zip(db: Session) -> Path:
             archive.writestr(
                 FULL_BACKUP_JSON_NAME, payload.model_dump_json(indent=2), compress_type=zipfile.ZIP_DEFLATED
             )
-            for relative in _payload_file_paths(payload):
+            for relative in _rom_file_paths(payload) + _bios_file_paths(payload):
                 source = rom_service.rom_dir_path(relative)
                 if source.is_file():
                     archive.write(source, FULL_BACKUP_FILES_PREFIX + relative)
+            if images:
+                for member, source in _uploaded_images(payload):
+                    if source.is_file():
+                        archive.write(source, member)
+            if guides:
+                for name in _guide_file_names(payload):
+                    source = guide_service.file_path(name)
+                    if source.is_file():
+                        archive.write(source, FULL_BACKUP_GUIDES_PREFIX + name)
     except BaseException:
         path.unlink(missing_ok=True)
         raise
@@ -454,6 +558,7 @@ def restore_backup(db: Session, payload: BackupPayload, files_zip: Path | None =
 
     db.execute(delete(GameTag))
     db.execute(delete(Note))
+    db.execute(delete(GameGuide))
     db.execute(delete(PlaySession))
     db.execute(delete(GameProgress))
     db.execute(delete(LibraryItem))
@@ -567,6 +672,7 @@ def restore_backup(db: Session, payload: BackupPayload, files_zip: Path | None =
         db.add(Note(id=n.id, game_id=n.game_id, body=n.body))
     for gt in payload.game_tags:
         db.add(GameTag(game_id=gt.game_id, tag_id=gt.tag_id))
+    restored_guides = _restore_guide_rows(db, payload, {g.id for g in payload.games})
 
     for m in payload.manufacturers:
         db.add(Manufacturer(id=m.id, name=m.name))
@@ -648,19 +754,36 @@ def restore_backup(db: Session, payload: BackupPayload, files_zip: Path | None =
 
     restored_items = {li.id: li for li in payload.library_items}
     orphaned_rom_files: list[str] = []
-    if files_zip is not None:
-        # A full backup replaces ROMs, saves and BIOS files outright with its own. Files are
-        # extracted before the commit (same stored names are simply rewritten), and any old
-        # file the backup doesn't reuse is removed once the new rows are committed.
-        old_files = [f for snap in rom_snapshots for f in snap["files"]]
-        old_files += [b.stored_filename for b in db.scalars(select(BiosFile))]
+    restored_guide_files = 0
+    restored_images = 0
+    included = _included_files(payload, files_zip)
+    if included.roms or included.bios:
+        _check_files_present(files_zip, payload, included)
+    if included.images:
+        restored_images = _extract_images(files_zip, payload)
+    if included.guides:
+        restored_guide_files = _extract_guide_files(files_zip, restored_guides)
+    if included.bios:
+        # The .zip's BIOS files replace the current ones outright.
+        orphaned_rom_files += [b.stored_filename for b in db.scalars(select(BiosFile))]
         db.execute(delete(BiosFile))
         db.flush()
+        _extract_files(files_zip, _bios_file_paths(payload))
+        for bios in payload.bios_files:
+            db.add(BiosFile(
+                id=bios.id, system=bios.system, filename=bios.filename, stored_filename=bios.stored_filename,
+                size_bytes=bios.size_bytes, md5=bios.md5,
+            ))
+    if included.roms:
+        # A full backup replaces ROMs and saves outright with its own. Files are extracted
+        # before the commit (same stored names are simply rewritten), and any old file the
+        # backup doesn't reuse is removed once the new rows are committed.
+        old_files = [f for snap in rom_snapshots for f in snap["files"]]
         # Drop rows pointing at copies/ROMs the payload doesn't have (a hand-edited file).
         payload.rom_files = [r for r in payload.rom_files if r.library_item_id in restored_items]
         rom_ids = {r.id for r in payload.rom_files}
         payload.rom_save_states = [s for s in payload.rom_save_states if s.rom_file_id in rom_ids]
-        _extract_full_backup_files(files_zip, payload)
+        _extract_files(files_zip, _rom_file_paths(payload))
         for rom in payload.rom_files:
             db.add(RomFile(
                 id=rom.id, library_item_id=rom.library_item_id, label=rom.label,
@@ -677,14 +800,16 @@ def restore_backup(db: Session, payload: BackupPayload, files_zip: Path | None =
                 size_bytes=state.size_bytes,
                 **({"created_at": datetime.fromisoformat(state.created_at)} if state.created_at else {}),
             ))
-        for bios in payload.bios_files:
-            db.add(BiosFile(
-                id=bios.id, system=bios.system, filename=bios.filename, stored_filename=bios.stored_filename,
-                size_bytes=bios.size_bytes, md5=bios.md5,
-            ))
-        kept = set(_payload_file_paths(payload))
-        orphaned_rom_files = [f for f in old_files if f not in kept]
+        kept = set(_rom_file_paths(payload))
+        orphaned_rom_files += [f for f in old_files if f not in kept]
         rom_snapshots = []
+    if included.bios:
+        kept_bios = set(_bios_file_paths(payload))
+        orphaned_rom_files = [f for f in orphaned_rom_files if f not in kept_bios]
+    # Rendered copies are never taken from a backup: rebuild each from its original, whether
+    # it just came out of the zip or was already here (a same-instance restore).
+    for guide in restored_guides:
+        guide_service.rebuild_rendered(guide)
     for snap in rom_snapshots:
         li = restored_items.get(snap["rom"]["library_item_id"])
         if (
@@ -702,32 +827,133 @@ def restore_backup(db: Session, payload: BackupPayload, files_zip: Path | None =
 
     db.commit()
     rom_service.delete_files(orphaned_rom_files)
+    # Any guide file the restore didn't re-attach (a hand-edited backup, or a JSON restore
+    # with no zip) must not linger as an orphan; a JSON restore re-attaches none of them.
+    guide_service.clear_folder(keep={name for g in restored_guides for name in guide_service.filenames_of(g)})
 
     return BackupRestoreResult(
         restored_games=len(payload.games),
         restored_library_items=len(payload.library_items),
         safety_snapshot_path=str(safety_snapshot_path),
-        restored_roms=len(payload.rom_files) if files_zip is not None else 0,
+        restored_roms=len(payload.rom_files) if included.roms else 0,
+        restored_guide_files=restored_guide_files,
+        restored_bios_files=len(payload.bios_files) if included.bios else 0,
+        restored_images=restored_images,
     )
 
 
-def _extract_full_backup_files(files_zip: Path, payload: BackupPayload) -> None:
-    """Copies each file the payload's rows reference out of the zip into the private ROM
-    dir. Only referenced names are read, and every destination goes through
-    rom_service.rom_dir_path, which refuses anything outside the ROM dir."""
+def _restore_guide_rows(db: Session, payload: BackupPayload, restored_ids: set[int]) -> list[GameGuide]:
+    """Rebuilds the Guides & Cheats rows a backup carries. A hand-edited file pointing at a
+    game that isn't in the backup is dropped, and a link whose file is missing from the
+    payload (a hand-edit, or a file entry the backup never had) becomes a bare entry rather
+    than breaking the restore — it still appears in the list, with no content to open."""
+    guides: list[GameGuide] = []
+    for g in payload.guides:
+        if g.game_id not in restored_ids:
+            continue
+        if g.source == GuideSource.FILE.value and g.stored_filename:
+            try:
+                guide_service.file_path(g.stored_filename)
+            except ValueError:
+                # A hand-edited backup pointing outside the guides folder — drop the row
+                # rather than letting a crafted filename reach the disk.
+                continue
+        guide = GameGuide(
+            id=g.id,
+            game_id=g.game_id,
+            name=g.name,
+            kind=GuideKind(g.kind),
+            platform_id=g.platform_id,
+            source=GuideSource(g.source),
+            url=g.url,
+            original_filename=g.original_filename,
+            stored_filename=g.stored_filename,
+            media_format=GuideFormat(g.media_format) if g.media_format else None,
+            size_bytes=g.size_bytes,
+        )
+        db.add(guide)
+        guides.append(guide)
+    db.flush()
+    return guides
+
+
+def _extract_guide_files(files_zip: Path, guides: list[GameGuide]) -> int:
+    """Copies each restored file guide's original out of the zip into the private guides
+    folder. Only file guides are read; a missing entry is a hand-edited backup, not a
+    restore error — the row stays, with no file to open. A docx/md/txt guide is re-rendered
+    from its original if it needs one, so the reader works even though the zip never
+    carries the rendered copy."""
+    count = 0
     with zipfile.ZipFile(files_zip) as archive:
         present = set(archive.namelist())
-        relatives = _payload_file_paths(payload)
-        # Check everything is there before writing anything, so a broken zip fails cleanly.
+        for guide in guides:
+            if guide.source is not GuideSource.FILE or not guide.stored_filename:
+                continue
+            member = FULL_BACKUP_GUIDES_PREFIX + _plain_name(guide.stored_filename)
+            if member not in present:
+                continue
+            destination = guide_service.file_path(guide.stored_filename)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            with archive.open(member) as source, destination.open("wb") as out:
+                shutil.copyfileobj(source, out, 1024 * 1024)
+            guide_service.rebuild_rendered(guide)
+            count += 1
+    return count
+
+
+def _included_files(payload: BackupPayload, files_zip: Path | None) -> BackupIncludedFiles:
+    """Which kinds of files this restore replaces: none for a .json; what the .zip says it
+    carries; and ROMs, BIOS files and guide files for a pre-change .zip, which always
+    carried all three (but never images)."""
+    if files_zip is None:
+        return BackupIncludedFiles()
+    return payload.included_files or BackupIncludedFiles(roms=True, bios=True, guides=True)
+
+
+def _check_files_present(files_zip: Path | None, payload: BackupPayload, included: BackupIncludedFiles) -> None:
+    """Raises before anything is written if a file an included section references isn't in
+    the zip, so a broken backup fails cleanly instead of half-restoring."""
+    assert files_zip is not None
+    with zipfile.ZipFile(files_zip) as archive:
+        present = set(archive.namelist())
+        relatives = (_rom_file_paths(payload) if included.roms else []) + (
+            _bios_file_paths(payload) if included.bios else []
+        )
         missing = [r for r in relatives if FULL_BACKUP_FILES_PREFIX + r not in present]
         if missing:
             raise ValueError(f"Backup is missing {len(missing)} file(s), e.g. {missing[0]}")
+
+
+def _extract_files(files_zip: Path | None, relatives: list[str]) -> None:
+    """Copies each named file out of the zip into the private ROM dir. Only referenced
+    names are read, and every destination goes through rom_service.rom_dir_path, which
+    refuses anything outside the ROM dir. The caller has already checked they're present
+    (see _check_files_present)."""
+    assert files_zip is not None
+    with zipfile.ZipFile(files_zip) as archive:
         for relative in relatives:
             member = FULL_BACKUP_FILES_PREFIX + relative
             destination = rom_service.rom_dir_path(relative)
             destination.parent.mkdir(parents=True, exist_ok=True)
             with archive.open(member) as source, destination.open("wb") as out:
                 shutil.copyfileobj(source, out, 1024 * 1024)
+
+
+def _extract_images(files_zip: Path | None, payload: BackupPayload) -> int:
+    """Puts back the uploaded images the backup's rows point at, from files/images/ in the
+    zip (an image the zip doesn't have is left as it is). Returns how many came back."""
+    assert files_zip is not None
+    restored = 0
+    with zipfile.ZipFile(files_zip) as archive:
+        present = set(archive.namelist())
+        for member, destination in _uploaded_images(payload):
+            if member not in present:
+                continue
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            with archive.open(member) as source, destination.open("wb") as out:
+                shutil.copyfileobj(source, out, 1024 * 1024)
+            restored += 1
+    return restored
 
 
 def parse_backup_payload(raw_json: str) -> BackupPayload:

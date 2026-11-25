@@ -30,11 +30,18 @@ describe("DataManagementSection", () => {
     render(<DataManagementSection />);
 
     await user.click(screen.getByRole("button", { name: "Full backup (JSON)" }));
-    expect(exportBackup).toHaveBeenLastCalledWith({ includeFiles: false });
+    expect(exportBackup).toHaveBeenLastCalledWith({ roms: false, bios: false, images: false, guides: false });
 
-    await user.click(screen.getByRole("checkbox", { name: "Include ROMs, saves and BIOS files" }));
+    await user.click(screen.getByRole("checkbox", { name: "ROMs and saves" }));
+    await user.click(screen.getByRole("checkbox", { name: /Images/ }));
     await user.click(screen.getByRole("button", { name: "Full backup with files (ZIP)" }));
-    expect(exportBackup).toHaveBeenLastCalledWith({ includeFiles: true });
+    expect(exportBackup).toHaveBeenLastCalledWith({ roms: true, bios: false, images: true, guides: false });
+
+    await user.click(screen.getByRole("checkbox", { name: "ROMs and saves" }));
+    await user.click(screen.getByRole("checkbox", { name: /Images/ }));
+    await user.click(screen.getByRole("checkbox", { name: /Guides & cheats/ }));
+    await user.click(screen.getByRole("button", { name: "Full backup with files (ZIP)" }));
+    expect(exportBackup).toHaveBeenLastCalledWith({ roms: false, bios: false, images: false, guides: true });
   });
 
   it("restores from a .zip full backup as well as .json", async () => {

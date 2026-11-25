@@ -7,7 +7,9 @@ from app.schemas.base import CamelModel
 # 2 added the optional rom_files/rom_save_states/bios_files sections (full backups only);
 # a version-1 file still restores — those sections just default to empty.
 # 3 added a custom game's screenshots, artwork and videos (see BackupGame); older files
-# still restore — the new parts default to empty.
+# still restore — the new parts default to empty. Guides & Cheats rows ride in the same
+# file (they default to empty in older files); their files only travel in a full-backup
+# .zip under files/guides/.
 BACKUP_FORMAT_VERSION = 3
 
 
@@ -115,6 +117,23 @@ class BackupNote(_BackupRow):
     id: int
     game_id: int
     body: str
+
+
+class BackupGuide(_BackupRow):
+    """A Guides & Cheats entry. A file entry's file is in a full-backup .zip under
+    files/guides/<stored_filename>; its rendered copy never is — a restore rebuilds it."""
+
+    id: int
+    game_id: int
+    name: str
+    kind: str
+    platform_id: int | None = None
+    source: str
+    url: str | None = None
+    original_filename: str | None = None
+    stored_filename: str | None = None
+    media_format: str | None = None
+    size_bytes: int | None = None
 
 
 class BackupGameTag(_BackupRow):
@@ -239,6 +258,16 @@ class BackupBiosFile(_BackupRow):
     md5: str
 
 
+class BackupIncludedFiles(_BackupRow):
+    """Which kinds of files a .zip backup carries under files/ — a restore only replaces
+    those kinds, leaving the rest as they are."""
+
+    roms: bool = False
+    bios: bool = False
+    images: bool = False
+    guides: bool = False
+
+
 class BackupPayload(_BackupRow):
     version: int
     exported_at: str
@@ -251,6 +280,8 @@ class BackupPayload(_BackupRow):
     play_sessions: list[BackupPlaySession] = []
     notes: list[BackupNote] = []
     game_tags: list[BackupGameTag] = []
+    # Guides & Cheats entries, links and files alike (files only in a full-backup .zip).
+    guides: list[BackupGuide] = []
     manufacturers: list[BackupManufacturer] = []
     hardware_platforms: list[BackupHardwarePlatform] = []
     hardware_types: list[BackupHardwareType] = []
@@ -263,6 +294,9 @@ class BackupPayload(_BackupRow):
     user_hardware: list[BackupUserHardware] = []
     user_accessories: list[BackupUserAccessory] = []
     # Full backups only (a .zip carrying the files themselves under files/<stored path>).
+    # .zip backups record which kinds they carry in included_files; Null in a pre-change
+    # .zip, which always carried ROMs, BIOS files and guide files (but never images).
+    included_files: BackupIncludedFiles | None = None
     rom_files: list[BackupRomFile] = []
     rom_save_states: list[BackupRomSaveState] = []
     bios_files: list[BackupBiosFile] = []
@@ -274,6 +308,20 @@ class BackupRestoreResult(CamelModel):
     safety_snapshot_path: str
     # Only a full-backup (.zip) restore brings ROMs back; 0 for a JSON restore.
     restored_roms: int = 0
+    # Same for guide files.
+    restored_guide_files: int = 0
+    # Same for BIOS files and uploaded images (see BackupIncludedFiles).
+    restored_bios_files: int = 0
+    restored_images: int = 0
+
+
+class FullBackupLinkRequest(CamelModel):
+    """Which files the .zip backup carries (at least one, or it would just be the .json)."""
+
+    roms: bool = False
+    bios: bool = False
+    images: bool = False
+    guides: bool = False
 
 
 class FullBackupLinkResponse(CamelModel):

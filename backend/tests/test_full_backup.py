@@ -57,6 +57,16 @@ def _restore_zip(client, data: bytes, name="videogametrackarr-full-backup.zip"):
     return client.post("/api/import/backup", files={"file": (name, io.BytesIO(data), "application/zip")})
 
 
+def _zip_backup(client, roms=True, bios=True, images=False, guides=False):
+    """A .zip backup the way the browser gets one: a signed link, then a plain download.
+    The body is the frontend's BackupFileOptions payload, all four flags."""
+    url = client.post(
+        "/api/export/backup/full-link",
+        json={"roms": roms, "bios": bios, "images": images, "guides": guides},
+    ).json()["url"]
+    return client.get(url)
+
+
 def _populate(client, item):
     files = {"file": ("Game (USA).nes", io.BytesIO(NES_ROM), "application/octet-stream")}
     rom = client.post(f"/api/library/{item.id}/roms", files=files, data={"label": "USA"}).json()["roms"][-1]
@@ -79,6 +89,7 @@ def test_plain_export_leaves_files_out(auth_client, nes_item):
     body = auth_client.get("/api/export/backup").json()
 
     assert body["version"] == 3
+    assert body["included_files"] is None
     assert body["rom_files"] == [] and body["rom_save_states"] == [] and body["bios_files"] == []
 
 
@@ -96,6 +107,8 @@ def test_full_backup_round_trip(auth_client, db_session, nes_item, _isolate_rom_
         manifest = json.loads(archive.read("backup.json"))
     assert names == {"backup.json", *(f"files/{name}" for name in before)}
     assert [r["label"] for r in manifest["rom_files"]] == ["USA"]
+    # GET ?full=true uses the include-everything defaults (ROMs, BIOS, guides; no images).
+    assert manifest["included_files"] == {"roms": True, "bios": True, "images": False, "guides": True}
 
     # Lose everything: the copy (with its ROM + saves) and the BIOS.
     auth_client.delete(f"/api/library/{nes_item.id}")
@@ -197,9 +210,17 @@ def test_a_zip_missing_a_referenced_file_fails_without_touching_data(
 def test_full_backup_download_link(client, auth_client, test_user, nes_item):
     from app.core.security import create_access_token
 
-    url = auth_client.post("/api/export/backup/full-link").json()["url"]
+    # The frontend's BackupFileOptions payload, all four flags.
+    url = auth_client.post(
+        "/api/export/backup/full-link",
+        json={"roms": True, "bios": False, "images": False, "guides": False},
+    ).json()["url"]
+    assert url.endswith("?roms=true&bios=false&images=false&guides=false")
     client.headers.pop("Authorization", None)
-    assert client.post("/api/export/backup/full-link").status_code == 401
+    assert client.post(
+        "/api/export/backup/full-link",
+        json={"roms": True, "bios": False, "images": False, "guides": False},
+    ).status_code == 401
 
     response = client.get(url)
 
@@ -207,6 +228,8 @@ def test_full_backup_download_link(client, auth_client, test_user, nes_item):
     assert response.headers["content-type"] == "application/zip"
     with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
         assert "backup.json" in archive.namelist()
+        manifest = json.loads(archive.read("backup.json"))
+    assert manifest["included_files"] == {"roms": True, "bios": False, "images": False, "guides": False}
     bad = f"/api/export/backup/full/{create_access_token(test_user.id)}/x.zip"
     assert client.get(bad).status_code == 401
 
@@ -270,3 +293,205 @@ def test_full_backup_excludes_gog_installer_downloads(db_session, seed_game, tmp
         assert not any("setup_upload.exe" in name for name in names)
     finally:
         path.unlink(missing_ok=True)
+
+
+def test_a_roms_only_zip_leaves_bios_files_alone(auth_client, db_session, nes_item, _isolate_rom_storage):
+    _populate(auth_client, nes_item)
+    with zipfile.ZipFile(io.BytesIO(_zip_backup(auth_client, roms=True, bios=False).content)) as archive:
+        manifest = json.loads(archive.read("backup.json"))
+        bios_members = [n for n in archive.namelist() if n.startswith("files/bios")]
+    assert manifest["bios_files"] == [] and bios_members == []
+    backup = _zip_backup(auth_client, roms=True, bios=False).content
+
+    _restore_zip(auth_client, backup)
+
+    status = _wait(auth_client)
+    assert status["status"] == "completed", status
+    assert status["result"]["restoredBiosFiles"] == 0
+    db_session.expire_all()
+    # The BIOS file wasn't in the .zip, so the one already here is kept.
+    assert db_session.query(BiosFile).count() == 1
+    assert db_session.query(RomFile).count() == 1
+
+
+def test_a_version_2_zip_restores_its_roms_and_bios(auth_client, db_session, nes_item, _isolate_rom_storage):
+    _populate(auth_client, nes_item)
+    before = _hashes(_isolate_rom_storage)
+    current = zipfile.ZipFile(io.BytesIO(_zip_backup(auth_client).content))
+    manifest = json.loads(current.read("backup.json"))
+    manifest["version"] = 2
+    del manifest["included_files"]
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as archive:
+        archive.writestr("backup.json", json.dumps(manifest))
+        for name in current.namelist():
+            if name != "backup.json":
+                archive.writestr(name, current.read(name))
+    auth_client.delete(f"/api/library/{nes_item.id}")
+
+    _restore_zip(auth_client, buf.getvalue())
+
+    status = _wait(auth_client)
+    assert status["status"] == "completed", status
+    assert (status["result"]["restoredRoms"], status["result"]["restoredBiosFiles"]) == (1, 1)
+    assert _hashes(_isolate_rom_storage) == before
+
+
+@pytest.fixture()
+def scratch_images(monkeypatch, tmp_path):
+    """Uploaded-image folders in tmp_path, never the real uploads/ folder."""
+    from app.services import upload_service
+
+    covers = tmp_path / "uploads" / "covers"
+    accessories = tmp_path / "uploads" / "accessory-images"
+    monkeypatch.setattr(
+        backup_service,
+        "_IMAGE_FOLDERS",
+        (
+            (upload_service.COVERS_URL_PREFIX, "covers", covers),
+            (upload_service.ACCESSORY_IMAGES_URL_PREFIX, "accessory-images", accessories),
+        ),
+    )
+    covers.mkdir(parents=True)
+    accessories.mkdir(parents=True)
+    return covers, accessories
+
+
+def test_images_round_trip_in_a_zip(auth_client, db_session, scratch_images):
+    from app.models.catalog import Game
+    from app.models.hardware import Accessory, AccessoryType, Manufacturer
+
+    covers, accessories = scratch_images
+    (covers / "custom.jpg").write_bytes(b"COVER")
+    (accessories / "pad.jpg").write_bytes(b"PAD")
+    manufacturer, accessory_type = Manufacturer(name="Hori"), AccessoryType(name="Controller")
+    db_session.add_all([manufacturer, accessory_type])
+    db_session.flush()
+    db_session.add_all(
+        [
+            Game(name="Homebrew", cover_url="/uploads/covers/custom.jpg"),
+            Game(name="From IGDB", igdb_id=77, cover_url="https://images.igdb.com/x.jpg"),
+            Accessory(
+                official_name="Pad",
+                manufacturer_id=manufacturer.id,
+                accessory_type_id=accessory_type.id,
+                image_url="/uploads/accessory-images/pad.jpg",
+            ),
+        ]
+    )
+    db_session.commit()
+
+    response = _zip_backup(auth_client, roms=False, bios=False, images=True)
+    with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+        names = set(archive.namelist())
+    # Only uploaded images: an IGDB cover is an address elsewhere, not a file here.
+    assert names == {"backup.json", "files/images/covers/custom.jpg", "files/images/accessory-images/pad.jpg"}
+
+    (covers / "custom.jpg").unlink()
+    (accessories / "pad.jpg").unlink()
+    _restore_zip(auth_client, response.content)
+
+    status = _wait(auth_client)
+    assert status["status"] == "completed", status
+    assert status["result"]["restoredImages"] == 2
+    assert (covers / "custom.jpg").read_bytes() == b"COVER"
+    assert (accessories / "pad.jpg").read_bytes() == b"PAD"
+
+
+def test_custom_game_media_round_trips_in_a_zip(auth_client, db_session, tmp_path, monkeypatch):
+    """A custom game's screenshots, artwork and videos can't be re-fetched from IGDB, so they're
+    in the backup (format 3) with their uploaded files; an IGDB game's aren't."""
+    from app.models.catalog import Artwork, Game, GameVideo, Screenshot
+    from app.services import upload_service
+
+    game_media = tmp_path / "uploads" / "game-media"
+    monkeypatch.setattr(
+        backup_service, "_IMAGE_FOLDERS", ((upload_service.GAME_MEDIA_URL_PREFIX, "game-media", game_media),)
+    )
+    game_media.mkdir(parents=True)
+    for name in ("s1.jpg", "s2.jpg", "a1.jpg"):
+        (game_media / name).write_bytes(name.encode())
+    custom = Game(name="Homebrew")
+    from_igdb = Game(name="From IGDB", igdb_id=78)
+    db_session.add_all([custom, from_igdb])
+    db_session.flush()
+    db_session.add_all(
+        [
+            Screenshot(game_id=custom.id, url="/uploads/game-media/s2.jpg"),
+            Screenshot(game_id=custom.id, url="/uploads/game-media/s1.jpg"),
+            Artwork(game_id=custom.id, url="/uploads/game-media/a1.jpg"),
+            GameVideo(game_id=custom.id, name="Trailer", video_id="dQw4w9WgXcQ"),
+            Screenshot(game_id=from_igdb.id, igdb_id=5, url="https://images.igdb.com/s.jpg"),
+        ]
+    )
+    db_session.commit()
+    custom_id = custom.id
+
+    response = _zip_backup(auth_client, roms=False, bios=False, images=True)
+    with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+        names = set(archive.namelist())
+        games = {g["name"]: g for g in json.loads(archive.read("backup.json"))["games"]}
+    assert names == {
+        "backup.json",
+        "files/images/game-media/s1.jpg",
+        "files/images/game-media/s2.jpg",
+        "files/images/game-media/a1.jpg",
+    }
+    assert games["From IGDB"]["screenshot_urls"] == []
+
+    for name in ("s1.jpg", "s2.jpg", "a1.jpg"):
+        (game_media / name).unlink()
+    _restore_zip(auth_client, response.content)
+
+    status = _wait(auth_client)
+    assert status["status"] == "completed", status
+    assert status["result"]["restoredImages"] == 3
+    assert (game_media / "s2.jpg").read_bytes() == b"s2.jpg"
+    db_session.expire_all()
+    restored = db_session.get(Game, custom_id)
+    assert [s.url for s in restored.screenshots] == ["/uploads/game-media/s2.jpg", "/uploads/game-media/s1.jpg"]
+    assert [a.url for a in restored.artworks] == ["/uploads/game-media/a1.jpg"]
+    assert [(v.name, v.video_id) for v in restored.videos] == [("Trailer", "dQw4w9WgXcQ")]
+
+
+def test_an_image_name_that_is_not_a_plain_file_name_is_skipped(auth_client, db_session, scratch_images):
+    from app.models.catalog import Game
+
+    db_session.add(Game(name="Sneaky", cover_url="/uploads/covers/../../escape.jpg"))
+    db_session.commit()
+
+    payload = backup_service.build_backup_payload(db_session)
+
+    assert backup_service._uploaded_images(payload) == []
+
+
+def test_a_guides_off_zip_leaves_guide_files_alone(auth_client, db_session, seed_game, _isolate_guide_storage):
+    """Guide entries are always in a backup; only their files are gated by the guides flag.
+    A zip made without guides restores the row but leaves the file already here alone."""
+    from app.models.library import GameGuide
+
+    upload = auth_client.post(
+        f"/api/games/{seed_game.id}/guides/file",
+        files={"file": ("walkthrough.md", io.BytesIO(b"# Walkthrough"), "application/octet-stream")},
+    )
+    assert upload.status_code == 201
+    assert db_session.query(GameGuide).count() == 1
+
+    with zipfile.ZipFile(io.BytesIO(_zip_backup(auth_client, guides=False).content)) as archive:
+        manifest = json.loads(archive.read("backup.json"))
+        guide_members = [n for n in archive.namelist() if n.startswith("files/guides/")]
+    assert len(manifest["guides"]) == 1 and guide_members == []
+    assert manifest["included_files"]["guides"] is False
+    backup = _zip_backup(auth_client, guides=False).content
+    before = sorted(p.name for p in _isolate_guide_storage.iterdir())
+    assert any(name.endswith(".md") for name in before)
+
+    _restore_zip(auth_client, backup)
+
+    status = _wait(auth_client)
+    assert status["status"] == "completed", status
+    assert status["result"]["restoredGuideFiles"] == 0
+    db_session.expire_all()
+    # The guide file wasn't in the .zip, so the one already here is kept.
+    assert db_session.query(GameGuide).count() == 1
+    assert sorted(p.name for p in _isolate_guide_storage.iterdir()) == before

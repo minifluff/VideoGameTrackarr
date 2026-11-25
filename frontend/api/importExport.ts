@@ -11,10 +11,19 @@ export async function exportBackupBlob(): Promise<Blob> {
   return response.data;
 }
 
+// Which files a .zip backup carries besides the data.
+export interface BackupFileOptions {
+  roms: boolean;
+  bios: boolean;
+  images: boolean;
+  // Guides & Cheats' uploaded files (their entries are always in a backup).
+  guides: boolean;
+}
+
 // A full backup (with ROMs, saves and BIOS files) can be many GB, so it isn't fetched into a
 // Blob: the server hands out a short-lived signed link and the browser downloads it itself.
-export async function createFullBackupLink(): Promise<string> {
-  const response = await apiClient.post<{ url: string }>("/api/export/backup/full-link");
+export async function createFullBackupLink(options: BackupFileOptions): Promise<string> {
+  const response = await apiClient.post<{ url: string }>("/api/export/backup/full-link", options);
   return response.data.url;
 }
 

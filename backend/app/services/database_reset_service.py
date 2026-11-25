@@ -19,6 +19,7 @@ from app.models.catalog import (
     Screenshot,
 )
 from app.models.library import (
+    GameGuide,
     GameProgress,
     GameTag,
     LibraryItem,
@@ -30,7 +31,7 @@ from app.models.library import (
 from app.models.playnite import PlayniteLibraryEntry
 from app.models.steam import SteamLibraryEntry, SteamWishlistEntry
 from app.repositories import game_repository
-from app.services import rom_service, upload_service
+from app.services import guide_service, rom_service, upload_service
 
 
 def reset_database(db: Session) -> dict[str, int]:
@@ -65,6 +66,7 @@ def reset_database(db: Session) -> dict[str, int]:
         db.execute(delete(GameProgress).where(GameProgress.game_id.in_(game_ids)))
         db.execute(delete(PlaySession).where(PlaySession.game_id.in_(game_ids)))
         db.execute(delete(Note).where(Note.game_id.in_(game_ids)))
+        db.execute(delete(GameGuide).where(GameGuide.game_id.in_(game_ids)))
         db.execute(delete(GameTag).where(GameTag.game_id.in_(game_ids)))
         db.execute(delete(GameGenre).where(GameGenre.game_id.in_(game_ids)))
         db.execute(delete(GamePlatform).where(GamePlatform.game_id.in_(game_ids)))
@@ -85,6 +87,8 @@ def reset_database(db: Session) -> dict[str, int]:
 
     db.commit()
     rom_service.delete_files(rom_filenames)
+    # Every guide row is gone, so nothing in the folder is still wanted.
+    guide_service.clear_folder()
     for url in images:
         upload_service.delete_if_local_upload(url)
 

@@ -85,6 +85,16 @@ def _reset_job_scheduler():
 
 
 @pytest.fixture(autouse=True)
+def _isolate_guide_storage(tmp_path, monkeypatch):
+    # Guide uploads must never land in the real backend/uploads directory during tests.
+    from app.services import guide_service
+
+    guide_dir = tmp_path / "guides"
+    monkeypatch.setattr(guide_service, "get_guide_dir", lambda: guide_dir)
+    yield guide_dir
+
+
+@pytest.fixture(autouse=True)
 def _isolate_rom_storage(tmp_path, monkeypatch):
     # ROM uploads must never land in the real backend/uploads directory during tests.
     from app.services import rom_service

@@ -8,6 +8,7 @@ import {
   fetchRestoreStatus,
   importCsv,
   restoreBackup,
+  type BackupFileOptions,
 } from "../api/importExport";
 import { resolveAssetUrl } from "../api/client";
 import { downloadBlob, downloadFromUrl } from "../utils/download";
@@ -25,9 +26,10 @@ export function useExportCsv() {
 
 export function useExportBackup() {
   return useMutation({
-    mutationFn: async ({ includeFiles }: { includeFiles: boolean } = { includeFiles: false }) => {
-      if (includeFiles) {
-        const url = await createFullBackupLink();
+    // The backup: a .json with the data, or a .zip when any files are picked to go with it.
+    mutationFn: async (files: BackupFileOptions = { roms: false, bios: false, images: false, guides: false }) => {
+      if (files.roms || files.bios || files.images || files.guides) {
+        const url = await createFullBackupLink(files);
         downloadFromUrl(resolveAssetUrl(url) ?? url);
         return;
       }

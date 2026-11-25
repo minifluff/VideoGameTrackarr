@@ -20,6 +20,7 @@ import GameCoverCard from "./GameCoverCard";
 import GameLibrarySection from "./GameLibrarySection";
 import GameOwnedOnSection from "./GameOwnedOnSection";
 import GameProgressSection from "./GameProgressSection";
+import GuidesCheatsSection from "./GuidesCheatsSection";
 import NotesSection from "./NotesSection";
 import NotFoundPage from "./NotFoundPage";
 import TagsSection from "./TagsSection";
@@ -177,6 +178,9 @@ const GameDetails = () => {
                 playStatus={game.playStatus}
               />
             </Card>
+          ) : null}
+          {!isAutoDiscovered ? (
+            <GuidesCheatsSection gameId={gameId} libraryItems={libraryItems} gamePlatforms={game.platforms} />
           ) : null}
           {!isAutoDiscovered ? (
             <Card id="notes" sx={sectionCardSx}>

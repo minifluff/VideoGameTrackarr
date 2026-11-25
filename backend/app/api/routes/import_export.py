@@ -3,7 +3,7 @@ import tempfile
 from collections.abc import Callable
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from fastapi.responses import FileResponse, Response
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
@@ -13,7 +13,7 @@ from app.api.deps import get_current_user, get_db, get_session_factory
 from app.api.routes.uploads import read_upload_capped
 from app.core.security import TokenError, TokenType, create_backup_download_token, decode_token
 from app.models.system import User
-from app.schemas.backup import FullBackupLinkResponse, RestoreStatusResponse
+from app.schemas.backup import FullBackupLinkRequest, FullBackupLinkResponse, RestoreStatusResponse
 from app.schemas.base import CamelModel
 from app.schemas.csv_import import CsvImportResult
 from app.services import backup_service, csv_service, export_backup_job, hardware_csv_service, restore_job
@@ -56,7 +56,7 @@ def export_backup(full: bool = False, db: Session = Depends(get_db)) -> Response
     """The JSON backup, or with ?full=true a .zip that also carries every ROM, save and BIOS
     file (built in a temp file that's deleted once it has been sent)."""
     if full:
-        return _full_backup_response(db)
+        return _full_backup_response(db, roms=True, bios=True, images=False, guides=True)
     backup_json = backup_service.export_backup_json(db)
     return Response(
         content=backup_json,
@@ -65,8 +65,9 @@ def export_backup(full: bool = False, db: Session = Depends(get_db)) -> Response
     )
 
 
-def _full_backup_response(db: Session) -> FileResponse:
-    path = backup_service.export_full_backup_zip(db)
+def _full_backup_response(db: Session, roms: bool, bios: bool, images: bool, guides: bool) -> FileResponse:
+    """The .zip backup with the files picked, built in a temp file that's deleted once sent."""
+    path = backup_service.export_full_backup_zip(db, roms=roms, bios=bios, images=images, guides=guides)
     return FileResponse(
         path,
         media_type="application/zip",
@@ -76,20 +77,36 @@ def _full_backup_response(db: Session) -> FileResponse:
 
 
 @router.post("/api/export/backup/full-link", response_model=FullBackupLinkResponse)
-def create_full_backup_link(current_user: User = Depends(get_current_user)) -> FullBackupLinkResponse:
+def create_full_backup_link(
+    body: FullBackupLinkRequest, current_user: User = Depends(get_current_user)
+) -> FullBackupLinkResponse:
+    """A short-lived signed link the browser downloads the .zip from itself — it can be many
+    GB, too big to fetch into memory first. Which files go in rides along in the address."""
     token = create_backup_download_token(current_user.id)
-    return FullBackupLinkResponse(url=f"/api/export/backup/full/{token}/videogametrackarr-full-backup.zip")
+    flags = "&".join(
+        f"{name}={str(value).lower()}"
+        for name, value in (("roms", body.roms), ("bios", body.bios), ("images", body.images), ("guides", body.guides))
+    )
+    return FullBackupLinkResponse(url=f"/api/export/backup/full/{token}/videogametrackarr-full-backup.zip?{flags}")
 
 
 @download_router.get("/api/export/backup/full/{token}/{filename}")
-def download_full_backup(token: str, filename: str, db: Session = Depends(get_db)) -> FileResponse:
+def download_full_backup(
+    token: str,
+    filename: str,
+    roms: bool = Query(default=True),
+    bios: bool = Query(default=True),
+    images: bool = Query(default=False),
+    guides: bool = Query(default=True),
+    db: Session = Depends(get_db),
+) -> FileResponse:
     try:
         payload = decode_token(token, TokenType.BACKUP_DOWNLOAD)
     except TokenError as exc:
         raise HTTPException(status_code=401, detail="Invalid or expired download link") from exc
     if db.get(User, int(payload["sub"])) is None:
         raise HTTPException(status_code=401, detail="Invalid or expired download link")
-    return _full_backup_response(db)
+    return _full_backup_response(db, roms=roms, bios=bios, images=images, guides=guides)
 
 
 @router.post("/api/import/csv", response_model=CsvImportResult)

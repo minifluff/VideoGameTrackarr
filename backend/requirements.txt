@@ -16,3 +16,7 @@ python-multipart>=0.0.9,<1.0
 Pillow>=11.0,<13.0
 py7zr>=1.0,<2.0
 smbprotocol>=1.12,<2.0
+# Guides & Cheats: Word and Markdown uploads become sanitised HTML.
+mammoth>=1.8,<2.0
+markdown-it-py>=3.0,<4.0
+nh3>=0.2.18,<1.0

@@ -47,6 +47,7 @@ from app.models.itad import ItadPriceCache  # noqa: F401
 from app.models.jobs import JobSchedule  # noqa: F401
 from app.models.library import (  # noqa: F401
     BiosFile,
+    GameGuide,
     GameProgress,
     GameTag,
     LibraryItem,

@@ -54,7 +54,17 @@ export default defineConfig({
         //
         // Same for the DOS/PSP player tab: its HTML must always come from the server, with
         // the COOP/COEP headers that make it cross-origin isolated.
-        globIgnores: ["**/emulatorjs/**", "player-isolated.html"],
+        //
+        // pdf.js (the Guides & Cheats reader) is only loaded when a PDF is opened: its chunks,
+        // worker and data files (public/pdfjs/, see scripts/vendor-pdfjs.mjs) stay out of the
+        // precache so the app doesn't grow by ~3 MB for people who never open one.
+        globIgnores: [
+          "**/emulatorjs/**",
+          "player-isolated.html",
+          "**/pdfjs/**",
+          "**/pdfjs-*",
+          "**/pdf.worker*",
+        ],
         navigateFallbackDenylist: [/^\/emulatorjs\//, /^\/player-isolated\.html/],
         // The API itself is NOT runtime-cached here — TanStack Query's own persisted
         // query cache (see offline/) already covers offline data availability at the
@@ -101,6 +111,11 @@ export default defineConfig({
             /(react|react-dom|react-router|@tanstack|i18next|scheduler)/.test(id)
           ) {
             return "framework";
+          }
+          // Only ever imported lazily (components/guideReader/PdfView.tsx), and kept out
+          // of the service worker's precache by name (globIgnores above).
+          if (id.includes("node_modules") && /pdfjs-dist/.test(id)) {
+            return "pdfjs";
           }
           return undefined;
         },
