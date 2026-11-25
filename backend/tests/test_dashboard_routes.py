@@ -181,6 +181,29 @@ def test_stats_recently_added_excludes_hidden_games(auth_client, db_session, see
     assert [g["id"] for g in response.json()["recentlyAdded"]] == [seed_game.id]
 
 
+def test_stats_recently_played_excludes_hidden_games(auth_client, db_session, seed_game, seed_platform):
+    hidden_game = Game(
+        igdb_id=1002,
+        name="Hidden Game",
+        slug="hidden-game",
+        category=GameCategory.MAIN_GAME,
+        hide_from_public=True,
+    )
+    db_session.add(hidden_game)
+    db_session.commit()
+    db_session.add(
+        GameProgress(game_id=seed_game.id, platform_id=seed_platform.id, last_played_at=datetime.now(UTC).date())
+    )
+    db_session.add(
+        GameProgress(game_id=hidden_game.id, platform_id=seed_platform.id, last_played_at=datetime.now(UTC).date())
+    )
+    db_session.commit()
+
+    response = auth_client.get("/api/dashboard/stats")
+
+    assert [g["id"] for g in response.json()["recentlyPlayed"]] == [seed_game.id]
+
+
 def test_stats_wishlisted_games_carry_wishlist_formats(auth_client, db_session, seed_game, seed_platform):
     db_session.add(
         LibraryItem(

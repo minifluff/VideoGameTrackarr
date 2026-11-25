@@ -210,7 +210,11 @@ def get_stats(db: Session) -> DashboardStatsData:
             _play_status_subquery(Game.id),
             _rating_subquery(Game.id),
         )
-        .where(last_played_subquery.is_not(None), ~_is_missing_game(Game.id))
+        .where(
+            last_played_subquery.is_not(None),
+            ~_is_missing_game(Game.id),
+            Game.hide_from_public.is_(False),
+        )
         .order_by(last_played_subquery.desc())
         .limit(RECENT_LIMIT)
     )
