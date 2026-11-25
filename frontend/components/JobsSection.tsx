@@ -15,11 +15,13 @@ import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import type { ChipProps } from "@mui/material/Chip";
 import type { JobRunStatus, JobSummary, ResyncJobResult } from "../api/types";
 import { useAcknowledgeJobStatus, useJobsList, useRunJob } from "../hooks/useJobs";
 import { useJobScheduleEditor } from "../hooks/useJobScheduleEditor";
+import { gameIdentifier } from "../utils/identifiers";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import ExportBackupJobCard from "./ExportBackupJobCard";
 import JobLastRunLine from "./JobLastRunLine";
@@ -215,7 +217,20 @@ function JobCard({ job }: { job: JobSummary }) {
             <Stack spacing={0.5} sx={{ mt: 1, pl: 2 }}>
               {result.failures.map((failure) => (
                 <Typography key={failure.gameId} variant="body2" color="text.secondary">
-                  {failure.gameName}: {failure.error}
+                  {failure.gameUuid ? (
+                    <Link
+                      to={`/game/${gameIdentifier({
+                        slug: failure.gameSlug,
+                        uuid: failure.gameUuid,
+                        name: failure.gameName,
+                      })}`}
+                    >
+                      {failure.gameName}
+                    </Link>
+                  ) : (
+                    failure.gameName
+                  )}
+                  : {failure.error}
                 </Typography>
               ))}
             </Stack>

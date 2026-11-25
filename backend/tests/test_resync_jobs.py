@@ -21,6 +21,8 @@ def test_run_isolates_a_per_game_failure_and_attempts_every_game(db_session, mon
     games = _seed_games(db_session, 3)
     failing_id = games[1].id
     failing_name = games[1].name  # captured before run() closes db_session below
+    failing_slug = games[1].slug
+    failing_uuid = games[1].uuid
 
     async def fake_resync_game(db, igdb_client, game_id, scope=None):
         if game_id == failing_id:
@@ -38,7 +40,15 @@ def test_run_isolates_a_per_game_failure_and_attempts_every_game(db_session, mon
     assert result["total"] == 3
     assert result["succeeded"] == 2
     assert result["failed"] == 1
-    assert result["failures"] == [{"game_id": failing_id, "game_name": failing_name, "error": "IGDB game not found"}]
+    assert result["failures"] == [
+        {
+            "gameId": failing_id,
+            "gameName": failing_name,
+            "gameSlug": failing_slug,
+            "gameUuid": failing_uuid,
+            "error": "IGDB game not found",
+        }
+    ]
 
 
 def test_run_reports_progress_after_each_game(db_session, monkeypatch):

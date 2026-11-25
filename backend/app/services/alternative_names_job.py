@@ -49,6 +49,9 @@ async def _fetch_all(db: Session, report_progress: Callable[[int, int], None]) -
                 await asyncio.sleep(_PACE_DELAY_SECONDS)
             batch = games[start : start + ALTERNATIVE_NAMES_BATCH_SIZE]
             rows = {game.id: game for game in db.query(Game).filter(Game.id.in_([game_id for game_id, _ in batch]))}
+            # Link identity for the failure list, captured before any rollback expires
+            # the rows above (see resync_jobs for why the keys are camelCase).
+            identities = {game_id: (game.slug, game.uuid) for game_id, game in rows.items()}
             batch_succeeded = 0
             batch_failures: list[dict[str, Any]] = []
             try:
@@ -60,7 +63,13 @@ async def _fetch_all(db: Session, report_progress: Callable[[int, int], None]) -
                     if game is None or game.igdb_id not in names_by_igdb_id:
                         # Deleted meanwhile, or no longer on IGDB.
                         batch_failures.append(
-                            {"game_id": game_id, "game_name": game_name, "error": "Not found on IGDB"}
+                            {
+                                "gameId": game_id,
+                                "gameName": game_name,
+                                "gameSlug": identities[game_id][0] if game_id in identities else None,
+                                "gameUuid": identities[game_id][1] if game_id in identities else None,
+                                "error": "Not found on IGDB",
+                            }
                         )
                         continue
                     game_media_repository.sync_alternative_names(
@@ -72,7 +81,14 @@ async def _fetch_all(db: Session, report_progress: Callable[[int, int], None]) -
                 db.rollback()
                 batch_succeeded = 0
                 batch_failures = [
-                    {"game_id": game_id, "game_name": game_name, "error": str(exc)} for game_id, game_name in batch
+                    {
+                        "gameId": game_id,
+                        "gameName": game_name,
+                        "gameSlug": identities[game_id][0] if game_id in identities else None,
+                        "gameUuid": identities[game_id][1] if game_id in identities else None,
+                        "error": str(exc),
+                    }
+                    for game_id, game_name in batch
                 ]
             succeeded += batch_succeeded
             failures.extend(batch_failures)

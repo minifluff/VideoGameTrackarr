@@ -237,7 +237,7 @@ def test_job_fills_alternative_names_in_batches(db_session, monkeypatch):
     gta5 = _game(db_session, "Grand Theft Auto V", 1020)
     rdr2 = _game(db_session, "Red Dead Redemption 2", 25076, ["Old"])
     gone = _game(db_session, "Removed From IGDB", 999)
-    gone_id, gone_name = gone.id, gone.name
+    gone_id, gone_name, gone_uuid = gone.id, gone.name, gone.uuid
     custom = Game(name="Custom Game", category=GameCategory.MAIN_GAME)  # no igdb_id: skipped
     db_session.add(custom)
     db_session.commit()
@@ -267,7 +267,15 @@ def test_job_fills_alternative_names_in_batches(db_session, monkeypatch):
         "total": 3,
         "succeeded": 2,
         "failed": 1,
-        "failures": [{"game_id": gone_id, "game_name": gone_name, "error": "Not found on IGDB"}],
+        "failures": [
+            {
+                "gameId": gone_id,
+                "gameName": gone_name,
+                "gameSlug": None,
+                "gameUuid": gone_uuid,
+                "error": "Not found on IGDB",
+            }
+        ],
     }
     names = {
         (game_id, name) for game_id, name in db_session.query(GameAlternativeName.game_id, GameAlternativeName.name)

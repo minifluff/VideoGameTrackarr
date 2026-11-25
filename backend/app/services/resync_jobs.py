@@ -4,6 +4,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from app.models.catalog import Game
 from app.repositories import game_repository
 from app.services import game_service
 from app.services.game_service import CatalogSyncScope
@@ -66,7 +67,20 @@ async def _resync_all(
                 # must not abort the whole batch; resync_game/import_game_from_igdb don't
                 # isolate failures themselves.
                 db.rollback()
-                failures.append({"game_id": game_id, "game_name": game_name, "error": str(exc)})
+                # Keys are camelCase, like the bulk-import job's failures: the Jobs page
+                # reads them straight off the result dict, which no CamelModel ever
+                # converts. The link identity is read here, not snapshotted up front:
+                # failures are rare, and the name above already survives the rollback.
+                game = db.get(Game, game_id)
+                failures.append(
+                    {
+                        "gameId": game_id,
+                        "gameName": game_name,
+                        "gameSlug": game.slug if game else None,
+                        "gameUuid": game.uuid if game else None,
+                        "error": str(exc),
+                    }
+                )
             report_progress(index + 1, len(games))
     finally:
         await client.aclose()

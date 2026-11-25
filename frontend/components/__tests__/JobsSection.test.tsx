@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import type { JobSummary } from "../../api/types";
 import { getBrowserTimeZone } from "../../utils/jobSchedule";
 import JobsSection from "../JobsSection";
@@ -165,5 +166,67 @@ describe("JobsSection schedule toggle", () => {
 
     expect(screen.getByLabelText("How often")).toBeInTheDocument();
     expect(updateScheduleSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("JobsSection failure list", () => {
+  function completedResyncJob(): JobSummary {
+    const job = idleJob("resync_all");
+    job.run = {
+      status: "completed",
+      startedAt: new Date().toISOString(),
+      finishedAt: new Date().toISOString(),
+      result: {
+        total: 2,
+        succeeded: 1,
+        failed: 1,
+        failures: [
+          {
+            gameId: 7,
+            gameName: "Test Game",
+            gameSlug: "test-game",
+            gameUuid: "11111111-2222-3333-4444-555555555555",
+            error: "IGDB game 123 not found",
+          },
+        ],
+      },
+      error: null,
+      progress: null,
+    };
+    return job;
+  }
+
+  it("links each failed game by name to its game page", () => {
+    jobsList = [completedResyncJob()];
+
+    render(
+      <MemoryRouter>
+        <JobsSection />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByLabelText("Expand"));
+
+    const link = screen.getByRole("link", { name: "Test Game" });
+    expect(link).toHaveAttribute("href", "/game/test-game");
+    expect(screen.getByText(/IGDB game 123 not found/)).toBeInTheDocument();
+  });
+
+  it("shows a plain name when a failure carries no link identity", () => {
+    const job = completedResyncJob();
+    const result = job.run.result as { failures: { gameUuid: string | null }[] };
+    result.failures[0].gameUuid = null;
+    jobsList = [job];
+
+    render(
+      <MemoryRouter>
+        <JobsSection />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByLabelText("Expand"));
+
+    expect(screen.queryByRole("link", { name: "Test Game" })).not.toBeInTheDocument();
+    expect(screen.getByText(/Test Game/)).toBeInTheDocument();
   });
 });

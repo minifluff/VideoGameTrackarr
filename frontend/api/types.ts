@@ -584,6 +584,11 @@ export type JobRunStatus = "idle" | "running" | "completed" | "failed";
 export interface ResyncJobFailure {
   gameId: number;
   gameName: string;
+  // Link identity for the game page (see utils/identifiers.gameIdentifier); null when
+  // the failure predates the link or the game row is gone, and then the name renders
+  // as plain text. Older runs stored snake_case keys and no identity at all.
+  gameSlug: string | null;
+  gameUuid: string | null;
   error: string;
 }
 
