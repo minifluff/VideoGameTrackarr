@@ -6,6 +6,7 @@ from app.models.library import LibraryItem, LibraryStatus, MediaFormat, PlayStat
 from app.repositories.game_repository import (
     GameSortOption,
     GameWithStatus,
+    ReleaseStatus,
     _apply_optional_game_filters,
     _is_browsable_game,
     _owned_exists,
@@ -148,6 +149,16 @@ def list_addons_for_collection(
     steelbook_only: bool = False,
     unlinked_only: bool = False,
     hide_with_cover_art: bool = False,
+    platform_scopes: list[str] | None = None,
+    release_statuses: list[ReleaseStatus] | None = None,
+    release_year_from: int | None = None,
+    release_year_to: int | None = None,
+    local_players_min: int | None = None,
+    online_multiplayer_only: bool = False,
+    coop_only: bool = False,
+    time_to_beat_min: int | None = None,
+    time_to_beat_max: int | None = None,
+    rating_min: int | None = None,
     sort: GameSortOption = GameSortOption.NAME_ASC,
 ) -> list[GameWithStatus]:
     """Addons of this collection's top-level games — parent_game_id is only ever set for
@@ -214,6 +225,16 @@ def list_addons_for_collection(
         steelbook_only=steelbook_only,
         unlinked_only=unlinked_only,
         hide_with_cover_art=hide_with_cover_art,
+        platform_scopes=platform_scopes,
+        release_statuses=release_statuses,
+        release_year_from=release_year_from,
+        release_year_to=release_year_to,
+        local_players_min=local_players_min,
+        online_multiplayer_only=online_multiplayer_only,
+        coop_only=coop_only,
+        time_to_beat_min=time_to_beat_min,
+        time_to_beat_max=time_to_beat_max,
+        rating_min=rating_min,
         sort=sort,
     )
     return [_row_to_game_with_status(row) for row in db.execute(stmt)]

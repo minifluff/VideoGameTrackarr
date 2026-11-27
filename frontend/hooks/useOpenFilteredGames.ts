@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import type { MatchAllFilters } from "../api/games";
-import type { GameCategory, MediaFormat, PlayStatus } from "../api/types";
-import type { OwnershipStatus } from "../components/GameListToolbar";
+import type { GameCategory, MediaFormat, PlayStatus, ReleaseStatus } from "../api/types";
+import type { OwnershipStatus, TimeToBeatRange } from "../components/GameListToolbar";
 import { writeSessionValue } from "../utils/sessionViewState";
 
 // Every filter a game list remembers, at its cleared value (the sort is left as it is).
@@ -13,11 +13,20 @@ const CLEARED_FILTERS = {
   ownershipStatuses: [] as OwnershipStatus[],
   ownershipExclude: false,
   platformIds: [] as number[],
+  platformScopes: [] as string[],
   platformExclude: false,
   tagIds: [] as number[],
   tagExclude: false,
   genreIds: [] as number[],
   genreExclude: false,
+  releaseStatuses: [] as ReleaseStatus[],
+  releaseYearFrom: null as number | null,
+  releaseYearTo: null as number | null,
+  localPlayersMin: null as number | null,
+  onlineMultiplayerOnly: false,
+  coopOnly: false,
+  timeToBeat: null as TimeToBeatRange | null,
+  ratingMin: null as number | null,
   gameModes: [] as string[],
   gameModeExclude: false,
   collectionIds: [] as number[],

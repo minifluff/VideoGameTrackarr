@@ -8,15 +8,24 @@ import { currentUserQueryKey, useCurrentUser } from "./useAuth";
 // showed before customisation existed. Adding a field here is enough: a saved layout
 // that doesn't mention it yet gets it in its default place (see resolveFilterLayout).
 // "toggles" is the Show-missing / Include-addons switch pair, which shares one grid cell.
+// New fields sit next to their neighbours: Release after Platforms (it narrows what a
+// platform's games are), and the play fields — local players, online, co-op, time to
+// beat, rating — together after Game Modes, which is the other "how you play it" field.
 export const FILTER_FIELD_KEYS = [
   "toggles",
   "gameType",
   "tags",
   "genres",
   "gameModes",
+  "localPlayers",
+  "onlineMultiplayer",
+  "coop",
+  "timeToBeat",
+  "rating",
   "ownership",
   "playStatus",
   "platforms",
+  "release",
   "formats",
   "storefronts",
   "collections",

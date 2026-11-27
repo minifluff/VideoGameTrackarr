@@ -1,9 +1,9 @@
 import type { ComponentProps } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import type { FilterFieldSetting, PlatformResponse, Tag } from "../../api/types";
+import type { FilterFieldSetting, Tag } from "../../api/types";
 import { buildGameFilterParams } from "../../api/games";
 import { currentUserQueryKey } from "../../hooks/useAuth";
 import GameListToolbar from "../GameListToolbar";
@@ -28,8 +28,8 @@ function renderToolbar(
     ownershipExclude: false,
     onOwnershipExcludeChange: vi.fn(),
     platformOptions: [],
-    platformIds: [],
-    onPlatformIdsChange: vi.fn(),
+    platformKeys: [],
+    onPlatformKeysChange: vi.fn(),
     platformExclude: false,
     onPlatformExcludeChange: vi.fn(),
     tagOptions: tags,
@@ -42,6 +42,22 @@ function renderToolbar(
     onGenreIdsChange: vi.fn(),
     genreExclude: false,
     onGenreExcludeChange: vi.fn(),
+    releaseStatuses: [],
+    onReleaseStatusesChange: vi.fn(),
+    releaseYearFrom: null,
+    onReleaseYearFromChange: vi.fn(),
+    releaseYearTo: null,
+    onReleaseYearToChange: vi.fn(),
+    localPlayersMin: null,
+    onLocalPlayersMinChange: vi.fn(),
+    onlineMultiplayerOnly: false,
+    onOnlineMultiplayerOnlyChange: vi.fn(),
+    coopOnly: false,
+    onCoopOnlyChange: vi.fn(),
+    timeToBeat: null,
+    onTimeToBeatChange: vi.fn(),
+    ratingMin: null,
+    onRatingMinChange: vi.fn(),
     gameModeOptions: [],
     gameModes: [],
     onGameModesChange: vi.fn(),
@@ -160,6 +176,50 @@ describe("GameListToolbar match mode", () => {
     }
   });
 
+  it("offers the release statuses and the year range", async () => {
+    const props = renderToolbar();
+    const { user, dialog } = await openFilters();
+
+    await user.click(within(dialog).getByRole("combobox", { name: "Release" }));
+    await user.click(await screen.findByRole("option", { name: "Upcoming" }));
+
+    expect(props.onReleaseStatusesChange).toHaveBeenCalledWith(["upcoming"]);
+
+    // Typing into a type=number input is unreliable in jsdom, so set the value directly.
+    fireEvent.change(within(dialog).getByLabelText("Released from"), {
+      target: { value: "2020" },
+    });
+    expect(props.onReleaseYearFromChange).toHaveBeenCalledWith(2020);
+  });
+
+  it("offers the local-players, time-to-beat and rating picks", async () => {
+    const props = renderToolbar();
+    const { user, dialog } = await openFilters();
+
+    await user.click(within(dialog).getByRole("combobox", { name: "Local players" }));
+    await user.click(await screen.findByRole("option", { name: "2+ players" }));
+    expect(props.onLocalPlayersMinChange).toHaveBeenCalledWith(2);
+
+    await user.click(within(dialog).getByRole("combobox", { name: "Time to beat" }));
+    await user.click(await screen.findByRole("option", { name: "5–15 h" }));
+    expect(props.onTimeToBeatChange).toHaveBeenCalledWith("5to15");
+
+    await user.click(within(dialog).getByRole("combobox", { name: "Rating" }));
+    await user.click(await screen.findByRole("option", { name: "8.5+ / 10" }));
+    expect(props.onRatingMinChange).toHaveBeenCalledWith(85);
+  });
+
+  it("offers the online-multiplayer and co-op switches", async () => {
+    const props = renderToolbar();
+    const { user, dialog } = await openFilters();
+
+    await user.click(within(dialog).getByRole("switch", { name: "Online multiplayer" }));
+    expect(props.onOnlineMultiplayerOnlyChange).toHaveBeenCalledWith(true);
+
+    await user.click(within(dialog).getByRole("switch", { name: "Co-op" }));
+    expect(props.onCoopOnlyChange).toHaveBeenCalledWith(true);
+  });
+
   it("clears play statuses and match modes with Clear filters", async () => {
     const props = renderToolbar({ playStatuses: ["playing"], matchAll: { tag: true } });
     const { user, dialog } = await openFilters();
@@ -185,6 +245,31 @@ describe("buildGameFilterParams", () => {
     expect(params.platformMatchAll).toBeUndefined();
     expect(params.playStatus).toEqual(["playing", "completed"]);
     expect(params.playStatusMatchAll).toBe(true);
+  });
+
+  it("sends platform cards as platformScope and keeps the shared Exclude", () => {
+    const params = buildGameFilterParams({ platformScopes: ["6:digital:GOG"], platformExclude: true });
+
+    expect(params.platformScope).toEqual(["6:digital:GOG"]);
+    expect(params.platformId).toBeUndefined();
+    expect(params.platformExclude).toBe(true);
+  });
+
+  it("only sends the toggles and thresholds that are set", () => {
+    const params = buildGameFilterParams({
+      genreIds: [4],
+      localPlayersMin: 2,
+      onlineMultiplayerOnly: false,
+      coopOnly: true,
+      timeToBeatMax: 5,
+    });
+
+    expect(params.genreId).toEqual([4]);
+    expect(params.localPlayersMin).toBe(2);
+    expect(params.onlineMultiplayerOnly).toBeUndefined();
+    expect(params.coopOnly).toBe(true);
+    expect(params.timeToBeatMin).toBeUndefined();
+    expect(params.timeToBeatMax).toBe(5);
   });
 });
 
@@ -307,44 +392,38 @@ describe("GameListToolbar filter layout", () => {
     expect(within(dialog).queryByLabelText("Tags")).not.toBeInTheDocument();
   });
 
-  it("lists only platforms with games in the Platforms dropdown", async () => {
-    const platforms: PlatformResponse[] = [
-      {
-        id: 1,
-        igdbId: null,
-        name: "Nintendo Switch",
-        slug: "switch",
-        abbreviation: "NS",
-        spineTemplateUrl: null,
-        caseHeightMm: null,
-        caseSpineMm: null,
-        spineColor: null,
-        spineIcon: null,
-        spineIconUrl: null,
-        gameCount: 12,
-      },
-      {
-        id: 2,
-        igdbId: null,
-        name: "Atari 2600",
-        slug: "atari-2600",
-        abbreviation: null,
-        spineTemplateUrl: null,
-        caseHeightMm: null,
-        caseSpineMm: null,
-        spineColor: null,
-        spineIcon: null,
-        spineIconUrl: null,
-        gameCount: 0,
-      },
-    ];
-    renderToolbar({ platformOptions: platforms });
+  it("offers the library's platform cards, PC split per storefront", async () => {
+    const onPlatformKeysChange = vi.fn();
+    renderToolbar({
+      platformOptions: [
+        { id: "6:digital:Steam", label: "PC · Steam" },
+        { id: "130", label: "Nintendo Switch" },
+      ],
+      onPlatformKeysChange,
+    });
     const { user, dialog } = await openFilters();
 
     await user.click(within(dialog).getByRole("combobox", { name: "Platforms" }));
+    await user.click(await screen.findByRole("option", { name: "PC · Steam" }));
 
-    expect(await screen.findByRole("option", { name: "Nintendo Switch (NS)" })).toBeInTheDocument();
-    expect(screen.queryByRole("option", { name: "Atari 2600" })).not.toBeInTheDocument();
+    expect(onPlatformKeysChange).toHaveBeenCalledWith(["6:digital:Steam"]);
+  });
+
+  it("clears the play filters along with the rest", async () => {
+    const props = renderToolbar({
+      genreIds: [4],
+      localPlayersMin: 2,
+      coopOnly: true,
+      timeToBeat: "5to15",
+    });
+    const { user, dialog } = await openFilters();
+
+    await user.click(within(dialog).getByRole("button", { name: "Clear filters" }));
+
+    expect(props.onGenreIdsChange).toHaveBeenCalledWith([]);
+    expect(props.onLocalPlayersMinChange).toHaveBeenCalledWith(null);
+    expect(props.onCoopOnlyChange).toHaveBeenCalledWith(false);
+    expect(props.onTimeToBeatChange).toHaveBeenCalledWith(null);
   });
 
   it("opens the Customize dialog from the filters dialog", async () => {

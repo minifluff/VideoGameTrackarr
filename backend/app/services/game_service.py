@@ -32,6 +32,7 @@ from app.services.igdb_client import (
     IGDBClient,
     extract_age_ratings,
     extract_game_mode_names,
+    extract_play_fields,
     extract_store_urls,
 )
 
@@ -179,6 +180,16 @@ def search_local_games(
     steelbook_only: bool = False,
     unlinked_only: bool = False,
     hide_with_cover_art: bool = False,
+    platform_scopes: list[str] | None = None,
+    release_statuses: list[game_repository.ReleaseStatus] | None = None,
+    release_year_from: int | None = None,
+    release_year_to: int | None = None,
+    local_players_min: int | None = None,
+    online_multiplayer_only: bool = False,
+    coop_only: bool = False,
+    time_to_beat_min: int | None = None,
+    time_to_beat_max: int | None = None,
+    rating_min: int | None = None,
     sort: game_repository.GameSortOption = game_repository.GameSortOption.NAME_ASC,
     required_collection_id: int | None = None,
     required_franchise_id: int | None = None,
@@ -221,6 +232,16 @@ def search_local_games(
         steelbook_only=steelbook_only,
         unlinked_only=unlinked_only,
         hide_with_cover_art=hide_with_cover_art,
+        platform_scopes=platform_scopes,
+        release_statuses=release_statuses,
+        release_year_from=release_year_from,
+        release_year_to=release_year_to,
+        local_players_min=local_players_min,
+        online_multiplayer_only=online_multiplayer_only,
+        coop_only=coop_only,
+        time_to_beat_min=time_to_beat_min,
+        time_to_beat_max=time_to_beat_max,
+        rating_min=rating_min,
         sort=sort,
         required_collection_id=required_collection_id,
         required_franchise_id=required_franchise_id,
@@ -517,6 +538,19 @@ def unlink_igdb(db: Session, game_id: int) -> GameWithStatus:
     if game.igdb_id is None:
         raise ConflictError(f"Game {game_id} is not linked to IGDB")
     game.igdb_id = None
+    # What only means something while the game is linked (mirrors upstream's
+    # _clear_igdb_link, which clears igdb_rating/igdb_rating_count the same way):
+    # cached IGDB play/length/rating data would go stale the moment the link is gone.
+    # Everything else IGDB filled in (name, cover, summary, genres, media, release
+    # dates...) stays as the game's own.
+    game.local_players = None
+    game.online_multiplayer = None
+    game.coop = None
+    game.time_to_beat_main = None
+    game.time_to_beat_complete = None
+    game.time_to_beat = None
+    game.igdb_rating = None
+    game.igdb_rating_count = None
     db.commit()
     return get_game_detail(db, game_id)
 
@@ -749,7 +783,16 @@ def _upsert_from_igdb_payload(
         igdb_status=igdb_game.get("status"),
         game_modes=extract_game_mode_names(igdb_game),
         age_ratings=extract_age_ratings(igdb_game),
-        time_to_beat=igdb_game.get("time_to_beat_data"),
+        time_to_beat=igdb_game.get("time_to_beat_data") or igdb_game.get("time_to_beat"),
+        # Players / length / IGDB member rating, cached at import/resync time — the
+        # payload already carries multiplayer_modes/game_modes (GAME_FIELDS) and the
+        # time-to-beat row (attached by _attach_time_to_beats, or time_to_beat_data
+        # from import_game_from_igdb's own fetch); rating/rating_count ride along on
+        # GAME_FIELDS' "fields *". A resync overwrites these with IGDB's current values,
+        # so a game whose data IGDB has since filled in (or removed) picks it up.
+        **extract_play_fields(igdb_game),
+        igdb_rating=igdb_game.get("rating"),
+        igdb_rating_count=igdb_game.get("rating_count"),
         **extract_store_urls(igdb_game),
     )
 

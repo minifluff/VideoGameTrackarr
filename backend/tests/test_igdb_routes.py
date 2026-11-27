@@ -22,6 +22,7 @@ def test_igdb_search_requires_auth(client):
 @respx.mock
 def test_igdb_search_returns_mapped_results(auth_client, igdb_client):
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     respx.post(f"{IGDB_API_BASE}/games").mock(
         return_value=httpx.Response(
             200,
@@ -53,6 +54,7 @@ def test_igdb_search_returns_mapped_results(auth_client, igdb_client):
 @respx.mock
 def test_igdb_search_by_id_syntax_returns_single_match(auth_client, igdb_client):
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     games_route = respx.post(f"{IGDB_API_BASE}/games").mock(
         return_value=httpx.Response(
             200,
@@ -73,6 +75,7 @@ def test_igdb_search_by_id_syntax_returns_single_match(auth_client, igdb_client)
 @respx.mock
 def test_igdb_search_bare_number_takes_id_lookup_path(auth_client, igdb_client):
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     games_route = respx.post(f"{IGDB_API_BASE}/games").mock(
         return_value=httpx.Response(
             200,
@@ -93,6 +96,7 @@ def test_igdb_search_bare_number_takes_id_lookup_path(auth_client, igdb_client):
 @respx.mock
 def test_igdb_search_by_id_syntax_returns_empty_for_unknown_id(auth_client, igdb_client):
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     respx.post(f"{IGDB_API_BASE}/games").mock(return_value=httpx.Response(200, json=[]))
 
     response = auth_client.get("/api/igdb/search", params={"query": "igdb:999999999"})
@@ -104,6 +108,7 @@ def test_igdb_search_by_id_syntax_returns_empty_for_unknown_id(auth_client, igdb
 @respx.mock
 def test_igdb_search_treats_non_id_query_as_name_search(auth_client, igdb_client):
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     games_route = respx.post(f"{IGDB_API_BASE}/games").mock(
         return_value=httpx.Response(200, json=[{"id": 1, "name": "igdb:nonsense", "category": 0}])
     )
@@ -117,6 +122,7 @@ def test_igdb_search_treats_non_id_query_as_name_search(auth_client, igdb_client
 @respx.mock
 def test_igdb_search_default_scope_queries_browsable_game_types(auth_client, igdb_client):
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     games_route = respx.post(f"{IGDB_API_BASE}/games").mock(return_value=httpx.Response(200, json=[]))
 
     response = auth_client.get("/api/igdb/search", params={"query": "zelda"})
@@ -129,6 +135,7 @@ def test_igdb_search_default_scope_queries_browsable_game_types(auth_client, igd
 @respx.mock
 def test_igdb_search_addon_scope_queries_hierarchical_game_types(auth_client, igdb_client):
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     games_route = respx.post(f"{IGDB_API_BASE}/games").mock(return_value=httpx.Response(200, json=[]))
 
     response = auth_client.get("/api/igdb/search", params={"query": "season pass", "categoryScope": "addon"})
@@ -142,6 +149,7 @@ def test_igdb_search_addon_scope_queries_hierarchical_game_types(auth_client, ig
 @respx.mock
 def test_igdb_search_includes_parent_game_when_present(auth_client, igdb_client):
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     respx.post(f"{IGDB_API_BASE}/games").mock(
         return_value=httpx.Response(
             200,
@@ -166,6 +174,7 @@ def test_igdb_search_includes_parent_game_when_present(auth_client, igdb_client)
 @respx.mock
 def test_igdb_search_parent_game_is_null_when_absent(auth_client, igdb_client):
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     respx.post(f"{IGDB_API_BASE}/games").mock(
         return_value=httpx.Response(200, json=[{"id": 1942, "name": "Old School Game", "game_type": 9}])
     )
@@ -180,6 +189,7 @@ def test_igdb_search_parent_game_is_null_when_absent(auth_client, igdb_client):
 @respx.mock
 def test_import_game_creates_game_and_addons(auth_client, db_session, igdb_client):
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     respx.post(f"{IGDB_API_BASE}/games").mock(
         side_effect=[
             httpx.Response(200, json=[{"id": 1942, "name": "Main Game", "slug": "main-game", "category": 0}]),
@@ -219,6 +229,7 @@ def test_import_game_cascade_discovered_standalone_expansion_is_display_only(aut
     # the two tests below). This is what regressed Miles Morales: the cascade loop used to
     # force every discovered child's parent_game_id unconditionally.
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     respx.post(f"{IGDB_API_BASE}/games").mock(
         side_effect=[
             httpx.Response(200, json=[{"id": 1944, "name": "Main Game 2", "slug": "main-game-2", "category": 0}]),
@@ -253,6 +264,7 @@ def test_import_game_links_hierarchical_addon_to_parent_already_in_library(
     # pack are hierarchical (they extend an existing copy), so the addon being imported now
     # should set the *structural* parent_game_id via IGDB's parent_game backlink.
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     respx.post(f"{IGDB_API_BASE}/games").mock(
         side_effect=[
             httpx.Response(
@@ -287,6 +299,7 @@ def test_import_game_links_non_hierarchical_addon_as_display_only(auth_client, d
     # it must NOT get the structural parent_game_id (that would hide it from the main games
     # list, see list_top_level_games), just a display-only link to the local parent.
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     respx.post(f"{IGDB_API_BASE}/games").mock(
         side_effect=[
             httpx.Response(
@@ -323,6 +336,7 @@ def test_import_game_links_non_hierarchical_addon_as_display_only(auth_client, d
 @respx.mock
 def test_import_game_caches_external_parent_when_not_in_library(auth_client, db_session, igdb_client):
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     respx.post(f"{IGDB_API_BASE}/games").mock(
         side_effect=[
             httpx.Response(
@@ -366,6 +380,7 @@ def test_import_game_returns_503_when_igdb_not_configured(auth_client, igdb_clie
 @respx.mock
 def test_resync_game_updates_existing_record(auth_client, db_session, seed_game, igdb_client):
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     respx.post(f"{IGDB_API_BASE}/games").mock(
         side_effect=[
             httpx.Response(
@@ -399,6 +414,7 @@ def test_resync_game_does_not_flip_auto_discovered_flag(auth_client, db_session,
     seed_game.auto_discovered = True
     db_session.commit()
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     respx.post(f"{IGDB_API_BASE}/games").mock(
         side_effect=[
             httpx.Response(200, json=[{"id": seed_game.igdb_id, "name": "Test Game (Updated)", "category": 0}]),
@@ -438,6 +454,7 @@ def test_link_game_to_igdb_resyncs_in_place(auth_client, db_session, igdb_client
     db_session.commit()
 
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     respx.post(f"{IGDB_API_BASE}/games").mock(
         side_effect=[
             httpx.Response(200, json=[{"id": 4242, "name": "Real Game Name", "category": 0}]),
@@ -467,6 +484,7 @@ def test_link_game_to_igdb_deletes_uploaded_cover(auth_client, db_session, igdb_
     db_session.commit()
 
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     respx.post(f"{IGDB_API_BASE}/games").mock(
         side_effect=[
             httpx.Response(
@@ -512,6 +530,7 @@ def test_link_game_to_igdb_preserves_existing_parent(auth_client, db_session, ig
     db_session.commit()
 
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     respx.post(f"{IGDB_API_BASE}/games").mock(
         side_effect=[
             httpx.Response(200, json=[{"id": 7777, "name": "Real DLC Name", "category": 1}]),
@@ -536,6 +555,7 @@ def test_link_via_parent_imports_parent_and_merges_original(auth_client, db_sess
     db_session.commit()
 
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     respx.post(f"{IGDB_API_BASE}/games").mock(
         side_effect=[
             # 1. get_games_by_ids([9001]) — resolve the addon's parent before importing it.
@@ -589,6 +609,7 @@ def test_link_via_parent_conflict_when_addon_has_no_parent(auth_client, db_sessi
     db_session.commit()
 
     respx.post(IGDB_TOKEN_URL).mock(return_value=TOKEN_RESPONSE)
+    respx.post(f"{IGDB_API_BASE}/game_time_to_beats").mock(return_value=httpx.Response(200, json=[]))
     respx.post(f"{IGDB_API_BASE}/games").mock(
         return_value=httpx.Response(200, json=[{"id": 9001, "name": "Real DLC Name", "game_type": 1}])
     )

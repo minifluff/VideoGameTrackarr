@@ -55,6 +55,18 @@ export interface RegionResponse {
   name: string;
 }
 
+// Released vs not out yet; a game with no release date (announced/TBA) counts as upcoming.
+export type ReleaseStatus = "released" | "upcoming";
+
+// A genre at least one owned or wishlisted game has — the Genre filter's options.
+// GET /api/genres only lists library genres, with how many games have each.
+export interface GenreResponse {
+  id: number;
+  name: string;
+  slug: string | null;
+  gameCount: number;
+}
+
 export type PlayStatus = "none" | "backlog" | "playing" | "completed" | "abandoned";
 
 // One slim Bookshelf row per owned (game x platform) from

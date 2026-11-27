@@ -191,6 +191,15 @@ class GameSortOption(enum.Enum):
     LABELS_DESC = "labels_desc"
 
 
+class ReleaseStatus(enum.Enum):
+    """Released vs not out yet, by first_release_date against today. An IGDB game with no
+    release date at all is still announced/TBA, so it counts as upcoming; a custom game with
+    none simply wasn't given one, so it's neither."""
+
+    RELEASED = "released"
+    UPCOMING = "upcoming"
+
+
 # Sorts that read a game's copies, progress, rating or sale state — kept off the public share
 # page, which doesn't show them (see routes/public.py).
 PRIVATE_SORTS = frozenset(
@@ -411,6 +420,41 @@ def _game_modes_clause(modes: list[str]) -> ColumnElement[bool]:
     return exists(select(1).select_from(each).where(each.c.value.in_(modes)))
 
 
+def _platform_scope_clause(scopes: list[str], game: Any = Game) -> ColumnElement[bool]:
+    """A Platforms-page card as a filter value: "<platform id>", or "<platform id>:<format>:
+    <storefront>" for a PC storefront card (PC · Steam, PC · GOG, ...) — the same copy rule as
+    that card's own page (platform_copy_exists), so the filter and the card always agree.
+    `game` is Game itself (this helper is only ever called against the unaliased Game)."""
+    clauses = []
+    for scope in scopes:
+        platform_id, _, rest = scope.partition(":")
+        media_format, _, storefront = rest.partition(":")
+        clauses.append(
+            platform_copy_exists(
+                game.id, int(platform_id), MediaFormat(media_format) if media_format else None, storefront or None
+            )
+        )
+    return or_(*clauses)
+
+
+def _release_status_clause(statuses: list[ReleaseStatus]) -> ColumnElement[bool]:
+    now = int(datetime.now(UTC).timestamp())
+    released = and_(Game.first_release_date.is_not(None), Game.first_release_date <= now)
+    upcoming = or_(
+        Game.first_release_date > now, and_(Game.first_release_date.is_(None), Game.igdb_id.is_not(None))
+    )
+    clauses = []
+    if ReleaseStatus.RELEASED in statuses:
+        clauses.append(released)
+    if ReleaseStatus.UPCOMING in statuses:
+        clauses.append(upcoming)
+    return or_(*clauses)
+
+
+def _year_start(year: int) -> int:
+    return int(datetime(year, 1, 1, tzinfo=UTC).timestamp())
+
+
 def _play_status_clause(statuses: list[PlayStatus]) -> ColumnElement[bool]:
     """Matches when *any* of the game's platforms has one of these statuses, the same "any
     copy" rule the platform/format filters use, not the single priority-picked status a card
@@ -461,6 +505,16 @@ def _apply_optional_game_filters(
     steelbook_only: bool = False,
     unlinked_only: bool = False,
     hide_with_cover_art: bool = False,
+    platform_scopes: list[str] | None = None,
+    release_statuses: list[ReleaseStatus] | None = None,
+    release_year_from: int | None = None,
+    release_year_to: int | None = None,
+    local_players_min: int | None = None,
+    online_multiplayer_only: bool = False,
+    coop_only: bool = False,
+    time_to_beat_min: int | None = None,
+    time_to_beat_max: int | None = None,
+    rating_min: int | None = None,
     sort: GameSortOption = GameSortOption.NAME_ASC,
 ) -> Select[Any]:
     """The Games list's whole optional filter set (search + 8 dimensions + sort), factored
@@ -563,6 +617,36 @@ def _apply_optional_game_filters(
         stmt = stmt.where(Game.igdb_id.is_(None))
     if hide_with_cover_art:
         stmt = stmt.where(Game.cover_url.is_(None))
+    if platform_scopes:
+        # Shares the Platforms filter's Exclude/All toggles: it's the same field in the dialog,
+        # just able to tell PC storefronts apart. Like platform_ids, an add-on's copy can meet it.
+        clause = _match_values(_platform_scope_clause, platform_scopes, platform_match_all)
+        stmt = stmt.where(_maybe_negate(clause, platform_exclude))
+    # The rest describe the game itself (when it came out, how it plays, how long it is, how
+    # it's rated), so they stay on the listed game: an add-on's own release date or rating
+    # shouldn't decide whether its base game is listed.
+    if release_statuses:
+        # No "match all": a game is either out or not.
+        stmt = stmt.where(_release_status_clause(release_statuses))
+    if release_year_from is not None:
+        stmt = stmt.where(Game.first_release_date >= _year_start(release_year_from))
+    if release_year_to is not None:
+        stmt = stmt.where(Game.first_release_date < _year_start(release_year_to + 1))
+    # The IGDB-backed columns below are NULL when IGDB has no data, and a NULL never satisfies
+    # a comparison — so each of these filters only keeps games IGDB actually knows about.
+    # time_to_beat_min/max are hours; time_to_beat_main is stored in seconds.
+    if local_players_min is not None:
+        stmt = stmt.where(Game.local_players >= local_players_min)
+    if online_multiplayer_only:
+        stmt = stmt.where(Game.online_multiplayer.is_(True))
+    if coop_only:
+        stmt = stmt.where(Game.coop.is_(True))
+    if time_to_beat_min is not None:
+        stmt = stmt.where(Game.time_to_beat_main >= time_to_beat_min * 3600)
+    if time_to_beat_max is not None:
+        stmt = stmt.where(Game.time_to_beat_main < time_to_beat_max * 3600)
+    if rating_min is not None:
+        stmt = stmt.where(Game.igdb_rating >= rating_min)
     return stmt.order_by(*_order_by_for_sort(sort))
 
 
@@ -601,6 +685,16 @@ def list_top_level_games(
     steelbook_only: bool = False,
     unlinked_only: bool = False,
     hide_with_cover_art: bool = False,
+    platform_scopes: list[str] | None = None,
+    release_statuses: list[ReleaseStatus] | None = None,
+    release_year_from: int | None = None,
+    release_year_to: int | None = None,
+    local_players_min: int | None = None,
+    online_multiplayer_only: bool = False,
+    coop_only: bool = False,
+    time_to_beat_min: int | None = None,
+    time_to_beat_max: int | None = None,
+    rating_min: int | None = None,
     sort: GameSortOption = GameSortOption.NAME_ASC,
     required_collection_id: int | None = None,
     required_franchise_id: int | None = None,
@@ -671,6 +765,16 @@ def list_top_level_games(
         steelbook_only=steelbook_only,
         unlinked_only=unlinked_only,
         hide_with_cover_art=hide_with_cover_art,
+        platform_scopes=platform_scopes,
+        release_statuses=release_statuses,
+        release_year_from=release_year_from,
+        release_year_to=release_year_to,
+        local_players_min=local_players_min,
+        online_multiplayer_only=online_multiplayer_only,
+        coop_only=coop_only,
+        time_to_beat_min=time_to_beat_min,
+        time_to_beat_max=time_to_beat_max,
+        rating_min=rating_min,
         sort=sort,
     )
     return [_row_to_game_with_status(row) for row in db.execute(stmt)]

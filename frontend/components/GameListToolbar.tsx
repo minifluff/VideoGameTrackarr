@@ -42,19 +42,20 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import type { MatchAllField, MatchAllFilters } from "../api/games";
 import { useFilterLayout, type FilterField, type FilterFieldKey } from "../hooks/useFilterLayout";
 import { toast } from "react-toastify";
 import { TOAST_OPTIONS } from "../utils/toastOptions";
 import type {
-  CatalogRef,
   CatalogRefSummary,
   GameCategory,
   GameSortOption,
+  GenreResponse,
   MediaFormat,
-  PlatformResponse,
   PlayStatus,
+  ReleaseStatus,
   Tag,
 } from "../api/types";
 import {
@@ -68,8 +69,12 @@ import AutocompleteMultiSelect from "./AutocompleteMultiSelect";
 import AutocompleteSelect from "./AutocompleteSelect";
 import TagChip from "./TagChip";
 
-function platformOptionLabel(option: PlatformResponse): string {
-  return option.abbreviation ? `${option.name} (${option.abbreviation})` : option.name;
+// A Games → Platforms card ("Switch", "PC · Steam", ...) as a Platforms filter value — keyed by
+// utils/platformScope.ts's platformScopeKey, which is what the backend's platformScope takes.
+// Built by the callers from useLibraryPlatforms, the same source as the Platforms page.
+export interface PlatformFilterOption {
+  id: string;
+  label: string;
 }
 
 export type OwnershipStatus = "owned" | "wishlisted";
@@ -137,6 +142,45 @@ const FORMAT_OPTIONS: FormatOption[] = [
   { value: "subscription", label: "Subscription" },
   { value: "other", label: "Other" },
 ];
+
+interface ReleaseStatusOption {
+  value: ReleaseStatus;
+  labelKey: string;
+}
+
+export const RELEASE_STATUS_OPTIONS: ReleaseStatusOption[] = [
+  { value: "released", labelKey: "games.listToolbar.releaseReleased" },
+  { value: "upcoming", labelKey: "games.listToolbar.releaseUpcoming" },
+];
+
+// "At least N players on one console/screen" — IGDB's offline max, the most a couch can share.
+export const LOCAL_PLAYERS_OPTIONS = [1, 2, 3, 4];
+
+export type TimeToBeatRange = "under5" | "5to15" | "15to40" | "over40";
+
+interface TimeToBeatOption {
+  value: TimeToBeatRange;
+  // Hours on IGDB's main-story estimate; min inclusive, max exclusive (the backend's
+  // timeToBeatMin/timeToBeatMax).
+  min?: number;
+  max?: number;
+}
+
+export const TIME_TO_BEAT_OPTIONS: TimeToBeatOption[] = [
+  { value: "under5", max: 5 },
+  { value: "5to15", min: 5, max: 15 },
+  { value: "15to40", min: 15, max: 40 },
+  { value: "over40", min: 40 },
+];
+
+// IGDB's members rating (igdb_rating), stored 0-100 and shown /10 like the game page.
+export const RATING_OPTIONS = [60, 75, 85];
+
+export function timeToBeatLabel(option: TimeToBeatOption, t: TFunction): string {
+  if (option.min === undefined) return t("games.listToolbar.timeToBeatUnder", { max: option.max });
+  if (option.max === undefined) return t("games.listToolbar.timeToBeatOver", { min: option.min });
+  return t("games.listToolbar.timeToBeatBetween", { min: option.min, max: option.max });
+}
 
 interface ExcludeCheckboxProps {
   checked: boolean;
@@ -243,9 +287,9 @@ interface GameListToolbarProps {
   onBulkHide?: () => void;
   onBulkUnhide?: () => void;
   onBulkDelete?: () => void;
-  platformOptions: PlatformResponse[];
-  platformIds: number[];
-  onPlatformIdsChange: (value: number[]) => void;
+  platformOptions: PlatformFilterOption[];
+  platformKeys: string[];
+  onPlatformKeysChange: (value: string[]) => void;
   // Same reasoning as hideCollectionsField below, for a Platform detail page.
   hidePlatformsField?: boolean;
   platformExclude: boolean;
@@ -255,11 +299,29 @@ interface GameListToolbarProps {
   onTagIdsChange: (value: number[]) => void;
   tagExclude: boolean;
   onTagExcludeChange: (value: boolean) => void;
-  genreOptions: CatalogRef[];
+  genreOptions: GenreResponse[];
   genreIds: number[];
   onGenreIdsChange: (value: number[]) => void;
   genreExclude: boolean;
   onGenreExcludeChange: (value: boolean) => void;
+  releaseStatuses: ReleaseStatus[];
+  onReleaseStatusesChange: (value: ReleaseStatus[]) => void;
+  releaseYearFrom: number | null;
+  onReleaseYearFromChange: (value: number | null) => void;
+  releaseYearTo: number | null;
+  onReleaseYearToChange: (value: number | null) => void;
+  // The IGDB-backed fields below only ever match games IGDB has data for — a game it knows
+  // nothing about (players, length, rating) is left out rather than guessed at.
+  localPlayersMin: number | null;
+  onLocalPlayersMinChange: (value: number | null) => void;
+  onlineMultiplayerOnly: boolean;
+  onOnlineMultiplayerOnlyChange: (value: boolean) => void;
+  coopOnly: boolean;
+  onCoopOnlyChange: (value: boolean) => void;
+  timeToBeat: TimeToBeatRange | null;
+  onTimeToBeatChange: (value: TimeToBeatRange | null) => void;
+  ratingMin: number | null;
+  onRatingMinChange: (value: number | null) => void;
   gameModeOptions: string[];
   gameModes: string[];
   onGameModesChange: (value: string[]) => void;
@@ -363,8 +425,8 @@ const GameListToolbar = ({
   onBulkDelete = () => {},
   platformOptions,
   hidePlatformsField = false,
-  platformIds,
-  onPlatformIdsChange,
+  platformKeys,
+  onPlatformKeysChange,
   platformExclude,
   onPlatformExcludeChange,
   tagOptions,
@@ -377,6 +439,22 @@ const GameListToolbar = ({
   onGenreIdsChange,
   genreExclude,
   onGenreExcludeChange,
+  releaseStatuses,
+  onReleaseStatusesChange,
+  releaseYearFrom,
+  onReleaseYearFromChange,
+  releaseYearTo,
+  onReleaseYearToChange,
+  localPlayersMin,
+  onLocalPlayersMinChange,
+  onlineMultiplayerOnly,
+  onOnlineMultiplayerOnlyChange,
+  coopOnly,
+  onCoopOnlyChange,
+  timeToBeat,
+  onTimeToBeatChange,
+  ratingMin,
+  onRatingMinChange,
   gameModeOptions,
   gameModes,
   onGameModesChange,
@@ -432,12 +510,10 @@ const GameListToolbar = ({
   const selectedTags = tagOptions.filter((tag) => tagIds.includes(tag.id));
   const selectedGenres = genreOptions.filter((genre) => genreIds.includes(genre.id));
   const selectedGameModes = gameModeOptions.filter((mode) => gameModes.includes(mode));
-  const selectedPlatforms = platformOptions.filter((platform) => platformIds.includes(platform.id));
-  // The Platforms dropdown lists only platforms the user actually has browsable
-  // games for — a zero-game platform can never match anything, so it just clutters
-  // the list. Already-selected platforms still resolve from the full list above, so
-  // an active filter is never stranded invisible if its count drops to zero.
-  const platformFilterOptions = platformOptions.filter((platform) => platform.gameCount > 0);
+  const selectedPlatforms = platformOptions.filter((platform) => platformKeys.includes(platform.id));
+  const selectedReleaseStatuses = RELEASE_STATUS_OPTIONS.filter((option) =>
+    releaseStatuses.includes(option.value)
+  );
   const selectedCollections = collectionOptions.filter((collection) =>
     collectionIds.includes(collection.id)
   );
@@ -459,7 +535,7 @@ const GameListToolbar = ({
   const showStorefrontFilter = formats.includes("digital");
   const activeFilterCount =
     ownershipStatuses.length +
-    platformIds.length +
+    platformKeys.length +
     tagIds.length +
     genreIds.length +
     gameModes.length +
@@ -469,6 +545,14 @@ const GameListToolbar = ({
     formats.length +
     storefronts.length +
     playStatuses.length +
+    releaseStatuses.length +
+    (releaseYearFrom !== null ? 1 : 0) +
+    (releaseYearTo !== null ? 1 : 0) +
+    (localPlayersMin !== null ? 1 : 0) +
+    (onlineMultiplayerOnly ? 1 : 0) +
+    (coopOnly ? 1 : 0) +
+    (timeToBeat !== null ? 1 : 0) +
+    (ratingMin !== null ? 1 : 0) +
     (steelbookOnly ? 1 : 0);
   const hasActiveFilters = activeFilterCount > 0;
   // Icon-only Sort button, so its tooltip carries the current sort instead of a
@@ -598,7 +682,7 @@ const GameListToolbar = ({
     genres: (
       <Grid size={{ xs: 12, sm: 6 }}>
         <Stack spacing={0.5}>
-          <AutocompleteMultiSelect<CatalogRef>
+          <AutocompleteMultiSelect<GenreResponse>
             label={t("games.listToolbar.genreLabel")}
             options={genreOptions}
             value={selectedGenres}
@@ -693,20 +777,20 @@ const GameListToolbar = ({
       !hidePlatformsField ? (
       <Grid size={{ xs: 12, sm: 6 }}>
         <Stack spacing={0.5}>
-          <AutocompleteMultiSelect<PlatformResponse>
+          <AutocompleteMultiSelect<PlatformFilterOption>
             label={t("games.listToolbar.consoleLabel")}
-            options={platformFilterOptions}
+            options={platformOptions}
             value={selectedPlatforms}
             onChange={(newValue) =>
-              onPlatformIdsChange(newValue.map((platform) => platform.id))
+              onPlatformKeysChange(newValue.map((platform) => platform.id))
             }
-            getOptionLabel={platformOptionLabel}
+            getOptionLabel={(option) => option.label}
             isOptionEqualToValue={(option, val) => option.id === val.id}
             placeholder={allPlaceholder}
             fullWidth
           />
           <FilterFieldOptions
-            selectedCount={platformIds.length}
+            selectedCount={platformKeys.length}
             exclude={platformExclude}
             onExcludeChange={onPlatformExcludeChange}
             {...matchAllProps("platform")}
@@ -714,6 +798,118 @@ const GameListToolbar = ({
         </Stack>
       </Grid>
       ) : null
+    ),
+    release: (
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <Stack spacing={1.5}>
+          {/* No Exclude/All row: a game is either out or not, so "not released" is
+              already the other option. */}
+          <AutocompleteMultiSelect<ReleaseStatusOption>
+            label={t("games.listToolbar.releaseStatusLabel")}
+            options={RELEASE_STATUS_OPTIONS}
+            value={selectedReleaseStatuses}
+            onChange={(newValue) =>
+              onReleaseStatusesChange(newValue.map((option) => option.value))
+            }
+            getOptionLabel={(option) => t(option.labelKey)}
+            isOptionEqualToValue={(option, val) => option.value === val.value}
+            placeholder={allPlaceholder}
+            fullWidth
+          />
+          <Stack direction="row" spacing={1}>
+            <TextField
+              label={t("games.listToolbar.releaseYearFromLabel")}
+              type="number"
+              value={releaseYearFrom ?? ""}
+              onChange={(event) =>
+                onReleaseYearFromChange(event.target.value ? Number(event.target.value) : null)
+              }
+              slotProps={{ htmlInput: { min: 1950, max: 2100 } }}
+              fullWidth
+            />
+            <TextField
+              label={t("games.listToolbar.releaseYearToLabel")}
+              type="number"
+              value={releaseYearTo ?? ""}
+              onChange={(event) =>
+                onReleaseYearToChange(event.target.value ? Number(event.target.value) : null)
+              }
+              slotProps={{ htmlInput: { min: 1950, max: 2100 } }}
+              fullWidth
+            />
+          </Stack>
+        </Stack>
+      </Grid>
+    ),
+    localPlayers: (
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <AutocompleteSelect<number>
+          label={t("games.listToolbar.localPlayersLabel")}
+          options={LOCAL_PLAYERS_OPTIONS}
+          value={localPlayersMin}
+          onChange={onLocalPlayersMinChange}
+          getOptionLabel={(option) =>
+            t("games.listToolbar.localPlayersOption", { count: option })
+          }
+          placeholder={allPlaceholder}
+          fullWidth
+        />
+      </Grid>
+    ),
+    onlineMultiplayer: (
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={onlineMultiplayerOnly}
+              onChange={(event) => onOnlineMultiplayerOnlyChange(event.target.checked)}
+            />
+          }
+          label={t("games.listToolbar.onlineMultiplayerOnlyLabel")}
+        />
+      </Grid>
+    ),
+    coop: (
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={coopOnly}
+              onChange={(event) => onCoopOnlyChange(event.target.checked)}
+            />
+          }
+          label={t("games.listToolbar.coopOnlyLabel")}
+        />
+      </Grid>
+    ),
+    timeToBeat: (
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <AutocompleteSelect<TimeToBeatOption>
+          label={t("games.listToolbar.timeToBeatLabel")}
+          options={TIME_TO_BEAT_OPTIONS}
+          value={TIME_TO_BEAT_OPTIONS.find((option) => option.value === timeToBeat) ?? null}
+          onChange={(option) => onTimeToBeatChange(option?.value ?? null)}
+          getOptionLabel={(option) => timeToBeatLabel(option, t)}
+          isOptionEqualToValue={(option, val) => option.value === val.value}
+          placeholder={allPlaceholder}
+          fullWidth
+        />
+      </Grid>
+    ),
+    rating: (
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <AutocompleteSelect<number>
+          label={t("games.listToolbar.ratingLabel")}
+          options={RATING_OPTIONS}
+          value={ratingMin}
+          onChange={onRatingMinChange}
+          getOptionLabel={(option) =>
+            t("games.listToolbar.ratingOption", { min: option / 10 })
+          }
+          placeholder={allPlaceholder}
+          fullWidth
+        />
+      </Grid>
     ),
     formats: (
       <Grid size={{ xs: 12, sm: 6 }}>
@@ -844,9 +1040,18 @@ const GameListToolbar = ({
     tags: { label: t("games.listToolbar.tagLabel"), applicable: true },
     genres: { label: t("games.listToolbar.genreLabel"), applicable: true },
     gameModes: { label: t("games.listToolbar.gameModeLabel"), applicable: true },
+    localPlayers: { label: t("games.listToolbar.localPlayersLabel"), applicable: true },
+    onlineMultiplayer: {
+      label: t("games.listToolbar.onlineMultiplayerOnlyLabel"),
+      applicable: true,
+    },
+    coop: { label: t("games.listToolbar.coopOnlyLabel"), applicable: true },
+    timeToBeat: { label: t("games.listToolbar.timeToBeatLabel"), applicable: true },
+    rating: { label: t("games.listToolbar.ratingLabel"), applicable: true },
     ownership: { label: t("games.listToolbar.ownershipLabel"), applicable: true },
     playStatus: { label: t("games.listToolbar.playStatusLabel"), applicable: true },
     platforms: { label: t("games.listToolbar.consoleLabel"), applicable: !hidePlatformsField },
+    release: { label: t("games.listToolbar.releaseStatusLabel"), applicable: true },
     formats: { label: t("games.listToolbar.formatLabel"), applicable: true },
     storefronts: { label: t("games.listToolbar.storefrontLabel"), applicable: showStorefrontFilter },
     collections: { label: t("games.listToolbar.collectionLabel"), applicable: !hideCollectionsField },
@@ -862,9 +1067,15 @@ const GameListToolbar = ({
     tags: t("games.listToolbar.tagLabel"),
     genres: t("games.listToolbar.genreLabel"),
     gameModes: t("games.listToolbar.gameModeLabel"),
+    localPlayers: t("games.listToolbar.localPlayersLabel"),
+    onlineMultiplayer: t("games.listToolbar.onlineMultiplayerOnlyLabel"),
+    coop: t("games.listToolbar.coopOnlyLabel"),
+    timeToBeat: t("games.listToolbar.timeToBeatLabel"),
+    rating: t("games.listToolbar.ratingLabel"),
     ownership: t("games.listToolbar.ownershipLabel"),
     playStatus: t("games.listToolbar.playStatusLabel"),
     platforms: t("games.listToolbar.consoleLabel"),
+    release: t("games.listToolbar.releaseStatusLabel"),
     formats: t("games.listToolbar.formatLabel"),
     storefronts: t("games.listToolbar.storefrontLabel"),
     collections: t("games.listToolbar.collectionLabel"),
@@ -921,6 +1132,16 @@ const GameListToolbar = ({
       } else if (field.key === "gameModes") {
         if (gameModes.length > 0) onGameModesChange([]);
         if (gameModeExclude) onGameModeExcludeChange(false);
+      } else if (field.key === "localPlayers") {
+        if (localPlayersMin !== null) onLocalPlayersMinChange(null);
+      } else if (field.key === "onlineMultiplayer") {
+        if (onlineMultiplayerOnly) onOnlineMultiplayerOnlyChange(false);
+      } else if (field.key === "coop") {
+        if (coopOnly) onCoopOnlyChange(false);
+      } else if (field.key === "timeToBeat") {
+        if (timeToBeat !== null) onTimeToBeatChange(null);
+      } else if (field.key === "rating") {
+        if (ratingMin !== null) onRatingMinChange(null);
       } else if (field.key === "ownership") {
         if (ownershipStatuses.length > 0) onOwnershipStatusesChange([]);
         if (ownershipExclude) onOwnershipExcludeChange(false);
@@ -928,8 +1149,12 @@ const GameListToolbar = ({
         if (playStatuses.length > 0) onPlayStatusesChange([]);
         if (playStatusExclude) onPlayStatusExcludeChange(false);
       } else if (field.key === "platforms") {
-        if (platformIds.length > 0) onPlatformIdsChange([]);
+        if (platformKeys.length > 0) onPlatformKeysChange([]);
         if (platformExclude) onPlatformExcludeChange(false);
+      } else if (field.key === "release") {
+        if (releaseStatuses.length > 0) onReleaseStatusesChange([]);
+        if (releaseYearFrom !== null) onReleaseYearFromChange(null);
+        if (releaseYearTo !== null) onReleaseYearToChange(null);
       } else if (field.key === "formats") {
         if (formats.length > 0) onFormatsChange([]);
         if (formatExclude) onFormatExcludeChange(false);
@@ -969,12 +1194,20 @@ const GameListToolbar = ({
   const handleClearFilters = () => {
     onOwnershipStatusesChange([]);
     onOwnershipExcludeChange(false);
-    onPlatformIdsChange([]);
+    onPlatformKeysChange([]);
     onPlatformExcludeChange(false);
     onTagIdsChange([]);
     onTagExcludeChange(false);
     onGenreIdsChange([]);
     onGenreExcludeChange(false);
+    onReleaseStatusesChange([]);
+    onReleaseYearFromChange(null);
+    onReleaseYearToChange(null);
+    onLocalPlayersMinChange(null);
+    onOnlineMultiplayerOnlyChange(false);
+    onCoopOnlyChange(false);
+    onTimeToBeatChange(null);
+    onRatingMinChange(null);
     onGameModesChange([]);
     onGameModeExcludeChange(false);
     onCollectionIdsChange([]);

@@ -3,7 +3,7 @@ import json
 import logging
 import time
 from datetime import UTC, datetime, timedelta
-from typing import Literal
+from typing import Any, Literal
 
 import httpx
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
@@ -70,6 +70,12 @@ GAME_FIELDS = (
     # discovered via its parent's relation arrays, still carries its conceptual parent's
     # name/url, even when we don't have that parent imported locally ourselves.
     "parent_game.name,parent_game.slug,parent_game.url,"
+    # Players and co-op support (see extract_play_fields) — per-platform rows, so a
+    # game that's 4-player split-screen on Switch but single-player on PC keeps both.
+    "multiplayer_modes.offlinemax,multiplayer_modes.offlinecoopmax,multiplayer_modes.onlinemax,"
+    "multiplayer_modes.onlinecoopmax,multiplayer_modes.offlinecoop,multiplayer_modes.onlinecoop,"
+    "multiplayer_modes.campaigncoop,multiplayer_modes.lancoop,multiplayer_modes.splitscreen,"
+    "multiplayer_modes.platform,"
     # Store page links (see extract_store_urls) — expanded here rather than fetched via a
     # separate request, same free-ride-on-the-existing-query treatment as every other
     # relation above. Deliberately the `websites` relation, not `external_games`:
@@ -162,6 +168,103 @@ def extract_store_urls(igdb_game: dict) -> dict[str, str | None]:
         preferred = next((url for url in candidates if "xbox.com" in url), None)
         result[field_name] = preferred or (candidates[0] if candidates else None)
     return result
+
+
+# IGDB's game_modes ids: 1 Single player, 2 Multiplayer, 3 Co-operative, 4 Split screen,
+# 5 MMO, 6 Battle Royale.
+_SINGLE_PLAYER_MODE = 1
+# Plain "Multiplayer" says nothing about where (Pico Park is a couch game), so only these
+# count as online on their own.
+_ONLINE_ONLY_MODES = {5, 6}
+_COOP_MODE = 3
+_SPLIT_SCREEN_MODE = 4
+# Fallback when a game_modes entry carries no id (the fork's GAME_FIELDS expands
+# game_modes as {id, name, slug} objects, but a payload built elsewhere may only have the
+# name/slug) — IGDB's own names/slugs for the six modes.
+_GAME_MODE_IDS_BY_NAME = {
+    "single player": _SINGLE_PLAYER_MODE,
+    "multiplayer": 2,
+    "co-operative": _COOP_MODE,
+    "split screen": _SPLIT_SCREEN_MODE,
+    "massively multiplayer online (mmo)": 5,
+    "battle royale": 6,
+}
+_GAME_MODE_IDS_BY_SLUG = {
+    "single-player": _SINGLE_PLAYER_MODE,
+    "multiplayer": 2,
+    "co-operative": _COOP_MODE,
+    "split-screen": _SPLIT_SCREEN_MODE,
+    "mmo": 5,
+    "battle-royale": 6,
+}
+
+
+def _game_mode_ids(game_modes: Any) -> set[int]:
+    """Normalises a game_modes payload to a set of IGDB mode ids. The fork's GAME_FIELDS
+    expands game_modes into {id, name, slug} dicts (see extract_game_mode_names); other
+    payloads — upstream-shaped, or hand-built in tests — carry bare ints. Both are
+    accepted; a dict without an id falls back to its name/slug."""
+    ids: set[int] = set()
+    for mode in game_modes or []:
+        if isinstance(mode, int):
+            ids.add(mode)
+        elif isinstance(mode, dict):
+            mode_id = mode.get("id")
+            if isinstance(mode_id, int):
+                ids.add(mode_id)
+            else:
+                by_name = _GAME_MODE_IDS_BY_NAME.get(str(mode.get("name") or "").lower())
+                by_slug = _GAME_MODE_IDS_BY_SLUG.get(str(mode.get("slug") or "").lower())
+                if by_name is not None:
+                    ids.add(by_name)
+                elif by_slug is not None:
+                    ids.add(by_slug)
+    return ids
+
+
+def extract_play_fields(igdb_game: dict) -> dict[str, int | bool | None]:
+    """The Game columns behind the Players and Time to beat filters, out of a game payload's
+    multiplayer_modes/game_modes (see GAME_FIELDS) and the time_to_beat row
+    _attach_time_to_beats adds. local_players takes the best of every platform's row — the
+    Games list filters a game, not one copy of it. The fork also accepts the
+    time_to_beat_data key game_service attaches (see get_igdb_preview_payload /
+    import_game_from_igdb), which carries the same normally/completely values."""
+    modes = igdb_game.get("multiplayer_modes") or []
+    game_modes = _game_mode_ids(igdb_game.get("game_modes"))
+    # IGDB's offline counts include LAN play: a row that's LAN co-op without split screen
+    # (Counter-Strike 2's 99, Age of Empires II's 8) says nothing about one console or screen.
+    local_players = max(
+        (
+            max(mode.get("offlinemax") or 0, mode.get("offlinecoopmax") or 0)
+            for mode in modes
+            if mode.get("splitscreen") or not mode.get("lancoop")
+        ),
+        default=0,
+    )
+    if not local_players and game_modes == {_SINGLE_PLAYER_MODE}:
+        local_players = 1
+    # Split screen with no count (LEGO 2K Drive) is still two players on one screen at least.
+    if not local_players and _SPLIT_SCREEN_MODE in game_modes:
+        local_players = 2
+    if modes:
+        online = any(max(mode.get("onlinemax") or 0, mode.get("onlinecoopmax") or 0) > 1 for mode in modes) or bool(
+            game_modes & _ONLINE_ONLY_MODES
+        )
+    elif game_modes & _ONLINE_ONLY_MODES:
+        online = True
+    elif game_modes == {_SINGLE_PLAYER_MODE}:
+        online = False
+    else:
+        online = None
+    coop = any(mode.get("offlinecoop") or mode.get("onlinecoop") or mode.get("campaigncoop") for mode in modes)
+    time_to_beat = igdb_game.get("time_to_beat") or igdb_game.get("time_to_beat_data") or {}
+    return {
+        "local_players": local_players or None,
+        "online_multiplayer": online,
+        "coop": (coop or _COOP_MODE in game_modes) if (modes or game_modes) else None,
+        "time_to_beat_main": time_to_beat.get("normally"),
+        "time_to_beat_complete": time_to_beat.get("completely"),
+    }
 
 # IGDB/Twitch hiccups and transient network errors are worth retrying; a 4xx (bad
 # credentials, malformed query) never gets better on retry, so only retry on
@@ -308,6 +411,7 @@ class IGDBClient:
         games = response.json()
 
         await self._attach_covers(games, headers)
+        await self._attach_time_to_beats(games)
         _normalize_nested_image_urls(games)
         return games
 
@@ -381,6 +485,7 @@ class IGDBClient:
         addons = response.json()
 
         await self._attach_covers(addons, headers)
+        await self._attach_time_to_beats(addons)
         _normalize_nested_image_urls(addons)
         return addons
 
@@ -519,6 +624,26 @@ class IGDBClient:
         for game in games:
             if game.get("cover"):
                 game["cover_url"] = cover_urls.get(game["cover"])
+
+    async def _attach_time_to_beats(self, games: list[dict]) -> None:
+        """IGDB keeps length estimates in their own endpoint, keyed by game id rather than
+        expandable from /games — one batched request per call, like the covers above.
+        Reuses get_time_to_beat_by_igdb_ids (which already does the batched fetch and
+        normalises the rows); games with no submissions simply get no time_to_beat key.
+        Best-effort: enrichment data must never take down a fetch — a failed lookup
+        leaves the payloads as they were, and game_service's own time_to_beat fetch
+        (import/resync) still runs afterwards."""
+        game_ids = [game["id"] for game in games if game.get("id")]
+        if not game_ids:
+            return
+        try:
+            by_game = await self.get_time_to_beat_by_igdb_ids(game_ids)
+        except Exception:
+            logger.warning("game_time_to_beats attach failed for IGDB ids %s — continuing without it", game_ids)
+            return
+        for game in games:
+            if game.get("id") in by_game:
+                game["time_to_beat"] = by_game[game["id"]]
 
     async def get_covers_by_ids(
         self, cover_ids: list[int], headers: dict[str, str] | None = None

@@ -29,6 +29,7 @@ from app.api.routes import (
     events,
     franchises,
     games,
+    genres,
     guides,
     hardware_lookups,
     hardware_stats,
@@ -335,6 +336,7 @@ app.include_router(import_export.router)
 app.include_router(import_export.download_router)
 app.include_router(insights.router)
 app.include_router(franchises.router)
+app.include_router(genres.router)
 app.include_router(collections.router)
 app.include_router(catalog_resync.router)
 app.include_router(events.router)

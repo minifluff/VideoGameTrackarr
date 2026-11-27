@@ -1,7 +1,7 @@
 import { apiClient } from "./client";
-import type { CatalogRef } from "./types";
+import type { GenreResponse } from "./types";
 
-export async function listGenres(): Promise<CatalogRef[]> {
-  const response = await apiClient.get<CatalogRef[]>("/api/genres");
+export async function listGenres(): Promise<GenreResponse[]> {
+  const response = await apiClient.get<GenreResponse[]>("/api/genres");
   return response.data;
 }

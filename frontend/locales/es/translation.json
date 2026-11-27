@@ -809,6 +809,15 @@
       "progress": "Linking {{done}} of {{total}} games...",
       "success": "Linked {{linked}} games ({{noMatch}} had no match, {{failed}} failed)",
       "error": "Auto-link failed"
+    },
+    "gameFilters": {
+      "heading": "Game lists",
+      "fields": "Filter fields",
+      "fieldsHelp": "{{shown}} of {{total}} fields shown in the Filter dialog. Saved to your account.",
+      "customizeButton": "Customize",
+      "customizeTitle": "Filter fields",
+      "customizeDescription": "Switch off the fields you never use. Hiding a field also clears its filter.",
+      "showAll": "Show all"
     }
   },
   "auth": {
@@ -1015,7 +1024,25 @@
       "hideFromPublicButton": "Hide",
       "confirmRemoveTitle": "Remove Games?",
       "confirmRemoveMessage": "Are you sure you want to remove {{count}} game(s)? This can be undone.",
-      "unhideButton": "Unhide"
+      "unhideButton": "Unhide",
+      "releaseStatusLabel": "Release",
+      "releaseReleased": "Released",
+      "releaseUpcoming": "Upcoming",
+      "releaseYearFromLabel": "Released from",
+      "releaseYearToLabel": "Released until",
+      "releaseYearFromChip": "From {{year}}",
+      "releaseYearToChip": "Until {{year}}",
+      "localPlayersLabel": "Local players",
+      "localPlayersOption_one": "{{count}}+ player",
+      "localPlayersOption_other": "{{count}}+ players",
+      "onlineMultiplayerOnlyLabel": "Online multiplayer",
+      "coopOnlyLabel": "Co-op",
+      "timeToBeatLabel": "Time to beat",
+      "timeToBeatUnder": "Under {{max}} h",
+      "timeToBeatBetween": "{{min}}–{{max}} h",
+      "timeToBeatOver": "{{min}} h or more",
+      "ratingLabel": "Rating",
+      "ratingOption": "{{min}}+ / 10"
     },
     "card": {
       "playStatusBacklog": "Pendiente",

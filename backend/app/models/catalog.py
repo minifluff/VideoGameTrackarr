@@ -1,7 +1,7 @@
 import enum
 import uuid
 
-from sqlalchemy import JSON, BigInteger, Boolean, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, BigInteger, Boolean, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.core.search_keys import search_key
@@ -199,6 +199,23 @@ class Game(TimestampMixin, Base):
         JSON,
         comment="IGDB game_time_to_beats in seconds, e.g. {'hastily': 5400, 'normally': 7200, 'count': 42}",
     )
+
+    # Players and length, cached at import/resync time from IGDB's multiplayer_modes, game_modes
+    # and game_time_to_beats — what the Games list's Players and Time to beat filters query (its
+    # Rating filter reads igdb_rating below). NULL means IGDB has no data, not "zero", so a filter
+    # on any of them leaves those games out rather than guessing.
+    local_players: Mapped[int | None] = mapped_column(
+        Integer, comment="Most players on one console/screen (offline max/coop max), 1 for single-player-only games"
+    )
+    online_multiplayer: Mapped[bool | None] = mapped_column(Boolean)
+    coop: Mapped[bool | None] = mapped_column(Boolean, comment="Any co-op mode: local, online or campaign")
+    time_to_beat_main: Mapped[int | None] = mapped_column(Integer, comment="Seconds, IGDB's 'normally' estimate")
+    time_to_beat_complete: Mapped[int | None] = mapped_column(Integer, comment="Seconds, IGDB's 'completely' estimate")
+    # Fork addition (upstream 2.3.0's rating columns, never ported until now): IGDB members'
+    # average rating, 0-100, and how many members it is based on. Refreshed on every
+    # import/resync; the Games list's Rating filter reads igdb_rating.
+    igdb_rating: Mapped[float | None] = mapped_column(Float)
+    igdb_rating_count: Mapped[int | None] = mapped_column(Integer)
 
     auto_discovered: Mapped[bool] = mapped_column(
         Boolean,

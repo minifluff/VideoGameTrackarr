@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Collapse from "@mui/material/Collapse";
@@ -14,23 +14,25 @@ import type {
   GameSummary,
   MediaFormat,
   PlayStatus,
+  ReleaseStatus,
 } from "../api/types";
 import { useCollectionAddons, useCollections, useFranchiseAddons, useFranchises, usePlatformAddons } from "../hooks/useCatalogBrowse";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useGames } from "../hooks/useGames";
-import { usePlatforms } from "../hooks/usePlatforms";
+import { useLibraryPlatforms } from "../hooks/usePlatforms";
 import { useGameModes } from "../hooks/useGameModes";
 import { useGenres } from "../hooks/useGenres";
 import { useStorefronts } from "../hooks/useStorefronts";
 import { useTags } from "../hooks/useTags";
 import { gameIdentifier } from "../utils/identifiers";
 import type { PlatformScope } from "../utils/platformScope";
+import { platformDisplayName, platformScopeKey } from "../utils/platformScope";
 import { matchesOwnership } from "../utils/ownershipFilter";
 import { readStoredShowHidden, storeShowHidden } from "../utils/showHiddenGames";
 import { ALL_KNOWN_STOREFRONTS } from "../utils/storefronts";
 import CatalogResyncButton from "./CatalogResyncButton";
 import GameCard from "./GameCard";
-import GameListToolbar, { type OwnershipStatus } from "./GameListToolbar";
+import GameListToolbar, { TIME_TO_BEAT_OPTIONS, type OwnershipStatus, type TimeToBeatRange } from "./GameListToolbar";
 import VirtualGameGrid from "./VirtualGameGrid";
 import { usePruneStaleIds, useSessionState } from "../hooks/useSessionState";
 import { useScrollCollapse } from "../hooks/useScrollCollapse";
@@ -108,11 +110,20 @@ const CatalogBrowseGrid = ({
   const [ownershipStatuses, setOwnershipStatuses] = useSessionState<OwnershipStatus[]>(`${stateKey}.ownershipStatuses`, []);
   const [ownershipExclude, setOwnershipExclude] = useSessionState(`${stateKey}.ownershipExclude`, false);
   const [platformIds, setPlatformIds] = useSessionState<number[]>(`${stateKey}.platformIds`, []);
+  const [platformScopes, setPlatformScopes] = useSessionState<string[]>(`${stateKey}.platformScopes`, []);
   const [platformExclude, setPlatformExclude] = useSessionState(`${stateKey}.platformExclude`, false);
   const [tagIds, setTagIds] = useSessionState<number[]>(`${stateKey}.tagIds`, []);
   const [tagExclude, setTagExclude] = useSessionState(`${stateKey}.tagExclude`, false);
   const [genreIds, setGenreIds] = useSessionState<number[]>(`${stateKey}.genreIds`, []);
   const [genreExclude, setGenreExclude] = useSessionState(`${stateKey}.genreExclude`, false);
+  const [releaseStatuses, setReleaseStatuses] = useSessionState<ReleaseStatus[]>(`${stateKey}.releaseStatuses`, []);
+  const [releaseYearFrom, setReleaseYearFrom] = useSessionState<number | null>(`${stateKey}.releaseYearFrom`, null);
+  const [releaseYearTo, setReleaseYearTo] = useSessionState<number | null>(`${stateKey}.releaseYearTo`, null);
+  const [localPlayersMin, setLocalPlayersMin] = useSessionState<number | null>(`${stateKey}.localPlayersMin`, null);
+  const [onlineMultiplayerOnly, setOnlineMultiplayerOnly] = useSessionState(`${stateKey}.onlineMultiplayerOnly`, false);
+  const [coopOnly, setCoopOnly] = useSessionState(`${stateKey}.coopOnly`, false);
+  const [timeToBeat, setTimeToBeat] = useSessionState<TimeToBeatRange | null>(`${stateKey}.timeToBeat`, null);
+  const [ratingMin, setRatingMin] = useSessionState<number | null>(`${stateKey}.ratingMin`, null);
   const [gameModes, setGameModes] = useSessionState<string[]>(`${stateKey}.gameModes`, []);
   const [gameModeExclude, setGameModeExclude] = useSessionState(`${stateKey}.gameModeExclude`, false);
   const [collectionIds, setCollectionIds] = useSessionState<number[]>(`${stateKey}.collectionIds`, []);
@@ -151,11 +162,36 @@ const CatalogBrowseGrid = ({
   const debouncedKeyword = useDebouncedValue(trimmedKeyword, 500);
   const isSearchActive = debouncedKeyword.length >= MIN_SEARCH_LENGTH;
 
-  const { data: platforms = [], isSuccess: platformsLoaded } = usePlatforms();
+  const { data: platforms = [], isSuccess: platformsLoaded } = useLibraryPlatforms();
+  // Only the Platforms-page cards the library actually has — PC split per storefront the same
+  // way — rather than every platform IGDB has ever attached to an imported game.
+  const platformOptions = useMemo(
+    () =>
+      platforms.map((platform) => {
+        const scope = { format: platform.format ?? undefined, storefront: platform.storefront ?? undefined };
+        return { id: platformScopeKey(platform.id, scope), label: platformDisplayName(platform, scope, t) };
+      }),
+    [platforms, t]
+  );
+  const platformIdOptions = useMemo(() => platforms.map((platform) => ({ id: platform.id })), [platforms]);
+  // An Insights row still presets plain platformIds; the toolbar edits both as one list of
+  // card keys and writes them back as scopes.
+  const platformKeys = useMemo(
+    () => [...platformIds.map(String), ...platformScopes],
+    [platformIds, platformScopes]
+  );
+  const setPlatformKeys = useCallback(
+    (keys: string[]) => {
+      setPlatformIds([]);
+      setPlatformScopes(keys);
+    },
+    [setPlatformIds, setPlatformScopes]
+  );
   const { data: tags = [], isSuccess: tagsLoaded } = useTags();
   const { data: collections = [], isSuccess: collectionsLoaded } = useCollections();
   const { data: franchises = [], isSuccess: franchisesLoaded } = useFranchises();
-  usePruneStaleIds(platformIds, setPlatformIds, platforms, platformsLoaded);
+  usePruneStaleIds(platformIds, setPlatformIds, platformIdOptions, platformsLoaded);
+  usePruneStaleIds(platformScopes, setPlatformScopes, platformOptions, platformsLoaded);
   usePruneStaleIds(tagIds, setTagIds, tags, tagsLoaded);
   usePruneStaleIds(collectionIds, setCollectionIds, collections, collectionsLoaded);
   usePruneStaleIds(franchiseIds, setFranchiseIds, franchises, franchisesLoaded);
@@ -176,11 +212,21 @@ const CatalogBrowseGrid = ({
     () => ({
       search: isSearchActive ? debouncedKeyword : undefined,
       platformIds: effectivePlatformIds.length > 0 ? effectivePlatformIds : undefined,
+      platformScopes: platformScopes.length > 0 ? platformScopes : undefined,
       platformExclude,
       tagIds: tagIds.length > 0 ? tagIds : undefined,
       tagExclude,
       genreIds: genreIds.length > 0 ? genreIds : undefined,
       genreExclude,
+      releaseStatuses: releaseStatuses.length > 0 ? releaseStatuses : undefined,
+      releaseYearFrom: releaseYearFrom ?? undefined,
+      releaseYearTo: releaseYearTo ?? undefined,
+      localPlayersMin: localPlayersMin ?? undefined,
+      onlineMultiplayerOnly,
+      coopOnly,
+      timeToBeatMin: TIME_TO_BEAT_OPTIONS.find((option) => option.value === timeToBeat)?.min,
+      timeToBeatMax: TIME_TO_BEAT_OPTIONS.find((option) => option.value === timeToBeat)?.max,
+      ratingMin: ratingMin ?? undefined,
       gameModes: gameModes.length > 0 ? gameModes : undefined,
       gameModeExclude,
       collectionIds: collectionIds.length > 0 ? collectionIds : undefined,
@@ -203,11 +249,20 @@ const CatalogBrowseGrid = ({
       isSearchActive,
       debouncedKeyword,
       effectivePlatformIds,
+      platformScopes,
       platformExclude,
       tagIds,
       tagExclude,
       genreIds,
       genreExclude,
+      releaseStatuses,
+      releaseYearFrom,
+      releaseYearTo,
+      localPlayersMin,
+      onlineMultiplayerOnly,
+      coopOnly,
+      timeToBeat,
+      ratingMin,
       gameModes,
       gameModeExclude,
       collectionIds,
@@ -328,10 +383,10 @@ const CatalogBrowseGrid = ({
             onOwnershipStatusesChange={setOwnershipStatuses}
             ownershipExclude={ownershipExclude}
             onOwnershipExcludeChange={setOwnershipExclude}
-            platformOptions={platforms}
+            platformOptions={platformOptions}
             hidePlatformsField={isPlatform}
-            platformIds={platformIds}
-            onPlatformIdsChange={setPlatformIds}
+            platformKeys={platformKeys}
+            onPlatformKeysChange={setPlatformKeys}
             platformExclude={platformExclude}
             onPlatformExcludeChange={setPlatformExclude}
             tagOptions={tags}
@@ -343,6 +398,22 @@ const CatalogBrowseGrid = ({
             onGenreIdsChange={setGenreIds}
             genreExclude={genreExclude}
             onGenreExcludeChange={setGenreExclude}
+            releaseStatuses={releaseStatuses}
+            onReleaseStatusesChange={setReleaseStatuses}
+            releaseYearFrom={releaseYearFrom}
+            onReleaseYearFromChange={setReleaseYearFrom}
+            releaseYearTo={releaseYearTo}
+            onReleaseYearToChange={setReleaseYearTo}
+            localPlayersMin={localPlayersMin}
+            onLocalPlayersMinChange={setLocalPlayersMin}
+            onlineMultiplayerOnly={onlineMultiplayerOnly}
+            onOnlineMultiplayerOnlyChange={setOnlineMultiplayerOnly}
+            coopOnly={coopOnly}
+            onCoopOnlyChange={setCoopOnly}
+            timeToBeat={timeToBeat}
+            onTimeToBeatChange={setTimeToBeat}
+            ratingMin={ratingMin}
+            onRatingMinChange={setRatingMin}
             gameModeOptions={gameModeOptions}
             gameModes={gameModes}
             onGameModesChange={setGameModes}

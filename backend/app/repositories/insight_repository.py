@@ -6,7 +6,7 @@ from app.models.hardware import Accessory, AccessoryDeviceLink, UserAccessory, U
 from app.models.ignored_duplicate import IgnoredDuplicateGroup
 from app.models.library import LibraryItem, LibraryStatus, MediaFormat, PlayStatus
 from app.repositories.accessory_repository import AccessoryWithStatus
-from app.repositories.game_repository import GameSortOption, _apply_optional_game_filters
+from app.repositories.game_repository import GameSortOption, ReleaseStatus, _apply_optional_game_filters
 
 # Mirrors the frontend's ADDON_DISPLAY_CATEGORIES (GameAddonsTab.tsx) — bundles, standalone
 # expansions, mods, updates, etc. all carry parent_game too, but aren't "DLC" a user would
@@ -139,6 +139,16 @@ def find_missing_addons(
     steelbook_only: bool = False,
     unlinked_only: bool = False,
     hide_with_cover_art: bool = False,
+    platform_scopes: list[str] | None = None,
+    release_statuses: list[ReleaseStatus] | None = None,
+    release_year_from: int | None = None,
+    release_year_to: int | None = None,
+    local_players_min: int | None = None,
+    online_multiplayer_only: bool = False,
+    coop_only: bool = False,
+    time_to_beat_min: int | None = None,
+    time_to_beat_max: int | None = None,
+    rating_min: int | None = None,
     sort: GameSortOption = GameSortOption.NAME_ASC,
 ) -> list[tuple[Game, list[tuple[Game, bool]]]]:
     """For every owned, top-level game: its DLC/expansions/packs (per parent_game_id,
@@ -204,6 +214,16 @@ def find_missing_addons(
         steelbook_only=steelbook_only,
         unlinked_only=unlinked_only,
         hide_with_cover_art=hide_with_cover_art,
+        platform_scopes=platform_scopes,
+        release_statuses=release_statuses,
+        release_year_from=release_year_from,
+        release_year_to=release_year_to,
+        local_players_min=local_players_min,
+        online_multiplayer_only=online_multiplayer_only,
+        coop_only=coop_only,
+        time_to_beat_min=time_to_beat_min,
+        time_to_beat_max=time_to_beat_max,
+        rating_min=rating_min,
         sort=sort,
     )
     # _apply_optional_game_filters' own order_by only covers Game's sort field — Addon.name
