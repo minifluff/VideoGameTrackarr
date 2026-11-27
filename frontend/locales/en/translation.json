@@ -927,9 +927,12 @@
       "columnHeaderYourRating": "Your rating",
       "owned": "Owned",
       "wishlisted": "Wishlisted",
+      "playStatusNotSet": "Not set",
       "playStatusNotStarted": "Not started",
       "playStatusBacklog": "Backlog",
       "playStatusPlaying": "Playing",
+      "playStatusOnHold": "On hold",
+      "playStatusEndless": "Endless",
       "playStatusCompleted": "Completed",
       "playStatusAbandoned": "Abandoned"
     },
@@ -1045,8 +1048,11 @@
       "ratingOption": "{{min}}+ / 10"
     },
     "card": {
+      "playStatusNotStarted": "Not started",
       "playStatusBacklog": "Backlog",
       "playStatusPlaying": "Playing",
+      "playStatusOnHold": "On hold",
+      "playStatusEndless": "Endless",
       "playStatusCompleted": "Completed",
       "playStatusAbandoned": "Abandoned",
       "noCover": "No cover",
@@ -1323,9 +1329,12 @@
       "romsDownloadDescription": "Download the ROM files stored on this server."
     },
     "stats": {
+      "playStatusNotSet": "Not set",
       "playStatusNotStarted": "Not started",
       "playStatusBacklog": "Backlog",
       "playStatusPlaying": "Playing",
+      "playStatusOnHold": "On hold",
+      "playStatusEndless": "Endless",
       "playStatusCompleted": "Completed",
       "playStatusAbandoned": "Abandoned",
       "loading": "Loading stats...",
@@ -2182,9 +2191,12 @@
     "removedToast_one": "Progress removed",
     "removedToast_other": "Progress entries removed",
     "statusOptions": {
-      "none": "Not started",
+      "none": "Not set",
+      "not_started": "Not started",
       "backlog": "Backlog",
       "playing": "Playing",
+      "on_hold": "On hold",
+      "endless": "Endless",
       "completed": "Completed",
       "abandoned": "Abandoned"
     },

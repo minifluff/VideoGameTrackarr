@@ -15,8 +15,11 @@ import OwnershipBadges from "./OwnershipBadges";
 
 const PLAY_STATUS_LABEL_KEYS: Record<PlayStatus, string> = {
   none: "",
+  not_started: "games.card.playStatusNotStarted",
   backlog: "games.card.playStatusBacklog",
   playing: "games.card.playStatusPlaying",
+  on_hold: "games.card.playStatusOnHold",
+  endless: "games.card.playStatusEndless",
   completed: "games.card.playStatusCompleted",
   abandoned: "games.card.playStatusAbandoned",
 };
@@ -26,8 +29,11 @@ const PLAY_STATUS_LABEL_KEYS: Record<PlayStatus, string> = {
 // the Playing chip had, and backlog reuses the Custom chip's grey).
 const PLAY_STATUS_COVER_COLORS: Record<PlayStatus, string> = {
   none: "#5d6673",
+  not_started: "#5d6673",
   backlog: "#5d6673",
   playing: "info.main",
+  on_hold: "warning.main",
+  endless: "secondary.main",
   completed: "success.main",
   abandoned: "error.main",
 };

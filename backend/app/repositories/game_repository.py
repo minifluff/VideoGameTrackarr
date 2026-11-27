@@ -94,14 +94,18 @@ def _wishlisted_exists(game_id_column: ColumnElement[int]) -> ColumnElement[bool
 
 # A game can now have GameProgress on multiple platforms (one owned copy each). Game-level
 # views (list/card/dashboard) can only show one status, so these pick a single "representative"
-# row via priority order — Playing beats Completed beats Backlog beats Abandoned beats None —
+# row via priority order — Playing, Endless, Completed, On hold, Backlog, Not started,
+# Abandoned, then None —
 # rather than assuming (as before per-platform tracking) that at most one row exists.
 _PLAY_STATUS_PRIORITY = case(
     (GameProgress.play_status == PlayStatus.PLAYING, 0),
-    (GameProgress.play_status == PlayStatus.COMPLETED, 1),
-    (GameProgress.play_status == PlayStatus.BACKLOG, 2),
-    (GameProgress.play_status == PlayStatus.ABANDONED, 3),
-    else_=4,
+    (GameProgress.play_status == PlayStatus.ENDLESS, 1),
+    (GameProgress.play_status == PlayStatus.COMPLETED, 2),
+    (GameProgress.play_status == PlayStatus.ON_HOLD, 3),
+    (GameProgress.play_status == PlayStatus.BACKLOG, 4),
+    (GameProgress.play_status == PlayStatus.NOT_STARTED, 5),
+    (GameProgress.play_status == PlayStatus.ABANDONED, 6),
+    else_=7,
 )
 
 
@@ -240,8 +244,16 @@ _TYPE_ORDER = [
     GameCategory.UPDATE,
 ]
 # The same priority the card's representative status uses (see _PLAY_STATUS_PRIORITY):
-# Playing beats Completed beats Backlog beats Abandoned.
-_PLAY_STATUS_ORDER = [PlayStatus.PLAYING, PlayStatus.COMPLETED, PlayStatus.BACKLOG, PlayStatus.ABANDONED]
+# Playing, Endless, Completed, On hold, Backlog, Not started, Abandoned.
+_PLAY_STATUS_ORDER = [
+    PlayStatus.PLAYING,
+    PlayStatus.ENDLESS,
+    PlayStatus.ON_HOLD,
+    PlayStatus.BACKLOG,
+    PlayStatus.NOT_STARTED,
+    PlayStatus.COMPLETED,
+    PlayStatus.ABANDONED,
+]
 
 
 def _first_copy_platform(game_id_column: ColumnElement[int]) -> ColumnElement[str | None]:
@@ -458,9 +470,9 @@ def _year_start(year: int) -> int:
 def _play_status_clause(statuses: list[PlayStatus]) -> ColumnElement[bool]:
     """Matches when *any* of the game's platforms has one of these statuses, the same "any
     copy" rule the platform/format filters use, not the single priority-picked status a card
-    shows (_play_status_subquery). NONE ("Not started") can't be a plain IN value: most
-    unstarted games have no GameProgress row at all, so it means "no platform has a real
-    status yet" instead."""
+    shows (_play_status_subquery). NONE ("Not set") can't be a plain IN value: most games
+    without a status have no GameProgress row at all, so it means "no platform has a real
+    status yet" instead. NOT_STARTED is a status the user chose, so it's a plain IN value."""
     clauses = []
     started = [status for status in statuses if status != PlayStatus.NONE]
     if started:
