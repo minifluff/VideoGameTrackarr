@@ -13,8 +13,6 @@ import ListItemText from "@mui/material/ListItemText";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { createFilterOptions } from "@mui/material/useAutocomplete";
-import { useTheme } from "@mui/material/styles";
-import useMediaQuery from "@mui/material/useMediaQuery";
 
 interface TouchPickerSheetProps<T> {
   open: boolean;
@@ -33,7 +31,9 @@ interface TouchPickerSheetProps<T> {
 }
 
 // The touch screen side of AutocompleteSelect / AutocompleteMultiSelect: the usual mobile
-// picker sheet, full screen on phones and a dialog on tablets. Nothing is focused when it opens,
+// picker sheet. It sizes to its content — a dialog, not a full-screen sheet — so a short
+// list (six game modes, say) doesn't leave a mostly empty sheet with Done stranded at the
+// bottom; a long list scrolls inside the sheet instead. Nothing is focused when it opens,
 // so the keyboard only comes up once the search box is tapped; the search matches like the
 // desktop Autocomplete's.
 function TouchPickerSheet<T>({
@@ -49,8 +49,6 @@ function TouchPickerSheet<T>({
   clearLabel,
 }: TouchPickerSheetProps<T>) {
   const { t } = useTranslation();
-  const theme = useTheme();
-  const phone = useMediaQuery(theme.breakpoints.down("sm"), { noSsr: true });
   const [search, setSearch] = useState("");
   const filterOptions = useMemo(() => createFilterOptions<T>(), []);
   const shown = useMemo(
@@ -67,7 +65,6 @@ function TouchPickerSheet<T>({
     <Dialog
       open={open}
       onClose={onClose}
-      fullScreen={phone}
       fullWidth
       maxWidth="sm"
       slotProps={{ transition: { onExited: () => setSearch("") } }}

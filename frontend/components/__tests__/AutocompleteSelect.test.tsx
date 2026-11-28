@@ -140,4 +140,29 @@ describe("AutocompleteMultiSelect on a touch screen", () => {
     expect(within(sheet).getByRole("button", { name: "Indie" })).toBeInTheDocument();
     expect(within(sheet).queryByRole("button", { name: "Adventure" })).not.toBeInTheDocument();
   });
+
+  it("sizes the sheet to its content instead of filling the phone screen", async () => {
+    // A narrow phone viewport: the sheet used to go fullScreen here, which left a mostly
+    // empty sheet with Done stranded at the bottom for a short option list.
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn((query: string) => ({
+        matches: query.includes("coarse") || query.includes("max-width"),
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }))
+    );
+    const user = userEvent.setup();
+    render(
+      <AutocompleteMultiSelect label="Genres" options={OPTIONS} value={[]} onChange={vi.fn()} getOptionLabel={(o) => o} />
+    );
+
+    await user.click(screen.getByRole("combobox", { name: "Genres" }));
+    expect(screen.getByRole("dialog", { name: "Genres" })).not.toHaveClass("MuiDialog-paperFullScreen");
+  });
 });
